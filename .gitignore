@@ -1,0 +1,6 @@
+build/
+__pycache__/
+*.pyc
+
+# clones de bibliotecas publicas do autor (repos git proprios), usados so para comparacao
+ref/

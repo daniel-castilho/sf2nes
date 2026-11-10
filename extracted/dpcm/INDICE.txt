@@ -1,0 +1,33 @@
+# i  banco  endereco  bytes  taxa  duracao(s)  tocada_no_trace  arquivo                    uso (deduzido do codigo)
+ 0  $16    $C000      3073  $0F   0.74        sim    voz_00_banco16_C000.wav    locutor: "ROUND"  (RoundIntroStep)
+ 1  $16    $CC40      1473  $0F   0.36        sim    voz_01_banco16_CC40.wav    locutor: numero do round 1
+ 2  $16    $D240      1553  $0F   0.37        sim    voz_02_banco16_D240.wav    locutor: numero do round 2
+ 3  $16    $D880      1697  $0F   0.41        sim    voz_03_banco16_D880.wav    locutor: numero do round 3
+ 4  --     (entrada vazia)
+ 5  $0A    $C000      1521  $0F   0.37        sim    voz_05_banco0A_C000.wav    locutor: "FIGHT"
+ 6  $0A    $C600      2401  $0F   0.58        sim    voz_06_banco0A_C600.wav    locutor: "YOU"  (fim do round)
+ 7  $0A    $CF80      1473  $0F   0.36        sim    voz_07_banco0A_CF80.wav    locutor: "WIN"  (vencedor humano)
+ 8  $0A    $D580      2545  $0F   0.61        sim    voz_08_banco0A_D580.wav    locutor: "LOSE" (vencedor CPU)
+ 9  $12    $C000      1569  $0F   0.38        sim    voz_09_banco12_C000.wav    locutor: "PERFECT" (venceu com energia cheia)
+10  $22    $C000      3073  $0F   0.74        sim    voz_10_banco22_C000.wav    pais de RYU e EHONDA   (deve ser "JAPAN")
+11  $22    $CC40      2689  $0F   0.65        nao    voz_11_banco22_CC40.wav    pais de BLANKA         (deve ser "BRAZIL")
+12  $26    $C000      3185  $0F   0.77        nao    voz_12_banco26_C000.wav    pais de KEN, GUILE e BALROG (deve ser "U.S.A.")
+13  $22    $D700      2129  $0F   0.51        nao    voz_13_banco22_D700.wav    pais de CHUN LI        (deve ser "CHINA")
+14  $2A    $C000      4081  $0F   0.99        nao    voz_14_banco2A_C000.wav    pais de ZANGIEF        (deve ser "U.S.S.R.")
+15  $2A    $D000      4081  $0F   0.99        nao    voz_15_banco2A_D000.wav    pais de SAGAT e M.BISON (deve ser "THAILAND")
+16  $02    $D440      2385  $0F   0.58        sim    voz_16_banco02_D440.wav    tela de titulo: START
+17  $1A    $D000      2337  $0F   0.56        sim    voz_17_banco1A_D000.wav    selecao: mover cursor
+18  $1A    $C000      4081  $0F   0.99        sim    voz_18_banco1A_C000.wav    selecao: confirmar
+19  $06    $D580      2145  $0F   0.52        nao    voz_19_banco06_D580.wav    ?
+20  $06    $C000      2609  $0F   0.63        sim    voz_20_banco06_C000.wav    ?
+21  $06    $CA40      2849  $0F   0.69        sim    voz_21_banco06_CA40.wav    ?
+22  $02    $C000      2305  $0F   0.56        nao    voz_22_banco02_C000.wav    ?
+23  $02    $C940      2785  $0F   0.67        nao    voz_23_banco02_C940.wav    ?
+24  $1E    $D840      1361  $0F   0.33        sim    voz_24_banco1E_D840.wav    Ryu: voz 0 (FighterVoiceTbl)
+25  $0E    $D140      1585  $0F   0.38        nao    voz_25_banco0E_D140.wav    ?
+26  $0E    $CDC0       849  $0F   0.20        nao    voz_26_banco0E_CDC0.wav    ?
+27  $0E    $C000      3505  $0F   0.85        sim    voz_27_banco0E_C000.wav    Ryu: vozes 1 e 2
+28  $12    $C640      3361  $0F   0.81        sim    voz_28_banco12_C640.wav    Ryu: vozes 3 e 4, 1a parte
+29  $12    $D380      2945  $0F   0.71        sim    voz_29_banco12_D380.wav    Ryu: vozes 3 e 4, 2a parte
+30  $1E    $C000      3121  $0F   0.75        sim    voz_30_banco1E_C000.wav    Ryu: vozes 5 e 6, 1a parte
+31  $1E    $CC40      3057  $0F   0.74        sim    voz_31_banco1E_CC40.wav    Ryu: vozes 5 e 6, 2a parte

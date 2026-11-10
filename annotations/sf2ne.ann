@@ -1,0 +1,491 @@
+# Anotacoes do disassembly do "Street Fighter II NE (DEMO by Parisoft)".
+# Formato (uma diretiva por linha; banco:endereco em hex; K:endereco = kernel comum aos 3 bancos de codigo):
+#   label   BB:AAAA Nome                 nome de rotina ou de tabela
+#   ram     AAAA Nome [N]                nome de variavel de RAM (N = quantos bytes; padrao 1)
+#   comment BB:AAAA texto                comentario no fim da linha
+#   block   BB:AAAA texto                comentario de bloco antes do endereco (repita p/ varias linhas)
+#   code    BB:AAAA                      forca o disassembler a tratar como codigo
+#   data    BB:AAAA-BBBB                 forca a tratar como dados
+#   table   BB:AAAA split lo=AAAA hi=BBBB n=N delta=1    tabela de saltos dividida (guarda endereco-1, uso com RTS)
+#                                        (as tabelas no padrao lda/pha/lda/pha/rts sao detectadas sozinhas)
+#   table   BB:AAAA words n=N            tabela de ponteiros de 16 bits
+#   ramcode BB:AAAA TAM ORG              trecho copiado para a RAM e executado la
+#   statebank BB frames=BB from=AAAA to=AAAA   banco de estados de um lutador (cabecalho 7 bytes + quadros de 14 bytes)
+#   ptr     BB:AAAA lo|hi BB:TTTT        esta instrucao imediata (ou byte de dado) e' a metade baixa/alta de um ponteiro
+#                                        para BB:TTTT. So para os casos que o trace nao pegou (tools/ptr_candidates.py).
+#   imm     BB:AAAA EXPRESSAO            escreve a mao o operando de uma instrucao imediata (ex.: imm 3F:F8BF <FarCall)
+#                                        (ponteiros para o ROM vistos no trace ja saem simbolicos sozinhos)
+#   alt     SIMBOLO BB:AAAA TAM          codigo alternativo (linhas seguintes comecando com "|"), montado so com
+#                                        -D SIMBOLO; sem o simbolo sai o original. Usado para correcoes opcionais.
+#   ram AAAA Nome N  nomeia N bytes seguidos: Nome, Nome+1, ... (vetores, pares P1/P2).
+
+ramcode 3F:F935 14 049E
+
+
+# ============================================================================================================
+# KERNEL (codigo repetido em $FC7C-$FF9A dos bancos $37, $3B e $3F)
+# ============================================================================================================
+label K:FC7C IrqHandler
+block K:FC7C ------------------------------------------------------------------------------------------------
+block K:FC7C IRQ = contador de scanlines do MMC5 ($5203/$5204). Faz os efeitos de raster.
+block K:FC7C   IrqStage ($03FF) = 0      -> primeira divisao da luta: fim do HUD, comeca o cenario
+block K:FC7C   IrqStage > 0              -> divisoes seguintes da luta; a ultima faz o chao linha a linha (paralaxe)
+block K:FC7C   IrqStage < 0 (bit 7)      -> telas de menu (selecao / VS / frase): troca de CHR por faixa
+block K:FC7C ATENCAO: os lacos de espera (dex/bne, nop) sao contagem de ciclos. Mexer aqui desalinha a imagem.
+label K:FC8E Irq_FightNext
+label K:FCB6 Irq_FloorLine
+comment K:FCB6 uma volta por scanline do chao: rolagem horizontal propria (tabela FloorScrollX)
+label K:FD04 Irq_FightArmNext
+label K:FD0E Irq_SetLine
+label K:FD16 Irq_Exit
+label K:FD1C Irq_FightFirst
+label K:FD62 Irq_Menu
+label K:FD8C Irq_MenuLast
+comment K:FD97 so para jogador humano (FighterIsCpu = 0)
+comment K:FDDF idem para o jogador 2 — nunca executado no demo (P2 e' sempre CPU)
+label K:FE14 MenuSplitLine
+label K:FE18 MenuSplitChrA
+label K:FE1B MenuSplitChrB
+label K:FE1E NmiHandler
+block K:FE1E ------------------------------------------------------------------------------------------------
+block K:FE1E NMI (vblank): envia a OAM, roda a tarefa do modo de tela atual (ScreenMode), acerta os bancos de CHR
+block K:FE1E dos sprites dos dois lutadores, a rolagem e os registradores do PPU, e sinaliza o laco principal.
+comment K:FE5A contador de frames
+comment K:FE5E avisa o laco principal que o vblank passou
+label K:FE66 NmiDispatch
+label K:FE71 NmiTaskLo
+label K:FE79 NmiTaskHi
+label K:FE82 NmiTask_Intro
+label K:FE8B NmiTask_Title
+label K:FE9C NmiTask_Select
+label K:FEBA NmiTask_Fight
+label K:FEC5 NmiTask_VsQuote
+label K:FED8 PaletteUpload
+block K:FED8 Copia o buffer de paleta (PaletteBuf, 24 cores = 8 paletas x 3; a cor 0 de todas e' $0F) para o PPU.
+
+# ============================================================================================================
+# BANCO $3F — reset, laco principal, nucleo do motor de luta
+# ============================================================================================================
+label 3F:FF9F Reset
+block 3F:FF9F ------------------------------------------------------------------------------------------------
+block 3F:FF9F RESET. Este codigo so existe no banco $3F (ver a correcao FIX_SOFT_RESET no fim de annotations/).
+label 3F:F7A2 Main
+block 3F:F7A2 ------------------------------------------------------------------------------------------------
+block 3F:F7A2 Inicializacao: configura o MMC5 (PRG modo 3 = 4 bancos de 8K; CHR modo 2 = paginas de 2K;
+block 3F:F7A2 ExRAM modo 3; nametables $44), zera rolagem/paleta, instala o trampolim FarCall na RAM e semeia o RNG.
+label 3F:F828 MainLoop
+block 3F:F828 Laco do jogo: aviso -> titulo -> selecao -> VS -> luta -> frase do vencedor -> volta ao comeco.
+comment 3F:F828 ScreenDisclaimer
+comment 3F:F83A ScreenTitle
+comment 3F:F86C ScreenPlayerSelect
+comment 3F:F87E ScreenVersus
+comment 3F:F890 Match
+comment 3F:F8A2 ScreenWinQuote
+comment 3F:F85E nenhum personagem escolhido
+comment 3F:F866 P1 = humano
+comment 3F:F86A P2 = CPU
+label 3F:F8B7 InstallFarCall
+imm 3F:F8BF <FarCall
+imm 3F:F8C3 >FarCall
+comment 3F:F8B7 copia 20 bytes de FarCallRom para $049E
+label 3F:F8E7 JoyPollBoth
+label 3F:F8F1 JoyPollSafe
+block 3F:F8F1 Le o controle A (0/1) ate duas leituras baterem — protege contra a corrupcao causada pelo canal DMC.
+block 3F:F8F1 Resultado em JoyState,x ; JoyPrev,x recebe o estado anterior.  (mesma ideia do joy_poll_safe da familib)
+label 3F:F91C JoyRead
+label 3F:F935 FarCallRom
+label 3F:E5AC RandomSeed
+label 3F:E5B9 Random
+label 3F:E03D DistanceX
+comment 3F:E03D A = |x do P2 - x do P1|
+label 3F:E049 DistanceY
+label 3F:E0CE StateCheckTransitions
+block 3F:E0CE ------------------------------------------------------------------------------------------------
+block 3F:E0CE MAQUINA DE ESTADOS DO LUTADOR (dirigida por dados; os dados ficam no banco FighterStateBank, em $A000).
+block 3F:E0CE Percorre a lista de transicoes do estado atual. Cada no': byte 0 = numero da condicao (StateCond*),
+block 3F:E0CE bytes 1-2 = ponteiro do proximo no'. A primeira condicao verdadeira decide o proximo estado.
+label 3F:E168 StateCondDispatch
+label 3F:E171 StateCondLo
+label 3F:E17D StateCondHi
+label 3F:E189 StateCond00
+label 3F:E1B1 StateCond01
+label 3F:E1D6 StateCond02
+label 3F:E1ED StateCond03
+label 3F:E1F3 StateCond04
+label 3F:E1F9 StateCond05
+label 3F:E204 StateCond06
+label 3F:E212 StateCond07
+label 3F:E224 StateCond08
+label 3F:E22E StateCond09
+label 3F:E271 StateCond0A
+label 3F:E296 StateCond0B
+label 3F:E371 StateAdvance
+comment 3F:E371 passa para o proximo estado (ponteiro no registro do estado atual)
+label 3F:E47F StateSetByte
+block 3F:E47F Grava o byte de estado (cabecalho +5) em FighterState e dispara o som da classe do estado:
+block 3F:E47F classes $70-$98 -> efeito sonoro (banco $37), classes $A0-$E0 -> voz do lutador (VoicePlayFighter).
+comment 3F:E3B1 cabecalho +6
+comment 3F:E3B8 quadro +11: condicao de desvio
+label 3F:E7D2 AiUpdate
+block 3F:E7D2 ------------------------------------------------------------------------------------------------
+block 3F:E7D2 IA DA CPU. Dois niveis: (1) uma rotina "pensar" em codigo nativo, propria de cada personagem
+block 3F:E7D2 (AiCharRoutine -> banco do personagem, ex. RyuAiThink em $00:8F46), que escolhe um roteiro;
+block 3F:E7D2 (2) um interpretador de roteiros (bytecode, opcodes $80-$91 = AiOp00..AiOp11) que gera os comandos.
+label 3F:E7A4 AiCallCharRoutine
+label 3F:E6E6 AiCharRoutine
+comment 3F:E6E6 uma entrada (endereco-1) por personagem; so o Ryu existe
+label 3F:E6E8 AiStartScriptNow
+comment 3F:E6E8 A/Y = ponteiro do roteiro; inicia sempre
+label 3F:E6F3 AiStartScript
+comment 3F:E6F3 A/Y = ponteiro do roteiro; so inicia se Random&7 < AiLevel (senao hesita)
+label 3F:E6FE AiDoNothing
+comment 3F:E70A AiLevel = 7 (fixo em MainLoop): a CPU reage em 7 de cada 8 chances — por isso a IA parece "dificil demais"
+comment 3F:F84C nivel da IA (0..7). E' o unico lugar que define a dificuldade
+label 3F:E82D AiOpDispatch
+label 3F:E6C2 AiOpLo
+label 3F:E6D4 AiOpHi
+label 3F:E5DF AiOp00
+label 3F:E5EA AiOp01
+label 3F:E5F7 AiOp02
+label 3F:E604 AiOp03
+label 3F:E61A AiOp04
+label 3F:E61F AiOp05
+label 3F:E62A AiOp06
+label 3F:E62D AiOp07
+label 3F:E636 AiOp08
+label 3F:E63E AiOp09
+label 3F:E646 AiOp0A
+label 3F:E659 AiOp0B
+label 3F:E65C AiOp0C
+label 3F:E6B0 AiOp0D
+label 3F:E686 AiOp0E
+label 3F:E69B AiOp0F
+label 3F:E6B3 AiOp10
+label 3F:E6BE AiOp11
+label 3F:E98D InputUpdate
+block 3F:E98D ------------------------------------------------------------------------------------------------
+block 3F:E98D ENTRADA DO JOGADOR HUMANO: le JoyState e alimenta o reconhecedor de comandos (golpes especiais).
+block 3F:E98D E' aqui (e em CmdStep*) que mora o problema relatado de "hadouken dificil / comando atrasado".
+label 3F:E99A InputButtons
+block 3F:E99A Botoes A (soco) e B (chute) com dois niveis de forca num botao so:
+block 3F:E99A   toque curto (soltou antes de 7 quadros)  -> golpe FRACO, emitido so QUANDO SOLTA
+block 3F:E99A   segurou 7 quadros ou mais                -> golpe FORTE, emitido a CADA quadro do 7o ao 20o, e de novo ao soltar
+block 3F:E99A InputAttack,x recebe: 0 soco fraco, 1 soco forte, 2 chute fraco, 3 chute forte, $FF nada.
+block 3F:E99A Consequencia: todo golpe sai atrasado (no minimo ate soltar o botao) e o forte se repete — ver docs/BUGS.md.
+comment 3F:E9A7 passou de 20 quadros segurando: ignora
+comment 3F:E9AB menos de 7 quadros: ainda nao decide (espera soltar)
+comment 3F:E9AF 7..20 quadros segurando: soco forte, todo quadro
+comment 3F:E9C2 soltou: <7 quadros = fraco (0), senao forte (1)
+label 3F:E9FE InputSetAttack
+label 3F:EA01 InputDirection
+comment 3F:EA01 direcional -> codigo de direcao relativo ao lado que o lutador olha (tabela D3F_E963)
+label 3F:EA24 InputCommands
+comment 3F:EA24 reconhecedor de comandos: percorre a lista de golpes especiais do personagem
+label 3F:EA6A CmdStepDispatch
+label 3F:EA76 CmdStepLo
+label 3F:EA89 CmdStepHi
+label 3F:E067 CmdMotionTbl
+comment 3F:E067 sequencias dos golpes especiais, 4 bytes cada (bits do controle: 04 baixo, 01 frente, 02 tras, 08 cima, 80 A, 40 B)
+label 3F:EF74 FightersUpdate
+block 3F:EF74 Um quadro de logica da luta: atualiza os dois lutadores (alternando a ordem a cada quadro) e desenha.
+label 3F:EF99 FighterUpdate
+comment 3F:EFC1 CPU ou humano?
+comment 3F:EFC5 CPU -> IA
+comment 3F:EFCB humano -> controle
+
+# ============================================================================================================
+# BANCO $3B — luta (rounds, HUD, desenho), telas VS e frase final, utilitarios de video
+# ============================================================================================================
+label 3B:E000 FighterLoadChar
+block 3B:E000 ------------------------------------------------------------------------------------------------
+block 3B:E000 Carrega a "ficha" do personagem FighterChar,x a partir das tabelas do banco $3C (10 personagens por tabela):
+block 3B:E000 bancos de dados (frames em $8000, estados em $A000) e ponteiros para os estados basicos.
+block 3B:E000 Hoje so a coluna 0 (Ryu) esta preenchida. Para um personagem novo, este e' o ponto de partida.
+label 3B:E098 FighterRoundInit
+comment 3B:E098 posicao inicial: P1 x=$5A, P2 x=$A6, y=$CD (chao)
+label 3B:E1F6 PortraitBuild
+label 3B:E3BE PpuUnRle
+block 3B:E3BE Descompacta RLE (formato do NESlib/Shiru: 1o byte = marcador; marcador,n = repete o ultimo byte n vezes;
+block 3B:E3BE marcador,0 = fim) direto em PPUDATA. Entrada: A = byte baixo, X = byte alto do endereco dos dados.
+label 3B:E426 FadeOut
+label 3B:E4D6 FadeIn
+label 3B:E844 NmiFightVram
+label 3B:EA61 ScreenVersus
+label 3B:EC1B ScreenWinQuote
+label 3B:ED81 DrawFighters
+label 3B:EDD9 DrawFighter
+label 3B:F2DF OamHideRest
+comment 3B:F2DF esconde os sprites nao usados neste quadro (Y = $FE do indice OamIndex ate o fim)
+label 3B:F2EA DrawMetasprite
+block 3B:F2EA Desenha um metasprite (lista de sprites 8x16) na OAM. Dados em (zp_D9): atributo, depois grupos
+block 3B:F2EA "quantidade, dx, dy, tiles..." ate um byte negativo. zp_DB/zp_DC = posicao base, zp_DD = espelhado.
+label 3B:F551 Match
+block 3B:F551 ------------------------------------------------------------------------------------------------
+block 3B:F551 A LUTA INTEIRA: rounds ate alguem fechar a partida.
+label 3B:F556 RoundStart
+label 3B:F58E FightFrame
+block 3B:F58E Laco de um quadro da luta: espera o vblank, som, regras do round, divisao de tela, logica dos lutadores.
+comment 3B:F5B2 "hit stop": enquanto HitStop nao zera, a logica roda quadro sim, quadro nao
+label 3B:F60F RoundInit
+label 3B:F64F RoundLogic
+label 3B:F68B RoundTimerTick
+comment 3B:F68B o relogio desce 1 a cada 32 quadros
+comment 3B:F6A0 tempo esgotado: compara a energia dos dois
+label 3B:F6D0 RoundIntroStep
+comment 3B:F6FD voz 0 = "ROUND"
+comment 3B:F82E voz 6 = "YOU"
+comment 3B:F841 voz 7 = "WIN"
+comment 3B:F853 voz 9 = "PERFECT" (vencedor humano com energia cheia, $58)
+comment 3B:F86F voz 8 = "LOSE" (o vencedor e' a CPU)
+comment 3B:F823 RoundResult: 0 = P1 venceu, 1 = P2 venceu, 2 = empate, $FF = luta em andamento
+comment 3B:F709 vozes 1..3 = numero do round
+comment 3B:F717 voz 5 = "FIGHT"
+label 3B:F7E1 RoundEndStep
+label 3B:F908 StageSplitSetup
+label 3B:F940 StageParallaxCalc
+label 3B:FACB DrawSupportScreen
+label 3B:FADC DrawTitleScreen
+label 3B:F98C RleSupportScreen
+label 3B:FAED RleTitleScreen
+
+# ============================================================================================================
+# BANCO $37 — som (FamiTone2 + vozes DPCM), telas de aviso / titulo / selecao
+# ============================================================================================================
+label 37:E000 VoiceBankTbl
+block 37:E000 ------------------------------------------------------------------------------------------------
+block 37:E000 DIRETORIO DE VOZES (DPCM): 32 amostras. VoiceBankTbl[i] = banco de PRG mapeado em $C000;
+block 37:E000 VoiceSampleTbl+3+3*i = endereco/64, (tamanho-1)/16, taxa  (tabela de amostras no formato FamiTone2).
+label 37:E01D VoiceSampleTbl
+label 37:E0EF CountryVoiceTbl
+comment 37:E0EF voz (nome do pais) de cada um dos 10 personagens na tela de selecao
+label 37:E0F9 FighterVoiceTbl
+comment 37:E0F9 16 bytes por personagem: pares (amostra, continuacao) para cada voz; $FF = nenhuma
+label 37:E19F SfxChannelOfs
+label 37:E1A3 SfxData
+comment 37:E1A3 efeitos sonoros no formato FamiTone2 (lista de ponteiros + fluxos de escrita na APU)
+label 37:E3E0 SoundLoadSong
+block 37:E3E0 Carrega musica: MusicBank = banco (mapeado em $A000), zp_D5/zp_D6 = ponteiro dos dados (FamiTone2).
+label 37:E3FA SoundInitSfx
+label 37:E401 SfxPlay
+label 37:E41B SoundInitVoices
+label 37:E427 VoicePlay
+comment 37:E427 troca o banco em $C000 para o da amostra e dispara o canal DMC
+label 37:E43C VoicePlayFighter
+label 37:E45F SoundUpdate
+block 37:E45F Chamado uma vez por quadro em todas as telas: encadeia a 2a metade de uma voz, mapeia a musica e roda o FamiTone2.
+label 37:E479 SoundStopMusic
+label 37:E47F FtSetSampleTable
+label 37:E486 FamiToneInit
+block 37:E486 ------------------------------------------------------------------------------------------------
+block 37:E486 FamiTone2 (Shiru), versao do autor (familib/src/ft2) com extensoes (slides de afinacao).
+block 37:E486 Variaveis em $0100-$018B (FT_BASE_ADR = $0100) + $046B-$047E.
+label 37:E4DB FamiToneMusicStop
+label 37:E519 FamiToneMusicPlay
+label 37:E5AC FamiToneMusicPause
+comment 37:E5AC nunca chamada no demo
+label 37:E5D0 FamiToneUpdate
+label 37:EAA1 _FT2SetInstrument
+label 37:EB0B _FT2ChannelUpdate
+label 37:ED21 FamiToneSampleStop
+label 37:ED27 FamiToneSamplePlayM
+label 37:ED3C FamiToneSamplePlay
+label 37:ED41 _FT2SamplePlay
+label 37:ED76 FamiToneSfxInit
+label 37:ED96 _FT2SfxClearChannel
+label 37:EDB0 FamiToneSfxPlay
+label 37:EDCB _FT2SfxUpdate
+label 37:EE77 _FT2NoteTableLSB
+label 37:EECF _FT2NoteTableMSB
+label 37:EF4C ScreenPlayerSelect
+label 37:F2CB ScreenDisclaimer
+label 37:F45E ScreenSupport
+label 37:F4E5 ScreenTitle
+label 37:F391 TextDisclaimer
+label 37:F68F TextPushStart
+
+# ============================================================================================================
+# BANCO $00 — dados do Ryu (frames) + IA do Ryu
+# ============================================================================================================
+label 00:8F46 RyuAiThink
+block 00:8F46 ------------------------------------------------------------------------------------------------
+block 00:8F46 IA do Ryu (codigo nativo dentro do banco de dados do personagem). Decide pelo estado e distancia do
+block 00:8F46 oponente e sorteia (Random) qual roteiro de IA disparar.
+
+# ============================================================================================================
+# BANCO $3C — fichas dos personagens, nomes e frases
+# ============================================================================================================
+label 3C:80C8 CharStateBankTbl
+label 3C:80D2 CharFrameBankTbl
+block 3C:8000 ------------------------------------------------------------------------------------------------
+block 3C:8000 FICHAS DOS PERSONAGENS: 23 tabelas de 10 bytes (uma coluna por personagem), lidas por FighterLoadChar.
+block 3C:8000 Ordem das colunas: 0 RYU, 1 KEN, 2 CHUN LI, 3 GUILE, 4 BLANKA, 5 EHONDA, 6 BALROG, 7 SAGAT, 8 M.BISON, 9 ZANGIEF.
+block 3C:8000 So a coluna 0 esta preenchida nas tabelas de ponteiros.
+label 3C:84CE CharNameTbl
+comment 3C:84CE nomes dos 10 personagens, 8 caracteres cada
+label 3C:8528 WinQuoteLine1
+comment 3C:8528 frase do vencedor, 1a linha: 22 caracteres por personagem
+label 3C:8604 WinQuoteLine2
+comment 3C:8604 frase do vencedor, 2a linha
+
+# ============================================================================================================
+# RAM
+# ============================================================================================================
+# --- lutadores: vetores de 2 posicoes, indice X = 0 (P1) ou 1 (P2)
+ram 0000 FighterChar 2
+ram 0002 FighterIsCpu 2
+ram 0004 FighterFlip 2
+ram 0006 FighterXSub 2
+ram 0008 FighterX 2
+ram 000A FighterYSub 2
+ram 000C FighterY 2
+ram 000E FighterHP 2
+ram 0010 FighterWins 2
+ram 0014 FighterDmgPending 2
+ram 0018 FighterFrameBank 2
+ram 001A FighterStateBank 2
+ram 001E FighterStatePtrLo 2
+ram 0020 FighterStatePtrHi 2
+ram 0022 FighterNextPtrLo 2
+ram 0024 FighterNextPtrHi 2
+ram 0026 FighterState 2
+ram 002A FighterFramePtrLo 2
+ram 002C FighterFramePtrHi 2
+ram 0030 FighterVelXSub 2
+ram 0032 FighterVelX 2
+ram 0034 FighterVelYSub 2
+ram 0036 FighterVelY 2
+ram 0040 FighterChrPage 2
+ram 0042 FighterAnimTimer 2
+ram 0086 InputDir 2
+ram 0088 InputAttack 2
+ram 008A BtnAHold 2
+ram 008C BtnBHold 2
+ram 0069 AiScriptPtrLo 2
+ram 006B AiScriptPtrHi 2
+ram 0064 CurFighter
+ram 0065 OtherFighter
+ram 0066 RngState 3
+# --- sistema
+ram 00AC VBlankFlag
+ram 00AD OamIndex
+ram 00B0 ScreenMode
+ram 00B1 FrameCounter
+ram 00B4 AiLevel
+ram 00B5 TimerOff
+ram 00B6 RoundStep
+ram 00B7 RoundStepTimer
+ram 00B8 RoundNumber
+ram 00B9 RoundResult
+ram 00BA TimerOnes
+ram 00BB TimerTens
+ram 00BC PaletteBuf 24
+ram 00D4 PaletteDirty
+ram 00ED PpuCtrlShadow
+ram 00EE PpuMaskShadow
+ram 00EF ScrollX
+ram 00F0 ScrollY
+ram 00F2 JoyState 2
+ram 00F6 JoyPrev 2
+ram 00FA RlePtr 2
+ram 00FC RleTag
+ram 00FD RleLast
+ram 0200 OamBuf 256
+ram 03B7 CameraX
+ram 03BB FloorLines
+ram 03DF FloorScrollX
+ram 03FF IrqStage
+ram 040C HitStop
+ram 045E VoiceQueued
+ram 045F MusicBank
+ram 0485 FadePalette 24
+# --- FamiTone2 (FT_BASE_ADR = $0100)
+ram 0083 FT_TEMP_PTR_L
+ram 0084 FT_TEMP_PTR_H
+ram 0174 FT_SONG_LIST_L
+ram 0175 FT_SONG_LIST_H
+ram 0176 FT_INSTRUMENT_L
+ram 0177 FT_INSTRUMENT_H
+ram 017C FT_DPCM_LIST_L
+ram 017D FT_DPCM_LIST_H
+ram 017E FT_DPCM_EFFECT
+ram 018A FT_SFX_ADR_L
+ram 018B FT_SFX_ADR_H
+
+# ============================================================================================================
+# BANCOS DE ESTADOS DOS LUTADORES (formato em docs/ARQUITETURA.md, secao 4.2)
+# statebank <banco> frames=<banco dos frames> from=<inicio> to=<fim>
+# Completa, pela estrutura dos registros, os ponteiros dos estados que nenhum trace visitou.
+# ============================================================================================================
+statebank 01 frames=00 from=A0B0 to=B1C6
+
+# ============================================================================================================
+# PONTEIROS CONFIRMADOS A MAO (o trace nao passou por estes trechos; achados com tools/ptr_candidates.py)
+# ============================================================================================================
+# Candidatos do ptr_candidates.py ja revisados e que NAO sao ponteiros (sao coordenadas, rolagem ou enderecos do PPU):
+#   37:EF58/EF5D ($E0F8 -> ScrollX/ScrollY)   37:F576/F57A ($FF10)          3B:E3AE/E3A9 ($8000 -> camera)
+#   3B:E5D7/E5DC ($FF32)                      3B:E622/E61D ($C6C5 -> HUD)   3B:EC10/EC14 ($90E0 -> posicao x,y)
+#   3B:ECAB/ECB0 e 3B:ECCF/ECD4 (endereco de nametable)   3B:F784/F788 ($805C -> posicao x,y)   3F:F85C/F860 ($FFFF)
+# roteiro de IA do Ryu passado em A/Y para AiStartScript
+ptr 00:9036 lo 00:8F16
+ptr 00:9038 hi 00:8F16
+# mesmo ponteiro de 3B:E188, noutro caminho
+ptr 3B:E158 lo 3C:83B6
+ptr 3B:E15C hi 3C:83B6
+# metasprite de texto de fim de round (ramo nunca executado nos traces), irmao de 3B:F88F -> 20:84A1
+ptr 3B:F8A2 lo 20:848B
+ptr 3B:F8A6 hi 20:848B
+
+# ============================================================================================================
+# CORRECAO OPCIONAL: travamento no soft reset  (make fixed)   — detalhes em docs/BUGS.md
+# O codigo de RESET so existe no banco $3F, mas o MMC5 nao e' reiniciado pelo botao RESET do console: se o reset
+# acontece com o banco $37 ou $3B em $E000, o vetor aponta para $FF9F cheio de $FF e o jogo trava.
+# A correcao poe o MESMO trecho de 13 bytes no espaco livre $FC6D dos tres bancos e aponta o vetor de RESET
+# para ele: ele mapeia o banco $3F e pula para o reset original.
+alt FIX_SOFT_RESET 37:FC6D F
+|ResetStub:
+|    lda #$00
+|    sta MMC5_IRQ_STATUS                         ; desliga o IRQ de scanline que pode ter ficado armado
+|    lda #$BF
+|    sta MMC5_PRG_E000                           ; banco $3F em $E000 (a proxima instrucao ja vem dele)
+|    jmp $FF9F                                   ; Reset original (so existe no banco $3F)
+alt FIX_SOFT_RESET 3B:FC6D F
+|ResetStub:
+|    lda #$00
+|    sta MMC5_IRQ_STATUS
+|    lda #$BF
+|    sta MMC5_PRG_E000
+|    jmp $FF9F
+alt FIX_SOFT_RESET 3F:FC6D F
+|ResetStub:
+|    lda #$00
+|    sta MMC5_IRQ_STATUS
+|    lda #$BF
+|    sta MMC5_PRG_E000
+|    jmp $FF9F
+alt FIX_SOFT_RESET 37:FFFC 2
+|    .word ResetStub
+alt FIX_SOFT_RESET 3B:FFFC 2
+|    .word ResetStub
+alt FIX_SOFT_RESET 3F:FFFC 2
+|    .word ResetStub
+
+# ============================================================================================================
+# AJUSTE EXPERIMENTAL: golpe forte dispara UMA vez   (make fixed FIXDEFS="-D FIX_SOFT_RESET -D FIX_HEAVY_ONCE")
+# No original, segurar A/B emite o golpe forte a cada quadro do 7o ao 20o e outra vez ao soltar (ver docs/BUGS.md).
+# Aqui ele e' emitido so no quadro em que o contador chega a 7, e soltar depois disso nao emite nada.
+# Muda a jogabilidade: teste antes de adotar.
+alt FIX_HEAVY_ONCE 3F:E9AD 2
+|    bne L3F_E9CB                                ; era bcc: so quando o contador e' exatamente 7
+alt FIX_HEAVY_ONCE 3F:E9C6 2
+|    lda #$FF                                    ; era lda #$01: soltar depois de 7 quadros nao repete o golpe
+alt FIX_HEAVY_ONCE 3F:E9DE 2
+|    bne L3F_E9FC
+alt FIX_HEAVY_ONCE 3F:E9F7 2
+|    lda #$FF
+
+# ============================================================================================================
+# MODO VERSUS (experimental): jogador 2 humano   (make fixed FIXDEFS="-D FIX_SOFT_RESET -D MODE_VERSUS")
+# O motor ja suporta dois humanos: basta FighterIsCpu+1 = 0. No demo nada faz isso (MainLoop fixa 1).
+# Com este bloco o P2 e' sempre o controle 2 (nao ha mais adversario CPU) — serve para testar o modo versus.
+alt MODE_VERSUS 3F:F868 2
+|    lda #$00                                    ; era lda #$01 (P2 = CPU)

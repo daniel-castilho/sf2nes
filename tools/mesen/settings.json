@@ -1,0 +1,9 @@
+{
+  "Debug": {
+    "ScriptWindow": { "AllowIoOsAccess": true, "AllowNetworkAccess": false, "ScriptTimeout": 60 }
+  },
+  "Nes": {
+    "Port1": { "Type": "NesController" },
+    "Port2": { "Type": "NesController" }
+  }
+}

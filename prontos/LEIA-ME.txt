@@ -1,0 +1,14 @@
+ROMs prontos para jogar, montados a partir do fonte deste projeto (make prontos).
+Todos partem do demo original; a diferenca em bytes esta entre parenteses.
+
+sf2ne_reset_corrigido.nes     so a correcao do travamento no soft reset (42 bytes).
+                              Em jogo normal e' identico ao original (telas, som e resultado conferidos no emulador).
+
+sf2ne_versus.nes              correcao do reset + MODO VERSUS: o segundo lutador e' controlado pelo controle 2 (43 bytes).
+                              Nao ha adversario CPU nesta variante. A selecao ainda so oferece o Ryu.
+
+sf2ne_golpe_forte_unico.nes   correcao do reset + ajuste experimental dos botoes: segurar A/B dispara o golpe forte
+                              uma vez so, em vez de repetir por ate 14 quadros (46 bytes). Muda a jogabilidade.
+
+Emuladores indicados pelo autor do demo: Mesen ou FCEUX (mapper 5 / MMC5).
+Detalhes de cada mudanca: docs/BUGS.md.   Para remontar: make prontos   (precisa do cc65).
