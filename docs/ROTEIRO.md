@@ -35,23 +35,24 @@ Programação: semanas. Conteúdo de um elenco inteiro: muito mais que isso. Pla
 - [x] causa do atraso/repetição de comandos encontrada e medida
 - [x] modo versus (2 jogadores) destravado como opção de montagem
 
-### Etapa 1 — entender o motor (a fazer; é onde a IA rende mais)
+### Etapa 1 — entender o motor (feita — o resultado está em `docs/FORMATOS.md`)
 
-Ordem sugerida, do que destrava mais para o que destrava menos:
+- [x] **As 12 condições de transição** (`StateCond00`–`0B`, `3F:E189`–`E296`) — §4
+- [x] **Os bytes do quadro** (+5…+11): efeito, dano, tipo de golpe, flags, movimento — §6–§8
+- [x] **Caixas de colisão** (`00:91C1`…) e as rotinas de acerto/dano — §10/§11
+- [x] **O reconhecedor de comandos** e o `InputDispatch`/`GuardRedirect` — §13 (vários tratadores
+  `CmdStep*` ainda `(nt)`; aprofundar na Etapa 2, ao corrigir o atraso dos especiais)
+- [x] **Os 18 opcodes dos roteiros de IA** e a lógica de `RyuAiThink` — §14
+- [x] As oito tabelas do início do banco de estados (`$A000`–`$A0AF`) — §1/§13
+- [x] O resto: projétil (hadouken) — §12 — e física do pulo (§8, integração de `VelY`); HUD e
+  seleção de personagem ficaram fora do escopo
+- [ ] nomear os ~276 rótulos `L3F_*` que sobraram no banco `$3F` — 82 no bloco de movimento
+  (`F0A5`–`F648`, descritos em `docs/FORMATOS.md` §8), 194 espalhados em rotinas auxiliares;
+  renomear cada um ao mexer nele na Etapa 2
 
-1. **As 12 condições de transição** (`StateCond00`–`0B`, `3F:E189`–`E296`). São curtas. Com elas nomeadas o banco
-   de estados vira texto legível ("se apertou soco fraco → estado X").
-2. **Os 6 bytes não decifrados do quadro** (+5…+10): velocidade, dano, tipo de golpe. Método: mudar um byte de um
-   quadro conhecido (o soco fraco, por exemplo), montar, e ver o que muda no emulador.
-3. **Caixas de colisão** (`00:91C1`…): registros de 9 bytes. Achar a rotina que testa acerto (procure quem lê o
-   ponteiro +3 do quadro).
-4. **Os 19 passos do reconhecedor de comandos** (`CmdStepDispatch`) — necessário para corrigir o atraso dos especiais.
-5. **Os 18 opcodes dos roteiros de IA** (`AiOp00`–`AiOp11`) e a lógica de `RyuAiThink`.
-6. As oito tabelas do início do banco de estados (`$A000`–`$A0AF`): qual é "de pé", "agachado", "no ar", "apanhando"…
-7. O resto: HUD, seleção de personagem, física do pulo, projétil (hadouken).
-
-Meta da etapa: nenhum rótulo `L3F_xxxx` nas rotinas do motor de luta e um documento `docs/FORMATOS.md` com cada
-estrutura de dados descrita campo a campo.
+Meta da etapa — um documento `docs/FORMATOS.md` com cada estrutura de dados descrita campo a
+campo, lida no código e conferida no ROM: **feita** (com `(hipótese)` e `(nt)` marcados onde a
+leitura não é garantida). A parte "nenhum rótulo `L3F_xxxx`" não fechou: sobram os ~276 acima.
 
 ### Etapa 2 — corrigir e destravar o que já existe
 
@@ -106,7 +107,7 @@ montado para que **toda afirmação possa ser conferida por máquina**:
 | uma mudança que não deveria alterar nada | `tools/mesen/regress.sh build/…nes` |
 | uma correção | um script de teste que falha antes e passa depois (modelo: `reset_test.lua`) |
 
-### Ciclo de trabalho para a Etapa 1
+### Ciclo de trabalho (usado na Etapa 1; vale para as próximas)
 
 1. Escolha uma rotina sem nome: `python3 tools/show.py 3F:E189 60`.
 2. Dê à IA **junto**: a rotina, as rotinas que ela chama, o trecho de `docs/RAM.md` e `docs/ARQUITETURA.md`

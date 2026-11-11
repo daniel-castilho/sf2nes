@@ -86,6 +86,8 @@ class Project:
         self.warn = set()
         self.rts_sites = set(); self.rts_tables = []; self.islands = []; self.island_fail = set()
         self.alts = {}; self.immtext = {}; self.manual_ptr = []; self.inferred = set(); self.statebanks = []; self.struct_fail = []; self.struct_kind = {}
+        self.stateconds = []                        # (off da tabela lo, n) — condicoes da maquina de estados
+        self.cond_names = {}                        # numero da condicao -> nome da rotina
         self.immsym = {}; self.ptr_conflicts = []; self.ptr_stats = (0, 0); self.ptr_ev = []
         self.nonempty = [b for b in range(64) if any(x != 0xFF for x in self.prg[b << 13:(b + 1) << 13])]
 
@@ -150,6 +152,10 @@ class Project:
                     q = ln.split()
                     d = dict(kv.split('=') for kv in q[2:])
                     self.statebanks.append((int(q[1], 16), int(d['frames'], 16), int(d['from'], 16), int(d['to'], 16)))
+                elif cmd == 'statecond':               # statecond BB:AAAA n=N  (tabela de condicoes da maquina de estados)
+                    q = ln.split()
+                    d = dict(kv.split('=') for kv in q[2:])
+                    self.stateconds.append((self.parse(q[1]), int(d.get('n', '0'), 0)))
                 elif cmd == 'ptr':                      # ptr BB:AAAA lo|hi BB:TTTT   (metade de um ponteiro, confirmada a mao)
                     q = ln.split()
                     self.manual_ptr.append((self.parse(q[1]), q[2], self.parse(q[3])))
@@ -623,6 +629,19 @@ class Project:
             for p, kind, size, fl in items: self.struct_kind[p] = (kind, size)
         self.struct_new = getattr(self, 'struct_new', 0) + n_new
 
+    def build_cond_names(self):
+        """Nomes das condicoes da maquina de estados, derivados da tabela de despacho (truque do RTS):
+        cada entrada guarda endereco-1 da rotina que testa a condicao. O rotulo dessa rotina no .ann
+        vira o nome impresso nos cabecalhos '; -- ESTADO' do banco de dados do lutador."""
+        for off, n in self.stateconds:
+            b = off >> 13
+            for i in range(n):
+                addr = (((self.prg[off + n + i] << 8) | self.prg[off + i]) + 1) & 0xFFFF
+                t = ba2off(b, addr)
+                nm = self.names.get(t) or self.labels.get(t)
+                if nm: self.cond_names[i] = nm
+                else: self.warn.add('statecond %s: entrada %d ($%04X) nao tem rotulo' % (fmt_off(off), i, addr))
+
     def auto_name(self, off):
         b, a = off2ba(off)
         code = self.kind[off] == OPC
@@ -876,7 +895,20 @@ class Project:
                 first = sk[0] == 'quadro' and self.struct_kind.get(o - 7, ('',))[0] == 'estado'
                 note = '' if co in self.labels else ('   [1o quadro do estado acima: cabecalho+7]' if first
                                                       else '   [$%04X, nenhum ponteiro conhecido aponta para ca]' % off2ba(o)[1])
-                out.append('; -- %s%s' % ('ESTADO (cabecalho, 7 bytes)' if sk[0] == 'estado' else 'quadro (%d bytes)' % sk[1], note))
+                if sk[0] == 'estado':
+                    c = self.prg[o]
+                    cs = 'cond=$%02X' % c
+                    if c >= 0x80: cs += ' sempre'
+                    elif c in self.cond_names: cs += ' %s' % self.cond_names[c]
+                    summ = '   [%s | classe=$%02X | acertos=%d]' % (cs, self.prg[o + 5], self.prg[o + 6])
+                else:
+                    p = self.prg
+                    sg = lambda v: v - 256 if v >= 128 else v
+                    summ = '   [dur=%d efe=$%02X/$%02X fl=$%02X mov=$%02X vx=%d vy=%d rep=%d' % (
+                        p[o], p[o + 5], p[o + 6], p[o + 7], p[o + 8], sg(p[o + 9]), sg(p[o + 10]), p[o + 11])
+                    if sk[1] == 16: summ += ' br=$%04X' % (p[o + 14] | (p[o + 15] << 8))
+                    summ += ']'
+                out.append('; -- %s%s%s' % ('ESTADO (cabecalho, 7 bytes)' if sk[0] == 'estado' else 'quadro (%d bytes)' % sk[1], summ, note))
             if co in self.labels:
                 if self.kind[o] == OPC and (o == base or self.is_entry(o) or co in self.xrefs) and co not in self.blocks: out.append('')
                 if self.kind[o] == OPC and (co in self.xrefs or (self.is_entry(o) and co in self.names)):
@@ -1012,6 +1044,7 @@ class Project:
         self.exports = set()
         self.kernel_imports = set()
         self.ramcode_at = {o: (l, org) for o, l, org in self.ramcode}
+        self.build_cond_names()
         os.makedirs(SRC, exist_ok=True)
         files = {}
         # kernel

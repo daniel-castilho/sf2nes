@@ -438,7 +438,7 @@ RyuAiThink:
     and #$04                                    ; 8F4B  29 04
     beq L00_8F96                                ; 8F4D  F0 47
     sec                                         ; 8F4F  38
-    lda ram_03BA                                ; 8F50  AD BA 03
+    lda FloorY                                  ; 8F50  AD BA 03
     sbc FighterY,x                              ; 8F53  F5 0C
     cmp #$20                                    ; 8F55  C9 20
     bcs L00_8F5C                                ; 8F57  B0 03
@@ -485,7 +485,7 @@ L00_8F8F:
 
 
 L00_8F96:
-    lda a:zp_7B,y                               ; 8F96  B9 7B 00
+    lda a:ProjX,y                               ; 8F96  B9 7B 00
     beq L00_8FCF                                ; 8F99  F0 34
     sec                                         ; 8F9B  38
     sbc FighterX,x                              ; 8F9C  F5 08
@@ -580,7 +580,7 @@ L00_9016:
 
 L00_901D:
     lda a:FighterY,y                            ; 901D  B9 0C 00
-    cmp ram_03BA                                ; 9020  CD BA 03
+    cmp FloorY                                  ; 9020  CD BA 03
     bcc L00_9028                                ; 9023  90 03
     jmp AiDoNothing                             ; 9025  4C FE E6
 

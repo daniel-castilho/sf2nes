@@ -173,58 +173,84 @@ Todos os dez têm nome, frase de vitória e voz de país (`CountryVoiceTbl`, `37
 | `$80DC` | terceiro banco (uso a confirmar) | `00 04 00 00 00 00 00 00 20 00` |
 | `$8000`–`$80BE` | 10 pares de ponteiros (lo/hi) para os estados básicos e tabelas do personagem | **só a coluna 0 (Ryu)** |
 
-Os ponteiros da coluna do Ryu: `$A000`, `$A012`, `$A01A`, `$A026`, `$A03E`, `$A056`, `$A06E`, `$A086` (oito tabelas
-de ponteiros no início do banco de estados — falta identificar o papel de cada uma), `3F:E0C0` (lista dos golpes
-especiais do personagem: índices em `CmdMotionTbl`, terminada por `$FF`) e `00:8E72` (tabela de roteiros de IA).
+Os ponteiros da coluna do Ryu: oito tabelas de ponteiros no início do banco de estados, mais `3F:E0C0` (lista dos
+golpes especiais do personagem: índices em `CmdMotionTbl`, terminada por `$FF`) e `00:8E72` (tabela de roteiros de IA).
+`FighterLoadChar` copia cada uma para a RAM (`ram_031E`–`ram_033A`):
+
+| Tabela no banco de estados | Copiada para | Papel (quem usa) |
+|---|---|---|
+| `$A000` | `ram_031E` | estados por **direção** (InputDir: neutro, frente, trás) — `InputDispatch` |
+| `$A012` | `ram_0322` | estados por **botão** (soco/chute fraco/forte) — `InputDispatch` |
+| `$A01A` | `ram_0326` | estados dos **golpes especiais** (índice do reconhecedor) — `InputDispatch` |
+| `$A026` | `ram_032A` | **defesas** (reação ao golpe recebido, índice `zp_16&$3F`) — `GuardRedirect` e rotina de dano |
+| `$A03E` | `ram_032E` | reação de dano **em pé** — rotina de dano |
+| `$A056` | `ram_0336` | reação de dano **agachado** — rotina de dano |
+| `$A06E` | `ram_0332` | reação de dano **neutra** — rotina de dano |
+| `$A086` | `ram_033A` | **agarrões** (dano `$0C`) — rotina de dano |
 
 ### 4.2 Máquina de estados — banco `$01` (Ryu)
 
 O banco de estados começa com tabelas de ponteiros (`$A000`–`$A0AF`) e depois é uma sequência de dois tipos de
 registro. **O banco inteiro foi lido com esta gramática sem sobrar nada**: 71 estados e 274 quadros.
+Cada campo está descrito em detalhe em `docs/FORMATOS.md`.
 
 **Cabeçalho de estado — 7 bytes**
 
 | Desl. | Conteúdo |
 |---|---|
-| +0 | número da condição que leva a este estado (`0`–`$0B` → `StateCond00`–`StateCond0B`; `$FF` = nenhuma) |
+| +0 | número da condição que leva a este estado (`0`–`$0B`, ver abaixo; `≥ $80`/`$FF` = incondicional) |
 | +1, +2 | ponteiro para a próxima alternativa a testar (lista encadeada de transições) |
 | +3, +4 | ponteiro para o estado seguinte quando este termina (`StateAdvance`) |
-| +5 | byte de estado → `FighterState` (5 bits altos = classe, 3 baixos = flags). `StateSetByte` também dispara o som da classe: `$70`–`$98` efeito sonoro, `$A0`–`$E0` voz do lutador |
-| +6 | parâmetro (0, 1, 2 ou 6), guardado em `$28,x` — significado a confirmar |
+| +5 | byte de estado → `FighterState` (classe; os 3 bits baixos são a postura: bit 0 em pé, bit 1 agachado). `StateSetByte` também dispara o som da classe: `$70`–`$98` efeito sonoro, `$A0`–`$E0` voz do lutador |
+| +6 | acertos do golpe → `AttackHitsLeft` (`zp_28`): quantas caixas de ataque o estado ainda pode acertar |
 
-O primeiro quadro de animação do estado vem logo depois do cabeçalho (cabeçalho + 7).
+O primeiro quadro de animação do estado vem logo depois do cabeçalho (cabeçalho + 7). O nó vencedor de uma
+transição é aplicado inteiro: vira o estado atual (a lista de alternativas mora nos cabeçalhos vizinhos,
+encadeada por +1/+2).
 
-**Quadro de animação — 14 bytes (16 se houver desvio)**
+**Quadro de animação — 14 bytes (16 se houver laço)**
 
 | Desl. | Conteúdo |
 |---|---|
 | +0 | duração em quadros de vídeo (1–100) |
 | +1, +2 | ponteiro para o metasprite (banco de frames) |
 | +3, +4 | ponteiro para as caixas de colisão (banco de frames), ou 0 |
-| +5 … +10 | seis bytes ainda não decifrados (movimento / flags do golpe) |
-| +11 | condição de desvio: 0 = nenhuma; 3, 5 ou 7 nos 21 quadros que desviam |
-| +12, +13 | ponteiro para o próximo quadro (0 = fim) |
-| +14, +15 | **só se +11 ≠ 0**: ponteiro do desvio (usado, por exemplo, para repetir um trecho da animação) |
+| +5 | parâmetro do efeito → `EffectParam` (dano `&$1F` quando o quadro acerta; velocidade do projetil) |
+| +6 | tipo do efeito → `EffectType`: `$0B` dispara projetil, `$20` efeito sonoro, `$8x`/`$Cx` classe de reação do oponente atingido |
+| +7 | flags → `FrameFlags` (bit 0 golpe especial, bit 1 golpe por botão, bit 2 direção) |
+| +8 | modo de movimento: 0/1 velocidade absoluta, 2/3 aceleração, 4/5 subpixel (vel/16) |
+| +9, +10 | `VelX` / `VelY` (com sinal; interpretados conforme o modo +8) |
+| +11 | repetições do laço → `LoopRepeat` (`zp_44`) |
+| +12, +13 | ponteiro para o próximo quadro (0 = fim do estado) |
+| +14, +15 | **só se +11 ≠ 0**: ponteiro do desvio (para onde repetir enquanto o laço não zerar) |
+
+**As 12 condições** (despachadas por `StateCondDispatch`, `3F:E168`; a tabela em `3F:E171` guarda endereço−1):
+`CondOponenteAtaca` (0), `CondOponenteLongeCostas` (1), `CondOponentePerto` (2), `CondEmPe` (3), `CondAgachado` (4),
+`CondNoAr` (5), `CondNoChaoOuVelX` (6), `CondInputBaixo` (7), `CondProjetilLivre` (8), `CondPodeAgarrar` (9),
+`CondVitoria` ($0A), `CondRoundPerdido` ($0B). A semântica exata de cada uma está nos comentários do
+`annotations/sf2ne.ann` e em `docs/FORMATOS.md`.
 
 `StateCheckTransitions` (`3F:E0CE`) percorre a lista de alternativas (+1) testando a condição (+0) de cada uma;
-a primeira verdadeira vira `FighterNextPtr`. No fonte gerado cada registro sai separado e comentado:
+a primeira verdadeira vira `FighterNextPtr`. No fonte gerado cada registro sai separado, com a condição, classe
+e acertos resumidos no cabeçalho, e os campos do quadro decodificados:
 
 ```
-; -- ESTADO (cabecalho, 7 bytes)
+; -- ESTADO (cabecalho, 7 bytes)   [cond=$0A CondVitoria | classe=$E9 | acertos=0]
 D01_A0B0:
     .byte $0A
     .word D01_A10B
     .word D01_A12E
     .byte $E9,$00
 
-; -- quadro (14 bytes)   [1o quadro do estado acima: cabecalho+7]
+; -- quadro (14 bytes)   [dur=8 efe=$00/$00 fl=$10 mov=$04 vx=0 vy=0 rep=0]   [1o quadro do estado acima: cabecalho+7]
     .byte $08
     .word D00_8D81
     ...
 ```
 
-A diretiva `statebank 01 frames=00 from=A0B0 to=B1C6` (em `annotations/sf2ne.ann`) é o que liga essa leitura
-estrutural. Um personagem novo ganha a sua com outra linha igual.
+As diretivas `statebank 01 frames=00 from=A0B0 to=B1C6` e `statecond 3F:E171 n=12` (em `annotations/sf2ne.ann`)
+são o que liga essa leitura estrutural — a segunda faz o gerador imprimir o nome da condição no cabeçalho.
+Um personagem novo ganha a sua com outra linha igual.
 
 ### 4.3 Frames e desenho — banco `$00` (Ryu)
 

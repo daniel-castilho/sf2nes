@@ -24,7 +24,8 @@ zp_12                        := $12    ; r=63953 w=181
 zp_13                        := $13    ; r=580 w=181
 FighterDmgPending            := $14    ; r=168077 w=11807
 ; FighterDmgPending+1         = $15    ; r=157303 w=2704
-zp_16                        := $16    ; r=281137 w=2688
+HitReactClass                := $16    ; r=281137 w=2688
+; HitReactClass+1             = $17    ; r=171625 w=1399
 FighterFrameBank             := $18    ; r=215657 w=102
 ; FighterFrameBank+1          = $19    ; r=368861 w=102
 FighterStateBank             := $1A    ; r=648584 w=102
@@ -40,12 +41,14 @@ FighterNextPtrHi             := $24    ; r=302306 w=48312
 ; FighterNextPtrHi+1          = $25    ; r=313382 w=55639
 FighterState                 := $26    ; r=1025741 w=13294
 ; FighterState+1              = $27    ; r=1187750 w=19911
-zp_28                        := $28    ; r=223865 w=10670
+AttackHitsLeft               := $28    ; r=223865 w=10670
+; AttackHitsLeft+1            = $29    ; r=228816 w=15911
 FighterFramePtrLo            := $2A    ; r=684932 w=36300
 ; FighterFramePtrLo+1         = $2B    ; r=689198 w=39284
 FighterFramePtrHi            := $2C    ; r=685142 w=36300
 ; FighterFramePtrHi+1         = $2D    ; r=692375 w=39284
-zp_2E                        := $2E    ; r=697831 w=35201
+MoveMode                     := $2E    ; r=697831 w=35201
+; MoveMode+1                  = $2F    ; r=702358 w=37398
 FighterVelXSub               := $30    ; r=345146 w=127303
 ; FighterVelXSub+1            = $31    ; r=299218 w=81139
 FighterVelX                  := $32    ; r=280110 w=42878
@@ -54,27 +57,44 @@ FighterVelYSub               := $34    ; r=215173 w=99427
 ; FighterVelYSub+1            = $35    ; r=181007 w=87134
 FighterVelY                  := $36    ; r=267809 w=87884
 ; FighterVelY+1               = $37    ; r=225260 w=80366
-zp_38                        := $38    ; r=2458334 w=36300
-zp_3A                        := $3A    ; r=37483 w=34835
-zp_3C                        := $3C    ; r=104755 w=34835
-zp_3E                        := $3E    ; r=250915 w=35141
+FrameFlags                   := $38    ; r=2458334 w=36300
+; FrameFlags+1                = $39    ; r=2589505 w=39284
+EffectParam                  := $3A    ; r=37483 w=34835
+; EffectParam+1               = $3B    ; r=39196 w=37068
+EffectType                   := $3C    ; r=104755 w=34835
+; EffectType+1                = $3D    ; r=111565 w=37068
+HitThisFrame                 := $3E    ; r=250915 w=35141
+; HitThisFrame+1              = $3F    ; r=253196 w=37500
 FighterChrPage               := $40    ; r=624902 w=214935
 ; FighterChrPage+1            = $41    ; r=624956 w=215225
 FighterAnimTimer             := $42    ; r=479991 w=476725
 ; FighterAnimTimer+1          = $43    ; r=489577 w=485401
-zp_44                        := $44    ; r=61181 w=34695
-zp_46                        := $46    ; r=256586 w=214935
-zp_48                        := $48    ; r=216820 w=214935
-zp_4A                        := $4A    ; r=252812 w=214935
-zp_4C                        := $4C    ; r=454250 w=333170
-zp_4E                        := $4E    ; r=255448 w=214935
-zp_50                        := $50    ; r=216133 w=214935
-zp_52                        := $52    ; r=253398 w=214935
-zp_54                        := $54    ; r=387221 w=300272
-zp_56                        := $56    ; r=226604 w=214935
-zp_58                        := $58    ; r=216164 w=214935
-zp_5A                        := $5A    ; r=274873 w=214935
-zp_5C                        := $5C    ; r=256351 w=234515
+LoopRepeat                   := $44    ; r=61181 w=34695
+; LoopRepeat+1                = $45    ; r=60752 w=37308
+Body1L                       := $46    ; r=256586 w=214935
+; Body1L+1                    = $47    ; r=241994 w=214935
+Body1T                       := $48    ; r=216820 w=214935
+; Body1T+1                    = $49    ; r=217475 w=214935
+Body1R                       := $4A    ; r=252812 w=214935
+; Body1R+1                    = $4B    ; r=224444 w=214935
+Body1B                       := $4C    ; r=454250 w=333170
+; Body1B+1                    = $4D    ; r=564993 w=388223
+Body2L                       := $4E    ; r=255448 w=214935
+; Body2L+1                    = $4F    ; r=241877 w=214935
+Body2T                       := $50    ; r=216133 w=214935
+; Body2T+1                    = $51    ; r=216617 w=214935
+Body2R                       := $52    ; r=253398 w=214935
+; Body2R+1                    = $53    ; r=228754 w=214935
+Body2B                       := $54    ; r=387221 w=300272
+; Body2B+1                    = $55    ; r=501647 w=357386
+AtkL                         := $56    ; r=226604 w=214935
+; AtkL+1                      = $57    ; r=219448 w=214935
+AtkT                         := $58    ; r=216164 w=214935
+; AtkT+1                      = $59    ; r=215885 w=214935
+AtkR                         := $5A    ; r=274873 w=214935
+; AtkR+1                      = $5B    ; r=232930 w=214935
+AtkB                         := $5C    ; r=256351 w=234515
+; AtkB+1                      = $5D    ; r=228302 w=221031
 zp_5E                        := $5E    ; r=2207 w=1435
 zp_60                        := $60    ; r=275624 w=56446
 zp_62                        := $62    ; r=231789 w=1576
@@ -93,15 +113,18 @@ zp_6F                        := $6F    ; r=26691 w=29
 zp_71                        := $71    ; r=366506 w=29
 zp_73                        := $73    ; r=0 w=29
 zp_75                        := $75    ; r=0 w=29
-zp_77                        := $77    ; r=140417 w=290
-zp_79                        := $79    ; r=103761 w=9129
-zp_7B                        := $7B    ; r=1453428 w=11778
-zp_7C                        := $7C    ; r=786035 w=54122
-zp_7D                        := $7D    ; r=84290 w=8868
-zp_7F                        := $7F    ; r=124131 w=21055
-zp_80                        := $80    ; r=73857 w=87257
-zp_81                        := $81    ; r=374621 w=491
-zp_82                        := $82    ; r=363037 w=1706
+ProjSpeed                    := $77    ; r=140417 w=290
+; ProjSpeed+1                 = $78    ; r=94665 w=998
+ProjXSub                     := $79    ; r=103761 w=9129
+; ProjXSub+1                  = $7A    ; r=37920 w=38726
+ProjX                        := $7B    ; r=1453428 w=11778
+; ProjX+1                     = $7C    ; r=786035 w=54122
+ProjY                        := $7D    ; r=84290 w=8868
+; ProjY+1                     = $7E    ; r=25518 w=37757
+ProjStep                     := $7F    ; r=124131 w=21055
+; ProjStep+1                  = $80    ; r=73857 w=87257
+ProjFlags                    := $81    ; r=374621 w=491
+; ProjFlags+1                 = $82    ; r=363037 w=1706
 FT_TEMP_PTR_L                := $83    ; r=15455890 w=6459077
 FT_TEMP_PTR_H                := $84    ; r=14711800 w=5000004
 zp_85                        := $85    ; r=258456 w=140207
@@ -113,7 +136,8 @@ BtnAHold                     := $8A    ; r=453239 w=79396
 ; BtnAHold+1                  = $8B    ; r=2066 w=61336
 BtnBHold                     := $8C    ; r=444137 w=78440
 ; BtnBHold+1                  = $8D    ; r=2078 w=61336
-zp_8E                        := $8E    ; r=350584 w=64221
+CmdMoveIdx                   := $8E    ; r=350584 w=64221
+; CmdMoveIdx+1                = $8F    ; r=69064 w=88713
 zp_90                        := $90    ; r=1324181 w=83857
 zp_91                        := $91    ; r=123669 w=121329
 zp_9E                        := $9E    ; r=2122290 w=215957
@@ -662,7 +686,7 @@ ram_03B6                     := $03B6    ; r=5242596 w=87604
 CameraX                      := $03B7    ; r=5757362 w=87714
 ram_03B8                     := $03B8    ; r=418363 w=94319
 ram_03B9                     := $03B9    ; r=509586 w=94319
-ram_03BA                     := $03BA    ; r=431672 w=87942
+FloorY                       := $03BA    ; r=431672 w=87942
 FloorLines                   := $03BB    ; r=10919936 w=101
 ram_03BC                     := $03BC    ; r=29 w=101
 ram_03BD                     := $03BD    ; r=29 w=101

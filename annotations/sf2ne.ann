@@ -11,6 +11,9 @@
 #   table   BB:AAAA words n=N            tabela de ponteiros de 16 bits
 #   ramcode BB:AAAA TAM ORG              trecho copiado para a RAM e executado la
 #   statebank BB frames=BB from=AAAA to=AAAA   banco de estados de um lutador (cabecalho 7 bytes + quadros de 14 bytes)
+#   statecond BB:AAAA n=N             tabela de condicoes da maquina de estados (split lo/hi, truque do RTS,
+#                                        guarda endereco-1): os rotulos dos alvos viram os nomes impressos nos
+#                                        cabecalhos "; -- ESTADO" do banco de dados do lutador
 #   ptr     BB:AAAA lo|hi BB:TTTT        esta instrucao imediata (ou byte de dado) e' a metade baixa/alta de um ponteiro
 #                                        para BB:TTTT. So para os casos que o trace nao pegou (tools/ptr_candidates.py).
 #   imm     BB:AAAA EXPRESSAO            escreve a mao o operando de uma instrucao imediata (ex.: imm 3F:F8BF <FarCall)
@@ -99,33 +102,114 @@ label 3F:E5B9 Random
 label 3F:E03D DistanceX
 comment 3F:E03D A = |x do P2 - x do P1|
 label 3F:E049 DistanceY
+label 3F:E000 HitFreeze
+comment 3F:E000 congela o lutador atingido: salva movimento/velocidades/timer em ram_0312-031C e para no quadro atual por $0E quadros
 label 3F:E0CE StateCheckTransitions
 block 3F:E0CE ------------------------------------------------------------------------------------------------
 block 3F:E0CE MAQUINA DE ESTADOS DO LUTADOR (dirigida por dados; os dados ficam no banco FighterStateBank, em $A000).
-block 3F:E0CE Percorre a lista de transicoes do estado atual. Cada no': byte 0 = numero da condicao (StateCond*),
-block 3F:E0CE bytes 1-2 = ponteiro do proximo no'. A primeira condicao verdadeira decide o proximo estado.
+block 3F:E0CE Percorre a lista de transicoes: cada no' E' um cabecalho de estado de 7 bytes — +0 numero da condicao
+block 3F:E0CE (Cond* abaixo; >= $80 = incondicional), +1/+2 proxima alternativa (a lista encadeada), +3/+4 proximo
+block 3F:E0CE estado na cadeia natural, +5 classe, +6 acertos do golpe. A primeira condicao verdadeira aplica O
+block 3F:E0CE PROPRIO NO' como proximo estado (FighterNextPtr = endereco do no'; AnimAdvance entra nele).
+block 3F:E0CE zp_DD marca a origem da busca: $04 = GuardRedirect, $02 = golpe por botao, $01 = golpe especial.
+block 3F:E0CE Com zp_DD = $04 e classe $28/$30: pula o 1o no' quando ele e' o proprio estado atual.
+block 3F:E0CE Com zp_DD = $02 e classe $70-$98 e no' != estado atual: pula o 1o no'. E com o bit 2 da classe zerado
+block 3F:E0CE e CondOponenteLongeCostas: pula o 1o no' tambem (nao reage de costas).
+label 3F:E129 TransNextNode
+comment 3F:E129 condicao falsa: segue para o no' +1/+2 e repete a busca (ponteiro 0 = fim da lista, nada muda)
+label 3F:E13B TransApply
+comment 3F:E13B condicao verdadeira: o no' atual vira o proximo estado; AnimTimer=1 nas classes de golpe/reacao ($28-$40/$B0-$E0) a menos que o quadro tenha a flag bit 3
 label 3F:E168 StateCondDispatch
 label 3F:E171 StateCondLo
 label 3F:E17D StateCondHi
-label 3F:E189 StateCond00
-label 3F:E1B1 StateCond01
-label 3F:E1D6 StateCond02
-label 3F:E1ED StateCond03
-label 3F:E1F3 StateCond04
-label 3F:E1F9 StateCond05
-label 3F:E204 StateCond06
-label 3F:E212 StateCond07
-label 3F:E224 StateCond08
-label 3F:E22E StateCond09
-label 3F:E271 StateCond0A
-label 3F:E296 StateCond0B
+statecond 3F:E171 n=12
+comment 3F:E171 12 condicoes; cada entrada guarda endereco-1 (truque do RTS com pha/pha/rts)
+label 3F:E189 CondOponenteAtaca
+comment 3F:E189 verdadeiro se EU estou em pe/agachado (classe & 3) E o oponente esta em classe de reacao ($70-$98), de golpe ($B0-$E0) ou com projetil no ar (dele)
+label 3F:E1B1 CondOponenteLongeCostas
+comment 3F:E1B1 verdadeiro se o oponente esta a |dx| >= $0F E eu de costas para ele: devolve $40 (e' o bit 6 de FighterFlip) para virar, 0 se esta encarando ou colado
+label 3F:E1D6 CondOponentePerto
+comment 3F:E1D6 verdadeiro se |dx| < $21
+label 3F:E1ED CondEmPe
+comment 3F:E1ED bit 0 da classe = postura em pe
+label 3F:E1F3 CondAgachado
+comment 3F:E1F3 bit 1 da classe = postura agachado
+label 3F:E1F9 CondNoAr
+comment 3F:E1F9 verdadeiro se FighterY < FloorY (acima do chao)
+label 3F:E204 CondNoChaoOuVelX
+comment 3F:E204 verdadeiro se FighterY = FloorY ou VelX/VelXSub != 0 (esta no chao ou deslizando)
+label 3F:E212 CondInputBaixo
+comment 3F:E212 verdadeiro se InputDir = $08/$0B/$0C (baixo reto ou diagonal-baixa); devolve o proprio InputDir
+label 3F:E224 CondProjetilLivre
+comment 3F:E224 verdadeiro se a vaga de projetil deste lutador esta livre (zp_7B dele = 0)
+label 3F:E22E CondPodeAgarrar
+comment 3F:E22E |dx| < $18, os dois no chao, InputDir = frente/tras ($05/$06) e classe do oponente < $30 ou $50-$9F (estados de virar $A0-$A9 nao contam, nt)
+label 3F:E271 CondVitoria
+comment 3F:E271 verdadeiro se RoundResult = este lutador E o oponente esta caido (classe >= $F0) E nao ha projeteis no ar E o canal de voz esta livre
+label 3F:E296 CondRoundPerdido
+comment 3F:E296 verdadeiro se RoundResult != este lutador E RoundResult != $FF (round encerrado; vale para empate)
+label 3F:E2A6 AnimAdvance
+block 3F:E2A6 ------------------------------------------------------------------------------------------------
+block 3F:E2A6 UM PASSO DA ANIMACAO (todo quadro, antes do teste de colisao):
+block 3F:E2A6  - efeito $0B do quadro atual -> dispara o projetil (ProjLaunch, parametro = quadro +5)
+block 3F:E2A6  - FighterNextPtr != 0 -> entra no novo estado escolhido por TransApply: grava classe (+5) e
+block 3F:E2A6    acertos (+6), primeiro quadro = no' + 7. Caso especial: estado $49 com zp_62 != 0 usa a
+block 3F:E2A6    alternativa +1/+2 do estado atual. Efeito $20 do quadro -> efeito sonoro (SfxPlay).
+block 3F:E2A6  - sem proximo estado e ram_031C != 0 -> restaura o movimento congelado pelo hit-freeze.
+block 3F:E2A6  - senao avanca os quadros: +11 (repeticoes do laco) > 0 -> decrementa e desvia para +14/+15;
+block 3F:E2A6    zera -> +12/+13 (proximo quadro); +12/+13 = 0 -> StateAdvance (cadeia natural +3/+4;
+block 3F:E2A6    classe $30 com HP <= dano pendente usa +1/+2, ou seja corta para o estado de dano).
+block 3F:E2A6  - KO no ar (HP <= dano pendente, acima do chao): HitStop = $78 e vozes de KO.
+label 3F:E301 FreezeRestore
+comment 3F:E301 devolve as velocidades/timer salvos pelo hit-freeze (ram_0312-031C)
+label 3F:E3B8 FrameEnter
+comment 3F:E3B8 entrada do 1o quadro do novo estado: carrega zp_44 com as repeticoes do laco (quadro +11)
+label 3F:E3BF FrameEnterCommon
+comment 3F:E3BF entrada de qualquer quadro: movimento (+8), grava FramePtr, efeito (+5/+6), AnimTimer (+0), flags (+7)
 label 3F:E371 StateAdvance
-comment 3F:E371 passa para o proximo estado (ponteiro no registro do estado atual)
+comment 3F:E371 fim da animacao: passa para o estado +3/+4 do cabecalho (cadeia natural); classe $30 com HP <= dano pendente usa a alternativa +1/+2
 label 3F:E47F StateSetByte
 block 3F:E47F Grava o byte de estado (cabecalho +5) em FighterState e dispara o som da classe do estado:
 block 3F:E47F classes $70-$98 -> efeito sonoro (banco $37), classes $A0-$E0 -> voz do lutador (VoicePlayFighter).
-comment 3F:E3B1 cabecalho +6
-comment 3F:E3B8 quadro +11: condicao de desvio
+comment 3F:E3B1 cabecalho +6 (acertos do golpe)
+label 3F:E4C2 MoveVelSetup
+comment 3F:E4C2 despacha pelo modo de movimento do quadro (+8): 0/1 absoluta, 2/3 aceleracao, 4/5 subpixel
+label 3F:E4DA MoveVelAbs
+comment 3F:E4DA modos 0/1: VelX/VelY do quadro (+9/+10) sao a velocidade nova, direto
+label 3F:E4F1 MoveVelSubpixel
+comment 3F:E4F1 modos 4/5: velocidade do quadro dividida por 16 — inteiro em VelX e resto<<4 em VelXSub
+label 3F:E53C MoveVelAdd
+comment 3F:E53C soma com sinal vel/16 a velocidade atual (VelX, VelXSub e VelY)
+label 3F:E597 MoveVelAccel
+comment 3F:E597 modos 2/3: acelera com MoveVelAdd (o bit 0 do modo nao muda o efeito)
+label 3F:E837 ProjLaunch
+comment 3F:E837 A = velocidade ($00/$01/$02, passo em D3F_E05E): nasce em FighterX +/- $27, direcao = FighterFlip (bit 6 de ProjFlags)
+label 3F:E854 ProjUpdate
+comment 3F:E854 anda 1/16 do passo por subquadro; Y = FloorY - $27; morre fora de $0C-$FB
+label 3F:E8BB ProjClash
+comment 3F:E8BB dois projeteis a |dx| < $18: os dois ganham bit 7 de ProjFlags e morrem apos 16 passos
+label 3F:E8F1 ProjHitTest
+comment 3F:E8F1 AABB do projetil (ponto +/- $0C/$0B) contra as caixas de corpo do oponente
+label 3F:E941 ProjHit
+comment 3F:E941 projetil acertou: morre, classe de reacao $CB, dano $6C e chama a rotina de dano
+label 3F:EBA3 LoadHitBoxesBoth
+comment 3F:EBA3 processa o lutador 1 e depois o 0 (chamado por FightersUpdate)
+label 3F:EBA5 LoadHitBoxes
+comment 3F:EBA5 mapeia o banco de colisao em $8000; registro do quadro +3/+4: caixas de corpo 1/2 e de ataque (h = 0 ausenta), espelhadas por FighterFlip, ataque clampado em $20/$E0
+label 3F:ECF1 HitTest
+comment 3F:ECF1 caixa de ataque de X contra corpo 1/2 de Y: um acerto por quadro (zp_3E), esgota AttackHitsLeft
+label 3F:E974 InputClear
+comment 3F:E974 zera a entrada do lutador (direcao neutra, sem golpe/hold)
+label 3F:E963 DirCodeTbl
+comment 3F:E963 bits do controle -> codigo de direcao (bit 0 frente, 1 tras, 2 baixo, 3 cima): $04 neutro, $05 frente, $06 tras, $07 cima, $08 baixo, $09-$0A diagonais de cima, $0B-$0C diagonais de baixo
+label 3F:F799 GuardClassTbl
+comment 3F:F799 byte de classe da guarda pela direcao (indice InputDir-$04): $29 em pe, $2A agachado
+label 3F:F671 InputDispatch
+comment 3F:F671 entrada do jogador: vira transicao de estado — direcao (flag de quadro bit 2), botao (bit 1) ou especial (bit 0); a classe do proximo estado ($58-$68 aceita direcao) decide o que passa
+label 3F:F6F5 TransViaTbl
+comment 3F:F6F5 le o ponteiro da tabela de estados e chama o caminhador de transicoes
+label 3F:F704 GuardRedirect
+comment 3F:F704 em guarda ($28-$2F): troca para a defesa da direcao atual (D3F_F799) e do golpe recebido (tabela ram_032A), preservando o quadro e o timer
 label 3F:E7D2 AiUpdate
 block 3F:E7D2 ------------------------------------------------------------------------------------------------
 block 3F:E7D2 IA DA CPU. Dois niveis: (1) uma rotina "pensar" em codigo nativo, propria de cada personagem
@@ -178,7 +262,7 @@ comment 3F:E9AF 7..20 quadros segurando: soco forte, todo quadro
 comment 3F:E9C2 soltou: <7 quadros = fraco (0), senao forte (1)
 label 3F:E9FE InputSetAttack
 label 3F:EA01 InputDirection
-comment 3F:EA01 direcional -> codigo de direcao relativo ao lado que o lutador olha (tabela D3F_E963)
+comment 3F:EA01 direcional -> codigo de direcao relativo ao lado que o lutador olha (tabela DirCodeTbl)
 label 3F:EA24 InputCommands
 comment 3F:EA24 reconhecedor de comandos: percorre a lista de golpes especiais do personagem
 label 3F:EA6A CmdStepDispatch
@@ -341,6 +425,7 @@ ram 000C FighterY 2
 ram 000E FighterHP 2
 ram 0010 FighterWins 2
 ram 0014 FighterDmgPending 2
+ram 0016 HitReactClass 2
 ram 0018 FighterFrameBank 2
 ram 001A FighterStateBank 2
 ram 001E FighterStatePtrLo 2
@@ -348,18 +433,46 @@ ram 0020 FighterStatePtrHi 2
 ram 0022 FighterNextPtrLo 2
 ram 0024 FighterNextPtrHi 2
 ram 0026 FighterState 2
+ram 0028 AttackHitsLeft 2
 ram 002A FighterFramePtrLo 2
 ram 002C FighterFramePtrHi 2
+ram 002E MoveMode 2
 ram 0030 FighterVelXSub 2
 ram 0032 FighterVelX 2
 ram 0034 FighterVelYSub 2
 ram 0036 FighterVelY 2
+ram 0038 FrameFlags 2
+ram 003A EffectParam 2
+ram 003C EffectType 2
+ram 003E HitThisFrame 2
 ram 0040 FighterChrPage 2
 ram 0042 FighterAnimTimer 2
+ram 0044 LoopRepeat 2
+# --- caixas de colisao (L/T/R/B), calculadas por LoadHitBoxes
+ram 0046 Body1L 2
+ram 0048 Body1T 2
+ram 004A Body1R 2
+ram 004C Body1B 2
+ram 004E Body2L 2
+ram 0050 Body2T 2
+ram 0052 Body2R 2
+ram 0054 Body2B 2
+ram 0056 AtkL 2
+ram 0058 AtkT 2
+ram 005A AtkR 2
+ram 005C AtkB 2
+# --- projetil (uma vaga por lutador; ProjX = 0 significa vaga livre)
+ram 0077 ProjSpeed 2
+ram 0079 ProjXSub 2
+ram 007B ProjX 2
+ram 007D ProjY 2
+ram 007F ProjStep 2
+ram 0081 ProjFlags 2
 ram 0086 InputDir 2
 ram 0088 InputAttack 2
 ram 008A BtnAHold 2
 ram 008C BtnBHold 2
+ram 008E CmdMoveIdx 2
 ram 0069 AiScriptPtrLo 2
 ram 006B AiScriptPtrHi 2
 ram 0064 CurFighter
@@ -391,6 +504,7 @@ ram 00FC RleTag
 ram 00FD RleLast
 ram 0200 OamBuf 256
 ram 03B7 CameraX
+ram 03BA FloorY
 ram 03BB FloorLines
 ram 03DF FloorScrollX
 ram 03FF IrqStage

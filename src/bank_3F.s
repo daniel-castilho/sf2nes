@@ -8,8 +8,8 @@
 
 ; <- jsr L3F_ED64, jsr L3F_F648
 ; modos: luta
-L3F_E000:
-    lda a:zp_2E,x                               ; E000  BD 2E 00
+HitFreeze:
+    lda a:MoveMode,x                            ; E000  BD 2E 00    congela o lutador atingido: salva movimento/velocidades/timer em ram_0312-031C e para no quadro atual por $0E quadros
     sta ram_0312,x                              ; E003  9D 12 03
     lda a:FighterVelXSub,x                      ; E006  BD 30 00
     sta ram_0314,x                              ; E009  9D 14 03
@@ -24,7 +24,7 @@ L3F_E000:
     lda #$0E                                    ; E024  A9 0E
     sta a:FighterAnimTimer,x                    ; E026  9D 42 00
     lda #$01                                    ; E029  A9 01
-    sta a:zp_2E,x                               ; E02B  9D 2E 00
+    sta a:MoveMode,x                            ; E02B  9D 2E 00
     lda #$00                                    ; E02E  A9 00
     sta a:FighterVelXSub,x                      ; E030  9D 30 00
     sta a:FighterVelX,x                         ; E033  9D 32 00
@@ -82,9 +82,15 @@ D3F_E0C0:
 
 ; ------------------------------------------------------------------------------------------------
 ; MAQUINA DE ESTADOS DO LUTADOR (dirigida por dados; os dados ficam no banco FighterStateBank, em $A000).
-; Percorre a lista de transicoes do estado atual. Cada no': byte 0 = numero da condicao (StateCond*),
-; bytes 1-2 = ponteiro do proximo no'. A primeira condicao verdadeira decide o proximo estado.
-; <- jmp L3F_E0F2, jmp L3F_EEB8, jmp L3F_F033, jmp L3F_F6F5, jsr L3F_F704
+; Percorre a lista de transicoes: cada no' E' um cabecalho de estado de 7 bytes — +0 numero da condicao
+; (Cond* abaixo; >= $80 = incondicional), +1/+2 proxima alternativa (a lista encadeada), +3/+4 proximo
+; estado na cadeia natural, +5 classe, +6 acertos do golpe. A primeira condicao verdadeira aplica O
+; PROPRIO NO' como proximo estado (FighterNextPtr = endereco do no'; AnimAdvance entra nele).
+; zp_DD marca a origem da busca: $04 = GuardRedirect, $02 = golpe por botao, $01 = golpe especial.
+; Com zp_DD = $04 e classe $28/$30: pula o 1o no' quando ele e' o proprio estado atual.
+; Com zp_DD = $02 e classe $70-$98 e no' != estado atual: pula o 1o no'. E com o bit 2 da classe zerado
+; e CondOponenteLongeCostas: pula o 1o no' tambem (nao reage de costas).
+; <- jmp L3F_E0F2, jmp L3F_EEB8, jmp L3F_F033, jmp TransViaTbl, jsr GuardRedirect
 ; modos: intro do round, luta
 StateCheckTransitions:
     lda zp_DD                                   ; E0CE  A5 DD
@@ -102,7 +108,7 @@ StateCheckTransitions:
     lda zp_DB                                   ; E0E8  A5 DB
     cmp a:FighterStatePtrLo,x                   ; E0EA  DD 1E 00
     bne L3F_E11D                                ; E0ED  D0 2E
-    jmp L3F_E129                                ; E0EF  4C 29 E1
+    jmp TransNextNode                           ; E0EF  4C 29 E1
 
 
 L3F_E0F2:
@@ -116,28 +122,28 @@ L3F_E0F2:
     bcs L3F_E111                                ; E101  B0 0E
     lda zp_DC                                   ; E103  A5 DC
     cmp a:FighterStatePtrHi,x                   ; E105  DD 20 00
-    bne L3F_E129                                ; E108  D0 1F
+    bne TransNextNode                           ; E108  D0 1F
     lda zp_DB                                   ; E10A  A5 DB
     cmp a:FighterStatePtrLo,x                   ; E10C  DD 1E 00
-    bne L3F_E129                                ; E10F  D0 18
+    bne TransNextNode                           ; E10F  D0 18
 L3F_E111:
     lda a:FighterState,x                        ; E111  BD 26 00
     and #$04                                    ; E114  29 04
     bne L3F_E11D                                ; E116  D0 05
-    jsr StateCond01                             ; E118  20 B1 E1
-    bne L3F_E129                                ; E11B  D0 0C
+    jsr CondOponenteLongeCostas                 ; E118  20 B1 E1
+    bne TransNextNode                           ; E11B  D0 0C
 L3F_E11D:
     ldy #$00                                    ; E11D  A0 00
     lda (zp_DB),y                               ; E11F  B1 DB       [le bancos $01]
-    bmi L3F_E13B                                ; E121  30 18
+    bmi TransApply                              ; E121  30 18
     tay                                         ; E123  A8
     jsr StateCondDispatch                       ; E124  20 68 E1
-    bne L3F_E13B                                ; E127  D0 12
+    bne TransApply                              ; E127  D0 12
 
 ; <- jmp StateCheckTransitions
 ; modos: intro do round, luta
-L3F_E129:
-    ldy #$02                                    ; E129  A0 02
+TransNextNode:
+    ldy #$02                                    ; E129  A0 02       condicao falsa: segue para o no' +1/+2 e repete a busca (ponteiro 0 = fim da lista, nada muda)
     lda (zp_DB),y                               ; E12B  B1 DB       [le bancos $01]
     beq L3F_E167                                ; E12D  F0 38
     pha                                         ; E12F  48
@@ -149,8 +155,9 @@ L3F_E129:
     jmp StateCheckTransitions                   ; E138  4C CE E0
 
 
-L3F_E13B:
-    lda a:zp_38,x                               ; E13B  BD 38 00
+; modos: luta
+TransApply:
+    lda a:FrameFlags,x                          ; E13B  BD 38 00    condicao verdadeira: o no' atual vira o proximo estado; AnimTimer=1 nas classes de golpe/reacao ($28-$40/$B0-$E0) a menos que o quadro tenha a flag bit 3
     and #$08                                    ; E13E  29 08
     bne L3F_E158                                ; E140  D0 16
     ldy #$05                                    ; E142  A0 05
@@ -186,36 +193,36 @@ StateCondDispatch:
     rts                                         ; E170  60
 
 StateCondLo:
-    .byte <(StateCond00-1)                      ; E171  88
-    .byte <(StateCond01-1)                      ; E172  B0
-    .byte <(StateCond02-1)                      ; E173  D5
-    .byte <(StateCond03-1)                      ; E174  EC
-    .byte <(StateCond04-1)                      ; E175  F2
-    .byte <(StateCond05-1)                      ; E176  F8
-    .byte <(StateCond06-1)                      ; E177  03
-    .byte <(StateCond07-1)                      ; E178  11
-    .byte <(StateCond08-1)                      ; E179  23
-    .byte <(StateCond09-1)                      ; E17A  2D
-    .byte <(StateCond0A-1)                      ; E17B  70
-    .byte <(StateCond0B-1)                      ; E17C  95
+    .byte <(CondOponenteAtaca-1)                ; E171  88          12 condicoes; cada entrada guarda endereco-1 (truque do RTS com pha/pha/rts)
+    .byte <(CondOponenteLongeCostas-1)          ; E172  B0
+    .byte <(CondOponentePerto-1)                ; E173  D5
+    .byte <(CondEmPe-1)                         ; E174  EC
+    .byte <(CondAgachado-1)                     ; E175  F2
+    .byte <(CondNoAr-1)                         ; E176  F8
+    .byte <(CondNoChaoOuVelX-1)                 ; E177  03
+    .byte <(CondInputBaixo-1)                   ; E178  11
+    .byte <(CondProjetilLivre-1)                ; E179  23
+    .byte <(CondPodeAgarrar-1)                  ; E17A  2D
+    .byte <(CondVitoria-1)                      ; E17B  70
+    .byte <(CondRoundPerdido-1)                 ; E17C  95
 StateCondHi:
-    .byte >(StateCond00-1)                      ; E17D  E1
-    .byte >(StateCond01-1)                      ; E17E  E1
-    .byte >(StateCond02-1)                      ; E17F  E1
-    .byte >(StateCond03-1)                      ; E180  E1
-    .byte >(StateCond04-1)                      ; E181  E1
-    .byte >(StateCond05-1)                      ; E182  E1
-    .byte >(StateCond06-1)                      ; E183  E2
-    .byte >(StateCond07-1)                      ; E184  E2
-    .byte >(StateCond08-1)                      ; E185  E2
-    .byte >(StateCond09-1)                      ; E186  E2
-    .byte >(StateCond0A-1)                      ; E187  E2
-    .byte >(StateCond0B-1)                      ; E188  E2
+    .byte >(CondOponenteAtaca-1)                ; E17D  E1
+    .byte >(CondOponenteLongeCostas-1)          ; E17E  E1
+    .byte >(CondOponentePerto-1)                ; E17F  E1
+    .byte >(CondEmPe-1)                         ; E180  E1
+    .byte >(CondAgachado-1)                     ; E181  E1
+    .byte >(CondNoAr-1)                         ; E182  E1
+    .byte >(CondNoChaoOuVelX-1)                 ; E183  E2
+    .byte >(CondInputBaixo-1)                   ; E184  E2
+    .byte >(CondProjetilLivre-1)                ; E185  E2
+    .byte >(CondPodeAgarrar-1)                  ; E186  E2
+    .byte >(CondVitoria-1)                      ; E187  E2
+    .byte >(CondRoundPerdido-1)                 ; E188  E2
 
 ; <- tabela StateCondLo
 ; modos: luta
-StateCond00:
-    lda a:FighterState,x                        ; E189  BD 26 00
+CondOponenteAtaca:
+    lda a:FighterState,x                        ; E189  BD 26 00    verdadeiro se EU estou em pe/agachado (classe & 3) E o oponente esta em classe de reacao ($70-$98), de golpe ($B0-$E0) ou com projetil no ar (dele)
     and #$03                                    ; E18C  29 03
     bne L3F_E191                                ; E18E  D0 01
     rts                                         ; E190  60
@@ -241,14 +248,14 @@ L3F_E1AA:
 
 
 L3F_E1AD:
-    lda a:zp_7B,y                               ; E1AD  B9 7B 00
+    lda a:ProjX,y                               ; E1AD  B9 7B 00
     rts                                         ; E1B0  60
 
 
 ; <- jsr L3F_E0F2, tabela StateCondLo
 ; modos: intro do round, luta
-StateCond01:
-    txa                                         ; E1B1  8A
+CondOponenteLongeCostas:
+    txa                                         ; E1B1  8A          verdadeiro se o oponente esta a |dx| >= $0F E eu de costas para ele: devolve $40 (e' o bit 6 de FighterFlip) para virar, 0 se esta encarando ou colado
     eor #$01                                    ; E1B2  49 01
     tay                                         ; E1B4  A8
     sec                                         ; E1B5  38
@@ -277,8 +284,8 @@ L3F_E1D5:
 
 ; <- tabela StateCondLo
 ; modos: luta
-StateCond02:
-    sec                                         ; E1D6  38
+CondOponentePerto:
+    sec                                         ; E1D6  38          verdadeiro se |dx| < $21
     lda FighterX                                ; E1D7  A5 08
     sbc FighterX+1                              ; E1D9  E5 09
     bne L3F_E1E0                                ; E1DB  D0 03
@@ -300,24 +307,24 @@ L3F_E1EC:
 
 ; <- tabela StateCondLo
 ; modos: luta
-StateCond03:
-    lda a:FighterState,x                        ; E1ED  BD 26 00
+CondEmPe:
+    lda a:FighterState,x                        ; E1ED  BD 26 00    bit 0 da classe = postura em pe
     and #$01                                    ; E1F0  29 01
     rts                                         ; E1F2  60
 
 
 ; <- tabela StateCondLo
 ; modos: luta
-StateCond04:
-    lda a:FighterState,x                        ; E1F3  BD 26 00
+CondAgachado:
+    lda a:FighterState,x                        ; E1F3  BD 26 00    bit 1 da classe = postura agachado
     and #$02                                    ; E1F6  29 02
     rts                                         ; E1F8  60
 
 
 ; <- tabela StateCondLo
 ; modos: luta
-StateCond05:
-    lda ram_03BA                                ; E1F9  AD BA 03
+CondNoAr:
+    lda FloorY                                  ; E1F9  AD BA 03    verdadeiro se FighterY < FloorY (acima do chao)
     sec                                         ; E1FC  38
     sbc FighterY,x                              ; E1FD  F5 0C
     bpl L3F_E203                                ; E1FF  10 02
@@ -328,8 +335,8 @@ L3F_E203:
 
 ; <- tabela StateCondLo
 ; modos: luta
-StateCond06:
-    lda ram_03BA                                ; E204  AD BA 03
+CondNoChaoOuVelX:
+    lda FloorY                                  ; E204  AD BA 03    verdadeiro se FighterY = FloorY ou VelX/VelXSub != 0 (esta no chao ou deslizando)
     cmp FighterY,x                              ; E207  D5 0C
     beq L3F_E211                                ; E209  F0 06
     lda a:FighterVelX,x                         ; E20B  BD 32 00
@@ -340,8 +347,8 @@ L3F_E211:
 
 ; <- tabela StateCondLo
 ; modos: luta
-StateCond07:
-    lda InputDir,x                              ; E212  B5 86
+CondInputBaixo:
+    lda InputDir,x                              ; E212  B5 86       verdadeiro se InputDir = $08/$0B/$0C (baixo reto ou diagonal-baixa); devolve o proprio InputDir
     cmp #$08                                    ; E214  C9 08
     beq L3F_E222                                ; E216  F0 0A
     cmp #$0B                                    ; E218  C9 0B
@@ -356,8 +363,8 @@ L3F_E222:
 
 ; <- tabela StateCondLo
 ; modos: luta
-StateCond08:
-    lda zp_7B,x                                 ; E224  B5 7B
+CondProjetilLivre:
+    lda ProjX,x                                 ; E224  B5 7B       verdadeiro se a vaga de projetil deste lutador esta livre (zp_7B dele = 0)
     beq L3F_E22B                                ; E226  F0 03
     lda #$00                                    ; E228  A9 00
     rts                                         ; E22A  60
@@ -370,8 +377,8 @@ L3F_E22B:
 
 ; <- tabela StateCondLo
 ; modos: luta
-StateCond09:
-    sec                                         ; E22E  38
+CondPodeAgarrar:
+    sec                                         ; E22E  38          |dx| < $18, os dois no chao, InputDir = frente/tras ($05/$06) e classe do oponente < $30 ou $50-$9F (estados de virar $A0-$A9 nao contam, nt)
     lda FighterX                                ; E22F  A5 08
     sbc FighterX+1                              ; E231  E5 09
     bpl L3F_E239                                ; E233  10 04
@@ -380,7 +387,7 @@ StateCond09:
 L3F_E239:
     cmp #$18                                    ; E239  C9 18
     bcs L3F_E26E                                ; E23B  B0 31
-    lda ram_03BA                                ; E23D  AD BA 03
+    lda FloorY                                  ; E23D  AD BA 03
     cmp FighterY                                ; E240  C5 0C
     bne L3F_E26E                                ; E242  D0 2A
     cmp FighterY+1                              ; E244  C5 0D
@@ -416,8 +423,8 @@ L3F_E26E:
 
 ; <- tabela StateCondLo
 ; modos: intro do round, luta
-StateCond0A:
-    cpx a:RoundResult                           ; E271  EC B9 00
+CondVitoria:
+    cpx a:RoundResult                           ; E271  EC B9 00    verdadeiro se RoundResult = este lutador E o oponente esta caido (classe >= $F0) E nao ha projeteis no ar E o canal de voz esta livre
     bne L3F_E293                                ; E274  D0 1D
     txa                                         ; E276  8A
     eor #$01                                    ; E277  49 01
@@ -425,9 +432,9 @@ StateCond0A:
     lda a:FighterState,y                        ; E27A  B9 26 00
     cmp #$F0                                    ; E27D  C9 F0
     bcc L3F_E293                                ; E27F  90 12
-    lda zp_7B                                   ; E281  A5 7B
+    lda ProjX                                   ; E281  A5 7B
     bne L3F_E293                                ; E283  D0 0E
-    lda zp_7C                                   ; E285  A5 7C
+    lda ProjX+1                                 ; E285  A5 7C
     bne L3F_E293                                ; E287  D0 0A
     lda SND_CHN                                 ; E289  AD 15 40
     and #$10                                    ; E28C  29 10
@@ -443,8 +450,8 @@ L3F_E293:
 
 ; <- tabela StateCondLo
 ; modos: intro do round, luta
-StateCond0B:
-    cpx a:RoundResult                           ; E296  EC B9 00
+CondRoundPerdido:
+    cpx a:RoundResult                           ; E296  EC B9 00    verdadeiro se RoundResult != este lutador E RoundResult != $FF (round encerrado; vale para empate)
     beq L3F_E2A3                                ; E299  F0 08
     bit a:RoundResult                           ; E29B  2C B9 00
     bmi L3F_E2A3                                ; E29E  30 03
@@ -457,17 +464,28 @@ L3F_E2A3:
     rts                                         ; E2A5  60
 
 
+; ------------------------------------------------------------------------------------------------
+; UM PASSO DA ANIMACAO (todo quadro, antes do teste de colisao):
+; - efeito $0B do quadro atual -> dispara o projetil (ProjLaunch, parametro = quadro +5)
+; - FighterNextPtr != 0 -> entra no novo estado escolhido por TransApply: grava classe (+5) e
+; acertos (+6), primeiro quadro = no' + 7. Caso especial: estado $49 com zp_62 != 0 usa a
+; alternativa +1/+2 do estado atual. Efeito $20 do quadro -> efeito sonoro (SfxPlay).
+; - sem proximo estado e ram_031C != 0 -> restaura o movimento congelado pelo hit-freeze.
+; - senao avanca os quadros: +11 (repeticoes do laco) > 0 -> decrementa e desvia para +14/+15;
+; zera -> +12/+13 (proximo quadro); +12/+13 = 0 -> StateAdvance (cadeia natural +3/+4;
+; classe $30 com HP <= dano pendente usa +1/+2, ou seja corta para o estado de dano).
+; - KO no ar (HP <= dano pendente, acima do chao): HitStop = $78 e vozes de KO.
 ; <- jsr L3F_EFCB
 ; modos: intro do round, luta, fim do round
-L3F_E2A6:
-    lda a:zp_3C,x                               ; E2A6  BD 3C 00
+AnimAdvance:
+    lda a:EffectType,x                          ; E2A6  BD 3C 00
     cmp #$0B                                    ; E2A9  C9 0B
     bne L3F_E2B3                                ; E2AB  D0 06
-    lda a:zp_3A,x                               ; E2AD  BD 3A 00
-    jsr L3F_E837                                ; E2B0  20 37 E8
+    lda a:EffectParam,x                         ; E2AD  BD 3A 00
+    jsr ProjLaunch                              ; E2B0  20 37 E8
 L3F_E2B3:
     lda a:FighterNextPtrHi,x                    ; E2B3  BD 24 00
-    beq L3F_E301                                ; E2B6  F0 49
+    beq FreezeRestore                           ; E2B6  F0 49
     ldy a:FighterState,x                        ; E2B8  BC 26 00
     cpy #$49                                    ; E2BB  C0 49
     bne L3F_E2D8                                ; E2BD  D0 19
@@ -500,16 +518,17 @@ L3F_E2F0:
     jsr StateSetByte                            ; E2F4  20 7F E4
     ldy #$06                                    ; E2F7  A0 06
     lda (zp_D7),y                               ; E2F9  B1 D7       [le bancos $01]
-    sta a:zp_28,x                               ; E2FB  9D 28 00
-    jmp L3F_E3B8                                ; E2FE  4C B8 E3
+    sta a:AttackHitsLeft,x                      ; E2FB  9D 28 00
+    jmp FrameEnter                              ; E2FE  4C B8 E3
 
 
-L3F_E301:
-    lda ram_031C,x                              ; E301  BD 1C 03
+; modos: intro do round, luta, fim do round
+FreezeRestore:
+    lda ram_031C,x                              ; E301  BD 1C 03    devolve as velocidades/timer salvos pelo hit-freeze (ram_0312-031C)
     beq L3F_E33C                                ; E304  F0 36
     sta a:FighterAnimTimer,x                    ; E306  9D 42 00
     lda ram_0312,x                              ; E309  BD 12 03
-    sta a:zp_2E,x                               ; E30C  9D 2E 00
+    sta a:MoveMode,x                            ; E30C  9D 2E 00
     lda ram_0314,x                              ; E30F  BD 14 03
     sta a:FighterVelXSub,x                      ; E312  9D 30 00
     lda ram_0316,x                              ; E315  BD 16 03
@@ -529,7 +548,7 @@ L3F_E301:
 
 
 L3F_E33C:
-    lda a:zp_44,x                               ; E33C  BD 44 00
+    lda a:LoopRepeat,x                          ; E33C  BD 44 00
     beq L3F_E361                                ; E33F  F0 20
     ldy #$0B                                    ; E341  A0 0B
     lda (zp_D5),y                               ; E343  B1 D5       [le bancos $01]
@@ -540,7 +559,7 @@ L3F_E33C:
 
 
 L3F_E34E:
-    dec a:zp_44,x                               ; E34E  DE 44 00
+    dec a:LoopRepeat,x                          ; E34E  DE 44 00
     beq L3F_E361                                ; E351  F0 0E
     ldy #$0E                                    ; E353  A0 0E
     lda (zp_D5),y                               ; E355  B1 D5       [le bancos $01]
@@ -552,7 +571,7 @@ L3F_E357:
     iny                                         ; E359  C8
     lda (zp_D5),y                               ; E35A  B1 D5       [le bancos $01]
     sta zp_DA                                   ; E35C  85 DA
-    jmp L3F_E3BF                                ; E35E  4C BF E3
+    jmp FrameEnterCommon                        ; E35E  4C BF E3
 
 
 L3F_E361:
@@ -563,12 +582,12 @@ L3F_E361:
     dey                                         ; E369  88
     lda (zp_D5),y                               ; E36A  B1 D5       [le bancos $01]
     sta zp_D9                                   ; E36C  85 D9
-    jmp L3F_E3B8                                ; E36E  4C B8 E3
+    jmp FrameEnter                              ; E36E  4C B8 E3
 
 
 ; modos: luta
 StateAdvance:
-    lda a:FighterStatePtrLo,x                   ; E371  BD 1E 00    passa para o proximo estado (ponteiro no registro do estado atual)
+    lda a:FighterStatePtrLo,x                   ; E371  BD 1E 00    fim da animacao: passa para o estado +3/+4 do cabecalho (cadeia natural); classe $30 com HP <= dano pendente usa a alternativa +1/+2
     sta zp_D7                                   ; E374  85 D7
     lda a:FighterStatePtrHi,x                   ; E376  BD 20 00
     sta zp_D8                                   ; E379  85 D8
@@ -599,24 +618,24 @@ L3F_E38F:
     ldy #$05                                    ; E3AA  A0 05
     lda (zp_D7),y                               ; E3AC  B1 D7       [le bancos $01]
     jsr StateSetByte                            ; E3AE  20 7F E4
-    ldy #$06                                    ; E3B1  A0 06       cabecalho +6
+    ldy #$06                                    ; E3B1  A0 06       cabecalho +6 (acertos do golpe)
     lda (zp_D7),y                               ; E3B3  B1 D7       [le bancos $01]
-    sta a:zp_28,x                               ; E3B5  9D 28 00
+    sta a:AttackHitsLeft,x                      ; E3B5  9D 28 00
 
-; <- jmp L3F_E2A6, jmp L3F_E361
+; <- jmp AnimAdvance, jmp L3F_E361
 ; modos: intro do round, luta, fim do round
-L3F_E3B8:
-    ldy #$0B                                    ; E3B8  A0 0B       quadro +11: condicao de desvio
+FrameEnter:
+    ldy #$0B                                    ; E3B8  A0 0B       entrada do 1o quadro do novo estado: carrega zp_44 com as repeticoes do laco (quadro +11)
     lda (zp_D9),y                               ; E3BA  B1 D9       [le bancos $01]
-    sta a:zp_44,x                               ; E3BC  9D 44 00
+    sta a:LoopRepeat,x                          ; E3BC  9D 44 00
 
 ; <- jmp L3F_E34E
 ; modos: intro do round, luta, fim do round
-L3F_E3BF:
-    ldy #$08                                    ; E3BF  A0 08
+FrameEnterCommon:
+    ldy #$08                                    ; E3BF  A0 08       entrada de qualquer quadro: movimento (+8), grava FramePtr, efeito (+5/+6), AnimTimer (+0), flags (+7)
     lda (zp_D9),y                               ; E3C1  B1 D9       [le bancos $01]
-    sta a:zp_2E,x                               ; E3C3  9D 2E 00
-    jsr L3F_E4C2                                ; E3C6  20 C2 E4
+    sta a:MoveMode,x                            ; E3C3  9D 2E 00
+    jsr MoveVelSetup                            ; E3C6  20 C2 E4
     lda zp_D9                                   ; E3C9  A5 D9
     sta a:FighterFramePtrLo,x                   ; E3CB  9D 2A 00
     sta zp_D5                                   ; E3CE  85 D5
@@ -624,25 +643,25 @@ L3F_E3BF:
     sta a:FighterFramePtrHi,x                   ; E3D2  9D 2C 00
     sta zp_D6                                   ; E3D5  85 D6
     lda #$00                                    ; E3D7  A9 00
-    sta a:zp_3E,x                               ; E3D9  9D 3E 00
+    sta a:HitThisFrame,x                        ; E3D9  9D 3E 00
     sta a:FighterNextPtrLo,x                    ; E3DC  9D 22 00
     sta a:FighterNextPtrHi,x                    ; E3DF  9D 24 00
     ldy #$05                                    ; E3E2  A0 05
     lda (zp_D9),y                               ; E3E4  B1 D9       [le bancos $01]
-    sta a:zp_3A,x                               ; E3E6  9D 3A 00
+    sta a:EffectParam,x                         ; E3E6  9D 3A 00
     ldy #$06                                    ; E3E9  A0 06
     lda (zp_D9),y                               ; E3EB  B1 D9       [le bancos $01]
-    sta a:zp_3C,x                               ; E3ED  9D 3C 00
+    sta a:EffectType,x                          ; E3ED  9D 3C 00
     ldy #$00                                    ; E3F0  A0 00
     lda (zp_D9),y                               ; E3F2  B1 D9       [le bancos $01]
     sta a:FighterAnimTimer,x                    ; E3F4  9D 42 00
     ldy #$07                                    ; E3F7  A0 07
     lda (zp_D9),y                               ; E3F9  B1 D9       [le bancos $01]
-    sta a:zp_38,x                               ; E3FB  9D 38 00
-    lda a:zp_3C,x                               ; E3FE  BD 3C 00
+    sta a:FrameFlags,x                          ; E3FB  9D 38 00
+    lda a:EffectType,x                          ; E3FE  BD 3C 00
     cmp #$20                                    ; E401  C9 20
     bne L3F_E420                                ; E403  D0 1B
-    lda a:zp_3A,x                               ; E405  BD 3A 00
+    lda a:EffectParam,x                         ; E405  BD 3A 00
     sta zp_DB                                   ; E408  85 DB
     stx zp_DC                                   ; E40A  86 DC
     farcall SfxPlay                             ; E40C  A9 E4 48 A9 1D 48 A9 3F .. -> 37:E401
@@ -654,9 +673,9 @@ L3F_E420:
     bcs L3F_E47E                                ; E427  B0 55
 L3F_E429:
     lda FighterY,x                              ; E429  B5 0C
-    cmp ram_03BA                                ; E42B  CD BA 03
+    cmp FloorY                                  ; E42B  CD BA 03
     bcs L3F_E47E                                ; E42E  B0 4E
-    lda a:zp_2E,x                               ; E430  BD 2E 00
+    lda a:MoveMode,x                            ; E430  BD 2E 00
     cmp #$02                                    ; E433  C9 02
     bcc L3F_E47E                                ; E435  90 47
     lda #$78                                    ; E437  A9 78
@@ -693,7 +712,7 @@ L3F_E47E:
 
 ; Grava o byte de estado (cabecalho +5) em FighterState e dispara o som da classe do estado:
 ; classes $70-$98 -> efeito sonoro (banco $37), classes $A0-$E0 -> voz do lutador (VoicePlayFighter).
-; <- jsr L3F_E2A6, jsr StateAdvance
+; <- jsr AnimAdvance, jsr StateAdvance
 ; modos: luta
 StateSetByte:
     sta a:FighterState,x                        ; E47F  9D 26 00
@@ -733,8 +752,8 @@ L3F_E4C1:
 
 ; <- jsr StateAdvance
 ; modos: intro do round, luta, fim do round
-L3F_E4C2:
-    ldy a:zp_2E,x                               ; E4C2  BC 2E 00
+MoveVelSetup:
+    ldy a:MoveMode,x                            ; E4C2  BC 2E 00    despacha pelo modo de movimento do quadro (+8): 0/1 absoluta, 2/3 aceleracao, 4/5 subpixel
     lda D3F_E4D4,y                              ; E4C5  B9 D4 E4    [idx $00..$05]
     pha                                         ; E4C8  48
     lda D3F_E4CE,y                              ; E4C9  B9 CE E4    [idx $00..$05]
@@ -742,24 +761,24 @@ L3F_E4C2:
     rts                                         ; E4CD  60
 
 D3F_E4CE:
-    .byte <(L3F_E4DA-1)                         ; E4CE  D9
-    .byte <(L3F_E4DA-1)                         ; E4CF  D9
-    .byte <(L3F_E597-1)                         ; E4D0  96
-    .byte <(L3F_E597-1)                         ; E4D1  96
-    .byte <(L3F_E4F1-1)                         ; E4D2  F0
-    .byte <(L3F_E4F1-1)                         ; E4D3  F0
+    .byte <(MoveVelAbs-1)                       ; E4CE  D9
+    .byte <(MoveVelAbs-1)                       ; E4CF  D9
+    .byte <(MoveVelAccel-1)                     ; E4D0  96
+    .byte <(MoveVelAccel-1)                     ; E4D1  96
+    .byte <(MoveVelSubpixel-1)                  ; E4D2  F0
+    .byte <(MoveVelSubpixel-1)                  ; E4D3  F0
 D3F_E4D4:
-    .byte >(L3F_E4DA-1)                         ; E4D4  E4
-    .byte >(L3F_E4DA-1)                         ; E4D5  E4
-    .byte >(L3F_E597-1)                         ; E4D6  E5
-    .byte >(L3F_E597-1)                         ; E4D7  E5
-    .byte >(L3F_E4F1-1)                         ; E4D8  E4
-    .byte >(L3F_E4F1-1)                         ; E4D9  E4
+    .byte >(MoveVelAbs-1)                       ; E4D4  E4
+    .byte >(MoveVelAbs-1)                       ; E4D5  E4
+    .byte >(MoveVelAccel-1)                     ; E4D6  E5
+    .byte >(MoveVelAccel-1)                     ; E4D7  E5
+    .byte >(MoveVelSubpixel-1)                  ; E4D8  E4
+    .byte >(MoveVelSubpixel-1)                  ; E4D9  E4
 
 ; <- tabela D3F_E4CE
 ; modos: luta
-L3F_E4DA:
-    lda #$00                                    ; E4DA  A9 00
+MoveVelAbs:
+    lda #$00                                    ; E4DA  A9 00       modos 0/1: VelX/VelY do quadro (+9/+10) sao a velocidade nova, direto
     sta a:FighterVelXSub,x                      ; E4DC  9D 30 00
     sta a:FighterVelYSub,x                      ; E4DF  9D 34 00
     ldy #$09                                    ; E4E2  A0 09
@@ -773,8 +792,8 @@ L3F_E4DA:
 
 ; <- jmp L3F_E5A9, tabela D3F_E4CE
 ; modos: intro do round, luta, fim do round
-L3F_E4F1:
-    lda #$00                                    ; E4F1  A9 00
+MoveVelSubpixel:
+    lda #$00                                    ; E4F1  A9 00       modos 4/5: velocidade do quadro dividida por 16 — inteiro em VelX e resto<<4 em VelXSub
     sta a:FighterVelXSub,x                      ; E4F3  9D 30 00
     sta a:FighterVelYSub,x                      ; E4F6  9D 34 00
     ldy #$09                                    ; E4F9  A0 09
@@ -814,10 +833,10 @@ L3F_E538:
     rts                                         ; E53B  60
 
 
-; <- jmp L3F_E597, jmp L3F_E5A2
+; <- jmp MoveVelAccel, jmp L3F_E5A2
 ; modos: luta
-L3F_E53C:
-    lda #$00                                    ; E53C  A9 00
+MoveVelAdd:
+    lda #$00                                    ; E53C  A9 00       soma com sinal vel/16 a velocidade atual (VelX, VelXSub e VelY)
     sta zp_DC                                   ; E53E  85 DC
     sta zp_DE                                   ; E540  85 DE
     ldy #$09                                    ; E542  A0 09
@@ -869,22 +888,22 @@ L3F_E584:
 
 ; <- tabela D3F_E4CE
 ; modos: luta
-L3F_E597:
-    ldy #$08                                    ; E597  A0 08
+MoveVelAccel:
+    ldy #$08                                    ; E597  A0 08       modos 2/3: acelera com MoveVelAdd (o bit 0 do modo nao muda o efeito)
     lda (zp_D5),y                               ; E599  B1 D5       [le bancos $01]
     cmp #$02                                    ; E59B  C9 02
     bne L3F_E5A2                                ; E59D  D0 03
-    jmp L3F_E53C                                ; E59F  4C 3C E5
+    jmp MoveVelAdd                              ; E59F  4C 3C E5
 
 
 L3F_E5A2:
     cmp #$03                                    ; E5A2  C9 03
     bne L3F_E5A9                                ; E5A4  D0 03
-    jmp L3F_E53C                                ; E5A6  4C 3C E5    (nt)
+    jmp MoveVelAdd                              ; E5A6  4C 3C E5    (nt)
 
 
 L3F_E5A9:
-    jmp L3F_E4F1                                ; E5A9  4C F1 E4
+    jmp MoveVelSubpixel                         ; E5A9  4C F1 E4
 
 
 ; <- jsr Main
@@ -936,7 +955,7 @@ AiOp00:
     sta InputDir,x                              ; E5E1  95 86
     lda #$FF                                    ; E5E3  A9 FF
     sta InputAttack,x                           ; E5E5  95 88
-    sta zp_8E,x                                 ; E5E7  95 8E
+    sta CmdMoveIdx,x                            ; E5E7  95 8E
     rts                                         ; E5E9  60
 
 
@@ -948,7 +967,7 @@ AiOp01:
     lda zp_6E                                   ; E5EE  A5 6E
     sta InputAttack,x                           ; E5F0  95 88
     lda #$FF                                    ; E5F2  A9 FF
-    sta zp_8E,x                                 ; E5F4  95 8E
+    sta CmdMoveIdx,x                            ; E5F4  95 8E
     rts                                         ; E5F6  60
 
 
@@ -960,7 +979,7 @@ AiOp02:
     lda #$FF                                    ; E5FB  A9 FF
     sta InputAttack,x                           ; E5FD  95 88
     lda zp_6D                                   ; E5FF  A5 6D
-    sta zp_8E,x                                 ; E601  95 8E
+    sta CmdMoveIdx,x                            ; E601  95 8E
     rts                                         ; E603  60
 
 
@@ -969,7 +988,7 @@ AiOp02:
 AiOp03:
     lda #$FF                                    ; E604  A9 FF
     sta InputAttack,x                           ; E606  95 88
-    sta zp_8E,x                                 ; E608  95 8E
+    sta CmdMoveIdx,x                            ; E608  95 8E
     lda #$06                                    ; E60A  A9 06
     sta InputDir,x                              ; E60C  95 86
     ldy OtherFighter                            ; E60E  A4 65
@@ -1055,7 +1074,7 @@ L3F_E656:
 ; <- tabela AiOpLo
 ; modos: luta
 AiOp0B:
-    lda zp_7B,x                                 ; E659  B5 7B
+    lda ProjX,x                                 ; E659  B5 7B
     rts                                         ; E65B  60
 
 
@@ -1283,12 +1302,12 @@ L3F_E74C:
     lda a:FighterState,x                        ; E74C  BD 26 00
     cmp #$50                                    ; E74F  C9 50
     bcs L3F_E77A                                ; E751  B0 27
-    lda a:zp_38,x                               ; E753  BD 38 00
+    lda a:FrameFlags,x                          ; E753  BD 38 00
     and #$07                                    ; E756  29 07
     bne L3F_E77A                                ; E758  D0 20
     lda #$FF                                    ; E75A  A9 FF
     sta InputAttack,x                           ; E75C  95 88
-    sta zp_8E,x                                 ; E75E  95 8E
+    sta CmdMoveIdx,x                            ; E75E  95 8E
     lda #$06                                    ; E760  A9 06
     sta InputDir,x                              ; E762  95 86
     ldy OtherFighter                            ; E764  A4 65
@@ -1319,7 +1338,7 @@ L3F_E78B:
 L3F_E793:
     lda zp_71,x                                 ; E793  B5 71
     bmi L3F_E7A3                                ; E795  30 0C
-    lda a:zp_38,x                               ; E797  BD 38 00
+    lda a:FrameFlags,x                          ; E797  BD 38 00
     and #$07                                    ; E79A  29 07
     beq L3F_E7CD                                ; E79C  F0 2F
     jsr AiCallCharRoutine                       ; E79E  20 A4 E7
@@ -1445,10 +1464,10 @@ L3F_E836:
     rts                                         ; E836  60
 
 
-; <- jsr L3F_E2A6
+; <- jsr AnimAdvance
 ; modos: luta
-L3F_E837:
-    sta zp_77,x                                 ; E837  95 77
+ProjLaunch:
+    sta ProjSpeed,x                             ; E837  95 77       A = velocidade ($00/$01/$02, passo em D3F_E05E): nasce em FighterX +/- $27, direcao = FighterFlip (bit 6 de ProjFlags)
     lsr a                                       ; E839  4A
     tay                                         ; E83A  A8
     lda D3F_E064,y                              ; E83B  B9 64 E0    [idx $00..$00]
@@ -1457,35 +1476,35 @@ L3F_E837:
     eor #$FF                                    ; E842  49 FF
     adc #$01                                    ; E844  69 01
 L3F_E846:
-    sty zp_81,x                                 ; E846  94 81
+    sty ProjFlags,x                             ; E846  94 81
     clc                                         ; E848  18
     adc FighterX,x                              ; E849  75 08
-    sta zp_7B,x                                 ; E84B  95 7B
+    sta ProjX,x                                 ; E84B  95 7B
     lda #$00                                    ; E84D  A9 00
-    sta zp_79,x                                 ; E84F  95 79
-    sta zp_7F,x                                 ; E851  95 7F
+    sta ProjXSub,x                              ; E84F  95 79
+    sta ProjStep,x                              ; E851  95 7F
     rts                                         ; E853  60
 
 
 ; <- jsr L3F_EFCB
 ; modos: intro do round, luta, fim do round
-L3F_E854:
-    lda zp_7B,x                                 ; E854  B5 7B
+ProjUpdate:
+    lda ProjX,x                                 ; E854  B5 7B       anda 1/16 do passo por subquadro; Y = FloorY - $27; morre fora de $0C-$FB
     beq L3F_E8BA                                ; E856  F0 62
-    lda zp_81,x                                 ; E858  B5 81
+    lda ProjFlags,x                             ; E858  B5 81
     sta zp_D9                                   ; E85A  85 D9
     and #$80                                    ; E85C  29 80
     bne L3F_E8B1                                ; E85E  D0 51
-    lda zp_77,x                                 ; E860  B5 77
+    lda ProjSpeed,x                             ; E860  B5 77
     lsr a                                       ; E862  4A
     tay                                         ; E863  A8
     lda D3F_E05B,x                              ; E864  BD 5B E0    [idx $00..$01]
     clc                                         ; E867  18
-    adc ram_03BA                                ; E868  6D BA 03
-    sta zp_7D,x                                 ; E86B  95 7D
+    adc FloorY                                  ; E868  6D BA 03
+    sta ProjY,x                                 ; E86B  95 7D
     lda #$00                                    ; E86D  A9 00
     sta zp_D7                                   ; E86F  85 D7
-    ldy zp_77,x                                 ; E871  B4 77
+    ldy ProjSpeed,x                             ; E871  B4 77
     lda D3F_E05E,y                              ; E873  B9 5E E0    [idx $00..$01]
     lsr a                                       ; E876  4A
     ror zp_D7                                   ; E877  66 D7
@@ -1496,13 +1515,13 @@ L3F_E854:
     lsr a                                       ; E87F  4A
     ror zp_D7                                   ; E880  66 D7
     sta zp_D8                                   ; E882  85 D8
-    lda zp_79,x                                 ; E884  B5 79
+    lda ProjXSub,x                              ; E884  B5 79
     bit zp_D9                                   ; E886  24 D9
     bvs L3F_E896                                ; E888  70 0C
     clc                                         ; E88A  18
     adc zp_D7                                   ; E88B  65 D7
-    sta zp_79,x                                 ; E88D  95 79
-    lda zp_7B,x                                 ; E88F  B5 7B
+    sta ProjXSub,x                              ; E88D  95 79
+    lda ProjX,x                                 ; E88F  B5 7B
     adc zp_D8                                   ; E891  65 D8
     jmp L3F_E89F                                ; E893  4C 9F E8
 
@@ -1510,67 +1529,67 @@ L3F_E854:
 L3F_E896:
     sec                                         ; E896  38
     sbc zp_D7                                   ; E897  E5 D7
-    sta zp_79,x                                 ; E899  95 79
-    lda zp_7B,x                                 ; E89B  B5 7B
+    sta ProjXSub,x                              ; E899  95 79
+    lda ProjX,x                                 ; E89B  B5 7B
     sbc zp_D8                                   ; E89D  E5 D8
 
-; <- jmp L3F_E854
+; <- jmp ProjUpdate
 ; modos: luta, fim do round
 L3F_E89F:
     cmp #$0C                                    ; E89F  C9 0C
     bcc L3F_E8AC                                ; E8A1  90 09
     cmp #$FC                                    ; E8A3  C9 FC
     bcs L3F_E8AC                                ; E8A5  B0 05
-    sta zp_7B,x                                 ; E8A7  95 7B
-    inc zp_7F,x                                 ; E8A9  F6 7F
+    sta ProjX,x                                 ; E8A7  95 7B
+    inc ProjStep,x                              ; E8A9  F6 7F
     rts                                         ; E8AB  60
 
 
 L3F_E8AC:
     lda #$00                                    ; E8AC  A9 00
-    sta zp_7B,x                                 ; E8AE  95 7B
+    sta ProjX,x                                 ; E8AE  95 7B
     rts                                         ; E8B0  60
 
 
 L3F_E8B1:
-    ldy zp_7F,x                                 ; E8B1  B4 7F
+    ldy ProjStep,x                              ; E8B1  B4 7F
     iny                                         ; E8B3  C8
     cpy #$10                                    ; E8B4  C0 10
     bcs L3F_E8AC                                ; E8B6  B0 F4
-    sty zp_7F,x                                 ; E8B8  94 7F
+    sty ProjStep,x                              ; E8B8  94 7F
 L3F_E8BA:
     rts                                         ; E8BA  60
 
 
 ; <- jsr FightersUpdate
 ; modos: intro do round, luta, fim do round
-L3F_E8BB:
-    lda zp_81                                   ; E8BB  A5 81
-    ora zp_82                                   ; E8BD  05 82
+ProjClash:
+    lda ProjFlags                               ; E8BB  A5 81       dois projeteis a |dx| < $18: os dois ganham bit 7 de ProjFlags e morrem apos 16 passos
+    ora ProjFlags+1                             ; E8BD  05 82
     and #$80                                    ; E8BF  29 80
     bne L3F_E8ED                                ; E8C1  D0 2A
-    lda zp_7C                                   ; E8C3  A5 7C
+    lda ProjX+1                                 ; E8C3  A5 7C
     beq L3F_E8ED                                ; E8C5  F0 26
-    lda zp_7B                                   ; E8C7  A5 7B
+    lda ProjX                                   ; E8C7  A5 7B
     beq L3F_E8ED                                ; E8C9  F0 22
     sec                                         ; E8CB  38
-    sbc zp_7C                                   ; E8CC  E5 7C
+    sbc ProjX+1                                 ; E8CC  E5 7C
     bpl L3F_E8D4                                ; E8CE  10 04
     eor #$FF                                    ; E8D0  49 FF
     adc #$01                                    ; E8D2  69 01
 L3F_E8D4:
     cmp #$18                                    ; E8D4  C9 18
     bcs L3F_E8ED                                ; E8D6  B0 15
-    lda zp_81                                   ; E8D8  A5 81
+    lda ProjFlags                               ; E8D8  A5 81
     ora #$80                                    ; E8DA  09 80
-    sta zp_81                                   ; E8DC  85 81
+    sta ProjFlags                               ; E8DC  85 81
     lda #$00                                    ; E8DE  A9 00
-    sta zp_7F                                   ; E8E0  85 7F
-    lda zp_82                                   ; E8E2  A5 82
+    sta ProjStep                                ; E8E0  85 7F
+    lda ProjFlags+1                             ; E8E2  A5 82
     ora #$80                                    ; E8E4  09 80
-    sta zp_82                                   ; E8E6  85 82
+    sta ProjFlags+1                             ; E8E6  85 82
     lda #$00                                    ; E8E8  A9 00
-    sta zp_80                                   ; E8EA  85 80
+    sta ProjStep+1                              ; E8EA  85 80
     rts                                         ; E8EC  60
 
 
@@ -1580,50 +1599,50 @@ L3F_E8ED:
 
 ; <- jmp L3F_E8ED
 ; modos: intro do round, luta, fim do round
-L3F_E8F1:
-    lda a:zp_7B,y                               ; E8F1  B9 7B 00
+ProjHitTest:
+    lda a:ProjX,y                               ; E8F1  B9 7B 00    AABB do projetil (ponto +/- $0C/$0B) contra as caixas de corpo do oponente
     beq L3F_E95A                                ; E8F4  F0 64
-    lda a:zp_81,y                               ; E8F6  B9 81 00
+    lda a:ProjFlags,y                           ; E8F6  B9 81 00
     bmi L3F_E95A                                ; E8F9  30 5F
     clc                                         ; E8FB  18
-    lda a:zp_7B,y                               ; E8FC  B9 7B 00
+    lda a:ProjX,y                               ; E8FC  B9 7B 00
     adc #$0C                                    ; E8FF  69 0C
-    cmp a:zp_46,x                               ; E901  DD 46 00
+    cmp a:Body1L,x                              ; E901  DD 46 00
     bcc L3F_E91E                                ; E904  90 18
     sbc #$17                                    ; E906  E9 17
-    cmp a:zp_4A,x                               ; E908  DD 4A 00
+    cmp a:Body1R,x                              ; E908  DD 4A 00
     bcs L3F_E91E                                ; E90B  B0 11
-    lda a:zp_7D,y                               ; E90D  B9 7D 00
+    lda a:ProjY,y                               ; E90D  B9 7D 00
     adc #$0C                                    ; E910  69 0C
-    cmp a:zp_48,x                               ; E912  DD 48 00
+    cmp a:Body1T,x                              ; E912  DD 48 00
     bcc L3F_E91E                                ; E915  90 07
     sbc #$17                                    ; E917  E9 17
-    cmp a:zp_4C,x                               ; E919  DD 4C 00
-    bcc L3F_E941                                ; E91C  90 23
+    cmp a:Body1B,x                              ; E919  DD 4C 00
+    bcc ProjHit                                 ; E91C  90 23
 L3F_E91E:
     clc                                         ; E91E  18
-    lda a:zp_7B,y                               ; E91F  B9 7B 00
+    lda a:ProjX,y                               ; E91F  B9 7B 00
     adc #$0C                                    ; E922  69 0C
-    cmp a:zp_4E,x                               ; E924  DD 4E 00
+    cmp a:Body2L,x                              ; E924  DD 4E 00
     bcc L3F_E95A                                ; E927  90 31
     sbc #$17                                    ; E929  E9 17
-    cmp a:zp_52,x                               ; E92B  DD 52 00
+    cmp a:Body2R,x                              ; E92B  DD 52 00
     bcs L3F_E95A                                ; E92E  B0 2A
-    lda a:zp_7D,y                               ; E930  B9 7D 00
+    lda a:ProjY,y                               ; E930  B9 7D 00
     adc #$0C                                    ; E933  69 0C
-    cmp a:zp_50,x                               ; E935  DD 50 00
+    cmp a:Body2T,x                              ; E935  DD 50 00
     bcc L3F_E95A                                ; E938  90 20
     sbc #$17                                    ; E93A  E9 17
-    cmp a:zp_54,x                               ; E93C  DD 54 00
+    cmp a:Body2B,x                              ; E93C  DD 54 00
     bcs L3F_E95A                                ; E93F  B0 19
-L3F_E941:
-    lda a:zp_81,y                               ; E941  B9 81 00
+ProjHit:
+    lda a:ProjFlags,y                           ; E941  B9 81 00    projetil acertou: morre, classe de reacao $CB, dano $6C e chama a rotina de dano
     ora #$80                                    ; E944  09 80
-    sta a:zp_81,y                               ; E946  99 81 00
+    sta a:ProjFlags,y                           ; E946  99 81 00
     lda #$00                                    ; E949  A9 00
-    sta a:zp_7F,y                               ; E94B  99 7F 00
+    sta a:ProjStep,y                            ; E94B  99 7F 00
     lda #$CB                                    ; E94E  A9 CB
-    sta a:zp_16,x                               ; E950  9D 16 00
+    sta a:HitReactClass,x                       ; E950  9D 16 00
     lda #$6C                                    ; E953  A9 6C
     sta zp_D8                                   ; E955  85 D8
     jsr L3F_ED83                                ; E957  20 83 ED
@@ -1631,24 +1650,24 @@ L3F_E95A:
     dex                                         ; E95A  CA
     bne L3F_E962                                ; E95B  D0 05
     ldy #$01                                    ; E95D  A0 01
-    jmp L3F_E8F1                                ; E95F  4C F1 E8
+    jmp ProjHitTest                             ; E95F  4C F1 E8
 
 
 L3F_E962:
     rts                                         ; E962  60
 
-D3F_E963:
-    .byte $04,$05,$06,$04,$08,$0B,$0C,$04,$07,$09,$0A,$04,$04,$04,$04,$04; E963
+DirCodeTbl:
+    .byte $04,$05,$06,$04,$08,$0B,$0C,$04,$07,$09,$0A,$04,$04,$04,$04,$04; E963              bits do controle -> codigo de direcao (bit 0 frente, 1 tras, 2 baixo, 3 cima): $04 neutro, $05 frente, $06 tras, $07 cima, $08 baixo, $09-$0A diagonais de cima, $0B-$0C diagonais de baixo
     .byte $04                                   ; E973
 
 ; <- jsr FighterUpdate
 ; modos: intro do round, luta, fim do round
-L3F_E974:
-    lda #$04                                    ; E974  A9 04
+InputClear:
+    lda #$04                                    ; E974  A9 04       zera a entrada do lutador (direcao neutra, sem golpe/hold)
     sta InputDir,x                              ; E976  95 86
     lda #$FF                                    ; E978  A9 FF
     sta InputAttack,x                           ; E97A  95 88
-    sta zp_8E,x                                 ; E97C  95 8E
+    sta CmdMoveIdx,x                            ; E97C  95 8E
     lda #$00                                    ; E97E  A9 00
     sta BtnAHold,x                              ; E980  95 8A
     sta BtnBHold,x                              ; E982  95 8C
@@ -1788,7 +1807,7 @@ InputSetAttack:
 ; <- jsr InputUpdate
 ; modos: luta
 InputDirection:
-    ldy OtherFighter                            ; EA01  A4 65       direcional -> codigo de direcao relativo ao lado que o lutador olha (tabela D3F_E963)
+    ldy OtherFighter                            ; EA01  A4 65       direcional -> codigo de direcao relativo ao lado que o lutador olha (tabela DirCodeTbl)
     lda FighterX,x                              ; EA03  B5 08
     cmp a:FighterX,y                            ; EA05  D9 08 00
     bne L3F_EA0F                                ; EA08  D0 05
@@ -1807,7 +1826,7 @@ L3F_EA0F:
 L3F_EA1D:
     tay                                         ; EA1D  A8
 L3F_EA1E:
-    lda D3F_E963,y                              ; EA1E  B9 63 E9    [idx $00..$0F]
+    lda DirCodeTbl,y                            ; EA1E  B9 63 E9    [idx $00..$0F]
     sta InputDir,x                              ; EA21  95 86
     rts                                         ; EA23  60
 
@@ -1977,7 +1996,7 @@ L3F_EAE1:
     cmp a:InputAttack,y                         ; EAEB  D9 88 00    (nt)
     bne L3F_EAF8                                ; EAEE  D0 08       (nt)
     lda zp_D9                                   ; EAF0  A5 D9       (nt)
-    sta a:zp_8E,y                               ; EAF2  99 8E 00    (nt)
+    sta a:CmdMoveIdx,y                          ; EAF2  99 8E 00    (nt)
     jmp L3F_EAC4                                ; EAF5  4C C4 EA    (nt)
 
 
@@ -2012,7 +2031,7 @@ L3F_EB0C:
 L3F_EB1A:
     lda zp_D9                                   ; EB1A  A5 D9       (nt)
     ldy zp_DC                                   ; EB1C  A4 DC       (nt)
-    sta a:zp_8E,y                               ; EB1E  99 8E 00    (nt)
+    sta a:CmdMoveIdx,y                          ; EB1E  99 8E 00    (nt)
 L3F_EB21:
     lda #$00                                    ; EB21  A9 00       (nt)
     sta zp_90,x                                 ; EB23  95 90       (nt)
@@ -2041,7 +2060,7 @@ L3F_EB32:
     beq L3F_EB49                                ; EB40  F0 07       (nt)
     ldy zp_DC                                   ; EB42  A4 DC       (nt)
     lda zp_D9                                   ; EB44  A5 D9       (nt)
-    sta a:zp_8E,y                               ; EB46  99 8E 00    (nt)
+    sta a:CmdMoveIdx,y                          ; EB46  99 8E 00    (nt)
 L3F_EB49:
     rts                                         ; EB49  60          (nt)
 
@@ -2103,7 +2122,7 @@ L3F_EB88:
     cmp a:InputAttack,y                         ; EB92  D9 88 00
     bne L3F_EBA2                                ; EB95  D0 0B
     lda zp_D9                                   ; EB97  A5 D9
-    sta a:zp_8E,y                               ; EB99  99 8E 00
+    sta a:CmdMoveIdx,y                          ; EB99  99 8E 00
 L3F_EB9C:
     lda #$00                                    ; EB9C  A9 00
     sta zp_90,x                                 ; EB9E  95 90
@@ -2114,13 +2133,13 @@ L3F_EBA2:
 
 ; <- jsr FightersUpdate
 ; modos: intro do round, luta, fim do round
-L3F_EBA3:
-    ldx #$01                                    ; EBA3  A2 01
+LoadHitBoxesBoth:
+    ldx #$01                                    ; EBA3  A2 01       processa o lutador 1 e depois o 0 (chamado por FightersUpdate)
 
 ; <- jmp L3F_ECD4
 ; modos: intro do round, luta, fim do round
-L3F_EBA5:
-    lda a:zp_1C,x                               ; EBA5  BD 1C 00
+LoadHitBoxes:
+    lda a:zp_1C,x                               ; EBA5  BD 1C 00    mapeia o banco de colisao em $8000; registro do quadro +3/+4: caixas de corpo 1/2 e de ataque (h = 0 ausenta), espelhadas por FighterFlip, ataque clampado em $20/$E0
     ora #$80                                    ; EBA8  09 80
     sta MMC5_PRG_8000                           ; EBAA  8D 14 51
     lda a:FighterStateBank,x                    ; EBAD  BD 1A 00
@@ -2133,18 +2152,18 @@ L3F_EBA5:
     ldy #$04                                    ; EBBF  A0 04
     lda (zp_D7),y                               ; EBC1  B1 D7       [le bancos $01]
     bne L3F_EBEC                                ; EBC3  D0 27
-    sta a:zp_46,x                               ; EBC5  9D 46 00
-    sta a:zp_4A,x                               ; EBC8  9D 4A 00
-    sta a:zp_48,x                               ; EBCB  9D 48 00
-    sta a:zp_4C,x                               ; EBCE  9D 4C 00
-    sta a:zp_4E,x                               ; EBD1  9D 4E 00
-    sta a:zp_52,x                               ; EBD4  9D 52 00
-    sta a:zp_50,x                               ; EBD7  9D 50 00
-    sta a:zp_54,x                               ; EBDA  9D 54 00
-    sta a:zp_56,x                               ; EBDD  9D 56 00
-    sta a:zp_5A,x                               ; EBE0  9D 5A 00
-    sta a:zp_58,x                               ; EBE3  9D 58 00
-    sta a:zp_5C,x                               ; EBE6  9D 5C 00
+    sta a:Body1L,x                              ; EBC5  9D 46 00
+    sta a:Body1R,x                              ; EBC8  9D 4A 00
+    sta a:Body1T,x                              ; EBCB  9D 48 00
+    sta a:Body1B,x                              ; EBCE  9D 4C 00
+    sta a:Body2L,x                              ; EBD1  9D 4E 00
+    sta a:Body2R,x                              ; EBD4  9D 52 00
+    sta a:Body2T,x                              ; EBD7  9D 50 00
+    sta a:Body2B,x                              ; EBDA  9D 54 00
+    sta a:AtkL,x                                ; EBDD  9D 56 00
+    sta a:AtkR,x                                ; EBE0  9D 5A 00
+    sta a:AtkT,x                                ; EBE3  9D 58 00
+    sta a:AtkB,x                                ; EBE6  9D 5C 00
     jmp L3F_ECE7                                ; EBE9  4C E7 EC
 
 
@@ -2158,34 +2177,34 @@ L3F_EBEC:
     ldy #$00                                    ; EBF7  A0 00
     lda (zp_D7),y                               ; EBF9  B1 D7       [le bancos $00]
     bne L3F_EC0C                                ; EBFB  D0 0F
-    sta a:zp_46,x                               ; EBFD  9D 46 00
-    sta a:zp_4A,x                               ; EC00  9D 4A 00
-    sta a:zp_48,x                               ; EC03  9D 48 00
-    sta a:zp_4C,x                               ; EC06  9D 4C 00
+    sta a:Body1L,x                              ; EBFD  9D 46 00
+    sta a:Body1R,x                              ; EC00  9D 4A 00
+    sta a:Body1T,x                              ; EC03  9D 48 00
+    sta a:Body1B,x                              ; EC06  9D 4C 00
     jmp L3F_EC45                                ; EC09  4C 45 EC
 
 
 L3F_EC0C:
-    sta a:zp_4C,x                               ; EC0C  9D 4C 00
+    sta a:Body1B,x                              ; EC0C  9D 4C 00
     iny                                         ; EC0F  C8
     clc                                         ; EC10  18
     lda FighterY,x                              ; EC11  B5 0C
     adc (zp_D7),y                               ; EC13  71 D7       [le bancos $00]
-    sta a:zp_48,x                               ; EC15  9D 48 00
+    sta a:Body1T,x                              ; EC15  9D 48 00
     clc                                         ; EC18  18
-    adc a:zp_4C,x                               ; EC19  7D 4C 00
-    sta a:zp_4C,x                               ; EC1C  9D 4C 00
+    adc a:Body1B,x                              ; EC19  7D 4C 00
+    sta a:Body1B,x                              ; EC1C  9D 4C 00
     iny                                         ; EC1F  C8
     lda FighterFlip,x                           ; EC20  B5 04
     bne L3F_EC36                                ; EC22  D0 12
     clc                                         ; EC24  18
     lda FighterX,x                              ; EC25  B5 08
     adc (zp_D7),y                               ; EC27  71 D7       [le bancos $00]
-    sta a:zp_46,x                               ; EC29  9D 46 00
+    sta a:Body1L,x                              ; EC29  9D 46 00
     iny                                         ; EC2C  C8
     clc                                         ; EC2D  18
     adc (zp_D7),y                               ; EC2E  71 D7       [le bancos $00]
-    sta a:zp_4A,x                               ; EC30  9D 4A 00
+    sta a:Body1R,x                              ; EC30  9D 4A 00
     jmp L3F_EC45                                ; EC33  4C 45 EC
 
 
@@ -2193,11 +2212,11 @@ L3F_EC36:
     sec                                         ; EC36  38
     lda FighterX,x                              ; EC37  B5 08
     sbc (zp_D7),y                               ; EC39  F1 D7       [le bancos $00]
-    sta a:zp_4A,x                               ; EC3B  9D 4A 00
+    sta a:Body1R,x                              ; EC3B  9D 4A 00
     iny                                         ; EC3E  C8
     sec                                         ; EC3F  38
     sbc (zp_D7),y                               ; EC40  F1 D7       [le bancos $00]
-    sta a:zp_46,x                               ; EC42  9D 46 00
+    sta a:Body1L,x                              ; EC42  9D 46 00
 
 ; <- jmp L3F_EBEC, jmp L3F_EC0C
 ; modos: intro do round, luta
@@ -2205,34 +2224,34 @@ L3F_EC45:
     iny                                         ; EC45  C8
     lda (zp_D7),y                               ; EC46  B1 D7       [le bancos $00]
     bne L3F_EC59                                ; EC48  D0 0F
-    sta a:zp_4E,x                               ; EC4A  9D 4E 00
-    sta a:zp_52,x                               ; EC4D  9D 52 00
-    sta a:zp_50,x                               ; EC50  9D 50 00
-    sta a:zp_54,x                               ; EC53  9D 54 00
+    sta a:Body2L,x                              ; EC4A  9D 4E 00
+    sta a:Body2R,x                              ; EC4D  9D 52 00
+    sta a:Body2T,x                              ; EC50  9D 50 00
+    sta a:Body2B,x                              ; EC53  9D 54 00
     jmp L3F_EC92                                ; EC56  4C 92 EC
 
 
 L3F_EC59:
-    sta a:zp_54,x                               ; EC59  9D 54 00
+    sta a:Body2B,x                              ; EC59  9D 54 00
     iny                                         ; EC5C  C8
     clc                                         ; EC5D  18
     lda FighterY,x                              ; EC5E  B5 0C
     adc (zp_D7),y                               ; EC60  71 D7       [le bancos $00]
-    sta a:zp_50,x                               ; EC62  9D 50 00
+    sta a:Body2T,x                              ; EC62  9D 50 00
     clc                                         ; EC65  18
-    adc a:zp_54,x                               ; EC66  7D 54 00
-    sta a:zp_54,x                               ; EC69  9D 54 00
+    adc a:Body2B,x                              ; EC66  7D 54 00
+    sta a:Body2B,x                              ; EC69  9D 54 00
     iny                                         ; EC6C  C8
     lda FighterFlip,x                           ; EC6D  B5 04
     bne L3F_EC83                                ; EC6F  D0 12
     clc                                         ; EC71  18
     lda FighterX,x                              ; EC72  B5 08
     adc (zp_D7),y                               ; EC74  71 D7       [le bancos $00]
-    sta a:zp_4E,x                               ; EC76  9D 4E 00
+    sta a:Body2L,x                              ; EC76  9D 4E 00
     iny                                         ; EC79  C8
     clc                                         ; EC7A  18
     adc (zp_D7),y                               ; EC7B  71 D7       [le bancos $00]
-    sta a:zp_52,x                               ; EC7D  9D 52 00
+    sta a:Body2R,x                              ; EC7D  9D 52 00
     jmp L3F_EC92                                ; EC80  4C 92 EC
 
 
@@ -2240,11 +2259,11 @@ L3F_EC83:
     sec                                         ; EC83  38
     lda FighterX,x                              ; EC84  B5 08
     sbc (zp_D7),y                               ; EC86  F1 D7       [le bancos $00]
-    sta a:zp_52,x                               ; EC88  9D 52 00
+    sta a:Body2R,x                              ; EC88  9D 52 00
     iny                                         ; EC8B  C8
     sec                                         ; EC8C  38
     sbc (zp_D7),y                               ; EC8D  F1 D7       [le bancos $00]
-    sta a:zp_4E,x                               ; EC8F  9D 4E 00
+    sta a:Body2L,x                              ; EC8F  9D 4E 00
 
 ; <- jmp L3F_EC36, jmp L3F_EC59
 ; modos: intro do round, luta
@@ -2252,37 +2271,37 @@ L3F_EC92:
     iny                                         ; EC92  C8
     lda (zp_D7),y                               ; EC93  B1 D7       [le bancos $00]
     bne L3F_ECA6                                ; EC95  D0 0F
-    sta a:zp_56,x                               ; EC97  9D 56 00
-    sta a:zp_5A,x                               ; EC9A  9D 5A 00
-    sta a:zp_58,x                               ; EC9D  9D 58 00
-    sta a:zp_5C,x                               ; ECA0  9D 5C 00
+    sta a:AtkL,x                                ; EC97  9D 56 00
+    sta a:AtkR,x                                ; EC9A  9D 5A 00
+    sta a:AtkT,x                                ; EC9D  9D 58 00
+    sta a:AtkB,x                                ; ECA0  9D 5C 00
     jmp L3F_ECE7                                ; ECA3  4C E7 EC
 
 
 L3F_ECA6:
-    sta a:zp_5C,x                               ; ECA6  9D 5C 00
+    sta a:AtkB,x                                ; ECA6  9D 5C 00
     iny                                         ; ECA9  C8
     clc                                         ; ECAA  18
     lda FighterY,x                              ; ECAB  B5 0C
     adc (zp_D7),y                               ; ECAD  71 D7       [le bancos $00]
-    sta a:zp_58,x                               ; ECAF  9D 58 00
+    sta a:AtkT,x                                ; ECAF  9D 58 00
     clc                                         ; ECB2  18
-    adc a:zp_5C,x                               ; ECB3  7D 5C 00
-    sta a:zp_5C,x                               ; ECB6  9D 5C 00
+    adc a:AtkB,x                                ; ECB3  7D 5C 00
+    sta a:AtkB,x                                ; ECB6  9D 5C 00
     iny                                         ; ECB9  C8
     lda FighterFlip,x                           ; ECBA  B5 04
     bne L3F_ECD4                                ; ECBC  D0 16
     clc                                         ; ECBE  18
     lda FighterX,x                              ; ECBF  B5 08
     adc (zp_D7),y                               ; ECC1  71 D7       [le bancos $00]
-    sta a:zp_56,x                               ; ECC3  9D 56 00
+    sta a:AtkL,x                                ; ECC3  9D 56 00
     iny                                         ; ECC6  C8
     clc                                         ; ECC7  18
     adc (zp_D7),y                               ; ECC8  71 D7       [le bancos $00]
     bcc L3F_ECCE                                ; ECCA  90 02
     lda #$E0                                    ; ECCC  A9 E0
 L3F_ECCE:
-    sta a:zp_5A,x                               ; ECCE  9D 5A 00
+    sta a:AtkR,x                                ; ECCE  9D 5A 00
     jmp L3F_ECE7                                ; ECD1  4C E7 EC
 
 
@@ -2290,21 +2309,21 @@ L3F_ECD4:
     sec                                         ; ECD4  38
     lda FighterX,x                              ; ECD5  B5 08
     sbc (zp_D7),y                               ; ECD7  F1 D7       [le bancos $00]
-    sta a:zp_5A,x                               ; ECD9  9D 5A 00
+    sta a:AtkR,x                                ; ECD9  9D 5A 00
     iny                                         ; ECDC  C8
     sec                                         ; ECDD  38
     sbc (zp_D7),y                               ; ECDE  F1 D7       [le bancos $00]
     bcs L3F_ECE4                                ; ECE0  B0 02
     lda #$20                                    ; ECE2  A9 20
 L3F_ECE4:
-    sta a:zp_56,x                               ; ECE4  9D 56 00
+    sta a:AtkL,x                                ; ECE4  9D 56 00
 
-; <- jmp L3F_EBA3, jmp L3F_EC83, jmp L3F_ECA6
+; <- jmp LoadHitBoxesBoth, jmp L3F_EC83, jmp L3F_ECA6
 ; modos: intro do round, luta, fim do round
 L3F_ECE7:
     dex                                         ; ECE7  CA
     bne L3F_ECED                                ; ECE8  D0 03
-    jmp L3F_EBA5                                ; ECEA  4C A5 EB
+    jmp LoadHitBoxes                            ; ECEA  4C A5 EB
 
 
 L3F_ECED:
@@ -2313,46 +2332,46 @@ L3F_ECED:
 
 ; <- jmp L3F_ED64
 ; modos: intro do round, luta, fim do round
-L3F_ECF1:
-    lda a:zp_3E,x                               ; ECF1  BD 3E 00
+HitTest:
+    lda a:HitThisFrame,x                        ; ECF1  BD 3E 00    caixa de ataque de X contra corpo 1/2 de Y: um acerto por quadro (zp_3E), esgota AttackHitsLeft
     beq L3F_ECF9                                ; ECF4  F0 03
     jmp L3F_ED7A                                ; ECF6  4C 7A ED
 
 
 L3F_ECF9:
-    lda a:zp_28,x                               ; ECF9  BD 28 00
+    lda a:AttackHitsLeft,x                      ; ECF9  BD 28 00
     beq L3F_ED7A                                ; ECFC  F0 7C
-    lda a:zp_5A,x                               ; ECFE  BD 5A 00
+    lda a:AtkR,x                                ; ECFE  BD 5A 00
     beq L3F_ED7A                                ; ED01  F0 77
-    cmp a:zp_46,y                               ; ED03  D9 46 00
+    cmp a:Body1L,y                              ; ED03  D9 46 00
     bcc L3F_ED20                                ; ED06  90 18
-    lda a:zp_4A,y                               ; ED08  B9 4A 00
-    cmp a:zp_56,x                               ; ED0B  DD 56 00
+    lda a:Body1R,y                              ; ED08  B9 4A 00
+    cmp a:AtkL,x                                ; ED0B  DD 56 00
     bcc L3F_ED20                                ; ED0E  90 10
-    lda a:zp_5C,x                               ; ED10  BD 5C 00
-    cmp a:zp_48,y                               ; ED13  D9 48 00
+    lda a:AtkB,x                                ; ED10  BD 5C 00
+    cmp a:Body1T,y                              ; ED13  D9 48 00
     bcc L3F_ED20                                ; ED16  90 08
-    lda a:zp_4C,y                               ; ED18  B9 4C 00
-    cmp a:zp_58,x                               ; ED1B  DD 58 00
+    lda a:Body1B,y                              ; ED18  B9 4C 00
+    cmp a:AtkT,x                                ; ED1B  DD 58 00
     bcs L3F_ED40                                ; ED1E  B0 20
 L3F_ED20:
-    lda a:zp_5A,x                               ; ED20  BD 5A 00
-    cmp a:zp_4E,y                               ; ED23  D9 4E 00
+    lda a:AtkR,x                                ; ED20  BD 5A 00
+    cmp a:Body2L,y                              ; ED23  D9 4E 00
     bcc L3F_ED7A                                ; ED26  90 52
-    lda a:zp_52,y                               ; ED28  B9 52 00
-    cmp a:zp_56,x                               ; ED2B  DD 56 00
+    lda a:Body2R,y                              ; ED28  B9 52 00
+    cmp a:AtkL,x                                ; ED2B  DD 56 00
     bcc L3F_ED7A                                ; ED2E  90 4A
-    lda a:zp_5C,x                               ; ED30  BD 5C 00
-    cmp a:zp_50,y                               ; ED33  D9 50 00
+    lda a:AtkB,x                                ; ED30  BD 5C 00
+    cmp a:Body2T,y                              ; ED33  D9 50 00
     bcc L3F_ED7A                                ; ED36  90 42
-    lda a:zp_54,y                               ; ED38  B9 54 00
-    cmp a:zp_58,x                               ; ED3B  DD 58 00
+    lda a:Body2B,y                              ; ED38  B9 54 00
+    cmp a:AtkT,x                                ; ED3B  DD 58 00
     bcc L3F_ED7A                                ; ED3E  90 3A
 L3F_ED40:
-    dec a:zp_28,x                               ; ED40  DE 28 00
-    inc a:zp_3E,x                               ; ED43  FE 3E 00
-    lda a:zp_3C,x                               ; ED46  BD 3C 00
-    sta a:zp_16,y                               ; ED49  99 16 00
+    dec a:AttackHitsLeft,x                      ; ED40  DE 28 00
+    inc a:HitThisFrame,x                        ; ED43  FE 3E 00
+    lda a:EffectType,x                          ; ED46  BD 3C 00
+    sta a:HitReactClass,y                       ; ED49  99 16 00
     lda a:FighterState,x                        ; ED4C  BD 26 00
     and #$F8                                    ; ED4F  29 F8
     cmp #$A0                                    ; ED51  C9 A0
@@ -2369,12 +2388,12 @@ L3F_ED40:
 L3F_ED64:
     lda a:FighterNextPtrHi,x                    ; ED64  BD 24 00
     bne L3F_ED6C                                ; ED67  D0 03
-    jsr L3F_E000                                ; ED69  20 00 E0
+    jsr HitFreeze                               ; ED69  20 00 E0
 
 ; <- jmp L3F_ECF9
 ; modos: luta
 L3F_ED6C:
-    lda a:zp_3A,x                               ; ED6C  BD 3A 00
+    lda a:EffectParam,x                         ; ED6C  BD 3A 00
     sta zp_D8                                   ; ED6F  85 D8
     stx zp_D7                                   ; ED71  86 D7
     tya                                         ; ED73  98
@@ -2388,7 +2407,7 @@ L3F_ED7A:
     dex                                         ; ED7A  CA
     bne L3F_ED82                                ; ED7B  D0 05
     ldy #$01                                    ; ED7D  A0 01
-    jmp L3F_ECF1                                ; ED7F  4C F1 EC
+    jmp HitTest                                 ; ED7F  4C F1 EC
 
 
 L3F_ED82:
@@ -2407,7 +2426,7 @@ L3F_ED83:
     ror a                                       ; ED90  6A
     ror a                                       ; ED91  6A
     and #$C0                                    ; ED92  29 C0
-    and a:zp_16,x                               ; ED94  3D 16 00
+    and a:HitReactClass,x                       ; ED94  3D 16 00
     beq L3F_EDC2                                ; ED97  F0 29
     lda #$01                                    ; ED99  A9 01
     sta zp_DB                                   ; ED9B  85 DB
@@ -2457,7 +2476,7 @@ L3F_EDD6:
 
 
 L3F_EDE9:
-    lda a:zp_16,x                               ; EDE9  BD 16 00
+    lda a:HitReactClass,x                       ; EDE9  BD 16 00
     and #$3F                                    ; EDEC  29 3F
     tay                                         ; EDEE  A8
     cpy #$0B                                    ; EDEF  C0 0B
@@ -2499,18 +2518,18 @@ L3F_EE27:
     lda D3F_EF3A,y                              ; EE38  B9 3A EF    [idx $03..$0B]
     cmp #$06                                    ; EE3B  C9 06
     bne L3F_EE4B                                ; EE3D  D0 0C
-    sta a:zp_16,x                               ; EE3F  9D 16 00    (nt)
+    sta a:HitReactClass,x                       ; EE3F  9D 16 00    (nt)
     lda a:FighterState,x                        ; EE42  BD 26 00    (nt)
     and #$04                                    ; EE45  29 04       (nt)
     beq L3F_EE4E                                ; EE47  F0 05       (nt)
     lda #$07                                    ; EE49  A9 07       (nt)
 L3F_EE4B:
-    sta a:zp_16,x                               ; EE4B  9D 16 00
+    sta a:HitReactClass,x                       ; EE4B  9D 16 00
 
 ; <- jmp L3F_EDD6, jmp L3F_EEF7
 ; modos: luta
 L3F_EE4E:
-    lda a:zp_16,x                               ; EE4E  BD 16 00
+    lda a:HitReactClass,x                       ; EE4E  BD 16 00
     cmp #$0C                                    ; EE51  C9 0C
     bne L3F_EE78                                ; EE53  D0 23
     lda ram_033A,x                              ; EE55  BD 3A 03
@@ -2585,7 +2604,7 @@ L3F_EEC2:
     stx zp_DC                                   ; EEC2  86 DC
     farcall SfxPlay                             ; EEC4  A9 EE 48 A9 D5 48 A9 3F .. -> 37:E401
     ldx zp_DC                                   ; EED6  A6 DC
-    lda a:zp_16,x                               ; EED8  BD 16 00
+    lda a:HitReactClass,x                       ; EED8  BD 16 00
     and #$3F                                    ; EEDB  29 3F
     asl a                                       ; EEDD  0A
     tay                                         ; EEDE  A8
@@ -2609,11 +2628,11 @@ L3F_EEDF:
 ; <- jmp L3F_ED83, jmp L3F_EDC2
 ; modos: luta
 L3F_EEF7:
-    lda a:zp_16,x                               ; EEF7  BD 16 00
+    lda a:HitReactClass,x                       ; EEF7  BD 16 00
     and #$1F                                    ; EEFA  29 1F
     tay                                         ; EEFC  A8
     lda D3F_EF47,y                              ; EEFD  B9 47 EF    [idx $00..$0C]
-    sta a:zp_16,x                               ; EF00  9D 16 00
+    sta a:HitReactClass,x                       ; EF00  9D 16 00
     jmp L3F_EE4E                                ; EF03  4C 4E EE
 
 D3F_EF06:
@@ -2635,8 +2654,8 @@ D3F_EF47:
 ; <- farcall L3B_E455, farcall FadeIn, farcall FightFrame
 ; modos: intro do round, luta, fim do round
 FightersUpdate:
-    jsr L3F_EBA3                                ; EF74  20 A3 EB
-    jsr L3F_E8BB                                ; EF77  20 BB E8
+    jsr LoadHitBoxesBoth                        ; EF74  20 A3 EB
+    jsr ProjClash                               ; EF77  20 BB E8
     jsr L3F_F033                                ; EF7A  20 33 F0
     jsr FighterUpdate                           ; EF7D  20 99 EF
     lda CurFighter                              ; EF80  A5 64
@@ -2666,7 +2685,7 @@ FighterUpdate:
     bit a:RoundResult                           ; EFB6  2C B9 00
     bmi L3F_EFC1                                ; EFB9  30 06
 L3F_EFBB:
-    jsr L3F_E974                                ; EFBB  20 74 E9
+    jsr InputClear                              ; EFBB  20 74 E9
     jmp L3F_EFCE                                ; EFBE  4C CE EF
 
 
@@ -2683,14 +2702,14 @@ L3F_EFCB:
 ; <- jmp FighterUpdate, jmp L3F_EFC1
 ; modos: intro do round, luta, fim do round
 L3F_EFCE:
-    jsr L3F_F671                                ; EFCE  20 71 F6
+    jsr InputDispatch                           ; EFCE  20 71 F6
     dec a:FighterAnimTimer,x                    ; EFD1  DE 42 00
     bne L3F_EFD9                                ; EFD4  D0 03
-    jsr L3F_E2A6                                ; EFD6  20 A6 E2
+    jsr AnimAdvance                             ; EFD6  20 A6 E2
 L3F_EFD9:
     jsr L3F_F0A5                                ; EFD9  20 A5 F0
-    jsr L3F_E854                                ; EFDC  20 54 E8
-    lda a:zp_38,x                               ; EFDF  BD 38 00
+    jsr ProjUpdate                              ; EFDC  20 54 E8
+    lda a:FrameFlags,x                          ; EFDF  BD 38 00
     and #$10                                    ; EFE2  29 10
     beq L3F_EFF7                                ; EFE4  F0 11
     ldy OtherFighter                            ; EFE6  A4 65
@@ -2771,7 +2790,7 @@ L3F_F037:
     bne L3F_F08F                                ; F05B  D0 32
     lda a:FighterNextPtrHi,y                    ; F05D  B9 24 00
     beq L3F_F06B                                ; F060  F0 09
-    lda a:zp_16,y                               ; F062  B9 16 00
+    lda a:HitReactClass,y                       ; F062  B9 16 00
     and #$1F                                    ; F065  29 1F
     cmp #$0C                                    ; F067  C9 0C
     beq L3F_F09A                                ; F069  F0 2F
@@ -2818,7 +2837,7 @@ L3F_F09B:
 ; <- jsr L3F_EFCB
 ; modos: intro do round, luta, fim do round
 L3F_F0A5:
-    ldy a:zp_2E,x                               ; F0A5  BC 2E 00
+    ldy a:MoveMode,x                            ; F0A5  BC 2E 00
     lda D3F_F0B7,y                              ; F0A8  B9 B7 F0    [idx $00..$05]
     pha                                         ; F0AB  48
     lda D3F_F0B1,y                              ; F0AC  B9 B1 F0    [idx $00..$05]
@@ -3066,17 +3085,17 @@ L3F_F204:
     clc                                         ; F20C  18
     adc a:FighterX,y                            ; F20D  79 08 00
     sta a:FighterX,y                            ; F210  99 08 00
-    lda zp_7B                                   ; F213  A5 7B
+    lda ProjX                                   ; F213  A5 7B
     beq L3F_F21C                                ; F215  F0 05
     clc                                         ; F217  18          (nt)
     adc zp_D9                                   ; F218  65 D9       (nt)
-    sta zp_7B                                   ; F21A  85 7B       (nt)
+    sta ProjX                                   ; F21A  85 7B       (nt)
 L3F_F21C:
-    lda zp_7C                                   ; F21C  A5 7C
+    lda ProjX+1                                 ; F21C  A5 7C
     beq L3F_F225                                ; F21E  F0 05
     clc                                         ; F220  18
     adc zp_D9                                   ; F221  65 D9
-    sta zp_7C                                   ; F223  85 7C
+    sta ProjX+1                                 ; F223  85 7C
 
 ; <- jmp L3F_F112, jmp L3F_F12F, jmp L3F_F15F, jmp L3F_F194
 ; modos: luta
@@ -3101,7 +3120,7 @@ L3F_F236:
     ora zp_D7                                   ; F240  05 D7
     bne L3F_F251                                ; F242  D0 0D
     lda FighterY,x                              ; F244  B5 0C
-    cmp ram_03BA                                ; F246  CD BA 03
+    cmp FloorY                                  ; F246  CD BA 03
     bcs L3F_F24E                                ; F249  B0 03
     jmp L3F_F317                                ; F24B  4C 17 F3
 
@@ -3183,8 +3202,8 @@ L3F_F2C0:
     sbc ram_03B9                                ; F2C3  ED B9 03
     sta zp_D8                                   ; F2C6  85 D8
     clc                                         ; F2C8  18
-    adc ram_03BA                                ; F2C9  6D BA 03
-    sta ram_03BA                                ; F2CC  8D BA 03
+    adc FloorY                                  ; F2C9  6D BA 03
+    sta FloorY                                  ; F2CC  8D BA 03
     ldy OtherFighter                            ; F2CF  A4 65
     clc                                         ; F2D1  18
     lda zp_D8                                   ; F2D2  A5 D8
@@ -3194,15 +3213,15 @@ L3F_F2DA:
     lda a:FighterVelY,x                         ; F2DA  BD 36 00
     bmi L3F_F317                                ; F2DD  30 38
     lda FighterY,x                              ; F2DF  B5 0C
-    cmp ram_03BA                                ; F2E1  CD BA 03
+    cmp FloorY                                  ; F2E1  CD BA 03
     bcc L3F_F317                                ; F2E4  90 31
-    lda ram_03BA                                ; F2E6  AD BA 03
+    lda FloorY                                  ; F2E6  AD BA 03
     sta FighterY,x                              ; F2E9  95 0C
     lda #$00                                    ; F2EB  A9 00
     sta FighterYSub,x                           ; F2ED  95 0A
     sta a:FighterVelY,x                         ; F2EF  9D 36 00
     sta a:FighterVelYSub,x                      ; F2F2  9D 34 00
-    sta a:zp_16,x                               ; F2F5  9D 16 00
+    sta a:HitReactClass,x                       ; F2F5  9D 16 00
     lda a:FighterStatePtrLo,x                   ; F2F8  BD 1E 00
     sta zp_D9                                   ; F2FB  85 D9
     lda a:FighterStatePtrHi,x                   ; F2FD  BD 20 00
@@ -3229,7 +3248,7 @@ L3F_F317:
     adc #$00                                    ; F323  69 00
     sta a:FighterVelY,x                         ; F325  9D 36 00
     lda FighterY,x                              ; F328  B5 0C
-    cmp ram_03BA                                ; F32A  CD BA 03
+    cmp FloorY                                  ; F32A  CD BA 03
     bcc L3F_F332                                ; F32D  90 03
     jmp L3F_F543                                ; F32F  4C 43 F5    (nt)
 
@@ -3239,7 +3258,7 @@ L3F_F317:
 L3F_F332:
     jsr L3F_F377                                ; F332  20 77 F3
     lda FighterY,x                              ; F335  B5 0C
-    cmp ram_03BA                                ; F337  CD BA 03
+    cmp FloorY                                  ; F337  CD BA 03
     bcc L3F_F376                                ; F33A  90 3A
     lda a:FighterVelX,x                         ; F33C  BD 32 00
     bmi L3F_F35A                                ; F33F  30 19
@@ -3298,7 +3317,7 @@ L3F_F38F:
     ldy OtherFighter                            ; F38F  A4 65
     lda FighterFlip,x                           ; F391  B5 04
     bne L3F_F3B9                                ; F393  D0 24
-    lda a:zp_38,x                               ; F395  BD 38 00
+    lda a:FrameFlags,x                          ; F395  BD 38 00
     and #$20                                    ; F398  29 20
     bne L3F_F3A6                                ; F39A  D0 0A
     lda #$D0                                    ; F39C  A9 D0
@@ -3322,7 +3341,7 @@ L3F_F3A9:
 
 
 L3F_F3B9:
-    lda a:zp_38,x                               ; F3B9  BD 38 00
+    lda a:FrameFlags,x                          ; F3B9  BD 38 00
     and #$20                                    ; F3BC  29 20
     bne L3F_F3CA                                ; F3BE  D0 0A
     lda #$31                                    ; F3C0  A9 31
@@ -3371,7 +3390,7 @@ L3F_F3FB:
 
 
 L3F_F404:
-    lda a:zp_38,x                               ; F404  BD 38 00
+    lda a:FrameFlags,x                          ; F404  BD 38 00
     and #$20                                    ; F407  29 20
     bne L3F_F411                                ; F409  D0 06
     lda FighterX,x                              ; F40B  B5 08
@@ -3429,7 +3448,7 @@ L3F_F453:
     lda #$00                                    ; F45A  A9 00
     sbc zp_D8                                   ; F45C  E5 D8
     sta zp_D8                                   ; F45E  85 D8
-    lda a:zp_38,x                               ; F460  BD 38 00
+    lda a:FrameFlags,x                          ; F460  BD 38 00
     and #$20                                    ; F463  29 20
     bne L3F_F46D                                ; F465  D0 06
     lda FighterX,x                              ; F467  B5 08
@@ -3540,17 +3559,17 @@ L3F_F512:
     clc                                         ; F51A  18
     adc a:FighterX,y                            ; F51B  79 08 00
     sta a:FighterX,y                            ; F51E  99 08 00
-    lda zp_7B                                   ; F521  A5 7B
+    lda ProjX                                   ; F521  A5 7B
     beq L3F_F52A                                ; F523  F0 05
     clc                                         ; F525  18
     adc zp_E7                                   ; F526  65 E7
-    sta zp_7B                                   ; F528  85 7B
+    sta ProjX                                   ; F528  85 7B
 L3F_F52A:
-    lda zp_7C                                   ; F52A  A5 7C
+    lda ProjX+1                                 ; F52A  A5 7C
     beq L3F_F533                                ; F52C  F0 05
     clc                                         ; F52E  18
     adc zp_E7                                   ; F52F  65 E7
-    sta zp_7C                                   ; F531  85 7C
+    sta ProjX+1                                 ; F531  85 7C
 
 ; <- jmp L3F_F38F, jmp L3F_F3B9, jmp L3F_F404, jmp L3F_F453
 ; modos: luta
@@ -3571,13 +3590,13 @@ L3F_F543:
     lda #$01                                    ; F543  A9 01
     sta zp_E0                                   ; F545  85 E0
     ldy OtherFighter                            ; F547  A4 65
-    lda a:zp_2E,y                               ; F549  B9 2E 00
+    lda a:MoveMode,y                            ; F549  B9 2E 00
     bne L3F_F551                                ; F54C  D0 03
     jmp L3F_F5C5                                ; F54E  4C C5 F5    (nt)
 
 
 L3F_F551:
-    ora a:zp_2E,x                               ; F551  1D 2E 00
+    ora a:MoveMode,x                            ; F551  1D 2E 00
     and #$01                                    ; F554  29 01
     beq L3F_F55B                                ; F556  F0 03
     jmp L3F_F5C5                                ; F558  4C C5 F5
@@ -3672,7 +3691,7 @@ L3F_F5C5:
 ; <- jmp L3F_F5FC
 ; modos: intro do round, luta, fim do round
 L3F_F5CD:
-    lda a:zp_38,x                               ; F5CD  BD 38 00
+    lda a:FrameFlags,x                          ; F5CD  BD 38 00
     and #$20                                    ; F5D0  29 20
     bne L3F_F621                                ; F5D2  D0 4D
     lda #$20                                    ; F5D4  A9 20
@@ -3684,7 +3703,7 @@ L3F_F5CD:
     sta FighterX,x                              ; F5E0  95 08
     lda zp_E0                                   ; F5E2  A5 E0
     beq L3F_F621                                ; F5E4  F0 3B
-    lda a:zp_16,x                               ; F5E6  BD 16 00
+    lda a:HitReactClass,x                       ; F5E6  BD 16 00
     and #$3F                                    ; F5E9  29 3F
     cmp #$0C                                    ; F5EB  C9 0C
     bne L3F_F621                                ; F5ED  D0 32
@@ -3705,7 +3724,7 @@ L3F_F5FC:
     sta FighterX,x                              ; F608  95 08
     lda zp_E0                                   ; F60A  A5 E0
     beq L3F_F621                                ; F60C  F0 13
-    lda a:zp_16,x                               ; F60E  BD 16 00
+    lda a:HitReactClass,x                       ; F60E  BD 16 00
     and #$3F                                    ; F611  29 3F
     cmp #$0C                                    ; F613  C9 0C
     bne L3F_F621                                ; F615  D0 0A
@@ -3727,7 +3746,7 @@ L3F_F621:
 ; <- jmp L3F_F62C
 ; modos: intro do round, luta, fim do round
 L3F_F62C:
-    lda a:zp_38,y                               ; F62C  B9 38 00
+    lda a:FrameFlags,y                          ; F62C  B9 38 00
     and #$40                                    ; F62F  29 40
     beq L3F_F63C                                ; F631  F0 09
     lda zp_E1,x                                 ; F633  B5 E1
@@ -3750,9 +3769,9 @@ L3F_F647:
 ; <- jsr L3F_F5C5, jsr L3F_F5FC
 ; modos: luta
 L3F_F648:
-    jsr L3F_E000                                ; F648  20 00 E0
+    jsr HitFreeze                               ; F648  20 00 E0
     lda #$00                                    ; F64B  A9 00
-    sta a:zp_16,x                               ; F64D  9D 16 00
+    sta a:HitReactClass,x                       ; F64D  9D 16 00
     stx zp_DE                                   ; F650  86 DE
     sty zp_DF                                   ; F652  84 DF
     lda #$09                                    ; F654  A9 09
@@ -3766,8 +3785,8 @@ L3F_F648:
 
 ; <- jsr L3F_EFCB
 ; modos: intro do round, luta, fim do round
-L3F_F671:
-    lda a:FighterNextPtrHi,x                    ; F671  BD 24 00
+InputDispatch:
+    lda a:FighterNextPtrHi,x                    ; F671  BD 24 00    entrada do jogador: vira transicao de estado — direcao (flag de quadro bit 2), botao (bit 1) ou especial (bit 0); a classe do proximo estado ($58-$68 aceita direcao) decide o que passa
     beq L3F_F695                                ; F674  F0 1F
     sta zp_D8                                   ; F676  85 D8
     lda a:FighterNextPtrLo,x                    ; F678  BD 22 00
@@ -3777,7 +3796,7 @@ L3F_F671:
     and #$F8                                    ; F681  29 F8
     cmp #$58                                    ; F683  C9 58
     bcs L3F_F68A                                ; F685  B0 03
-    jmp L3F_F704                                ; F687  4C 04 F7
+    jmp GuardRedirect                           ; F687  4C 04 F7
 
 
 L3F_F68A:
@@ -3785,11 +3804,11 @@ L3F_F68A:
     bcc L3F_F695                                ; F68C  90 07
     cmp #$99                                    ; F68E  C9 99
     bcc L3F_F6D6                                ; F690  90 44
-    jmp L3F_F704                                ; F692  4C 04 F7    (nt)
+    jmp GuardRedirect                           ; F692  4C 04 F7    (nt)
 
 
 L3F_F695:
-    lda a:zp_38,x                               ; F695  BD 38 00
+    lda a:FrameFlags,x                          ; F695  BD 38 00
     and #$04                                    ; F698  29 04
     beq L3F_F6B2                                ; F69A  F0 16
     sta zp_DD                                   ; F69C  85 DD
@@ -3802,9 +3821,9 @@ L3F_F695:
     sbc #$04                                    ; F6AB  E9 04
     asl a                                       ; F6AD  0A
     tay                                         ; F6AE  A8
-    jsr L3F_F6F5                                ; F6AF  20 F5 F6
+    jsr TransViaTbl                             ; F6AF  20 F5 F6
 L3F_F6B2:
-    lda a:zp_38,x                               ; F6B2  BD 38 00
+    lda a:FrameFlags,x                          ; F6B2  BD 38 00
     and #$02                                    ; F6B5  29 02
     beq L3F_F6D6                                ; F6B7  F0 1D
     sta zp_DD                                   ; F6B9  85 DD
@@ -3820,28 +3839,28 @@ L3F_F6B2:
     lda InputAttack,x                           ; F6CF  B5 88
     asl a                                       ; F6D1  0A
     tay                                         ; F6D2  A8
-    jsr L3F_F6F5                                ; F6D3  20 F5 F6
+    jsr TransViaTbl                             ; F6D3  20 F5 F6
 L3F_F6D6:
-    lda a:zp_38,x                               ; F6D6  BD 38 00
+    lda a:FrameFlags,x                          ; F6D6  BD 38 00
     and #$01                                    ; F6D9  29 01
-    beq L3F_F704                                ; F6DB  F0 27
+    beq GuardRedirect                           ; F6DB  F0 27
     sta zp_DD                                   ; F6DD  85 DD
-    lda zp_8E,x                                 ; F6DF  B5 8E
-    bmi L3F_F704                                ; F6E1  30 21
+    lda CmdMoveIdx,x                            ; F6DF  B5 8E
+    bmi GuardRedirect                           ; F6E1  30 21
     lda ram_0326,x                              ; F6E3  BD 26 03
     sta zp_D7                                   ; F6E6  85 D7
     lda ram_0328,x                              ; F6E8  BD 28 03
     sta zp_D8                                   ; F6EB  85 D8
-    lda zp_8E,x                                 ; F6ED  B5 8E
+    lda CmdMoveIdx,x                            ; F6ED  B5 8E
     ldy #$FF                                    ; F6EF  A0 FF
-    sty zp_8E,x                                 ; F6F1  94 8E
+    sty CmdMoveIdx,x                            ; F6F1  94 8E
     asl a                                       ; F6F3  0A
     tay                                         ; F6F4  A8
 
 ; <- jsr L3F_F695
 ; modos: intro do round, luta
-L3F_F6F5:
-    lda (zp_D7),y                               ; F6F5  B1 D7       [le bancos $01]
+TransViaTbl:
+    lda (zp_D7),y                               ; F6F5  B1 D7       [le bancos $01] le o ponteiro da tabela de estados e chama o caminhador de transicoes
     sta zp_DB                                   ; F6F7  85 DB
     iny                                         ; F6F9  C8
     lda (zp_D7),y                               ; F6FA  B1 D7       [le bancos $01]
@@ -3854,14 +3873,14 @@ L3F_F703:
     rts                                         ; F703  60
 
 
-; <- jmp L3F_F671, jmp L3F_F68A
+; <- jmp InputDispatch, jmp L3F_F68A
 ; modos: intro do round, luta, fim do round
-L3F_F704:
-    lda a:FighterState,x                        ; F704  BD 26 00
+GuardRedirect:
+    lda a:FighterState,x                        ; F704  BD 26 00    em guarda ($28-$2F): troca para a defesa da direcao atual (D3F_F799) e do golpe recebido (tabela ram_032A), preservando o quadro e o timer
     and #$F8                                    ; F707  29 F8
     cmp #$28                                    ; F709  C9 28
     bne L3F_F703                                ; F70B  D0 F6
-    lda a:zp_38,x                               ; F70D  BD 38 00
+    lda a:FrameFlags,x                          ; F70D  BD 38 00
     and #$24                                    ; F710  29 24
     bne L3F_F703                                ; F712  D0 EF
     lda a:FighterNextPtrHi,x                    ; F714  BD 24 00
@@ -3872,13 +3891,13 @@ L3F_F704:
     sec                                         ; F720  38
     sbc #$04                                    ; F721  E9 04
     tay                                         ; F723  A8
-    lda D3F_F799,y                              ; F724  B9 99 F7    [idx $00..$08]
+    lda GuardClassTbl,y                         ; F724  B9 99 F7    [idx $00..$08]
     sta a:FighterState,x                        ; F727  9D 26 00
     lda ram_032A,x                              ; F72A  BD 2A 03
     sta zp_D7                                   ; F72D  85 D7
     lda ram_032C,x                              ; F72F  BD 2C 03
     sta zp_D8                                   ; F732  85 D8
-    lda a:zp_16,x                               ; F734  BD 16 00
+    lda a:HitReactClass,x                       ; F734  BD 16 00
     and #$3F                                    ; F737  29 3F
     asl a                                       ; F739  0A
     tay                                         ; F73A  A8
@@ -3913,7 +3932,7 @@ L3F_F704:
     sta zp_D6                                   ; F77B  85 D6
     ldy #$07                                    ; F77D  A0 07
     lda (zp_D5),y                               ; F77F  B1 D5       [le bancos $01]
-    sta a:zp_38,x                               ; F781  9D 38 00
+    sta a:FrameFlags,x                          ; F781  9D 38 00
     ldy #$05                                    ; F784  A0 05
     lda (zp_DA),y                               ; F786  B1 DA       [le bancos $01]
     sta a:FighterState,x                        ; F788  9D 26 00
@@ -3924,8 +3943,8 @@ L3F_F704:
     sta a:FighterAnimTimer,x                    ; F795  9D 42 00
     rts                                         ; F798  60
 
-D3F_F799:
-    .byte $29,$29,$29,$29,$2A,$29,$29,$2A,$2A   ; F799
+GuardClassTbl:
+    .byte $29,$29,$29,$29,$2A,$29,$29,$2A,$2A   ; F799              byte de classe da guarda pela direcao (indice InputDir-$04): $29 em pe, $2A agachado
 
 ; ------------------------------------------------------------------------------------------------
 ; Inicializacao: configura o MMC5 (PRG modo 3 = 4 bancos de 8K; CHR modo 2 = paginas de 2K;

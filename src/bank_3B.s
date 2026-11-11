@@ -113,7 +113,7 @@ L3B_E0A0:
     lda #$59                                    ; E0E9  A9 59
     sta a:FighterState,x                        ; E0EB  9D 26 00
     lda #$00                                    ; E0EE  A9 00
-    sta a:zp_28,x                               ; E0F0  9D 28 00
+    sta a:AttackHitsLeft,x                      ; E0F0  9D 28 00
     sta a:FighterNextPtrLo,x                    ; E0F3  9D 22 00
     sta a:FighterNextPtrHi,x                    ; E0F6  9D 24 00
     ldy #$00                                    ; E0F9  A0 00
@@ -121,21 +121,21 @@ L3B_E0A0:
     sta a:FighterAnimTimer,x                    ; E0FD  9D 42 00
     ldy #$0B                                    ; E100  A0 0B
     lda (zp_D5),y                               ; E102  B1 D5       [le bancos $01]
-    sta a:zp_44,x                               ; E104  9D 44 00
+    sta a:LoopRepeat,x                          ; E104  9D 44 00
     ldy #$07                                    ; E107  A0 07
     lda (zp_D5),y                               ; E109  B1 D5       [le bancos $01]
-    sta a:zp_38,x                               ; E10B  9D 38 00
+    sta a:FrameFlags,x                          ; E10B  9D 38 00
     ldy #$08                                    ; E10E  A0 08
     lda (zp_D5),y                               ; E110  B1 D5       [le bancos $01]
-    sta a:zp_2E,x                               ; E112  9D 2E 00
+    sta a:MoveMode,x                            ; E112  9D 2E 00
     lda #$00                                    ; E115  A9 00
     sta a:FighterVelXSub,x                      ; E117  9D 30 00
     sta a:FighterVelX,x                         ; E11A  9D 32 00
     sta a:FighterVelYSub,x                      ; E11D  9D 34 00
     sta a:FighterVelY,x                         ; E120  9D 36 00
-    sta a:zp_3A,x                               ; E123  9D 3A 00
-    sta a:zp_3C,x                               ; E126  9D 3C 00
-    sta a:zp_3E,x                               ; E129  9D 3E 00
+    sta a:EffectParam,x                         ; E123  9D 3A 00
+    sta a:EffectType,x                          ; E126  9D 3C 00
+    sta a:HitThisFrame,x                        ; E129  9D 3E 00
     txa                                         ; E12C  8A
     beq L3B_E131                                ; E12D  F0 02
     lda #$40                                    ; E12F  A9 40
@@ -146,7 +146,7 @@ L3B_E131:
     sta a:zp_60,x                               ; E138  9D 60 00
     sta a:zp_62,x                               ; E13B  9D 62 00
     sta a:FighterDmgPending,x                   ; E13E  9D 14 00
-    sta a:zp_16,x                               ; E141  9D 16 00
+    sta a:HitReactClass,x                       ; E141  9D 16 00
     lda #$58                                    ; E144  A9 58
     sta FighterHP,x                             ; E146  95 0E
     lda #<D3C_80E6                              ; E148  A9 E6
@@ -359,7 +359,7 @@ L3B_E294:
     ora #$80                                    ; E29B  09 80
     sta MMC5_PRG_C000                           ; E29D  8D 16 51
     lda #$CD                                    ; E2A0  A9 CD
-    sta ram_03BA                                ; E2A2  8D BA 03
+    sta FloorY                                  ; E2A2  8D BA 03
     lda D36_C000,y                              ; E2A5  B9 00 C0    [bancos $36 idx $00..$00]
     sta FloorLines                              ; E2A8  8D BB 03
     lda D36_C005,y                              ; E2AB  B9 05 C0    [bancos $36 idx $00..$00]
@@ -467,7 +467,7 @@ L3B_E397:
     lda #$00                                    ; E39F  A9 00
     sta HitStop                                 ; E3A1  8D 0C 04
     lda #$CD                                    ; E3A4  A9 CD
-    sta ram_03BA                                ; E3A6  8D BA 03
+    sta FloorY                                  ; E3A6  8D BA 03
     lda #$80                                    ; E3A9  A9 80
     sta CameraX                                 ; E3AB  8D B7 03
     lda #$00                                    ; E3AE  A9 00
@@ -949,7 +949,7 @@ L3B_E741:
     lda FrameCounter                            ; E741  A5 B1
     and #$01                                    ; E743  29 01
     tax                                         ; E745  AA
-    lda a:zp_16,x                               ; E746  BD 16 00
+    lda a:HitReactClass,x                       ; E746  BD 16 00
     cmp #$0C                                    ; E749  C9 0C
     beq L3B_E7A5                                ; E74B  F0 58
     ldy a:FighterDmgPending,x                   ; E74D  BC 14 00
@@ -2248,17 +2248,17 @@ L3B_F24A:
 ; <- jsr DrawFighters
 ; modos: intro do round, luta, fim do round
 L3B_F27A:
-    lda zp_7B,x                                 ; F27A  B5 7B
+    lda ProjX,x                                 ; F27A  B5 7B
     bne L3B_F27F                                ; F27C  D0 01
     rts                                         ; F27E  60
 
 
 L3B_F27F:
-    lda zp_7B,x                                 ; F27F  B5 7B
+    lda ProjX,x                                 ; F27F  B5 7B
     sta zp_DB                                   ; F281  85 DB
-    lda zp_7D,x                                 ; F283  B5 7D
+    lda ProjY,x                                 ; F283  B5 7D
     sta zp_DC                                   ; F285  85 DC
-    lda zp_81,x                                 ; F287  B5 81
+    lda ProjFlags,x                             ; F287  B5 81
     and #$40                                    ; F289  29 40
     sta zp_DD                                   ; F28B  85 DD
     stx zp_E1                                   ; F28D  86 E1
@@ -2267,10 +2267,10 @@ L3B_F27F:
     lda #$20                                    ; F293  A9 20
     ora #$80                                    ; F295  09 80
     sta MMC5_PRG_8000                           ; F297  8D 14 51
-    lda zp_81,x                                 ; F29A  B5 81
+    lda ProjFlags,x                             ; F29A  B5 81
     and #$80                                    ; F29C  29 80
     beq L3B_F2B5                                ; F29E  F0 15
-    lda zp_7F,x                                 ; F2A0  B5 7F
+    lda ProjStep,x                              ; F2A0  B5 7F
     lsr a                                       ; F2A2  4A
     and #$07                                    ; F2A3  29 07
     lsr a                                       ; F2A5  4A
@@ -2284,13 +2284,13 @@ L3B_F27F:
 
 
 L3B_F2B5:
-    lda zp_77,x                                 ; F2B5  B5 77
+    lda ProjSpeed,x                             ; F2B5  B5 77
     lsr a                                       ; F2B7  4A
     asl a                                       ; F2B8  0A
     asl a                                       ; F2B9  0A
     asl a                                       ; F2BA  0A
     sta zp_D9                                   ; F2BB  85 D9
-    lda zp_7F,x                                 ; F2BD  B5 7F
+    lda ProjStep,x                              ; F2BD  B5 7F
     lsr a                                       ; F2BF  4A
     and #$03                                    ; F2C0  29 03
     asl a                                       ; F2C2  0A
