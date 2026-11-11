@@ -63,8 +63,10 @@ validação fica para depois, registrada como pendência, não como critério).
 - [x] **2.0** documentar o reconhecedor de comandos por inteiro — §13: os 5 tratadores `CmdStep*`,
   `CmdMotionTbl`/`CmdKeyAttackTbl`/listas de chaves, estado intercalado `CmdMotionStep`/`CmdMotionWin`,
   consumo no `InputDispatch`
-- [ ] **2.1** comandos: golpe na borda de subida do botão + promoção fraco→forte (ver `docs/BUGS.md`) —
-  depende da 2.0
+- [x] **2.1** comandos: golpe na borda de subida do botão + promoção fraco→forte (ver `docs/BUGS.md` §2.1) —
+  feito como `FIX_EDGE_ATTACK`: `InputButtons` (`3F:E99A–E9FB`) reescrito num bloco só + marcador seletivo
+  `EdgeMarkHold` (`$F949`) no lugar da gravação cega de `$15`; `-D FIX_HEAVY_ONCE` continua independente e é
+  subsumido quando o `FIX_EDGE_ATTACK` está ligado; validação de jogabilidade pendente
 - [ ] **2.2** dificuldade: SELECT na tela de seleção alterna Fácil/Normal/Difícil (`AiLevel` 2/4/7,
   padrão 4) + ler/documentar a IA — depende da 2.0
 - [ ] **2.3** versus: P2 entra com START na tela de seleção, HUD "PRESS START" → "P2", P2 travado no

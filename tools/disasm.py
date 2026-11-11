@@ -861,8 +861,22 @@ class Project:
         if mode != 'abs': s += ' idx $%02X..$%02X' % (lo - v, hi - v)
         return s
 
-    def emit_range(self, out, bank, a_lo, a_hi, for_kernel=False, in_alt=False):
-        """Emite [a_lo, a_hi) do banco."""
+    def check_alts(self):
+        """Dois alts nao podem se sobrepor parcialmente: ou sao disjuntos, ou um contem o outro
+        por inteiro (o contido sai aninhado dentro do ramo .else do continente)."""
+        items = sorted(self.alts.items())
+        for i, (o1, (n1, s1, _)) in enumerate(items):
+            for o2, (n2, s2, _) in items[i + 1:]:
+                if o2 >= o1 + s1: break
+                if o2 + s2 > o1 + s1:
+                    b1, a1 = off2ba(o1); b2, a2 = off2ba(o2)
+                    sys.exit('annotations: alt %s (%02X:%04X, $%X bytes) e alt %s (%02X:%04X, $%X bytes) '
+                             'se sobrepoem parcialmente' % (n1, b1, a1, s1, n2, b2, a2, s2))
+
+    def emit_range(self, out, bank, a_lo, a_hi, for_kernel=False, in_alt=None):
+        """Emite [a_lo, a_hi) do banco.  in_alt = offset do alt cujo ramo .else esta' sendo emitido
+        (ou None): so' o alt na propria ancora e' ignorado, alt contido no intervalo e' emitido
+        aninhado — assim um ajuste grande nao desliga os ajustes menores que caem dentro dele."""
         base = bank << 13
         o = ba2off(bank, a_lo); end = base + (a_hi - bank_base(bank))
         COL = 44
@@ -873,7 +887,7 @@ class Project:
             out.append(('    %-*s%s' % (COL, text, cm)).rstrip())
         while o < end:
             co = self.canon(o)
-            if o in self.alts and not in_alt:
+            if o in self.alts and o != in_alt:
                 name, ln_, lines = self.alts[o]
                 a0 = off2ba(o)[1]
                 tag = '__alt_%02X_%04X' % (bank, a0)
@@ -883,13 +897,13 @@ class Project:
                 out.append('    .assert * - %s <= $%X, error, "bloco alt %s em $%04X passou do tamanho"' % (tag, ln_, name, a0))
                 out.append('    .res $%X - (* - %s), $FF' % (ln_, tag))
                 out.append('.else')
-                self.emit_range(out, bank, a0, a0 + ln_, in_alt=True)
+                self.emit_range(out, bank, a0, a0 + ln_, in_alt=o)
                 out.append('.endif'); out.append('')
                 o += ln_; continue
             if co in self.blocks:
                 out.append('')
                 for t in self.blocks[co]: out.append('; ' + t if t else ';')
-            if o in self.struct_kind and not in_alt:
+            if o in self.struct_kind and in_alt is None:
                 sk = self.struct_kind[o]
                 out.append('')
                 first = sk[0] == 'quadro' and self.struct_kind.get(o - 7, ('',))[0] == 'estado'
@@ -1045,6 +1059,7 @@ class Project:
         self.kernel_imports = set()
         self.ramcode_at = {o: (l, org) for o, l, org in self.ramcode}
         self.build_cond_names()
+        self.check_alts()
         os.makedirs(SRC, exist_ok=True)
         files = {}
         # kernel

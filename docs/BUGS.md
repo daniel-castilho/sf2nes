@@ -94,6 +94,43 @@ A opção 1 é a que os jogos de luta de 2 botões costumam usar. O reconhecedor
 inteiro (§13 do `docs/FORMATOS.md`: os 5 tratadores `CmdStep*`, as tabelas e o estado intercalado), então
 o caminho é mexer no `InputButtons` (origem do evento) sem tocar no caminhador do reconhecedor.
 
+### 2.1 Opção 3 implementada: borda de subida + promoção (`FIX_EDGE_ATTACK`)
+
+A opção 3 foi a escolhida. A seção A+B do `InputButtons` (`3F:E99A–E9FB`, 98 bytes) é reescrita por inteiro
+num bloco `alt` só, e o comportamento passa a ser:
+
+| O que o jogador faz | Com `FIX_EDGE_ATTACK` |
+|---|---|
+| aperta (1º quadro) | golpe **fraco** no mesmo quadro — borda de subida |
+| segura do 2º ao 6º quadro | nada (zona morta) |
+| segura a partir do 7º quadro | **forte** (promoção): o motor decide se o estado do lutador aceita |
+| solta antes de 7 quadros | nada — o fraco já saiu no aperto |
+| solta entre 7 e 20 quadros | forte uma última vez, como no original |
+| solta depois de 20 quadros | nada |
+
+```
+make fixed FIXDEFS="-D FIX_SOFT_RESET -D FIX_EDGE_ATTACK"
+```
+
+177 bytes diferentes do original (42 do `FIX_SOFT_RESET` + 135 do ajuste).
+
+O heart do ajuste é o **marcador seletivo**: o `InputDispatch` (`3F:F6C9`) gravava `$15` nos *dois* contadores a
+cada despacho de botão, inclusive o fraco — o que mataria a promoção (o contador do próprio botão deixaria de
+contar). O `jsr EdgeMarkHold` substitui essa gravação cega: forte despachado → `$FF` nos dois contadores (no
+caminho segurado o `iny` dá wrap e desarma; na soltura o `cpy #$15` ignora), fraco despachado → `$01` só no
+contador do próprio botão (segue contando, promoção aos 7). A rotina fica no espaço livre do banco (`$F949`).
+
+Diferenças conscientes em relação ao original, ambas registradas no `annotations/sf2ne.ann`:
+
+* segurando além de 20 quadros o forte **continua armado** (o original desistia);
+* depois de ~256 quadros segurando o contador dá wrap e o botão volta a disparar fraco (o original também tinha
+  um wrap ali, no `beq` de `$FF→0`).
+
+O `FIX_HEAVY_ONCE` continua existindo como opção independente (funciona sozinho) e é **subsumido** quando o
+`FIX_EDGE_ATTACK` está ligado — combinar os dois é inofensivo (a não-repetição passa a vir do marcador `$FF`).
+
+Validação de jogabilidade: **pendente** (nenhuma validação manual foi feita nesta etapa).
+
 Curiosidade útil: `CmdMotionTbl` (`3F:E067`) já tem sequências que o Ryu não usa — trás→frente e baixo→cima
 (golpes de carga), A-A-A / B-B-B (golpes de botão repetido) e frente-baixo-trás-cima (giro de 360°).
 O reconhecedor foi escrito pensando no elenco completo.

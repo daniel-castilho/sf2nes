@@ -10,5 +10,9 @@ sf2ne_versus.nes              correcao do reset + MODO VERSUS: o segundo lutador
 sf2ne_golpe_forte_unico.nes   correcao do reset + ajuste experimental dos botoes: segurar A/B dispara o golpe forte
                               uma vez so, em vez de repetir por ate 14 quadros (46 bytes). Muda a jogabilidade.
 
+sf2ne_golpe_na_borda.nes      correcao do reset + ajuste dos botoes (177 bytes): o golpe fraco sai no quadro em que
+                              o botao e' apertado (borda de subida) e, se o botao continuar segurado, o fraco vira
+                              forte no 7o quadro (promocao). Soltar antes de 7 nao repete o golpe. Muda a jogabilidade.
+
 Emuladores indicados pelo autor do demo: Mesen ou FCEUX (mapper 5 / MMC5).
 Detalhes de cada mudanca: docs/BUGS.md.   Para remontar: make prontos   (precisa do cc65).

@@ -260,10 +260,24 @@ block 3F:E99A   toque curto (soltou antes de 7 quadros)  -> golpe FRACO, emitido
 block 3F:E99A   segurou 7 quadros ou mais                -> golpe FORTE, emitido a CADA quadro do 7o ao 20o, e de novo ao soltar
 block 3F:E99A InputAttack,x recebe: 0 soco fraco, 1 soco forte, 2 chute fraco, 3 chute forte, $FF nada.
 block 3F:E99A Consequencia: todo golpe sai atrasado (no minimo ate soltar o botao) e o forte se repete — ver docs/BUGS.md.
+block 3F:E99A Ajuste FIX_EDGE_ATTACK (secao de ajustes no fim do arquivo): fraco na borda de subida + promocao para forte.
 comment 3F:E9A7 passou de 20 quadros segurando: ignora
 comment 3F:E9AB menos de 7 quadros: ainda nao decide (espera soltar)
+comment 3F:E9AD contador < 7: segue para o botao B sem emitir nada
 comment 3F:E9AF 7..20 quadros segurando: soco forte, todo quadro
+label 3F:E9B4 BtnAReleased
+comment 3F:E9B4 A soltou: zera o contador do soco e emite fraco (se segurou <7) ou forte de novo
+label 3F:E9C0 EmitWeakPunch
+comment 3F:E9C0 emissor do soco fraco (A=$00): saida da soltura rapida (<7 quadros)
 comment 3F:E9C2 soltou: <7 quadros = fraco (0), senao forte (1)
+label 3F:E9CB BtnBCheck
+comment 3F:E9CB processamento do botao B (chute); os casos "nada a fazer" do A caem aqui
+label 3F:E9E5 BtnBReleased
+comment 3F:E9E5 B soltou: zera o contador do chute e emite fraco/forte
+label 3F:E9F1 EmitWeakKick
+comment 3F:E9F1 emissor do chute fraco (A=$02): saida da soltura rapida (<7 quadros)
+label 3F:E9FC BtnNone
+comment 3F:E9FC nenhum botao ativo: InputAttack = $FF
 label 3F:E9FE InputSetAttack
 label 3F:EA01 InputDirection
 comment 3F:EA01 direcional -> codigo de direcao relativo ao lado que o lutador olha (tabela DirCodeTbl)
@@ -660,14 +674,125 @@ alt FIX_SOFT_RESET 3F:FFFC 2
 # No original, segurar A/B emite o golpe forte a cada quadro do 7o ao 20o e outra vez ao soltar (ver docs/BUGS.md).
 # Aqui ele e' emitido so no quadro em que o contador chega a 7, e soltar depois disso nao emite nada.
 # Muda a jogabilidade: teste antes de adotar.
+# NOTA: os 4 ancoras abaixo caem dentro do bloco reescrito pelo FIX_EDGE_ATTACK (E99A-E9FB): sao emitidos
+# aninhados no ramo .else dele, entao continuam funcionando sozinhos como antes. Com FIX_EDGE_ATTACK ligado
+# sao subsumidos: a nao-repeticao do forte passa a vir do marcador $FF do EdgeMarkHold. Combinar os dois e' inofensivo.
 alt FIX_HEAVY_ONCE 3F:E9AD 2
-|    bne L3F_E9CB                                ; era bcc: so quando o contador e' exatamente 7
+|    bne BtnBCheck                               ; era bcc: so quando o contador e' exatamente 7
 alt FIX_HEAVY_ONCE 3F:E9C6 2
 |    lda #$FF                                    ; era lda #$01: soltar depois de 7 quadros nao repete o golpe
 alt FIX_HEAVY_ONCE 3F:E9DE 2
-|    bne L3F_E9FC
+|    bne BtnNone
 alt FIX_HEAVY_ONCE 3F:E9F7 2
 |    lda #$FF
+
+# ============================================================================================================
+# AJUSTE: golpe na borda de subida + promocao fraco->forte   (make fixed FIXDEFS="-D FIX_SOFT_RESET -D FIX_EDGE_ATTACK")
+# Problema original (docs/BUGS.md item 2): o golpe so sai quando o botao e' SOLTO (fraco) ou se repete
+# do 7o ao 20o quadro (forte) — todo golpe sai atrasado e o forte "metralha".
+# Aqui: o FRACO sai no quadro em que o botao e' apertado (borda de subida: contador==1); segurando,
+# o contador segue contando e no 7o quadro o FORTE assume (promocao — o motor ja' decide se o estado
+# do lutador aceita cancelar a animacao do fraco). Soltar antes de 7 quadros nao emite nada (o fraco
+# ja' saiu no aperto); soltar entre 7 e 20 emite o forte uma ultima vez, como no original.
+#
+# Anti-repeticao (o coracao do ajuste): o marcador do InputDispatch (F6C9) era cego — gravava $15 nos
+# DOIS contadores em qualquer despacho de botao, inclusive fraco, o que mataria a promocao. Passa a
+# ser seletivo (EdgeMarkHold, no espaco livre): forte despachado -> $FF nos dois contadores (no caminho
+# segurado o iny faz wrap a 0 e desarma; na soltura o cpy #$15 ignora); fraco despachado -> $01 no
+# contador do proprio botao so' (conta dali em diante; o outro botao nao e' afetado).
+#
+# A secao A+B do InputButtons (E99A-E9FB, $62 = 98 bytes) e' reescrita por inteiro num bloco so'; os 4 ancoras
+# do FIX_HEAVY_ONCE caem dentro dele (ver nota ali em cima). O emitidor fraco/forte tail-calla
+# InputSetAttack (sta InputAttack,x; rts) igual ao original, pulando o processamento do outro botao.
+# Diferencas conscientes vs original: segurando alem de 20 quadros o forte continua armado (o original
+# desistia — aqui ele sai quando o estado permitir, o que e' o comportamento pedido); apos ~256 quadros
+# segurando o contador da wrap e o botao volta a edgear (fraco) — caso extreme, original tambem tinha
+# um wrap ali (o beq de $FF->0).
+alt FIX_EDGE_ATTACK 3F:E99A 62
+|InputButtons:
+|    lda JoyState,x                              ; botao A (bit 7): segurado?
+|    bpl EdgeARel                                ; soltou -> logica de soltura
+|    ldy BtnAHold,x
+|    iny
+|    beq EdgeBBtn                                ; wrap $FF->0 (marcador de forte): ignora
+|    sty BtnAHold,x
+|    cpy #$02                                     ; borda de subida: contador==1
+|    bcc EdgeAWeak                                ; -> soco fraco AGORA
+|    cpy #$07                                     ; 2..6: zona morta (fraco ja' saiu no aperto)
+|    bcc EdgeBBtn                                 ; 7..20: forte segue armado enquanto segurar
+|EdgeAStrong:
+|    lda #$01                                     ; soco forte
+|    jmp InputSetAttack
+|EdgeAWeak:
+|    lda #$00                                     ; soco fraco na borda de subida
+|    jmp InputSetAttack
+|EdgeARel:                                        ; A soltou
+|    ldy BtnAHold,x
+|    lda #$00
+|    sta BtnAHold,x                               ; zera o contador do soco
+|    cpy #$15                                     ; >=21 (marcador $FF ou segurou demais): nada
+|    bcs EdgeBBtn
+|    cpy #$07
+|    bcc EdgeBBtn                                ; <7: nada (o fraco ja' saiu no aperto)
+|    bcs EdgeAStrong                              ; 7..20: forte uma ultima vez
+|EdgeBBtn:                                        ; botao B (bit 6)
+|    lda JoyState,x
+|    and #$40
+|    beq EdgeBRel                                 ; soltou
+|    ldy BtnBHold,x
+|    iny
+|    beq BtnNone                                  ; wrap $FF->0 (marcador de forte): nenhum golpe
+|    sty BtnBHold,x
+|    cpy #$02                                     ; borda de subida
+|    bcc EdgeBWeak                                ; -> chute fraco AGORA
+|    cpy #$07                                     ; 2..6: zona morta
+|    bcc BtnNone                                  ; 7..20: forte segue armado
+|EdgeBStrong:
+|    lda #$03                                     ; chute forte
+|    jmp InputSetAttack
+|EdgeBWeak:
+|    lda #$02                                     ; chute fraco na borda de subida
+|    jmp InputSetAttack
+|EdgeBRel:                                        ; B soltou
+|    ldy BtnBHold,x
+|    lda #$00
+|    sta BtnBHold,x                               ; zera o contador do chute
+|    cpy #$15
+|    bcs BtnNone
+|    cpy #$07
+|    bcc BtnNone                                  ; <7: nada
+|    bcs EdgeBStrong                              ; 7..20: forte uma ultima vez
+
+# marcador seletivo do despacho de botao (substitui ldy #$15 / sty BtnAHold,x / sty BtnBHold,x)
+alt FIX_EDGE_ATTACK 3F:F6C9 6
+|    jsr EdgeMarkHold
+
+# rotina do marcador seletivo, no espaco livre do banco (F949)
+alt FIX_EDGE_ATTACK 3F:F949 36
+|EdgeMarkHold:
+|    lda InputAttack,x                           ; 0/1 soco, 2/3 chute ($FF nao chega: bmi em F6BD)
+|    cmp #$01
+|    beq EdgeMarkStrong
+|    cmp #$03
+|    beq EdgeMarkStrong
+|    cmp #$00
+|    beq EdgeMarkA
+|    cmp #$02
+|    beq EdgeMarkB
+|    rts
+|EdgeMarkStrong:
+|    ldy #$FF                                     ; forte despachado: desarma os dois contadores
+|    sty BtnAHold,x                               ; (segurando: wrap do iny; soltando: cpy #$15)
+|    sty BtnBHold,x
+|    rts
+|EdgeMarkA:
+|    ldy #$01                                     ; fraco despachado: segue contando (promocao aos 7)
+|    sty BtnAHold,x
+|    rts
+|EdgeMarkB:
+|    ldy #$01
+|    sty BtnBHold,x
+|    rts
 
 # ============================================================================================================
 # MODO VERSUS (experimental): jogador 2 humano   (make fixed FIXDEFS="-D FIX_SOFT_RESET -D MODE_VERSUS")

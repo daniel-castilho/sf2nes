@@ -29,7 +29,7 @@ tools/mesen/setup_mesen.sh       # opcional: baixa o Mesen 2.1.1 e deixa pronto 
 | `make` | monta `build/sf2ne.nes` e confere que é **idêntico** ao original (byte a byte) |
 | `make gen` | regenera `src/`, `sf2ne.cfg` e `assets/` a partir de ROM + trace + anotações |
 | `make fixed` | monta `build/sf2ne_fixed.nes` com as correções opcionais (`-D FIX_SOFT_RESET`) |
-| `make fixed FIXDEFS="-D A -D B"` | escolhe quais blocos `alt` ligar: `FIX_SOFT_RESET`, `FIX_HEAVY_ONCE`, `MODE_VERSUS` |
+| `make fixed FIXDEFS="-D A -D B"` | escolhe quais blocos `alt` ligar: `FIX_SOFT_RESET`, `FIX_HEAVY_ONCE`, `FIX_EDGE_ATTACK`, `MODE_VERSUS` |
 | `make assets` | exporta gráficos (PNG) e vozes (WAV) para `extracted/` |
 | `make clean` | apaga `build/` |
 
@@ -50,9 +50,13 @@ Uma diretiva por linha. `BB:AAAA` = banco:endereço; `K:AAAA` = kernel (vale par
 | `imm BB:AAAA <Rotulo` | escreve à mão o operando de uma instrução imediata (ex.: endereços de RAM) |
 | `statebank BB frames=BB from=AAAA to=AAAA` | banco de estados de um lutador: lê cabeçalhos e quadros pela estrutura |
 | `ramcode BB:AAAA TAM ORG` | trecho copiado para a RAM e executado lá (o trampolim `FarCall`) |
-| `alt SIMBOLO BB:AAAA TAM` + linhas `\|…` | código alternativo montado só com `-D SIMBOLO` (correções opcionais) |
+| `alt SIMBOLO BB:AAAA TAM` + linhas `\|…` | código alternativo montado só com `-D SIMBOLO` (correções opcionais). `TAM` é o tamanho do trecho substituído, **em hexadecimal**, e precisa cair no fim de uma instrução original |
 
 Depois de qualquer mudança: `make gen && make`. Se aparecer `DIFERENTE do original`, a anotação quebrou algo.
+
+Um `alt` cujo intervalo contenha a âncora de outro `alt` emite o menor **aninhado** dentro do ramo `.else`
+do maior: assim o menor continua valendo sozinho e é simplesmente ignorado quando o maior está ligado.
+Dois `alt` que se sobreponham só pela metade são recusados pelo gerador (o `.else` repetiria bytes).
 
 ## Scripts em `tools/`
 

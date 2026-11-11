@@ -3,7 +3,7 @@
 #   make          monta build/sf2ne.nes e confere que e' IDENTICO ao ROM original (byte a byte)
 #   make gen      regenera src/ a partir de rom/ + trace/ + annotations/sf2ne.ann  (fase de anotacao)
 #   make fixed    monta build/sf2ne_fixed.nes com as correcoes opcionais ligadas (blocos `alt` das anotacoes)
-#   make prontos  monta as variantes jogaveis em prontos/ (reset corrigido, versus, golpe forte unico)
+#   make prontos  monta as variantes jogaveis em prontos/ (reset corrigido, versus, golpe forte unico, golpe na borda)
 #   make assets   exporta os graficos (PNG) e as vozes (WAV) para extracted/
 #   make clean
 #
@@ -60,6 +60,7 @@ prontos:
 	@$(MAKE) --no-print-directory fixed && cp $(BUILD)/sf2ne_fixed.nes prontos/sf2ne_reset_corrigido.nes
 	@$(MAKE) --no-print-directory fixed FIXDEFS="-D FIX_SOFT_RESET -D MODE_VERSUS" && cp $(BUILD)/sf2ne_fixed.nes prontos/sf2ne_versus.nes
 	@$(MAKE) --no-print-directory fixed FIXDEFS="-D FIX_SOFT_RESET -D FIX_HEAVY_ONCE" && cp $(BUILD)/sf2ne_fixed.nes prontos/sf2ne_golpe_forte_unico.nes
+	@$(MAKE) --no-print-directory fixed FIXDEFS="-D FIX_SOFT_RESET -D FIX_EDGE_ATTACK" && cp $(BUILD)/sf2ne_fixed.nes prontos/sf2ne_golpe_na_borda.nes
 	@$(MAKE) --no-print-directory fixed > /dev/null
 	@ls -l prontos/*.nes
 

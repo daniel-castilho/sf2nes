@@ -1691,46 +1691,108 @@ InputUpdate:
     jmp InputCommands                           ; E997  4C 24 EA
 
 
+.ifdef FIX_EDGE_ATTACK
+__alt_3F_E99A:
+InputButtons:
+    lda JoyState,x                              ; botao A (bit 7): segurado?
+    bpl EdgeARel                                ; soltou -> logica de soltura
+    ldy BtnAHold,x
+    iny
+    beq EdgeBBtn                                ; wrap $FF->0 (marcador de forte): ignora
+    sty BtnAHold,x
+    cpy #$02                                     ; borda de subida: contador==1
+    bcc EdgeAWeak                                ; -> soco fraco AGORA
+    cpy #$07                                     ; 2..6: zona morta (fraco ja' saiu no aperto)
+    bcc EdgeBBtn                                 ; 7..20: forte segue armado enquanto segurar
+EdgeAStrong:
+    lda #$01                                     ; soco forte
+    jmp InputSetAttack
+EdgeAWeak:
+    lda #$00                                     ; soco fraco na borda de subida
+    jmp InputSetAttack
+EdgeARel:                                        ; A soltou
+    ldy BtnAHold,x
+    lda #$00
+    sta BtnAHold,x                               ; zera o contador do soco
+    cpy #$15                                     ; >=21 (marcador $FF ou segurou demais): nada
+    bcs EdgeBBtn
+    cpy #$07
+    bcc EdgeBBtn                                ; <7: nada (o fraco ja' saiu no aperto)
+    bcs EdgeAStrong                              ; 7..20: forte uma ultima vez
+EdgeBBtn:                                        ; botao B (bit 6)
+    lda JoyState,x
+    and #$40
+    beq EdgeBRel                                 ; soltou
+    ldy BtnBHold,x
+    iny
+    beq BtnNone                                  ; wrap $FF->0 (marcador de forte): nenhum golpe
+    sty BtnBHold,x
+    cpy #$02                                     ; borda de subida
+    bcc EdgeBWeak                                ; -> chute fraco AGORA
+    cpy #$07                                     ; 2..6: zona morta
+    bcc BtnNone                                  ; 7..20: forte segue armado
+EdgeBStrong:
+    lda #$03                                     ; chute forte
+    jmp InputSetAttack
+EdgeBWeak:
+    lda #$02                                     ; chute fraco na borda de subida
+    jmp InputSetAttack
+EdgeBRel:                                        ; B soltou
+    ldy BtnBHold,x
+    lda #$00
+    sta BtnBHold,x                               ; zera o contador do chute
+    cpy #$15
+    bcs BtnNone
+    cpy #$07
+    bcc BtnNone                                  ; <7: nada
+    bcs EdgeBStrong                              ; 7..20: forte uma ultima vez
+    .assert * - __alt_3F_E99A <= $62, error, "bloco alt FIX_EDGE_ATTACK em $E99A passou do tamanho"
+    .res $62 - (* - __alt_3F_E99A), $FF
+.else
+
 ; Botoes A (soco) e B (chute) com dois niveis de forca num botao so:
 ; toque curto (soltou antes de 7 quadros)  -> golpe FRACO, emitido so QUANDO SOLTA
 ; segurou 7 quadros ou mais                -> golpe FORTE, emitido a CADA quadro do 7o ao 20o, e de novo ao soltar
 ; InputAttack,x recebe: 0 soco fraco, 1 soco forte, 2 chute fraco, 3 chute forte, $FF nada.
 ; Consequencia: todo golpe sai atrasado (no minimo ate soltar o botao) e o forte se repete — ver docs/BUGS.md.
+; Ajuste FIX_EDGE_ATTACK (secao de ajustes no fim do arquivo): fraco na borda de subida + promocao para forte.
 ; <- jsr InputUpdate
 ; modos: luta
 InputButtons:
     lda JoyState,x                              ; E99A  B5 F2
     and #$80                                    ; E99C  29 80
-    beq L3F_E9B4                                ; E99E  F0 14
+    beq BtnAReleased                            ; E99E  F0 14
     ldy BtnAHold,x                              ; E9A0  B4 8A
     iny                                         ; E9A2  C8
-    beq L3F_E9CB                                ; E9A3  F0 26
+    beq BtnBCheck                               ; E9A3  F0 26
     sty BtnAHold,x                              ; E9A5  94 8A
     cpy #$15                                    ; E9A7  C0 15       passou de 20 quadros segurando: ignora
-    bcs L3F_E9CB                                ; E9A9  B0 20
+    bcs BtnBCheck                               ; E9A9  B0 20
     cpy #$07                                    ; E9AB  C0 07       menos de 7 quadros: ainda nao decide (espera soltar)
 
 .ifdef FIX_HEAVY_ONCE
 __alt_3F_E9AD:
-    bne L3F_E9CB                                ; era bcc: so quando o contador e' exatamente 7
+    bne BtnBCheck                               ; era bcc: so quando o contador e' exatamente 7
     .assert * - __alt_3F_E9AD <= $2, error, "bloco alt FIX_HEAVY_ONCE em $E9AD passou do tamanho"
     .res $2 - (* - __alt_3F_E9AD), $FF
 .else
-    bcc L3F_E9CB                                ; E9AD  90 1C
+    bcc BtnBCheck                               ; E9AD  90 1C       contador < 7: segue para o botao B sem emitir nada
 .endif
 
     lda #$01                                    ; E9AF  A9 01       7..20 quadros segurando: soco forte, todo quadro
     jmp InputSetAttack                          ; E9B1  4C FE E9
 
 
-L3F_E9B4:
-    ldy BtnAHold,x                              ; E9B4  B4 8A
-    beq L3F_E9CB                                ; E9B6  F0 13
+; modos: luta
+BtnAReleased:
+    ldy BtnAHold,x                              ; E9B4  B4 8A       A soltou: zera o contador do soco e emite fraco (se segurou <7) ou forte de novo
+    beq BtnBCheck                               ; E9B6  F0 13
     lda #$00                                    ; E9B8  A9 00
     sta BtnAHold,x                              ; E9BA  95 8A
     cpy #$15                                    ; E9BC  C0 15
-    bcs L3F_E9CB                                ; E9BE  B0 0B
-    lda #$00                                    ; E9C0  A9 00
+    bcs BtnBCheck                               ; E9BE  B0 0B
+EmitWeakPunch:
+    lda #$00                                    ; E9C0  A9 00       emissor do soco fraco (A=$00): saida da soltura rapida (<7 quadros)
     cpy #$07                                    ; E9C2  C0 07       soltou: <7 quadros = fraco (0), senao forte (1)
     bcc InputSetAttack                          ; E9C4  90 38
 
@@ -1746,39 +1808,42 @@ __alt_3F_E9C6:
     jmp InputSetAttack                          ; E9C8  4C FE E9
 
 
-L3F_E9CB:
-    lda JoyState,x                              ; E9CB  B5 F2
+; modos: luta
+BtnBCheck:
+    lda JoyState,x                              ; E9CB  B5 F2       processamento do botao B (chute); os casos "nada a fazer" do A caem aqui
     and #$40                                    ; E9CD  29 40
-    beq L3F_E9E5                                ; E9CF  F0 14
+    beq BtnBReleased                            ; E9CF  F0 14
     ldy BtnBHold,x                              ; E9D1  B4 8C
     iny                                         ; E9D3  C8
-    beq L3F_E9FC                                ; E9D4  F0 26
+    beq BtnNone                                 ; E9D4  F0 26
     sty BtnBHold,x                              ; E9D6  94 8C
     cpy #$15                                    ; E9D8  C0 15
-    bcs L3F_E9FC                                ; E9DA  B0 20
+    bcs BtnNone                                 ; E9DA  B0 20
     cpy #$07                                    ; E9DC  C0 07
 
 .ifdef FIX_HEAVY_ONCE
 __alt_3F_E9DE:
-    bne L3F_E9FC
+    bne BtnNone
     .assert * - __alt_3F_E9DE <= $2, error, "bloco alt FIX_HEAVY_ONCE em $E9DE passou do tamanho"
     .res $2 - (* - __alt_3F_E9DE), $FF
 .else
-    bcc L3F_E9FC                                ; E9DE  90 1C
+    bcc BtnNone                                 ; E9DE  90 1C
 .endif
 
     lda #$03                                    ; E9E0  A9 03
     jmp InputSetAttack                          ; E9E2  4C FE E9
 
 
-L3F_E9E5:
-    ldy BtnBHold,x                              ; E9E5  B4 8C
-    beq L3F_E9FC                                ; E9E7  F0 13
+; modos: luta
+BtnBReleased:
+    ldy BtnBHold,x                              ; E9E5  B4 8C       B soltou: zera o contador do chute e emite fraco/forte
+    beq BtnNone                                 ; E9E7  F0 13
     lda #$00                                    ; E9E9  A9 00
     sta BtnBHold,x                              ; E9EB  95 8C
     cpy #$15                                    ; E9ED  C0 15
-    bcs L3F_E9FC                                ; E9EF  B0 0B
-    lda #$02                                    ; E9F1  A9 02
+    bcs BtnNone                                 ; E9EF  B0 0B
+EmitWeakKick:
+    lda #$02                                    ; E9F1  A9 02       emissor do chute fraco (A=$02): saida da soltura rapida (<7 quadros)
     cpy #$07                                    ; E9F3  C0 07
     bcc InputSetAttack                          ; E9F5  90 07
 
@@ -1793,11 +1858,14 @@ __alt_3F_E9F7:
 
     jmp InputSetAttack                          ; E9F9  4C FE E9
 
+.endif
 
-L3F_E9FC:
-    lda #$FF                                    ; E9FC  A9 FF
 
-; <- jmp InputButtons, jmp L3F_E9B4, jmp L3F_E9CB, jmp L3F_E9E5
+; modos: luta
+BtnNone:
+    lda #$FF                                    ; E9FC  A9 FF       nenhum botao ativo: InputAttack = $FF
+
+; <- jmp InputButtons, jmp BtnAReleased, jmp BtnBCheck, jmp BtnBReleased
 ; modos: luta
 InputSetAttack:
     sta InputAttack,x                           ; E9FE  95 88
@@ -3843,9 +3911,18 @@ L3F_F6B2:
     sta zp_D7                                   ; F6C2  85 D7
     lda ram_0324,x                              ; F6C4  BD 24 03
     sta zp_D8                                   ; F6C7  85 D8
+
+.ifdef FIX_EDGE_ATTACK
+__alt_3F_F6C9:
+    jsr EdgeMarkHold
+    .assert * - __alt_3F_F6C9 <= $6, error, "bloco alt FIX_EDGE_ATTACK em $F6C9 passou do tamanho"
+    .res $6 - (* - __alt_3F_F6C9), $FF
+.else
     ldy #$15                                    ; F6C9  A0 15
     sty BtnAHold,x                              ; F6CB  94 8A
     sty BtnBHold,x                              ; F6CD  94 8C
+.endif
+
     lda InputAttack,x                           ; F6CF  B5 88
     asl a                                       ; F6D1  0A
     tay                                         ; F6D2  A8
@@ -4172,7 +4249,40 @@ FarCall_04AD:
     rts                                         ; 04B1  60
 .reloc
 
-    .res 804, $FF                               ; F949
+
+.ifdef FIX_EDGE_ATTACK
+__alt_3F_F949:
+EdgeMarkHold:
+    lda InputAttack,x                           ; 0/1 soco, 2/3 chute ($FF nao chega: bmi em F6BD)
+    cmp #$01
+    beq EdgeMarkStrong
+    cmp #$03
+    beq EdgeMarkStrong
+    cmp #$00
+    beq EdgeMarkA
+    cmp #$02
+    beq EdgeMarkB
+    rts
+EdgeMarkStrong:
+    ldy #$FF                                     ; forte despachado: desarma os dois contadores
+    sty BtnAHold,x                               ; (segurando: wrap do iny; soltando: cpy #$15)
+    sty BtnBHold,x
+    rts
+EdgeMarkA:
+    ldy #$01                                     ; fraco despachado: segue contando (promocao aos 7)
+    sty BtnAHold,x
+    rts
+EdgeMarkB:
+    ldy #$01
+    sty BtnBHold,x
+    rts
+    .assert * - __alt_3F_F949 <= $36, error, "bloco alt FIX_EDGE_ATTACK em $F949 passou do tamanho"
+    .res $36 - (* - __alt_3F_F949), $FF
+.else
+    .res 54, $FF                                ; F949
+.endif
+
+    .res 750, $FF                               ; F97F
 
 .ifdef FIX_SOFT_RESET
 __alt_3F_FC6D:
