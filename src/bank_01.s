@@ -20,8 +20,8 @@ D01_A012:
     .word D01_AF07                              ; A014  07 AF
     .word D01_ABBF                              ; A016  BF AB
     .word D01_AADF                              ; A018  DF AA
-D01_A01A:
-    .word D01_AF54                              ; A01A  54 AF
+RyuSpcTrans:
+    .word D01_AF54                              ; A01A  54 AF       6 ponteiros de transicao dos especiais do Ryu (ram_0326 aponta para ca): indexados por CmdMoveIdx*2, consumidos pelo InputDispatch
     .word D01_AFA1                              ; A01C  A1 AF
     .word D01_AFEE                              ; A01E  EE AF
     .word D01_B049                              ; A020  49 B0

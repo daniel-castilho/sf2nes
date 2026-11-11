@@ -67,18 +67,18 @@ D3F_E05E:
 D3F_E064:
     .byte $27,$27,$27                           ; E064
 CmdMotionTbl:
-    .byte $04                                   ; E067              sequencias dos golpes especiais, 4 bytes cada (bits do controle: 04 baixo, 01 frente, 02 tras, 08 cima, 80 A, 40 B)
+    .byte $04                                   ; E067              sequencias dos golpes especiais, 4 bytes por chave $00-$11 (bits do controle: 04 baixo, 01 frente, 02 tras, 08 cima, 80 A, 40 B; $00 encerra)
 D3F_E068:
-    .byte $01,$00,$00,$04,$01,$00,$00,$04,$01,$00,$00,$04,$01,$00,$00,$04; E068
+    .byte $01,$00,$00,$04,$01,$00,$00,$04,$01,$00,$00,$04,$01,$00,$00,$04; E068              CmdMotionTbl+1: lido em EB73 com o MESMO indice para ver o proximo byte da sequencia sem iny
     .byte $02,$00,$00,$04,$02,$00,$00,$01,$04,$01,$00,$01,$04,$01,$00,$02; E078
     .byte $01,$00,$00,$02,$01,$00,$00,$02,$01,$00,$00,$02,$01,$00,$00,$04; E088
     .byte $08,$00,$00,$04,$08,$00,$00,$80,$80,$80,$00,$40,$40,$40,$00,$01; E098
     .byte $04,$02,$08,$01,$00,$00,$00           ; E0A8
-D3F_E0AF:
-    .byte $00,$01,$02,$03,$00,$01,$02,$03,$00,$01,$02,$03,$00,$01,$00,$02; E0AF
+CmdKeyAttackTbl:
+    .byte $00,$01,$02,$03,$00,$01,$02,$03,$00,$01,$02,$03,$00,$01,$00,$02; E0AF              botao exigido por chave, 17 bytes ($00-$10): 0 soco fraco, 1 soco forte, 2 chute fraco, 3 chute forte
     .byte $03                                   ; E0BF
-D3F_E0C0:
-    .byte $02,$03,$06,$07,$04,$05,$FF,$0A,$0B,$08,$09,$0C,$0D,$FF; E0C0
+CmdKeyListRyu:
+    .byte $02,$03,$06,$07,$04,$05,$FF,$0A,$0B,$08,$09,$0C,$0D,$FF; E0C0              lista de especiais do Ryu (chaves, $FF = fim): hadouken ch $02/$03 (chute), shoryuken $06/$07 (chute), tatsumaki $04/$05 (soco); a POSICAO na lista vira CmdMoveIdx
 
 ; ------------------------------------------------------------------------------------------------
 ; MAQUINA DE ESTADOS DO LUTADOR (dirigida por dados; os dados ficam no banco FighterStateBank, em $A000).
@@ -1663,7 +1663,7 @@ DirCodeTbl:
 ; <- jsr FighterUpdate
 ; modos: intro do round, luta, fim do round
 InputClear:
-    lda #$04                                    ; E974  A9 04       zera a entrada do lutador (direcao neutra, sem golpe/hold)
+    lda #$04                                    ; E974  A9 04       zera a entrada do lutador (direcao neutra, sem golpe/hold); roda todo quadro fora da luta ativa (ScreenMode != 5 ou round ja decidido)
     sta InputDir,x                              ; E976  95 86
     lda #$FF                                    ; E978  A9 FF
     sta InputAttack,x                           ; E97A  95 88
@@ -1671,10 +1671,10 @@ InputClear:
     lda #$00                                    ; E97E  A9 00
     sta BtnAHold,x                              ; E980  95 8A
     sta BtnBHold,x                              ; E982  95 8C
-    sta zp_90,x                                 ; E984  95 90
-    sta zp_9E,x                                 ; E986  95 9E
-    sta zp_91,x                                 ; E988  95 91
-    sta zp_9F,x                                 ; E98A  95 9F
+    sta CmdMotionStep,x                         ; E984  95 90       zera o passo do comando 0 do reconhecedor (CmdMotionStep,x = entrada 0 da lista)
+    sta CmdMotionWin,x                          ; E986  95 9E       zera a janela do comando 0 (CmdMotionWin,x)
+    sta CmdMotionStep+1,x                       ; E988  95 91       estouro: CmdMotionStep+1,x NAO e' a entrada 1 (arrays intercalados) — atinge 1 byte do vizinho
+    sta CmdMotionWin+1,x                        ; E98A  95 9F       mesmo estouro na janela; entradas 1-5 nunca sao zeradas aqui, so expiram pela janela
     rts                                         ; E98C  60
 
 
@@ -1834,7 +1834,7 @@ L3F_EA1E:
 ; <- jmp InputUpdate
 ; modos: luta
 InputCommands:
-    lda ram_033E,x                              ; EA24  BD 3E 03    reconhecedor de comandos: percorre a lista de golpes especiais do personagem
+    lda ram_033E,x                              ; EA24  BD 3E 03    reconhecedor: zp_D7/D8 = lista de especiais do personagem (slot 8 da ficha, ram_033E/0340), zp_DA/zp_DB = JoyState/JoyPrev espelhados por FighterFlip, zp_DC = lutador, zp_D9 = posicao na lista
     sta zp_D7                                   ; EA27  85 D7
     lda ram_0340,x                              ; EA29  BD 40 03
     sta zp_D8                                   ; EA2C  85 D8
@@ -1864,193 +1864,197 @@ L3F_EA52:
 
 ; <- jmp InputCommands
 ; modos: luta
-L3F_EA58:
-    lda (zp_D7),y                               ; EA58  B1 D7       [le bancos $3F]
-    bmi L3F_EA73                                ; EA5A  30 17
+CmdWalkLoop:
+    lda (zp_D7),y                               ; EA58  B1 D7       [le bancos $3F] chave = lista[zp_D9], bit 7 = fim da lista ($FF); despacha CmdStep[chave] com Y = chave
+    bmi CmdWalkEnd                              ; EA5A  30 17
     tay                                         ; EA5C  A8
     jsr CmdStepDispatch                         ; EA5D  20 6A EA
-    inx                                         ; EA60  E8
+    inx                                         ; EA60  E8          x += 2 por entrada da lista: x = lutador + 2*posicao indexa os arrays intercalados CmdMotionStep/CmdMotionWin (par = P1, impar = P2)
     inx                                         ; EA61  E8
     ldy zp_D9                                   ; EA62  A4 D9
     iny                                         ; EA64  C8
     sty zp_D9                                   ; EA65  84 D9
-    jmp L3F_EA58                                ; EA67  4C 58 EA
+    jmp CmdWalkLoop                             ; EA67  4C 58 EA
 
 
 ; <- jsr InputCommands
 ; modos: luta
 CmdStepDispatch:
-    lda CmdStepHi,y                             ; EA6A  B9 89 EA    [idx $02..$07]
+    lda CmdStepHi,y                             ; EA6A  B9 89 EA    [idx $02..$07] salta para CmdStep[chave] via CmdStepLo/CmdStepHi (endereco-1 + RTS), Y = chave $00-$12
     pha                                         ; EA6D  48
     lda CmdStepLo,y                             ; EA6E  B9 76 EA    [idx $02..$07]
     pha                                         ; EA71  48
     rts                                         ; EA72  60
 
 
-L3F_EA73:
-    ldx zp_DC                                   ; EA73  A6 DC
+; modos: luta
+CmdWalkEnd:
+    ldx zp_DC                                   ; EA73  A6 DC       fim da lista: recupera x = lutador (zp_DC) e retorna
     rts                                         ; EA75  60
 
 CmdStepLo:
-    .byte <(L3F_EB4B-1)                         ; EA76  4A
-    .byte <(L3F_EB4B-1)                         ; EA77  4A
-    .byte <(L3F_EB4B-1)                         ; EA78  4A
-    .byte <(L3F_EB4B-1)                         ; EA79  4A
-    .byte <(L3F_EB4B-1)                         ; EA7A  4A
-    .byte <(L3F_EB4B-1)                         ; EA7B  4A
-    .byte <(L3F_EB4B-1)                         ; EA7C  4A
-    .byte <(L3F_EB4B-1)                         ; EA7D  4A
-    .byte <(L3F_EA9C-1)                         ; EA7E  9B
-    .byte <(L3F_EA9C-1)                         ; EA7F  9B
-    .byte <(L3F_EA9C-1)                         ; EA80  9B
-    .byte <(L3F_EA9C-1)                         ; EA81  9B
-    .byte <(L3F_EA9C-1)                         ; EA82  9B
-    .byte <(L3F_EA9C-1)                         ; EA83  9B
-    .byte <(L3F_EAFD-1)                         ; EA84  FC
-    .byte <(L3F_EAFD-1)                         ; EA85  FC
-    .byte <(L3F_EB4B-1)                         ; EA86  4A
-    .byte <(L3F_EB32-1)                         ; EA87  31
-    .byte <(L3F_EB4A-1)                         ; EA88  49
+    .byte <(CmdStepMotion-1)                    ; EA76  4A
+    .byte <(CmdStepMotion-1)                    ; EA77  4A
+    .byte <(CmdStepMotion-1)                    ; EA78  4A
+    .byte <(CmdStepMotion-1)                    ; EA79  4A
+    .byte <(CmdStepMotion-1)                    ; EA7A  4A
+    .byte <(CmdStepMotion-1)                    ; EA7B  4A
+    .byte <(CmdStepMotion-1)                    ; EA7C  4A
+    .byte <(CmdStepMotion-1)                    ; EA7D  4A
+    .byte <(CmdStepCharge-1)                    ; EA7E  9B
+    .byte <(CmdStepCharge-1)                    ; EA7F  9B
+    .byte <(CmdStepCharge-1)                    ; EA80  9B
+    .byte <(CmdStepCharge-1)                    ; EA81  9B
+    .byte <(CmdStepCharge-1)                    ; EA82  9B
+    .byte <(CmdStepCharge-1)                    ; EA83  9B
+    .byte <(CmdStepMash-1)                      ; EA84  FC
+    .byte <(CmdStepMash-1)                      ; EA85  FC
+    .byte <(CmdStepMotion-1)                    ; EA86  4A
+    .byte <(CmdStepBothBtn-1)                   ; EA87  31
+    .byte <(CmdStepNone-1)                      ; EA88  49
 CmdStepHi:
-    .byte >(L3F_EB4B-1)                         ; EA89  EB
-    .byte >(L3F_EB4B-1)                         ; EA8A  EB
-    .byte >(L3F_EB4B-1)                         ; EA8B  EB
-    .byte >(L3F_EB4B-1)                         ; EA8C  EB
-    .byte >(L3F_EB4B-1)                         ; EA8D  EB
-    .byte >(L3F_EB4B-1)                         ; EA8E  EB
-    .byte >(L3F_EB4B-1)                         ; EA8F  EB
-    .byte >(L3F_EB4B-1)                         ; EA90  EB
-    .byte >(L3F_EA9C-1)                         ; EA91  EA
-    .byte >(L3F_EA9C-1)                         ; EA92  EA
-    .byte >(L3F_EA9C-1)                         ; EA93  EA
-    .byte >(L3F_EA9C-1)                         ; EA94  EA
-    .byte >(L3F_EA9C-1)                         ; EA95  EA
-    .byte >(L3F_EA9C-1)                         ; EA96  EA
-    .byte >(L3F_EAFD-1)                         ; EA97  EA
-    .byte >(L3F_EAFD-1)                         ; EA98  EA
-    .byte >(L3F_EB4B-1)                         ; EA99  EB
-    .byte >(L3F_EB32-1)                         ; EA9A  EB
-    .byte >(L3F_EB4A-1)                         ; EA9B  EB
+    .byte >(CmdStepMotion-1)                    ; EA89  EB          19 chaves: $00-$07 e $10 movimento (EB4B), $08-$0D carga (EA9C), $0E/$0F 3x botao (EAFD), $11 A+B juntos (EB32), $12 vazio (EB4A)
+    .byte >(CmdStepMotion-1)                    ; EA8A  EB
+    .byte >(CmdStepMotion-1)                    ; EA8B  EB
+    .byte >(CmdStepMotion-1)                    ; EA8C  EB
+    .byte >(CmdStepMotion-1)                    ; EA8D  EB
+    .byte >(CmdStepMotion-1)                    ; EA8E  EB
+    .byte >(CmdStepMotion-1)                    ; EA8F  EB
+    .byte >(CmdStepMotion-1)                    ; EA90  EB
+    .byte >(CmdStepCharge-1)                    ; EA91  EA
+    .byte >(CmdStepCharge-1)                    ; EA92  EA
+    .byte >(CmdStepCharge-1)                    ; EA93  EA
+    .byte >(CmdStepCharge-1)                    ; EA94  EA
+    .byte >(CmdStepCharge-1)                    ; EA95  EA
+    .byte >(CmdStepCharge-1)                    ; EA96  EA
+    .byte >(CmdStepMash-1)                      ; EA97  EA
+    .byte >(CmdStepMash-1)                      ; EA98  EA
+    .byte >(CmdStepMotion-1)                    ; EA99  EB
+    .byte >(CmdStepBothBtn-1)                   ; EA9A  EB
+    .byte >(CmdStepNone-1)                      ; EA9B  EB
 
+; ------------------------------------------------------------------------------------------------
+; CARGA, 3 fases: segurar a direcao por $3C (60) quadros, soltar apertando a direcao de liberacao
+; (byte seguinte da sequencia) numa janela de 8 quadros, entao o botao exigido na mesma janela. (nt)
 ; <- tabela CmdStepLo
-L3F_EA9C:
+CmdStepCharge:
     tya                                         ; EA9C  98          (nt)
     asl a                                       ; EA9D  0A          (nt)
     asl a                                       ; EA9E  0A          (nt)
-    adc zp_90,x                                 ; EA9F  75 90       (nt)
+    adc CmdMotionStep,x                         ; EA9F  75 90       (nt)
     tay                                         ; EAA1  A8          (nt)
-    lda zp_90,x                                 ; EAA2  B5 90       (nt)
-    beq L3F_EAAD                                ; EAA4  F0 07       (nt)
+    lda CmdMotionStep,x                         ; EAA2  B5 90       (nt)
+    beq CmdChargeHold                           ; EAA4  F0 07       (nt)
     cmp #$01                                    ; EAA6  C9 01       (nt)
-    beq L3F_EAD4                                ; EAA8  F0 2A       (nt)
-    jmp L3F_EAE1                                ; EAAA  4C E1 EA    (nt)
+    beq CmdChargeRelease                        ; EAA8  F0 2A       (nt)
+    jmp CmdChargeButton                         ; EAAA  4C E1 EA    (nt)
 
 
-L3F_EAAD:
-    lda CmdMotionTbl,y                          ; EAAD  B9 67 E0    (nt)
+CmdChargeHold:
+    lda CmdMotionTbl,y                          ; EAAD  B9 67 E0    fase 0: direcao de carga apertada -> conta quadros (satura em $3C); soltou antes de 60 -> zera (nt)
     and zp_DA                                   ; EAB0  25 DA       (nt)
-    bne L3F_EACB                                ; EAB2  D0 17       (nt)
-    lda zp_9E,x                                 ; EAB4  B5 9E       (nt)
+    bne CmdChargeTick                           ; EAB2  D0 17       (nt)
+    lda CmdMotionWin,x                          ; EAB4  B5 9E       (nt)
     cmp #$3C                                    ; EAB6  C9 3C       (nt)
-    bcc L3F_EAC4                                ; EAB8  90 0A       (nt)
+    bcc CmdChargeReset                          ; EAB8  90 0A       (nt)
     lda #$08                                    ; EABA  A9 08       (nt)
-    sta zp_9E,x                                 ; EABC  95 9E       (nt)
-    inc zp_90,x                                 ; EABE  F6 90       (nt)
+    sta CmdMotionWin,x                          ; EABC  95 9E       (nt)
+    inc CmdMotionStep,x                         ; EABE  F6 90       (nt)
     iny                                         ; EAC0  C8          (nt)
-    jmp L3F_EAD4                                ; EAC1  4C D4 EA    (nt)
+    jmp CmdChargeRelease                        ; EAC1  4C D4 EA    (nt)
 
 
-; <- jmp L3F_EAD4
-L3F_EAC4:
-    lda #$00                                    ; EAC4  A9 00       (nt)
-    sta zp_90,x                                 ; EAC6  95 90       (nt)
-    sta zp_9E,x                                 ; EAC8  95 9E       (nt)
+; <- jmp CmdChargeRelease
+CmdChargeReset:
+    lda #$00                                    ; EAC4  A9 00       zera o passo e a janela do comando corrente (nt)
+    sta CmdMotionStep,x                         ; EAC6  95 90       (nt)
+    sta CmdMotionWin,x                          ; EAC8  95 9E       (nt)
     rts                                         ; EACA  60          (nt)
 
 
-L3F_EACB:
-    inc zp_9E,x                                 ; EACB  F6 9E       (nt)
+CmdChargeTick:
+    inc CmdMotionWin,x                          ; EACB  F6 9E       segurando: contador de quadros, satura em $3C (60) (nt)
     bne L3F_EAD3                                ; EACD  D0 04       (nt)
     lda #$3C                                    ; EACF  A9 3C       (nt)
-    sta zp_9E,x                                 ; EAD1  95 9E       (nt)
+    sta CmdMotionWin,x                          ; EAD1  95 9E       (nt)
 L3F_EAD3:
     rts                                         ; EAD3  60          (nt)
 
 
-; <- jmp L3F_EAAD
-L3F_EAD4:
-    lda CmdMotionTbl,y                          ; EAD4  B9 67 E0    (nt)
+; <- jmp CmdChargeHold
+CmdChargeRelease:
+    lda CmdMotionTbl,y                          ; EAD4  B9 67 E0    fase 1: direcao de liberacao apertada numa janela de 8 quadros (EAF8 desconta a cada erro) (nt)
     and zp_DA                                   ; EAD7  25 DA       (nt)
-    beq L3F_EAF8                                ; EAD9  F0 1D       (nt)
+    beq CmdChargeWinTick                        ; EAD9  F0 1D       (nt)
     lda #$08                                    ; EADB  A9 08       (nt)
-    sta zp_9E,x                                 ; EADD  95 9E       (nt)
-    inc zp_90,x                                 ; EADF  F6 90       (nt)
+    sta CmdMotionWin,x                          ; EADD  95 9E       (nt)
+    inc CmdMotionStep,x                         ; EADF  F6 90       (nt)
 
-; <- jmp L3F_EA9C
-L3F_EAE1:
-    ldy zp_D9                                   ; EAE1  A4 D9       (nt)
+; <- jmp CmdStepCharge
+CmdChargeButton:
+    ldy zp_D9                                   ; EAE1  A4 D9       fase 2: botao exigido (CmdKeyAttackTbl[chave] == InputAttack) -> CmdMoveIdx[lutador] = posicao na lista (nt)
     lda (zp_D7),y                               ; EAE3  B1 D7       (nt)
     tay                                         ; EAE5  A8          (nt)
-    lda D3F_E0AF,y                              ; EAE6  B9 AF E0    (nt)
+    lda CmdKeyAttackTbl,y                       ; EAE6  B9 AF E0    (nt)
     ldy zp_DC                                   ; EAE9  A4 DC       (nt)
     cmp a:InputAttack,y                         ; EAEB  D9 88 00    (nt)
-    bne L3F_EAF8                                ; EAEE  D0 08       (nt)
+    bne CmdChargeWinTick                        ; EAEE  D0 08       (nt)
     lda zp_D9                                   ; EAF0  A5 D9       (nt)
     sta a:CmdMoveIdx,y                          ; EAF2  99 8E 00    (nt)
-    jmp L3F_EAC4                                ; EAF5  4C C4 EA    (nt)
+    jmp CmdChargeReset                          ; EAF5  4C C4 EA    (nt)
 
 
-L3F_EAF8:
-    dec zp_9E,x                                 ; EAF8  D6 9E       (nt)
-    bmi L3F_EAC4                                ; EAFA  30 C8       (nt)
+CmdChargeWinTick:
+    dec CmdMotionWin,x                          ; EAF8  D6 9E       janela expirou (< 0) -> zera o comando (nt)
+    bmi CmdChargeReset                          ; EAFA  30 C8       (nt)
     rts                                         ; EAFC  60          (nt)
 
 
 ; <- tabela CmdStepLo
-L3F_EAFD:
-    lda D3F_E0AF,y                              ; EAFD  B9 AF E0    (nt)
+CmdStepMash:
+    lda CmdKeyAttackTbl,y                       ; EAFD  B9 AF E0    3x o MESMO botao (CmdKeyAttackTbl[chave] == InputAttack), intervalos de ate 8 quadros. (nt) (nt)
     ldy zp_DC                                   ; EB00  A4 DC       (nt)
     cmp a:InputAttack,y                         ; EB02  D9 88 00    (nt)
-    beq L3F_EB0C                                ; EB05  F0 05       (nt)
-    lda zp_90,x                                 ; EB07  B5 90       (nt)
-    bne L3F_EB28                                ; EB09  D0 1D       (nt)
+    beq CmdMashCount                            ; EB05  F0 05       (nt)
+    lda CmdMotionStep,x                         ; EB07  B5 90       (nt)
+    bne CmdMashGap                              ; EB09  D0 1D       (nt)
     rts                                         ; EB0B  60          (nt)
 
 
-L3F_EB0C:
-    ldy zp_90,x                                 ; EB0C  B4 90       (nt)
+CmdMashCount:
+    ldy CmdMotionStep,x                         ; EB0C  B4 90       aperto certo: conta (1..2), zera o intervalo (nt)
     iny                                         ; EB0E  C8          (nt)
     cpy #$03                                    ; EB0F  C0 03       (nt)
-    bcs L3F_EB1A                                ; EB11  B0 07       (nt)
-    sty zp_90,x                                 ; EB13  94 90       (nt)
+    bcs CmdMashDone                             ; EB11  B0 07       (nt)
+    sty CmdMotionStep,x                         ; EB13  94 90       (nt)
     lda #$00                                    ; EB15  A9 00       (nt)
-    sta zp_9E,x                                 ; EB17  95 9E       (nt)
+    sta CmdMotionWin,x                          ; EB17  95 9E       (nt)
     rts                                         ; EB19  60          (nt)
 
 
-L3F_EB1A:
-    lda zp_D9                                   ; EB1A  A5 D9       (nt)
+CmdMashDone:
+    lda zp_D9                                   ; EB1A  A5 D9       3o aperto -> CmdMoveIdx[lutador] = posicao na lista (nt)
     ldy zp_DC                                   ; EB1C  A4 DC       (nt)
     sta a:CmdMoveIdx,y                          ; EB1E  99 8E 00    (nt)
-L3F_EB21:
+CmdMashReset:
     lda #$00                                    ; EB21  A9 00       (nt)
-    sta zp_90,x                                 ; EB23  95 90       (nt)
-    sta zp_9E,x                                 ; EB25  95 9E       (nt)
+    sta CmdMotionStep,x                         ; EB23  95 90       (nt)
+    sta CmdMotionWin,x                          ; EB25  95 9E       (nt)
     rts                                         ; EB27  60          (nt)
 
 
-L3F_EB28:
-    ldy zp_9E,x                                 ; EB28  B4 9E       (nt)
+CmdMashGap:
+    ldy CmdMotionWin,x                          ; EB28  B4 9E       intervalo entre apertos passou de 8 -> zera (nt)
     iny                                         ; EB2A  C8          (nt)
     cpy #$08                                    ; EB2B  C0 08       (nt)
-    bcs L3F_EB21                                ; EB2D  B0 F2       (nt)
-    sty zp_9E,x                                 ; EB2F  94 9E       (nt)
+    bcs CmdMashReset                            ; EB2D  B0 F2       (nt)
+    sty CmdMotionWin,x                          ; EB2F  94 9E       (nt)
     rts                                         ; EB31  60          (nt)
 
 
 ; <- tabela CmdStepLo
-L3F_EB32:
-    lda zp_DA                                   ; EB32  A5 DA       (nt)
+CmdStepBothBtn:
+    lda zp_DA                                   ; EB32  A5 DA       A+B apertados juntos na borda de subida (agora $C0, antes nao) -> CmdMoveIdx[lutador] = posicao na lista. (nt) (nt)
     and #$C0                                    ; EB34  29 C0       (nt)
     cmp #$C0                                    ; EB36  C9 C0       (nt)
     bne L3F_EB49                                ; EB38  D0 0F       (nt)
@@ -2066,67 +2070,73 @@ L3F_EB49:
 
 
 ; <- tabela CmdStepLo
-L3F_EB4A:
-    rts                                         ; EB4A  60          (nt)
+CmdStepNone:
+    rts                                         ; EB4A  60          chave $12: lugar vago; seus 4 bytes de sequencia (E0AF-E0B2) sao a CmdKeyAttackTbl — inofensivo (nt)
 
 
+; ------------------------------------------------------------------------------------------------
+; SEQUENCIA DE DIRECOES: Y = chave*4 + passo. Um passo vale quando o bit exigido esta apertado E
+; alguma direcao e' NOVA (apertada agora, ausente no quadro anterior) — segurando parado nao avanca.
+; Janela de $0C (12) quadros entre passos; byte $00 encerra a sequencia -> fase do botao (outras 12).
 ; <- tabela CmdStepLo
 ; modos: luta
-L3F_EB4B:
+CmdStepMotion:
     tya                                         ; EB4B  98
     asl a                                       ; EB4C  0A
     asl a                                       ; EB4D  0A
-    adc zp_90,x                                 ; EB4E  75 90
+    adc CmdMotionStep,x                         ; EB4E  75 90
     tay                                         ; EB50  A8
     lda CmdMotionTbl,y                          ; EB51  B9 67 E0    [idx $08..$1F]
-    beq L3F_EB7F                                ; EB54  F0 29
+    beq CmdMotionBtnWin                         ; EB54  F0 29
     lda zp_DA                                   ; EB56  A5 DA
     and #$0F                                    ; EB58  29 0F
     sta zp_DA                                   ; EB5A  85 DA
     and zp_DB                                   ; EB5C  25 DB
     cmp zp_DA                                   ; EB5E  C5 DA
-    beq L3F_EB69                                ; EB60  F0 07
+    beq CmdMotionWinTick                        ; EB60  F0 07
     lda zp_DA                                   ; EB62  A5 DA
     and CmdMotionTbl,y                          ; EB64  39 67 E0    [idx $08..$1E]
-    bne L3F_EB73                                ; EB67  D0 0A
-L3F_EB69:
-    ldy zp_9E,x                                 ; EB69  B4 9E
+    bne CmdMotionAdvance                        ; EB67  D0 0A
+CmdMotionWinTick:
+    ldy CmdMotionWin,x                          ; EB69  B4 9E       nenhuma direcao nova / bit exigido solto: conta a janela; passou de 12 -> zera o comando
     iny                                         ; EB6B  C8
     cpy #$0C                                    ; EB6C  C0 0C
-    bcs L3F_EB9C                                ; EB6E  B0 2C
-    sty zp_9E,x                                 ; EB70  94 9E
+    bcs CmdMotionReset                          ; EB6E  B0 2C
+    sty CmdMotionWin,x                          ; EB70  94 9E
     rts                                         ; EB72  60
 
 
-L3F_EB73:
-    lda #$00                                    ; EB73  A9 00
-    sta zp_9E,x                                 ; EB75  95 9E
-    inc zp_90,x                                 ; EB77  F6 90
+; modos: luta
+CmdMotionAdvance:
+    lda #$00                                    ; EB73  A9 00       passo cumprido: zera a janela, avanca o passo; D3F_E068,y (MESMO y) le o byte SEGUINTE — $0 cai ja na fase do botao
+    sta CmdMotionWin,x                          ; EB75  95 9E
+    inc CmdMotionStep,x                         ; EB77  F6 90
     lda D3F_E068,y                              ; EB79  B9 68 E0    [idx $08..$1E]
-    beq L3F_EB88                                ; EB7C  F0 0A
+    beq CmdMotionButton                         ; EB7C  F0 0A
     rts                                         ; EB7E  60
 
 
-L3F_EB7F:
-    ldy zp_9E,x                                 ; EB7F  B4 9E
+; modos: luta
+CmdMotionBtnWin:
+    ldy CmdMotionWin,x                          ; EB7F  B4 9E       fase do botao: mesma janela de 12 quadros
     iny                                         ; EB81  C8
     cpy #$0C                                    ; EB82  C0 0C
-    bcs L3F_EB9C                                ; EB84  B0 16
-    sty zp_9E,x                                 ; EB86  94 9E
-L3F_EB88:
-    ldy zp_D9                                   ; EB88  A4 D9
+    bcs CmdMotionReset                          ; EB84  B0 16
+    sty CmdMotionWin,x                          ; EB86  94 9E
+CmdMotionButton:
+    ldy zp_D9                                   ; EB88  A4 D9       botao exigido (CmdKeyAttackTbl[chave] == InputAttack) -> CmdMoveIdx[lutador] = posicao na lista; zera o comando
     lda (zp_D7),y                               ; EB8A  B1 D7       [le bancos $3F]
     tay                                         ; EB8C  A8
-    lda D3F_E0AF,y                              ; EB8D  B9 AF E0    [idx $02..$07]
+    lda CmdKeyAttackTbl,y                       ; EB8D  B9 AF E0    [idx $02..$07]
     ldy zp_DC                                   ; EB90  A4 DC
     cmp a:InputAttack,y                         ; EB92  D9 88 00
     bne L3F_EBA2                                ; EB95  D0 0B
     lda zp_D9                                   ; EB97  A5 D9
     sta a:CmdMoveIdx,y                          ; EB99  99 8E 00
-L3F_EB9C:
+CmdMotionReset:
     lda #$00                                    ; EB9C  A9 00
-    sta zp_90,x                                 ; EB9E  95 90
-    sta zp_9E,x                                 ; EBA0  95 9E
+    sta CmdMotionStep,x                         ; EB9E  95 90
+    sta CmdMotionWin,x                          ; EBA0  95 9E
 L3F_EBA2:
     rts                                         ; EBA2  60
 

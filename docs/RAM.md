@@ -32,7 +32,9 @@ screenshots, mais leitura do código que as usa. Para confirmar uma hipótese, f
 | `$69` / `$6B` | `AiScriptPtrLo/Hi` | roteiro de IA em execução |
 
 Ainda sem nome, mas claramente por lutador (pares): `$12`, `$16`, `$1C`, `$28`, `$2E`, `$38`, `$3A`–`$3F`, `$44`–`$63`,
-`$6D`–`$A9` (inclui o estado do reconhecedor de comandos: `$90`, `$9E`…), e `$0300`–`$0345` (ficha carregada do banco `$3C`).
+`$6D`–`$A9` (inclui o estado do reconhecedor de comandos: `CmdMotionStep` `$90`–`$9B` e `CmdMotionWin`
+`$9E`–`$A9`, 6 entradas × 2 lutadores intercaladas — §13 do `docs/FORMATOS.md`), e `$0300`–`$0345`
+(ficha carregada do banco `$3C`).
 
 ## Sistema
 

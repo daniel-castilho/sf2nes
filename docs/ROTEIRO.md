@@ -40,8 +40,8 @@ Programação: semanas. Conteúdo de um elenco inteiro: muito mais que isso. Pla
 - [x] **As 12 condições de transição** (`StateCond00`–`0B`, `3F:E189`–`E296`) — §4
 - [x] **Os bytes do quadro** (+5…+11): efeito, dano, tipo de golpe, flags, movimento — §6–§8
 - [x] **Caixas de colisão** (`00:91C1`…) e as rotinas de acerto/dano — §10/§11
-- [x] **O reconhecedor de comandos** e o `InputDispatch`/`GuardRedirect` — §13 (vários tratadores
-  `CmdStep*` ainda `(nt)`; aprofundar na Etapa 2, ao corrigir o atraso dos especiais)
+- [x] **O reconhecedor de comandos** e o `InputDispatch`/`GuardRedirect` — §13 (fechado na fase 2.0
+  da Etapa 2: os 5 tratadores `CmdStep*` decodificados; carga/3×botão/A+B seguem `(nt)` no trace)
 - [x] **Os 18 opcodes dos roteiros de IA** e a lógica de `RyuAiThink` — §14
 - [x] As oito tabelas do início do banco de estados (`$A000`–`$A0AF`) — §1/§13
 - [x] O resto: projétil (hadouken) — §12 — e física do pulo (§8, integração de `VelY`); HUD e
@@ -56,12 +56,24 @@ leitura não é garantida). A parte "nenhum rótulo `L3F_xxxx`" não fechou: sob
 
 ### Etapa 2 — corrigir e destravar o que já existe
 
-- [ ] comandos: disparar na borda de subida do botão (ver `docs/BUGS.md`, item 2)
-- [ ] seletor de dificuldade (`AiLevel`) e uma IA menos mecânica
-- [ ] **modo versus**: o motor já funciona com dois humanos (`-D MODE_VERSUS`, testado — ver `docs/BUGS.md`).
-  Falta a interface: escolha 1P/2P ou "P2 aperta START para entrar", e seleção de lutador para o P2.
-- [ ] fluxo de jogo: depois da vitória, próximo adversário em vez de voltar ao aviso; tela de derrota/continue
-- [ ] frase do vencedor correta por personagem (as dez já estão no ROM)
+Decidido: as 4 decisões abaixo, tudo em blocos `alt`/`FIXDEFS` (opt-in) — o caminho padrão segue byte a
+byte idêntico; Ken e conteúdo de personagem ficam para a Etapa 3; **sem testes nesta etapa** (a
+validação fica para depois, registrada como pendência, não como critério).
+
+- [x] **2.0** documentar o reconhecedor de comandos por inteiro — §13: os 5 tratadores `CmdStep*`,
+  `CmdMotionTbl`/`CmdKeyAttackTbl`/listas de chaves, estado intercalado `CmdMotionStep`/`CmdMotionWin`,
+  consumo no `InputDispatch`
+- [ ] **2.1** comandos: golpe na borda de subida do botão + promoção fraco→forte (ver `docs/BUGS.md`) —
+  depende da 2.0
+- [ ] **2.2** dificuldade: SELECT na tela de seleção alterna Fácil/Normal/Difícil (`AiLevel` 2/4/7,
+  padrão 4) + ler/documentar a IA — depende da 2.0
+- [ ] **2.3** versus: P2 entra com START na tela de seleção, HUD "PRESS START" → "P2", P2 travado no
+  Ryu (sem seleção de personagem para o P2) — o motor em si já funciona com dois humanos
+  (`-D MODE_VERSUS`, testado; ver `docs/BUGS.md`)
+- [ ] **2.4** fim de partida: frase do vencedor → volta ao título (hoje volta ao aviso de demo)
+
+Fora do escopo desta etapa (ficam para depois): IA menos mecânica além do seletor de dificuldade,
+próximo adversário/tela de continue, frase do vencedor por personagem.
 
 ### Etapa 3 — segundo lutador (Ken)
 

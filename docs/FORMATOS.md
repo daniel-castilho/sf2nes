@@ -36,13 +36,13 @@ na RAM (`ram_031E`–`ram_0344`), lida pelo motor sem tocar no banco `$3C` de no
 |---|---|---|---|
 | `$8000`/`$800A` | `ram_031E` | `$A000` | estados por **direção** (9 entradas) |
 | `$8014`/`$801E` | `ram_0322` | `$A012` | estados por **botão** (4) |
-| `$8028`/`$8032` | `ram_0326` | `$A01A` | **golpes especiais** (6 no Ryu) |
+| `$8028`/`$8032` | `ram_0326` | `$A01A` (`RyuSpcTrans`) | **golpes especiais** (6 no Ryu) |
 | `$803C`/`$8046` | `ram_032A` | `$A026` | **defesas** (12) |
 | `$8050`/`$805A` | `ram_032E` | `$A03E` | reação de dano **em pé** (12) |
 | `$8064`/`$806E` | `ram_0336` | `$A056` | reação de dano **agachado** (12) |
 | `$8078`/`$8082` | `ram_0332` | `$A06E` | reação de dano **neutra** (12) |
 | `$808C`/`$8096` | `ram_033A` | `$A086` | **agarrões** (12) |
-| `$80A0`/`$80AA` | `ram_033E` | fora do banco de estados | lista de especiais do reconhecedor (`3F:E0C0`) |
+| `$80A0`/`$80AA` | `ram_033E` | fora do banco de estados | lista de especiais do reconhecedor (`CmdKeyListRyu`, `3F:E0C0`) |
 | `$80B4`/`$80BE` | `ram_0342` | fora do banco de estados | tabela de roteiros de IA (`00:8E72`) |
 
 | Tabela de bytes | Copiado para | Papel |
@@ -460,20 +460,53 @@ atual **preservando o ponto da animação**: `FramePtr = NextPtr + (FramePtr −
 flags (+7) e classe (+5) do nó, zera o pendente e restaura o timer — a defesa entra no mesmo
 quadro da animação de guarda.
 
-**Reconhecedor de especiais** (`InputCommands` + 19 tratadores `CmdStep*`, `3F:EA9C`–`$EBxx`;
-vários `(nt)` — aprofundar na fase de comandos):
+**Reconhecedor de especiais** (`InputCommands`, `3F:EA24`) — a ponte "movimento no controle → índice
+de golpe". A cada quadro de luta, para cada lutador humano:
 
-* `CmdMotionTbl` (`3F:E067`): 16 golpes × 4 bytes, sequência de bits de direção/botão — `$04`
-  baixo, `$01` frente, `$02` trás, `$08` cima, `$80` A, `$40` B; `$00` completa a sequência. Sequências
-  no ROM: `04 01` ×4 (↓→), `04 02` ×2 (↓←), `01 04 01` ×2 (→↓→), `02 01` ×4 (←→, carga),
-  `04 08` ×2 (↓↑, carga), `80 80 80`, `40 40 40` (botão repetido).
-* `D3F_E0AF` (16 bytes): **botão exigido** por índice de golpe — `00 01 02 03`×3 (índices 0–11;
-  0/1 soco, 2/3 chute) e `00 01 00 02` (índices 12–15; a sequência de 3×A exige soco fraco e a
-  de 3×B, chute fraco).
-* Lista de especiais do personagem (`3F:E0C0`, terminada em `$FF`): cada byte é um índice em
-  `CmdMotionTbl`; a **posição na lista** vira `CmdMoveIdx` → tabela `ram_0326`. Ryu:
-  `02 03 06 07 04 05 FF` = ↓→+chute (fraco/forte) = hadouken, →↓→+chute = shoryuken,
-  ↓←+soco = tatsumaki.
+1. **Caminhada** (`CmdWalkLoop`): percorre a lista de especiais do personagem (slot 8 da ficha, copiada
+   para `ram_033E`/`ram_0340`); cada byte é uma **chave** ($00–$12), bit 7 (`$FF`) termina. `JoyState`/
+   `JoyPrev` são espelhados por `FighterFlip` (bits frente/trás trocados) e a chave despacha
+   `CmdStep[chave]` pela tabela dividida `CmdStepLo`/`CmdStepHi` (truque do RTS), com `Y = chave`. O
+   `inx; inx` por entrada faz `x = lutador + 2×posição`.
+2. **Estado por entrada**: cada entrada da lista tem passo e janela próprios, nos arrays intercalados
+   `CmdMotionStep` (`$90`–`$9B`) e `CmdMotionWin` (`$9E`–`$A9`), indexados por `lutador + 2×posição`
+   (P1 usa os bytes pares, P2 os ímpares). São 12 bytes: no máximo **6 especiais por personagem** —
+   uma lista maior pisaria no estado do outro lutador.
+3. **Reconhecido**: o tratador que completa grava `CmdMoveIdx[lutador] = posição na lista`; o
+   `InputDispatch` (flag bit 0 do quadro, acima) vira transição de estado via `RyuSpcTrans` (`01:A01A`,
+   apontada por `ram_0326`) e **consome** o índice.
+
+Os cinco estilos de tratador (`(nt)` = lido do código; o trace só executou o de movimento):
+
+| Chaves | Tratador | Regra |
+|---|---|---|
+| `$00`–`$07`, `$10` | `CmdStepMotion` (`EB4B`) | sequência de direções (`CmdMotionTbl[chave×4+passo]`); um passo vale quando o bit exigido está apertado **e** alguma direção é nova (não estava no quadro anterior) — segurando parado não avança; janela de 12 quadros entre passos; o byte `$00` encerra e começa a fase do botão (outras 12), exigindo `InputAttack == CmdKeyAttackTbl[chave]` |
+| `$08`–`$0D` | `CmdStepCharge` (`EA9C`) | carga: segurar a direção ≥ 60 quadros (contador satura em `$3C`), soltar apertando a direção de liberação (byte seguinte da sequência) num prazo de 8 quadros, depois o botão no mesmo prazo |
+| `$0E`/`$0F` | `CmdStepMash` (`EAFD`) | apertar o mesmo botão (`CmdKeyAttackTbl[chave] == InputAttack`) 3×, intervalos ≤ 8 quadros |
+| `$11` | `CmdStepBothBtn` (`EB32`) | A+B apertados juntos na borda de subida |
+| `$12` | `CmdStepNone` (`EB4A`) | vazio — lugar vago na tabela |
+
+* `CmdMotionTbl` (`3F:E067`): 19 chaves ($00–$12) × 4 bytes — bits `$04` baixo, `$01` frente, `$02`
+  trás, `$08` cima, `$80` A, `$40` B; `$00` encerra. Sequências: `04 01` ×4 (↓→), `04 02` ×2 (↓←),
+  `01 04 01` ×2 (→↓→), `02 01` ×4 (carga ← … →), `04 08` ×2 (carga ↓ … ↑), `80 80 80` (3×A),
+  `40 40 40` (3×B), `01 04 02 08` (→↓←↑). `CmdMotionAdvance` (`EB73`) lê `CmdMotionTbl+1` com o
+  mesmo índice para ver o byte seguinte sem `iny`. Os 4 bytes "da chave `$12`" são a própria
+  `CmdKeyAttackTbl` — inofensivo, o tratador é só `rts`.
+* `CmdKeyAttackTbl` (`3F:E0AF`, **17 bytes** = chaves `$00`–`$10`): **botão exigido** — `00 01 02 03`
+  ×3 (chaves $00–$0B; 0/1 soco, 2/3 chute) e `00 01 00 02 03` (chaves `$0C`–`$10`; a sequência de 3×A
+  exige soco fraco, a de 3×B chute fraco e o giro de 4 direções, chute forte).
+* Listas de especiais: `CmdKeyListRyu` (`3F:E0C0`): `02 03 06 07 04 05 FF` — cada byte é uma chave e
+  a **posição na lista** vira `CmdMoveIdx` (hadouken 0/1 com chute, shoryuken 2/3 com chute,
+  tatsumaki 4/5 com soco). Há uma segunda lista em `$E0C7` (`0A 0B 08 09 0C 0D FF`, só chaves de
+  carga), pronta para outro personagem — nenhum ponteiro da ficha aponta para ela hoje.
+
+Notas de leitura: (a) o `InputClear` (`3F:E974`), que roda fora da luta ativa, só zera a entrada 0 do
+reconhecedor — e o `sta CmdMotionStep+1,x` / `CmdMotionWin+1,x` de `E988`/`E98A` não é a entrada 1 do
+lutador, é um byte do vizinho (o layout é intercalado); as entradas 1–5 nunca são zeradas ali, só
+expiram pela janela. (b) No trace, as leituras de `$90` parecem ~8× maiores que o uso real: é a
+leitura fantasma do 6502 (toda instrução `(zp),X` lê o byte-base sem índice no ciclo anterior), não
+um bug. (c) A CPU não passa pelo reconhecedor: os operadores `AiOp00`–`AiOp03` escrevem `InputDir`/
+`InputAttack`/`CmdMoveIdx` direto.
 
 ## 14. IA (roteiros)
 

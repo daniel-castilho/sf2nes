@@ -70,9 +70,11 @@ Consequências diretas, que batem com os relatos:
 * **atraso**: nenhum golpe sai no quadro em que o botão é apertado — o fraco espera soltar, o forte espera 7 quadros.
   Em alguns estados a lógica roda quadro sim, quadro não (`HitStop`), e os 7 viram 14;
 * **repetição**: o forte é reemitido por até 14 quadros seguidos; se a animação termina dentro dessa janela, sai de novo;
-* **hadouken difícil**: o golpe especial precisa do movimento (↓ ↘ →) **e** do evento do botão. Como o evento só
-  nasce ao soltar (ou depois de 7 quadros), a janela do movimento muitas vezes já fechou. O reconhecedor
-  (`InputCommands` → `CmdStepDispatch`) tem a sua própria contagem de tempo por passo (`$9E,x`, limite 12).
+* **hadouken difícil**: o golpe especial precisa do movimento (↓→) **e** do evento do botão — o
+  reconhecedor (§13 do `docs/FORMATOS.md`) exige `InputAttack == CmdKeyAttackTbl[chave]` na fase do
+  botão, que dura 12 quadros após o último passo; o movimento em si também exige direção **nova** a
+  cada passo, com janela de 12 quadros entre passos. Como o evento do botão só nasce ao soltar (ou
+  depois de 7 quadros segurando), ele costuma chegar tarde demais para a janela que sobrou.
 
 **Ajuste experimental pronto** (`FIX_HEAVY_ONCE`, 4 bytes): o forte passa a ser emitido uma vez só, quando o contador
 chega a 7, e soltar depois disso não emite nada.
@@ -88,8 +90,9 @@ Resolve a repetição; **não** resolve o atraso. Para o atraso há uma decisão
 2. baixar o limiar de 7 para 3–4 quadros (constantes `#$07` em `3F:E9AB`, `E9C2`, `E9DC`, `E9F3`);
 3. golpe fraco na borda de subida e "promoção" para forte se o botão continuar apertado e a animação ainda puder ser cancelada.
 
-A opção 1 é a que os jogos de luta de 2 botões costumam usar. Ainda não foi implementada: exige entender os 19 passos
-de `CmdStepDispatch` (o próximo alvo de estudo sugerido em `docs/ROTEIRO.md`).
+A opção 1 é a que os jogos de luta de 2 botões costumam usar. O reconhecedor já está decodificado por
+inteiro (§13 do `docs/FORMATOS.md`: os 5 tratadores `CmdStep*`, as tabelas e o estado intercalado), então
+o caminho é mexer no `InputButtons` (origem do evento) sem tocar no caminhador do reconhecedor.
 
 Curiosidade útil: `CmdMotionTbl` (`3F:E067`) já tem sequências que o Ryu não usa — trás→frente e baixo→cima
 (golpes de carga), A-A-A / B-B-B (golpes de botão repetido) e frente-baixo-trás-cima (giro de 360°).

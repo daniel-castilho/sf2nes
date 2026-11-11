@@ -138,10 +138,30 @@ BtnBHold                     := $8C    ; r=444137 w=78440
 ; BtnBHold+1                  = $8D    ; r=2078 w=61336
 CmdMoveIdx                   := $8E    ; r=350584 w=64221
 ; CmdMoveIdx+1                = $8F    ; r=69064 w=88713
-zp_90                        := $90    ; r=1324181 w=83857
-zp_91                        := $91    ; r=123669 w=121329
-zp_9E                        := $9E    ; r=2122290 w=215957
-zp_9F                        := $9F    ; r=123486 w=123218
+CmdMotionStep                := $90    ; r=1324181 w=83857
+; CmdMotionStep+1             = $91    ; r=123669 w=121329
+; CmdMotionStep+2             = $92    ; r=160807 w=82688
+; CmdMotionStep+3             = $93    ; r=2072 w=200
+; CmdMotionStep+4             = $94    ; r=160338 w=21359
+; CmdMotionStep+5             = $95    ; r=2075 w=200
+; CmdMotionStep+6             = $96    ; r=159933 w=20703
+; CmdMotionStep+7             = $97    ; r=2066 w=200
+; CmdMotionStep+8             = $98    ; r=161252 w=23249
+; CmdMotionStep+9             = $99    ; r=2072 w=200
+; CmdMotionStep+10            = $9A    ; r=161121 w=22087
+; CmdMotionStep+11            = $9B    ; r=2069 w=200
+CmdMotionWin                 := $9E    ; r=2122290 w=215957
+; CmdMotionWin+1              = $9F    ; r=123486 w=123218
+; CmdMotionWin+2              = $A0    ; r=149050 w=214971
+; CmdMotionWin+3              = $A1    ; r=2060 w=2089
+; CmdMotionWin+4              = $A2    ; r=149603 w=154864
+; CmdMotionWin+5              = $A3    ; r=2060 w=2089
+; CmdMotionWin+6              = $A4    ; r=149807 w=154390
+; CmdMotionWin+7              = $A5    ; r=2060 w=2089
+; CmdMotionWin+8              = $A6    ; r=148623 w=155372
+; CmdMotionWin+9              = $A7    ; r=2066 w=2089
+; CmdMotionWin+10             = $A8    ; r=148973 w=154404
+; CmdMotionWin+11             = $A9    ; r=2078 w=2089
 VBlankFlag                   := $AC    ; r=1199107513 w=818302
 OamIndex                     := $AD    ; r=769099 w=1288840
 zp_AE                        := $AE    ; r=18373682 w=28783509

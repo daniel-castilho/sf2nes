@@ -199,7 +199,11 @@ comment 3F:EBA5 mapeia o banco de colisao em $8000; registro do quadro +3/+4: ca
 label 3F:ECF1 HitTest
 comment 3F:ECF1 caixa de ataque de X contra corpo 1/2 de Y: um acerto por quadro (zp_3E), esgota AttackHitsLeft
 label 3F:E974 InputClear
-comment 3F:E974 zera a entrada do lutador (direcao neutra, sem golpe/hold)
+comment 3F:E974 zera a entrada do lutador (direcao neutra, sem golpe/hold); roda todo quadro fora da luta ativa (ScreenMode != 5 ou round ja decidido)
+comment 3F:E984 zera o passo do comando 0 do reconhecedor (CmdMotionStep,x = entrada 0 da lista)
+comment 3F:E986 zera a janela do comando 0 (CmdMotionWin,x)
+comment 3F:E988 estouro: CmdMotionStep+1,x NAO e' a entrada 1 (arrays intercalados) — atinge 1 byte do vizinho
+comment 3F:E98A mesmo estouro na janela; entradas 1-5 nunca sao zeradas aqui, so expiram pela janela
 label 3F:E963 DirCodeTbl
 comment 3F:E963 bits do controle -> codigo de direcao (bit 0 frente, 1 tras, 2 baixo, 3 cima): $04 neutro, $05 frente, $06 tras, $07 cima, $08 baixo, $09-$0A diagonais de cima, $0B-$0C diagonais de baixo
 label 3F:F799 GuardClassTbl
@@ -264,12 +268,68 @@ label 3F:E9FE InputSetAttack
 label 3F:EA01 InputDirection
 comment 3F:EA01 direcional -> codigo de direcao relativo ao lado que o lutador olha (tabela DirCodeTbl)
 label 3F:EA24 InputCommands
-comment 3F:EA24 reconhecedor de comandos: percorre a lista de golpes especiais do personagem
+comment 3F:EA24 reconhecedor: zp_D7/D8 = lista de especiais do personagem (slot 8 da ficha, ram_033E/0340), zp_DA/zp_DB = JoyState/JoyPrev espelhados por FighterFlip, zp_DC = lutador, zp_D9 = posicao na lista
+label 3F:EA58 CmdWalkLoop
+comment 3F:EA58 chave = lista[zp_D9], bit 7 = fim da lista ($FF); despacha CmdStep[chave] com Y = chave
+comment 3F:EA60 x += 2 por entrada da lista: x = lutador + 2*posicao indexa os arrays intercalados CmdMotionStep/CmdMotionWin (par = P1, impar = P2)
 label 3F:EA6A CmdStepDispatch
+comment 3F:EA6A salta para CmdStep[chave] via CmdStepLo/CmdStepHi (endereco-1 + RTS), Y = chave $00-$12
+label 3F:EA73 CmdWalkEnd
+comment 3F:EA73 fim da lista: recupera x = lutador (zp_DC) e retorna
 label 3F:EA76 CmdStepLo
 label 3F:EA89 CmdStepHi
+comment 3F:EA89 19 chaves: $00-$07 e $10 movimento (EB4B), $08-$0D carga (EA9C), $0E/$0F 3x botao (EAFD), $11 A+B juntos (EB32), $12 vazio (EB4A)
+label 3F:EA9C CmdStepCharge
+block 3F:EA9C ------------------------------------------------------------------------------------------------
+block 3F:EA9C CARGA, 3 fases: segurar a direcao por $3C (60) quadros, soltar apertando a direcao de liberacao
+block 3F:EA9C (byte seguinte da sequencia) numa janela de 8 quadros, entao o botao exigido na mesma janela. (nt)
+label 3F:EAAD CmdChargeHold
+comment 3F:EAAD fase 0: direcao de carga apertada -> conta quadros (satura em $3C); soltou antes de 60 -> zera
+label 3F:EAC4 CmdChargeReset
+comment 3F:EAC4 zera o passo e a janela do comando corrente
+label 3F:EACB CmdChargeTick
+comment 3F:EACB segurando: contador de quadros, satura em $3C (60)
+label 3F:EAD4 CmdChargeRelease
+comment 3F:EAD4 fase 1: direcao de liberacao apertada numa janela de 8 quadros (EAF8 desconta a cada erro)
+label 3F:EAE1 CmdChargeButton
+comment 3F:EAE1 fase 2: botao exigido (CmdKeyAttackTbl[chave] == InputAttack) -> CmdMoveIdx[lutador] = posicao na lista
+label 3F:EAF8 CmdChargeWinTick
+comment 3F:EAF8 janela expirou (< 0) -> zera o comando
+label 3F:EAFD CmdStepMash
+comment 3F:EAFD 3x o MESMO botao (CmdKeyAttackTbl[chave] == InputAttack), intervalos de ate 8 quadros. (nt)
+label 3F:EB0C CmdMashCount
+comment 3F:EB0C aperto certo: conta (1..2), zera o intervalo
+label 3F:EB1A CmdMashDone
+comment 3F:EB1A 3o aperto -> CmdMoveIdx[lutador] = posicao na lista
+label 3F:EB21 CmdMashReset
+label 3F:EB28 CmdMashGap
+comment 3F:EB28 intervalo entre apertos passou de 8 -> zera
+label 3F:EB32 CmdStepBothBtn
+comment 3F:EB32 A+B apertados juntos na borda de subida (agora $C0, antes nao) -> CmdMoveIdx[lutador] = posicao na lista. (nt)
+label 3F:EB4A CmdStepNone
+comment 3F:EB4A chave $12: lugar vago; seus 4 bytes de sequencia (E0AF-E0B2) sao a CmdKeyAttackTbl — inofensivo
+label 3F:EB4B CmdStepMotion
+block 3F:EB4B ------------------------------------------------------------------------------------------------
+block 3F:EB4B SEQUENCIA DE DIRECOES: Y = chave*4 + passo. Um passo vale quando o bit exigido esta apertado E
+block 3F:EB4B alguma direcao e' NOVA (apertada agora, ausente no quadro anterior) — segurando parado nao avanca.
+block 3F:EB4B Janela de $0C (12) quadros entre passos; byte $00 encerra a sequencia -> fase do botao (outras 12).
+label 3F:EB69 CmdMotionWinTick
+comment 3F:EB69 nenhuma direcao nova / bit exigido solto: conta a janela; passou de 12 -> zera o comando
+label 3F:EB73 CmdMotionAdvance
+comment 3F:EB73 passo cumprido: zera a janela, avanca o passo; D3F_E068,y (MESMO y) le o byte SEGUINTE — $0 cai ja na fase do botao
+label 3F:EB7F CmdMotionBtnWin
+comment 3F:EB7F fase do botao: mesma janela de 12 quadros
+label 3F:EB88 CmdMotionButton
+comment 3F:EB88 botao exigido (CmdKeyAttackTbl[chave] == InputAttack) -> CmdMoveIdx[lutador] = posicao na lista; zera o comando
+label 3F:EB9C CmdMotionReset
 label 3F:E067 CmdMotionTbl
-comment 3F:E067 sequencias dos golpes especiais, 4 bytes cada (bits do controle: 04 baixo, 01 frente, 02 tras, 08 cima, 80 A, 40 B)
+comment 3F:E067 sequencias dos golpes especiais, 4 bytes por chave $00-$11 (bits do controle: 04 baixo, 01 frente, 02 tras, 08 cima, 80 A, 40 B; $00 encerra)
+comment 3F:E068 CmdMotionTbl+1: lido em EB73 com o MESMO indice para ver o proximo byte da sequencia sem iny
+label 3F:E0AF CmdKeyAttackTbl
+comment 3F:E0AF botao exigido por chave, 17 bytes ($00-$10): 0 soco fraco, 1 soco forte, 2 chute fraco, 3 chute forte
+label 3F:E0C0 CmdKeyListRyu
+comment 3F:E0C0 lista de especiais do Ryu (chaves, $FF = fim): hadouken ch $02/$03 (chute), shoryuken $06/$07 (chute), tatsumaki $04/$05 (soco); a POSICAO na lista vira CmdMoveIdx
+comment 3F:E0C7 segunda lista (chaves de carga $08-$0D) para outro personagem — nenhum ponteiro da ficha aponta aqui hoje
 label 3F:EF74 FightersUpdate
 block 3F:EF74 Um quadro de logica da luta: atualiza os dois lutadores (alternando a ordem a cada quadro) e desenha.
 label 3F:EF99 FighterUpdate
@@ -285,6 +345,8 @@ block 3B:E000 ------------------------------------------------------------------
 block 3B:E000 Carrega a "ficha" do personagem FighterChar,x a partir das tabelas do banco $3C (10 personagens por tabela):
 block 3B:E000 bancos de dados (frames em $8000, estados em $A000) e ponteiros para os estados basicos.
 block 3B:E000 Hoje so a coluna 0 (Ryu) esta preenchida. Para um personagem novo, este e' o ponto de partida.
+block 3B:E000 Na RAM os ponteiros ficam separados por metade: lo em ram_031E+x, hi em ram_0320+x — P1 = (031E,0320), P2 = (031F,0321).
+block 3B:E000 Detalhe: so o hi do slot 0 e' lido SEM ,y (lda D3C_800A, E025) — personagem != 0 herdaria o hi do Ryu.
 label 3B:E098 FighterRoundInit
 comment 3B:E098 posicao inicial: P1 x=$5A, P2 x=$A6, y=$CD (chao)
 label 3B:E1F6 PortraitBuild
@@ -396,6 +458,12 @@ block 00:8F46 IA do Ryu (codigo nativo dentro do banco de dados do personagem). 
 block 00:8F46 oponente e sorteia (Random) qual roteiro de IA disparar.
 
 # ============================================================================================================
+# BANCO $01 — dados do Ryu: banco de estados do lutador (statebank no fim) + tabelas de transicao
+# ============================================================================================================
+label 01:A01A RyuSpcTrans
+comment 01:A01A 6 ponteiros de transicao dos especiais do Ryu (ram_0326 aponta para ca): indexados por CmdMoveIdx*2, consumidos pelo InputDispatch
+
+# ============================================================================================================
 # BANCO $3C — fichas dos personagens, nomes e frases
 # ============================================================================================================
 label 3C:80C8 CharStateBankTbl
@@ -473,6 +541,10 @@ ram 0088 InputAttack 2
 ram 008A BtnAHold 2
 ram 008C BtnBHold 2
 ram 008E CmdMoveIdx 2
+# estado do reconhecedor (3F:EA24): 6 entradas x 2 lutadores INTERCALADAS — offset = lutador + 2*posicao na lista
+# (par = P1, impar = P2); $9C/$9D sao mortos. So o reconhecedor, o InputClear e o init do sistema tocam aqui.
+ram 0090 CmdMotionStep 12
+ram 009E CmdMotionWin 12
 ram 0069 AiScriptPtrLo 2
 ram 006B AiScriptPtrHi 2
 ram 0064 CurFighter

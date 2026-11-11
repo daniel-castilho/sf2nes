@@ -10,6 +10,8 @@
 ; Carrega a "ficha" do personagem FighterChar,x a partir das tabelas do banco $3C (10 personagens por tabela):
 ; bancos de dados (frames em $8000, estados em $A000) e ponteiros para os estados basicos.
 ; Hoje so a coluna 0 (Ryu) esta preenchida. Para um personagem novo, este e' o ponto de partida.
+; Na RAM os ponteiros ficam separados por metade: lo em ram_031E+x, hi em ram_0320+x — P1 = (031E,0320), P2 = (031F,0321).
+; Detalhe: so o hi do slot 0 e' lido SEM ,y (lda D3C_800A, E025) — personagem != 0 herdaria o hi do Ryu.
 ; <- jsr ScreenVersus
 ; modos: VS
 FighterLoadChar:

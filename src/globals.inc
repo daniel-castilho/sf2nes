@@ -7,6 +7,7 @@
 .global CharFrameBankTbl
 .global CharNameTbl
 .global CharStateBankTbl
+.global CmdKeyListRyu
 .global D00_8000
 .global D00_8020
 .global D00_8046
@@ -185,7 +186,6 @@
 .global D00_9467
 .global D01_A000
 .global D01_A012
-.global D01_A01A
 .global D01_A026
 .global D01_A03E
 .global D01_A056
@@ -286,7 +286,6 @@
 .global D3C_84A6
 .global D3C_84BA
 .global D3C_851E
-.global D3F_E0C0
 .global DistanceX
 .global DistanceY
 .global DrawFighters
@@ -311,6 +310,7 @@
 .global OamHideRest
 .global Random
 .global RyuAiThink
+.global RyuSpcTrans
 .global ScreenDisclaimer
 .global ScreenPlayerSelect
 .global ScreenTitle
