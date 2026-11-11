@@ -62,6 +62,8 @@ Depois de qualquer mudança: `make gen && make`. Se aparecer `DIFERENTE do origi
 | `show.py BB:AAAA [n]` | mostra uma rotina do fonte gerado, com quem chama e em que telas roda |
 | `datamap.py 37,3B,3F [-u] [-m N]` | lista as faixas de dados de um banco e se foram lidas (R), tipadas (T) ou nunca tocadas (?) |
 | `ptr_candidates.py` | pares de imediatos que **parecem** ponteiros mas o trace não confirmou (revisão manual) |
+| `poke_prg.py SAIDA BASE BANCO ADDR BYTE…` | grava `SAIDA` como cópia de `BASE` com bytes trocados na janela do banco (experimentos em cima de uma cópia; o original não é tocado). Mostra o valor atual e pede confirmação (`--force` pula); `- SAIDA BASE` = cópia sem patch (baseline) |
+| `frame_census.py [banco=01] [ROM]` | censo dos bytes dos quadros de animação direto do ROM (efeitos, flags, modos, colisão) — só os quadros alcançáveis |
 | `shift_test.sh <banco> [<banco>…]` | teste de realocação: insere 1 byte no começo de cada banco listado e monta `build/shift/…` |
 | `extract_chr.py`, `extract_dpcm.py` | exportam gráficos e vozes (`make assets`) |
 | `trace_merge.py rom saida dir…` | mescla execuções brutas do emulador em `trace/` |
