@@ -46,7 +46,7 @@ Programação: semanas. Conteúdo de um elenco inteiro: muito mais que isso. Pla
 - [x] As oito tabelas do início do banco de estados (`$A000`–`$A0AF`) — §1/§13
 - [x] O resto: projétil (hadouken) — §12 — e física do pulo (§8, integração de `VelY`); HUD e
   seleção de personagem ficaram fora do escopo
-- [ ] nomear os ~276 rótulos `L3F_*` que sobraram no banco `$3F` — 82 no bloco de movimento
+- [x] todos os rótulos L3F_* nomeados — 242 adicionados nesta fase + 173 pré-existentes no .ann
   (`F0A5`–`F648`, descritos em `docs/FORMATOS.md` §8), 194 espalhados em rotinas auxiliares;
   renomear cada um ao mexer nele na Etapa 2
 
