@@ -4,3 +4,9 @@ __pycache__/
 
 # clones de bibliotecas publicas do autor (repos git proprios), usados so para comparacao
 ref/
+
+# emulador baixado localmente (Mesen 2) e seus logs
+mesen/
+mesen_linux.zip
+mesen.log
+mesen/mesen.log
