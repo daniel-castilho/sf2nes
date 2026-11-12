@@ -159,7 +159,7 @@ SoundInitSfx:
     jmp FamiToneSfxInit                         ; E3FE  4C 76 ED
 
 
-; <- farcall StateAdvance, farcall L3F_EEB8, farcall MoveGrabEscape
+; <- farcall StateAdvance, farcall SoundProc, farcall MoveGrabEscape
 ; modos: luta
 SfxPlay:
     ldy zp_DC                                   ; E401  A4 DC
@@ -204,7 +204,7 @@ VoicePlay:
     jmp FamiToneSamplePlay                      ; E439  4C 3C ED
 
 
-; <- farjmp L3F_E4A1
+; <- farjmp ScreenConfig
 ; modos: luta
 VoicePlayFighter:
     ldx zp_DB                                   ; E43C  A6 DB
@@ -1712,10 +1712,34 @@ ScreenPlayerSelect:
     jmp SelectFighterIntro                      ; EF8F  4C CF F0
 
 
+.ifdef FIX_SELECT_DIFFICULTY
+__alt_37_EF92:
+    ; le bit $20 (SELECT) do JoyState do jogador corrente
+    lda JoyState,x
+    and #$20
+    beq +
+    ; SELECT apertado: alterna AiLevel
+    lda AiLevel,x
+    clc
+    adc #$02
+    cmp #$09
+    bcs ++
+    sta AiLevel,x
+    jmp ++
+++;
+    lda #$04
+    sta AiLevel,x
+++;
+    .assert * - __alt_37_EF92 <= $2, error, "bloco alt FIX_SELECT_DIFFICULTY em $EF92 passou do tamanho"
+    .res $2 - (* - __alt_37_EF92), $FF
+.else
+
 ; <- jsr ScreenPlayerSelect
 ; modos: selecao
 SelectInit:
     lda #$29                                    ; EF92  A9 29       inicia a tela de selecao: carrega a musica $29 e zera a escolha
+.endif
+
     sta MusicBank                               ; EF94  8D 5F 04
     lda #<D29_AAB6                              ; EF97  A9 B6
     sta zp_D5                                   ; EF99  85 D5
