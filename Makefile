@@ -27,7 +27,7 @@ $(BUILD)/%.o: src/%.s $(INCS)
 $(BUILD)/sf2ne.nes: $(OBJS) sf2ne.cfg
 	ld65 -C sf2ne.cfg $(OBJS) -o $@ -m $(BUILD)/sf2ne.map -Ln $(BUILD)/sf2ne.labels
 
-verify-original: $(BUILD)/sf2ne.nes
+verify: $(BUILD)/sf2ne.nes
 	@if cmp -s $(BUILD)/sf2ne.nes $(ROM); then 	    echo "OK: build/sf2ne.nes e' identico ao ROM original (sha1 $(SHA1))"; 	else 	    echo "ATENCAO: build/sf2ne.nes diverge do ROM original (sha1 $(SHA1))"; 	fi
 
 gen:

@@ -170,42 +170,6 @@ class Project:
             except Exception as e:
                 sys.exit('%s:%d: %s  (%s)' % (ANN, lineno, ln, e))
 
-    def check_duplicate_labels(self):
-        """Verifica simbolos duplicados na mesma unidade de assembly.
-        Apresenta nome e enderecos de conflitos, sem sinalizar falsos positivos
-        entre unidades independentes ou nomes ja qualificado por endereco."""
-        from collections import defaultdict
-        import re
-        
-        # Collect all label 3F:AAAA Name lines from annotations
-        ann_path = os.path.join(ROOT, 'annotations', 'sf2ne.ann')
-        name_addrs = defaultdict(list)
-        
-        if os.path.exists(ann_path):
-            label_pattern = re.compile(r'^(label\s+3F:([0-9A-F]{4})\s+)(\S+)$', re.MULTILINE)
-            with open(ann_path, 'r', encoding='utf-8') as f:
-                for lineno, raw in enumerate(f, 1):
-                    m = label_pattern.match(raw.strip())
-                    if m:
-                        addr = m.group(2)
-                        name = m.group(3)
-                        # Skip names already qualified by address (underscore format)
-                        # e.g., End_E054 should not flag End
-                        name_parts = name.split('_')
-                        base_name = name_parts[0] if len(name_parts) > 1 else name
-                        name_addrs[base_name].append((addr, lineno))
-        
-        # Find duplicates (names appearing at multiple addresses)
-        duplicates = {name: addrs for name, addrs in name_addrs.items() if len(addrs) > 1}
-        
-        if duplicates:
-            for name, addrs in sorted(duplicates.items()):
-                print(f'AVISO: Label duplicada nao endereco-qualificada: {name}')
-                for addr, line in addrs:
-                    print(f'  Linha {line}: banco 3F:{addr}')
-        else:
-            print('Nenhum simbolo duplicado nao endereco-qualificado encontrado nas anotations.')
-
     def parse(self, s):
         b, a = s.split(':')
         if b.upper() == 'K': return ba2off(KERNEL_REF, int(a, 16))

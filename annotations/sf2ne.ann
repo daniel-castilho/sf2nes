@@ -141,8 +141,8 @@ label 3F:E5A2 RoundStart
 comment 3F:E5A2 RoundStart
 label 3F:E5A9 CharSelect
 comment 3F:E5A9 CharSelect
-label 3F:E5F4 SoundUpdate
-comment 3F:E5F4 SoundUpdate
+label 3F:E5F4 SoundUpdate_Input
+comment 3F:E5F4 SoundUpdate_Input
 label 3F:E619 MoveDispatch
 comment 3F:E619 MoveDispatch
 label 3F:E656 ColCheck
@@ -377,8 +377,8 @@ label 3F:F436 InputProc
 comment 3F:F436 InputProc
 label 3F:F46D ColCheck_F46D
 comment 3F:F46D ColCheck
-label 3F:F470 SfxPlay
-comment 3F:F470 SfxPlay
+label 3F:F470 SfxPlay_F470
+comment 3F:F470 SfxPlay_F470
 label 3F:F487 BankChange_F487
 comment 3F:F487 BankChange
 label 3F:F48D SoundConfig
@@ -829,7 +829,7 @@ label 3B:E1F6 PortraitBuild
 label 3B:E3BE PpuUnRle
 block 3B:E3BE Descompacta RLE (formato do NESlib/Shiru: 1o byte = marcador; marcador,n = repete o ultimo byte n vezes;
 block 3B:E3BE marcador,0 = fim) direto em PPUDATA. Entrada: A = byte baixo, X = byte alto do endereco dos dados.
-label 3B:E426 FadeOut
+label 3B:E426 FadeOut_Bank3B
 label 3B:E4D6 FadeIn
 label 3B:E844 NmiFightVram
 label 3B:EA61 ScreenVersus
@@ -984,7 +984,7 @@ comment 37:E1A3 efeitos sonoros no formato FamiTone2 (lista de ponteiros + fluxo
 label 37:E3E0 SoundLoadSong
 block 37:E3E0 Carrega musica: MusicBank = banco (mapeado em $A000), zp_D5/zp_D6 = ponteiro dos dados (FamiTone2).
 label 37:E3FA SoundInitSfx
-label 37:E401 SfxPlay
+label 37:E401 SfxPlay_Select
 label 37:E41B SoundInitVoices
 label 37:E427 VoicePlay
 comment 37:E427 troca o banco em $C000 para o da amostra e dispara o canal DMC
@@ -1447,8 +1447,6 @@ alt FIX_EDGE_ATTACK 3F:F949 36
 # O motor ja suporta dois humanos: basta FighterIsCpu+1 = 0. No demo nada faz isso (MainLoop fixa 1).
 # Com este bloco o P2 e' sempre o controle 2 (nao ha mais adversario CPU) — serve para testar o modo versus.
 alt MODE_VERSUS 3F:F868 2
-|+
-|    lda #$00                                    ; era lda #$01 (P2 = CPU)
 # ============================================================================================================
 # DIFICULDADE/VERSUS (FIX_SELECT_VERSUS): START na selecao entra vs mode
 # bit $10 de JoyState, banco $37 (SelectInit/EF92)
@@ -1460,6 +1458,7 @@ alt FIX_SELECT_VERSUS 37:EF92 3
 |    and #$10
 |    beq START_CHECK_END
 |    ; START pressionado: entra modo versus
+|    lda #$00
 |   sta FighterIsCpu+1  ; P2 = humano (usa MODE_VERSUS alt)
 |   sta FighterChar+1   ; P2 bloqueado em Ryu (indice 0)
 |   lda #$05

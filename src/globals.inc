@@ -292,7 +292,7 @@
 .global DrawSupportScreen
 .global DrawTitleScreen
 .global FadeIn
-.global FadeOut
+.global FadeOut_Bank3B
 .global FightersUpdate
 .global JoyPollBoth
 .global JoyPollBothSel
@@ -314,8 +314,8 @@
 .global SelectDrawBlink
 .global SelectDrawFighter
 .global SelectScreenBuild
-.global SfxPlay
 .global SfxPlayByState
+.global SfxPlay_Select
 .global SoundLoadSong
 .global SoundStopMusic
 .global SoundUpdate

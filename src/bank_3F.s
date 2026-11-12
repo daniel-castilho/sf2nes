@@ -671,7 +671,7 @@ FrameEnterCommon:
     lda a:EffectParam,x                         ; E405  BD 3A 00
     sta zp_DB                                   ; E408  85 DB
     stx zp_DC                                   ; E40A  86 DC
-    farcall SfxPlay                             ; E40C  A9 E4 48 A9 1D 48 A9 3F .. -> 37:E401
+    farcall SfxPlay_Select                      ; E40C  A9 E4 48 A9 1D 48 A9 3F .. -> 37:E401
     ldx zp_DC                                   ; E41E  A6 DC
 StateBlockStart:
     lda FighterHP,x                             ; E420  B5 0E       StateBlockStart
@@ -978,8 +978,8 @@ AiOp01:
     lda zp_6E                                   ; E5EE  A5 6E
     sta InputAttack,x                           ; E5F0  95 88
     lda #$FF                                    ; E5F2  A9 FF
-SoundUpdate:
-    sta CmdMoveIdx,x                            ; E5F4  95 8E       SoundUpdate
+SoundUpdate_Input:
+    sta CmdMoveIdx,x                            ; E5F4  95 8E       SoundUpdate_Input
     rts                                         ; E5F6  60
 
 
@@ -2727,7 +2727,7 @@ SoundProc_EEB8:
 ; modos: luta
 HitDamageSfx:
     stx zp_DC                                   ; EEC2  86 DC       toca o efeito sonoro do dano e indexa a tabela de reacao
-    farcall SfxPlay                             ; EEC4  A9 EE 48 A9 D5 48 A9 3F .. -> 37:E401
+    farcall SfxPlay_Select                      ; EEC4  A9 EE 48 A9 D5 48 A9 3F .. -> 37:E401
     ldx zp_DC                                   ; EED6  A6 DC
     lda a:HitReactClass,x                       ; EED8  BD 16 00
     and #$3F                                    ; EEDB  29 3F
@@ -3604,14 +3604,14 @@ MoveHorizLeftFwd:
     bne ColCheck_F46D                           ; F465  D0 06
     lda FighterX,x                              ; F467  B5 08
     cmp #$D1                                    ; F469  C9 D1
-    bcs SfxPlay                                 ; F46B  B0 03
+    bcs SfxPlay_F470                            ; F46B  B0 03
 ColCheck_F46D:
     jmp MoveHorizApply                          ; F46D  4C 33 F5    ColCheck
 
 
 ; modos: luta
-SfxPlay:
-    lda zp_D7                                   ; F470  A5 D7       SfxPlay
+SfxPlay_F470:
+    lda zp_D7                                   ; F470  A5 D7       SfxPlay_F470
     sta zp_D9                                   ; F472  85 D9
     lda zp_D8                                   ; F474  A5 D8
     lsr a                                       ; F476  4A
@@ -3702,7 +3702,7 @@ FrameUpdate:
     adc zp_DA                                   ; F50E  65 DA
     sta zp_D8                                   ; F510  85 D8
 
-; <- jmp SfxPlay
+; <- jmp SfxPlay_F470
 ; modos: luta
 MoveScrollStageOthers:
     sec                                         ; F512  38          move o oponente e o projetil junto com o cenario
@@ -3939,7 +3939,7 @@ MoveGrabEscape:
     lda #$09                                    ; F654  A9 09
     sta zp_DB                                   ; F656  85 DB
     stx zp_DC                                   ; F658  86 DC
-    farcall SfxPlay                             ; F65A  A9 F6 48 A9 6B 48 A9 3F .. -> 37:E401
+    farcall SfxPlay_Select                      ; F65A  A9 F6 48 A9 6B 48 A9 3F .. -> 37:E401
     ldx zp_DE                                   ; F66C  A6 DE
     ldy zp_DF                                   ; F66E  A4 DF
     rts                                         ; F670  60

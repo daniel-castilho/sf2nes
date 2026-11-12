@@ -548,7 +548,7 @@ D3B_E420:
 
 ; <- farjmp SelectWaitEnd, farcall ScreenDisclaimer, farjmp ScreenSupport, farjmp L37_F652, jmp VersusDraw, jmp L3B_EC83 ... (+1)
 ; modos: aviso/QR, titulo, selecao, VS, fim do round, frase final
-FadeOut:
+FadeOut_Bank3B:
     ldx #$09                                    ; E426  A2 09
 FadeOutStep:
     lda #$00                                    ; E428  A9 00       passo do fade-out: espera o vblank, marca a paleta e trata a troca de CHR do titulo
@@ -587,7 +587,7 @@ L3B_E455:
     jsr OamHideRest                             ; E478  20 DF F2
     ldx FadePalette                             ; E47B  AE 85 04
 
-; <- jmp FadeOut
+; <- jmp FadeOut_Bank3B
 ; modos: aviso/QR, titulo, selecao, VS, fim do round, frase final
 FadeOutDarken:
     ldy #$17                                    ; E47E  A0 17       prepara o escurecimento das 24 cores (Y=$17) e cai no laco
@@ -1434,7 +1434,7 @@ L3B_EBBD:
     dec zp_E9                                   ; EBD9  C6 E9
     bne L3B_EBB9                                ; EBDB  D0 DC
     farcall SoundStopMusic                      ; EBDD  A9 EB 48 A9 EE 48 A9 3B .. -> 37:E479
-    jmp FadeOut                                 ; EBEF  4C 26 E4
+    jmp FadeOut_Bank3B                          ; EBEF  4C 26 E4
 
 
 ; <- jsr VersusDraw, jsr ScreenWinQuote
@@ -1576,7 +1576,7 @@ L3B_ECEF:
     dec zp_E9                                   ; ED0B  C6 E9
     bne L3B_ECEB                                ; ED0D  D0 DC
     farcall SoundStopMusic                      ; ED0F  A9 ED 48 A9 20 48 A9 3B .. -> 37:E479
-    jmp FadeOut                                 ; ED21  4C 26 E4
+    jmp FadeOut_Bank3B                          ; ED21  4C 26 E4
 
 
 ; <- jsr L3B_EC83
@@ -2545,7 +2545,7 @@ L3B_F592:
     lda a:RoundStep                             ; F5D7  AD B6 00
     bne FightFrame                              ; F5DA  D0 B2
     farcall SoundStopMusic                      ; F5DC  A9 F5 48 A9 ED 48 A9 3B .. -> 37:E479
-    jsr FadeOut                                 ; F5EE  20 26 E4
+    jsr FadeOut_Bank3B                          ; F5EE  20 26 E4
     lda #$02                                    ; F5F1  A9 02
     cmp FighterWins                             ; F5F3  C5 10
     beq L3B_F60E                                ; F5F5  F0 17

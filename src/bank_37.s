@@ -161,7 +161,7 @@ SoundInitSfx:
 
 ; <- farcall StateAdvance, farcall SoundProc_EEB8, farcall MoveGrabEscape
 ; modos: luta
-SfxPlay:
+SfxPlay_Select:
     ldy zp_DC                                   ; E401  A4 DC
     ldx SfxChannelOfs,y                         ; E403  BE 9F E1    [idx $00..$01]
     lda zp_DB                                   ; E406  A5 DB
@@ -1523,7 +1523,7 @@ _FT2SfxClearChannel:
     rts                                         ; EDAF  60
 
 
-; <- jmp SfxPlay, jsr SfxPlayByState
+; <- jmp SfxPlay_Select, jsr SfxPlayByState
 ; modos: luta
 FamiToneSfxPlay:
     asl a                                       ; EDB0  0A
@@ -1946,7 +1946,7 @@ SelectWaitEnd:
     dec zp_EB                                   ; F1AA  C6 EB
     bpl L37_F155                                ; F1AC  10 A7
     farcall SoundStopMusic                      ; F1AE  A9 F1 48 A9 BF 48 A9 37 .. -> 37:E479
-    farjmp FadeOut                              ; F1C0  A9 37 48 A9 3B A2 E4 A0 .. -> 3B:E426
+    farjmp FadeOut_Bank3B                       ; F1C0  A9 37 48 A9 3B A2 E4 A0 .. -> 3B:E426
 
 
 ; <- jsr L37_EFD0
@@ -2198,7 +2198,7 @@ L37_F374:
     beq L37_F374                                ; F376  F0 FC
     lda FrameCounter                            ; F378  A5 B1
     bne L37_F370                                ; F37A  D0 F4
-    farcall FadeOut                             ; F37C  A9 F3 48 A9 8D 48 A9 37 .. -> 3B:E426
+    farcall FadeOut_Bank3B                      ; F37C  A9 F3 48 A9 8D 48 A9 37 .. -> 3B:E426
     jmp ScreenSupport                           ; F38E  4C 5E F4
 
 TextDisclaimer:
@@ -2266,7 +2266,7 @@ L37_F4B9:
     lda FrameCounter                            ; F4D5  A5 B1
     bne L37_F4B5                                ; F4D7  D0 DC
 L37_F4D9:
-    farjmp FadeOut                              ; F4D9  A9 37 48 A9 3B A2 E4 A0 .. -> 3B:E426
+    farjmp FadeOut_Bank3B                       ; F4D9  A9 37 48 A9 3B A2 E4 A0 .. -> 3B:E426
 
 
 ; <- farcall Main
@@ -2443,7 +2443,7 @@ L37_F645:
 
 L37_F652:
     farcall SoundStopMusic                      ; F652  A9 F6 48 A9 63 48 A9 37 .. -> 37:E479
-    farjmp FadeOut                              ; F664  A9 37 48 A9 3B A2 E4 A0 .. -> 3B:E426
+    farjmp FadeOut_Bank3B                       ; F664  A9 37 48 A9 3B A2 E4 A0 .. -> 3B:E426
 
 
 ; <- jsr L37_F601, jsr L37_F616, jsr L37_F645
