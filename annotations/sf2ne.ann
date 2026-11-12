@@ -1085,6 +1085,28 @@ alt FIX_EDGE_ATTACK 3F:F949 36
 # O motor ja suporta dois humanos: basta FighterIsCpu+1 = 0. No demo nada faz isso (MainLoop fixa 1).
 # Com este bloco o P2 e' sempre o controle 2 (nao ha mais adversario CPU) — serve para testar o modo versus.
 alt MODE_VERSUS 3F:F868 2
+# ============================================================================================================
+# DIFICULDADE/VERSUS (FIX_SELECT_VERSUS): START na selecao entra vs mode
+# bit $10 de JoyState, banco $37 (SelectInit/EF92)
+# Quando START pressionado: P2 humano, bloqueado em Ryu, HUD $P2$
+
+alt FIX_SELECT_VERSUS 37:EF92 3
+|    ; verifica START (bit $10) para entrar no modo versus
+|    lda JoyState,x
+|    and #$10
+|    beq START_CHECK_END
+|    ; START pressionado: entra modo versus
+|    lda #$00
+|   sta FighterIsCpu+1  ; P2 = humano (usa MODE_VERSUS alt)
+|   sta FighterChar+1   ; P2 bloqueado em Ryu (indice 0)
+|   lda #$05
+|   sta ScreenMode      ; modo versus
+|   jmp ScreenVersus
+|;;
+|+
+# ============================================================================================================
+
+
 |    lda #$00                                    ; era lda #$01 (P2 = CPU)
 
 
