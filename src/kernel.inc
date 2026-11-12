@@ -193,7 +193,7 @@ Irq_MenuLast:
     bmi K_FDDB                                  ; FD95  30 44
     lda FighterIsCpu                            ; FD97  A5 02       so para jogador humano (FighterIsCpu = 0)
     bne K_FDDB                                  ; FD99  D0 40
-    farcall L3B_F02E                            ; FD9B  A9 FD 48 A9 AC 48 A9 3F .. -> 3B:F02E
+    farcall NmiVsPortraitUpload                 ; FD9B  A9 FD 48 A9 AC 48 A9 3F .. -> 3B:F02E
     lda #$29                                    ; FDAD  A9 29
     sta PPUADDR                                 ; FDAF  8D 06 20
     lda #$C0                                    ; FDB2  A9 C0
@@ -348,7 +348,7 @@ NmiTask_Title:
 K_FE93:
     lda FadePalette+10                          ; FE93  AD 8F 04
     beq K_FE9B                                  ; FE96  F0 03
-    jmp L37_E394                                ; FE98  4C 94 E3
+    jmp TitleDrawPushStart                      ; FE98  4C 94 E3
 
 
 K_FE9B:
@@ -394,11 +394,11 @@ NmiTask_VsQuote:
 K_FECD:
     lda ram_03AE                                ; FECD  AD AE 03
     beq K_FED5                                  ; FED0  F0 03
-    jmp L3B_F02E                                ; FED2  4C 2E F0
+    jmp NmiVsPortraitUpload                     ; FED2  4C 2E F0
 
 
 K_FED5:
-    jmp L3B_F225                                ; FED5  4C 25 F2
+    jmp NmiVsQuoteUpload                        ; FED5  4C 25 F2
 
 
 ; Copia o buffer de paleta (PaletteBuf, 24 cores = 8 paletas x 3; a cor 0 de todas e' $0F) para o PPU.

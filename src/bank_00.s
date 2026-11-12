@@ -790,12 +790,12 @@ D00_9146:
     .byte >(D00_8EA6)                           ; 9146  8E
     .byte $8E                                   ; 9147
 D00_9148:
-    .word L00_914A-1                            ; 9148  49 91
+    .word RyuAiAntiAir-1                        ; 9148  49 91
 
 ; <- tabela D00_9148
 ; modos: luta
-L00_914A:
-    ldy OtherFighter                            ; 914A  A4 65
+RyuAiAntiAir:
+    ldy OtherFighter                            ; 914A  A4 65       IA do Ryu contra oponente no ar ($C0/$C8): dispara o roteiro de anti-aereo (tabela D00_9148)
     lda a:FighterState,y                        ; 914C  B9 26 00
     and #$F8                                    ; 914F  29 F8
     cmp #$C0                                    ; 9151  C9 C0
@@ -814,12 +814,12 @@ L00_9163:
     bcc L00_917B                                ; 9165  90 14
     lda a:FighterVelY,y                         ; 9167  B9 36 00
     bpl L00_916F                                ; 916A  10 03
-    jmp L00_91BA                                ; 916C  4C BA 91
+    jmp RyuAiAirAttack                          ; 916C  4C BA 91
 
 
 L00_916F:
     bne L00_9174                                ; 916F  D0 03
-    jmp L00_91BA                                ; 9171  4C BA 91
+    jmp RyuAiAirAttack                          ; 9171  4C BA 91
 
 
 L00_9174:
@@ -831,12 +831,12 @@ L00_9174:
 L00_917B:
     lda a:FighterVelY,y                         ; 917B  B9 36 00
     bpl L00_9183                                ; 917E  10 03
-    jmp L00_91BA                                ; 9180  4C BA 91
+    jmp RyuAiAirAttack                          ; 9180  4C BA 91
 
 
 L00_9183:
     bne L00_9188                                ; 9183  D0 03
-    jmp L00_91BA                                ; 9185  4C BA 91
+    jmp RyuAiAirAttack                          ; 9185  4C BA 91
 
 
 L00_9188:
@@ -879,8 +879,8 @@ L00_91B7:
 
 ; <- jmp L00_9163, jmp L00_916F, jmp L00_917B, jmp L00_9183
 ; modos: luta
-L00_91BA:
-    lda #<D00_8F24                              ; 91BA  A9 24
+RyuAiAirAttack:
+    lda #<D00_8F24                              ; 91BA  A9 24       IA do Ryu: inicia o roteiro D00_8F24 (ataque aereo) sempre
     ldy #>D00_8F24                              ; 91BC  A0 8F
     jmp AiStartScriptNow                        ; 91BE  4C E8 E6
 

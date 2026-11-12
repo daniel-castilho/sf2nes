@@ -105,8 +105,8 @@ D37_E328:
 
 ; <- jmp K_FE93
 ; modos: titulo
-L37_E394:
-    lda #$2A                                    ; E394  A9 2A
+TitleDrawPushStart:
+    lda #$2A                                    ; E394  A9 2A       restaura as 11 cores do PRESS START no PPU ($2ACB) durante o fade do titulo
     sta PPUADDR                                 ; E396  8D 06 20
     lda #$CB                                    ; E399  A9 CB
     sta PPUADDR                                 ; E39B  8D 06 20
@@ -136,7 +136,7 @@ L37_E394:
 
 
 ; Carrega musica: MusicBank = banco (mapeado em $A000), zp_D5/zp_D6 = ponteiro dos dados (FamiTone2).
-; <- farcall L37_EF92, farcall ScreenTitle, farcall L3B_EAF2, farcall ScreenWinQuote, farcall Match
+; <- farcall SelectInit, farcall ScreenTitle, farcall VersusDraw, farcall ScreenWinQuote, farcall Match
 ; modos: titulo, selecao, VS, intro do round, frase final
 SoundLoadSong:
     lda MusicBank                               ; E3E0  AD 5F 04
@@ -159,7 +159,7 @@ SoundInitSfx:
     jmp FamiToneSfxInit                         ; E3FE  4C 76 ED
 
 
-; <- farcall StateAdvance, farcall L3F_EEB8, farcall L3F_F648
+; <- farcall StateAdvance, farcall L3F_EEB8, farcall MoveGrabEscape
 ; modos: luta
 SfxPlay:
     ldy zp_DC                                   ; E401  A4 DC
@@ -170,8 +170,8 @@ SfxPlay:
 
 ; <- farjmp StateSetByte
 ; modos: luta
-L37_E40B:
-    ldx zp_DC                                   ; E40B  A6 DC
+SfxPlayByState:
+    ldx zp_DC                                   ; E40B  A6 DC       efeito sonoro por classe de estado: canal em D37_E199[x], sfx em SfxChannelOfs[estado]
     lda D37_E199,x                              ; E40D  BD 99 E1    [idx $00..$05]
     ldy zp_DB                                   ; E410  A4 DB
     ldx SfxChannelOfs,y                         ; E412  BE 9F E1    [idx $00..$01]
@@ -229,7 +229,7 @@ L37_E45E:
 
 
 ; Chamado uma vez por quadro em todas as telas: encadeia a 2a metade de uma voz, mapeia a musica e roda o FamiTone2.
-; <- jmp SoundStopMusic, farcall L37_EFD0, farcall L37_F0CF, farcall ScreenTitle, farcall L3B_EAF2, farcall L3B_EC83 ... (+2)
+; <- jmp SoundStopMusic, farcall L37_EFD0, farcall SelectFighterIntro, farcall ScreenTitle, farcall VersusDraw, farcall L3B_EC83 ... (+2)
 ; modos: titulo, selecao, VS, intro do round, luta, fim do round, frase final
 SoundUpdate:
     lda VoiceQueued                             ; E45F  AD 5E 04
@@ -245,7 +245,7 @@ L37_E46E:
     jmp FamiToneUpdate                          ; E476  4C D0 E5
 
 
-; <- farcall L37_F19E, farcall L37_F652, farcall L3B_EAF2, farcall L3B_EC83, farcall FightFrame
+; <- farcall SelectWaitEnd, farcall L37_F652, farcall VersusDraw, farcall L3B_EC83, farcall FightFrame
 ; modos: titulo, selecao, VS, fim do round, frase final
 SoundStopMusic:
     jsr FamiToneMusicStop                       ; E479  20 DB E4
@@ -434,7 +434,7 @@ FamiToneUpdate:
     bmi L37_E5D7                                ; E5D3  30 02
     bne L37_E5DA                                ; E5D5  D0 03
 L37_E5D7:
-    jmp L37_E719                                ; E5D7  4C 19 E7
+    jmp _FT2UpdateSound                         ; E5D7  4C 19 E7
 
 
 L37_E5DA:
@@ -447,7 +447,7 @@ L37_E5DA:
     cmp ram_0159                                ; E5EA  CD 59 01
     bcs L37_E5F5                                ; E5ED  B0 06
     sta ram_017B                                ; E5EF  8D 7B 01    (nt)
-    jmp L37_E6DD                                ; E5F2  4C DD E6    (nt)
+    jmp _FT2UpdateEnvelopes                     ; E5F2  4C DD E6    (nt)
 
 
 L37_E5F5:
@@ -545,20 +545,20 @@ L37_E6C4:
     ldy #$04                                    ; E6C6  A0 04
     sty ram_0479                                ; E6C8  8C 79 04
     jsr _FT2ChannelUpdate                       ; E6CB  20 0B EB
-    bcc L37_E6DD                                ; E6CE  90 0D
+    bcc _FT2UpdateEnvelopes                     ; E6CE  90 0D
     lda ram_0154                                ; E6D0  AD 54 01    (nt)
     bne L37_E6DA                                ; E6D3  D0 05       (nt)
     jsr FamiToneSampleStop                      ; E6D5  20 21 ED    (nt)
-    bne L37_E6DD                                ; E6D8  D0 03       (nt)
+    bne _FT2UpdateEnvelopes                     ; E6D8  D0 03       (nt)
 L37_E6DA:
     jsr FamiToneSamplePlayM                     ; E6DA  20 27 ED    (nt)
 
 ; <- jmp L37_E5DA
 ; modos: titulo, selecao, VS, intro do round, luta, fim do round, frase final
-L37_E6DD:
-    ldx #$00                                    ; E6DD  A2 00
-L37_E6DF:
-    lda ram_010E,x                              ; E6DF  BD 0E 01
+_FT2UpdateEnvelopes:
+    ldx #$00                                    ; E6DD  A2 00       laco das 5 vozes: atualiza os envelopes de volume (X=0)
+_FT2EnvProcess:
+    lda ram_010E,x                              ; E6DF  BD 0E 01    processa o envelope da voz X: contador ram_010E e ponteiro
     beq L37_E6E9                                ; E6E2  F0 05
     dec ram_010E,x                              ; E6E4  DE 0E 01    (nt)
     bne L37_E714                                ; E6E7  D0 2B       (nt)
@@ -571,8 +571,8 @@ L37_E6E9:
 
 ; <- jmp L37_E5F5
 ; modos: titulo, selecao, VS, intro do round, luta, fim do round, frase final
-L37_E6F6:
-    lda (FT_TEMP_PTR_L),y                       ; E6F6  B1 83       [le bancos $29,$2D,$37]
+_FT2EnvReadValue:
+    lda (FT_TEMP_PTR_L),y                       ; E6F6  B1 83       [le bancos $29,$2D,$37] le o valor do envelope; $80-$FF vira $40-$7F (offset no volume)
     bpl L37_E703                                ; E6F8  10 09
     clc                                         ; E6FA  18
     adc #$40                                    ; E6FB  69 40
@@ -584,7 +584,7 @@ L37_E703:
     iny                                         ; E705  C8
     lda (FT_TEMP_PTR_L),y                       ; E706  B1 83       [le bancos $29,$2D,$37]
     tay                                         ; E708  A8
-    jmp L37_E6F6                                ; E709  4C F6 E6
+    jmp _FT2EnvReadValue                        ; E709  4C F6 E6
 
 
 L37_E70C:
@@ -596,12 +596,12 @@ L37_E710:
 L37_E714:
     inx                                         ; E714  E8
     cpx #$0E                                    ; E715  E0 0E
-    bne L37_E6DF                                ; E717  D0 C6
+    bne _FT2EnvProcess                          ; E717  D0 C6
 
 ; <- jmp FamiToneUpdate
 ; modos: titulo, selecao, VS, intro do round, luta, fim do round, frase final
-L37_E719:
-    inc ram_046A                                ; E719  EE 6A 04
+_FT2UpdateSound:
+    inc ram_046A                                ; E719  EE 6A 04    avanca a fase do vibrato global (ram_046A, 0..10)
     lda ram_046A                                ; E71C  AD 6A 04
     cmp #$0B                                    ; E71F  C9 0B
     bcc L37_E728                                ; E721  90 05
@@ -630,7 +630,7 @@ L37_E74F:
     adc _FT2NoteTableMSB,x                      ; E74F  7D CF EE    [idx $04..$36]
     sta ram_0478                                ; E752  8D 78 04
     ldy #$00                                    ; E755  A0 00
-    jsr L37_E8B5                                ; E757  20 B5 E8
+    jsr _FT2ChannelPitch                        ; E757  20 B5 E8
     sta ram_0180                                ; E75A  8D 80 01
     stx ram_0181                                ; E75D  8E 81 01
     lda ram_0100                                ; E760  AD 00 01
@@ -644,7 +644,7 @@ L37_E76E:
     bcc L37_E776                                ; E771  90 03
     ldx ram_0460                                ; E773  AE 60 04
 L37_E776:
-    jsr L37_EF27                                ; E776  20 27 EF
+    jsr _FT2ScaleVolume                         ; E776  20 27 EF
 L37_E779:
     ora ram_047A                                ; E779  0D 7A 04
     sta ram_017F                                ; E77C  8D 7F 01
@@ -670,7 +670,7 @@ L37_E7A6:
     adc _FT2NoteTableMSB,x                      ; E7A6  7D CF EE    [idx $04..$33]
     sta ram_0478                                ; E7A9  8D 78 04
     ldy #$01                                    ; E7AC  A0 01
-    jsr L37_E8B5                                ; E7AE  20 B5 E8
+    jsr _FT2ChannelPitch                        ; E7AE  20 B5 E8
     sta ram_0183                                ; E7B1  8D 83 01
     stx ram_0184                                ; E7B4  8E 84 01
     lda ram_0104                                ; E7B7  AD 04 01
@@ -684,7 +684,7 @@ L37_E7C5:
     bcc L37_E7CD                                ; E7C8  90 03
     ldx ram_0460                                ; E7CA  AE 60 04
 L37_E7CD:
-    jsr L37_EF27                                ; E7CD  20 27 EF
+    jsr _FT2ScaleVolume                         ; E7CD  20 27 EF
 L37_E7D0:
     ora ram_047A                                ; E7D0  0D 7A 04
     sta ram_0182                                ; E7D3  8D 82 01
@@ -705,7 +705,7 @@ L37_E7F1:
     adc _FT2NoteTableMSB,x                      ; E7F1  7D CF EE    [idx $04..$29]
     sta ram_0478                                ; E7F4  8D 78 04
     ldy #$02                                    ; E7F7  A0 02
-    jsr L37_E8B5                                ; E7F9  20 B5 E8
+    jsr _FT2ChannelPitch                        ; E7F9  20 B5 E8
     sta ram_0186                                ; E7FC  8D 86 01
     stx ram_0187                                ; E7FF  8E 87 01
     lda ram_0108                                ; E802  AD 08 01
@@ -740,7 +740,7 @@ L37_E840:
     bcc L37_E848                                ; E843  90 03
     ldx ram_0460                                ; E845  AE 60 04
 L37_E848:
-    jsr L37_EF27                                ; E848  20 27 EF
+    jsr _FT2ScaleVolume                         ; E848  20 27 EF
 L37_E84B:
     ora #$F0                                    ; E84B  09 F0
     sta ram_0188                                ; E84D  8D 88 01
@@ -787,8 +787,8 @@ D37_E8B1:
 
 ; <- jsr L37_E70C
 ; modos: titulo, selecao, VS, intro do round, luta, fim do round, frase final
-L37_E8B5:
-    lda ram_0150,y                              ; E8B5  B9 50 01
+_FT2ChannelPitch:
+    lda ram_0150,y                              ; E8B5  B9 50 01    calcula o tom da voz: se nao ha slide, carrega a nota atual de _FT2NoteTable
     bne L37_E8C2                                ; E8B8  D0 08
     sta ram_0471,y                              ; E8BA  99 71 04    (nt)
     sta ram_0474,y                              ; E8BD  99 74 04    (nt)
@@ -803,13 +803,13 @@ L37_E8C2:
     sta ram_0478                                ; E8CA  8D 78 04    (nt)
     lda ram_0471,y                              ; E8CD  B9 71 04    (nt)
     sta ram_0477                                ; E8D0  8D 77 04    (nt)
-    jmp L37_E9F9                                ; E8D3  4C F9 E9    (nt)
+    jmp _FT2Vibrato                             ; E8D3  4C F9 E9    (nt)
 
 
 L37_E8D6:
     lda ram_046B,y                              ; E8D6  B9 6B 04
     bne L37_E8DE                                ; E8D9  D0 03
-    jmp L37_E9F9                                ; E8DB  4C F9 E9
+    jmp _FT2Vibrato                             ; E8DB  4C F9 E9
 
 
 L37_E8DE:
@@ -817,7 +817,7 @@ L37_E8DE:
     beq L37_E914                                ; E8E0  F0 32       (nt)
     cmp #$02                                    ; E8E2  C9 02       (nt)
     beq L37_E8E9                                ; E8E4  F0 03       (nt)
-    jmp L37_E940                                ; E8E6  4C 40 E9    (nt)
+    jmp _FT2SlideToNote                         ; E8E6  4C 40 E9    (nt)
 
 
 L37_E8E9:
@@ -840,7 +840,7 @@ L37_E905:
     sta ram_0478                                ; E908  8D 78 04    (nt)
     lda ram_0471,y                              ; E90B  B9 71 04    (nt)
     sta ram_0477                                ; E90E  8D 77 04    (nt)
-    jmp L37_E9F9                                ; E911  4C F9 E9    (nt)
+    jmp _FT2Vibrato                             ; E911  4C F9 E9    (nt)
 
 
 L37_E914:
@@ -857,7 +857,7 @@ L37_E923:
     txa                                         ; E929  8A          (nt)
     sta ram_0474,y                              ; E92A  99 74 04    (nt)
     sta ram_0478                                ; E92D  8D 78 04    (nt)
-    jmp L37_E9F9                                ; E930  4C F9 E9    (nt)
+    jmp _FT2Vibrato                             ; E930  4C F9 E9    (nt)
 
 
 L37_E933:
@@ -870,8 +870,8 @@ L37_E933:
 
 
 ; <- jmp L37_E8DE
-L37_E940:
-    lda ram_0471,y                              ; E940  B9 71 04    (nt)
+_FT2SlideToNote:
+    lda ram_0471,y                              ; E940  B9 71 04    slide/portamento: carrega o tom alvo quando o deslocamento zera (nt)
     ora ram_0474,y                              ; E943  19 74 04    (nt)
     bne L37_E957                                ; E946  D0 0F       (nt)
     ldx ram_0150,y                              ; E948  BE 50 01    (nt)
@@ -880,12 +880,12 @@ L37_E940:
     lda _FT2NoteTableMSB,x                      ; E951  BD CF EE    (nt)
     sta ram_0474,y                              ; E954  99 74 04    (nt)
 L37_E957:
-    jsr L37_E9E8                                ; E957  20 E8 E9    (nt)
-    jsr L37_E9CA                                ; E95A  20 CA E9    (nt)
+    jsr _FT2LoadNotePitch                       ; E957  20 E8 E9    (nt)
+    jsr _FT2PitchCompare                        ; E95A  20 CA E9    (nt)
     beq L37_E965                                ; E95D  F0 06       (nt)
     dex                                         ; E95F  CA          (nt)
     beq L37_E9AF                                ; E960  F0 4D       (nt)
-    jmp L37_E9F9                                ; E962  4C F9 E9    (nt)
+    jmp _FT2Vibrato                             ; E962  4C F9 E9    (nt)
 
 
 L37_E965:
@@ -900,7 +900,7 @@ L37_E974:
     sta ram_0471,y                              ; E974  99 71 04    (nt)
     txa                                         ; E977  8A          (nt)
     sta ram_0474,y                              ; E978  99 74 04    (nt)
-    jsr L37_E9CA                                ; E97B  20 CA E9    (nt)
+    jsr _FT2PitchCompare                        ; E97B  20 CA E9    (nt)
     cpx #$01                                    ; E97E  E0 01       (nt)
     beq L37_E991                                ; E980  F0 0F       (nt)
 L37_E982:
@@ -908,11 +908,11 @@ L37_E982:
     sta ram_0477                                ; E985  8D 77 04    (nt)
     lda ram_0474,y                              ; E988  B9 74 04    (nt)
     sta ram_0478                                ; E98B  8D 78 04    (nt)
-    jmp L37_E9F9                                ; E98E  4C F9 E9    (nt)
+    jmp _FT2Vibrato                             ; E98E  4C F9 E9    (nt)
 
 
 L37_E991:
-    jsr L37_E9E8                                ; E991  20 E8 E9    (nt)
+    jsr _FT2LoadNotePitch                       ; E991  20 E8 E9    (nt)
     lda ram_0477                                ; E994  AD 77 04    (nt)
     sta ram_0471,y                              ; E997  99 71 04    (nt)
     lda ram_0478                                ; E99A  AD 78 04    (nt)
@@ -923,7 +923,7 @@ L37_E991:
     lda #$00                                    ; E9A7  A9 00       (nt)
     sta ram_046B,y                              ; E9A9  99 6B 04    (nt)
 L37_E9AC:
-    jmp L37_E9F9                                ; E9AC  4C F9 E9    (nt)
+    jmp _FT2Vibrato                             ; E9AC  4C F9 E9    (nt)
 
 
 L37_E9AF:
@@ -937,13 +937,13 @@ L37_E9BC:
     sta ram_0471,y                              ; E9BC  99 71 04    (nt)
     txa                                         ; E9BF  8A          (nt)
     sta ram_0474,y                              ; E9C0  99 74 04    (nt)
-    jsr L37_E9CA                                ; E9C3  20 CA E9    (nt)
+    jsr _FT2PitchCompare                        ; E9C3  20 CA E9    (nt)
     beq L37_E991                                ; E9C6  F0 C9       (nt)
     bne L37_E982                                ; E9C8  D0 B8       (nt)
 
-; <- jsr L37_E940, jsr L37_E965, jsr L37_E9AF
-L37_E9CA:
-    lda ram_0474,y                              ; E9CA  B9 74 04    (nt)
+; <- jsr _FT2SlideToNote, jsr L37_E965, jsr L37_E9AF
+_FT2PitchCompare:
+    lda ram_0474,y                              ; E9CA  B9 74 04    compara o tom atual com o alvo: devolve 2 se igual, 0/1 se abaixo/acima (nt)
     tax                                         ; E9CD  AA          (nt)
     cmp ram_0478                                ; E9CE  CD 78 04    (nt)
     bcc L37_E9E5                                ; E9D1  90 12       (nt)
@@ -966,9 +966,9 @@ L37_E9E5:
     rts                                         ; E9E7  60          (nt)
 
 
-; <- jsr L37_E940, jsr L37_E991
-L37_E9E8:
-    lda ram_0150,y                              ; E9E8  B9 50 01    (nt)
+; <- jsr _FT2SlideToNote, jsr L37_E991
+_FT2LoadNotePitch:
+    lda ram_0150,y                              ; E9E8  B9 50 01    carrega o tom alvo da nota atual em ram_0477/0478 (nt)
     tax                                         ; E9EB  AA          (nt)
     lda _FT2NoteTableLSB,x                      ; E9EC  BD 77 EE    (nt)
     sta ram_0477                                ; E9EF  8D 77 04    (nt)
@@ -977,10 +977,10 @@ L37_E9E8:
     rts                                         ; E9F8  60          (nt)
 
 
-; <- jmp L37_E8C2, jmp L37_E8D6, jmp L37_E8E9, jmp L37_E914, jmp L37_E940, jmp L37_E965 ... (+1)
+; <- jmp L37_E8C2, jmp L37_E8D6, jmp L37_E8E9, jmp L37_E914, jmp _FT2SlideToNote, jmp L37_E965 ... (+1)
 ; modos: titulo, selecao, VS, intro do round, luta, fim do round, frase final
-L37_E9F9:
-    ldx ram_0467,y                              ; E9F9  BE 67 04
+_FT2Vibrato:
+    ldx ram_0467,y                              ; E9F9  BE 67 04    aplica o vibrato: profundidade ram_0467 e fase ram_046A somam ao tom
     beq L37_EA20                                ; E9FC  F0 22
     lda D37_EA27,x                              ; E9FE  BD 27 EA    (nt)
     clc                                         ; EA01  18          (nt)
@@ -1099,15 +1099,15 @@ L37_EB1A:
 
 ; <- jmp L37_EB35, jmp L37_EB60, jmp L37_EB79, jmp L37_EB91, jmp L37_EBA4, jmp L37_EBB7 ... (+8)
 ; modos: titulo, selecao, VS, intro do round, luta, fim do round, frase final
-L37_EB26:
-    lda (FT_TEMP_PTR_L),y                       ; EB26  B1 83       [le bancos $29,$2D]
+_FT2ReadByte:
+    lda (FT_TEMP_PTR_L),y                       ; EB26  B1 83       [le bancos $29,$2D] le um byte do ponteiro do canal e avanca o ponteiro de 16 bits
     inc FT_TEMP_PTR_L                           ; EB28  E6 83
     bne L37_EB2E                                ; EB2A  D0 02
     inc FT_TEMP_PTR_H                           ; EB2C  E6 84
 L37_EB2E:
     ora #$00                                    ; EB2E  09 00
     bpl L37_EB35                                ; EB30  10 03
-    jmp L37_EC91                                ; EB32  4C 91 EC
+    jmp _FT2SpecialCode                         ; EB32  4C 91 EC
 
 
 L37_EB35:
@@ -1119,26 +1119,26 @@ L37_EB35:
     lda ram_0460                                ; EB40  AD 60 04
 L37_EB43:
     sta ram_0464                                ; EB43  8D 64 04
-    jmp L37_EB26                                ; EB46  4C 26 EB
+    jmp _FT2ReadByte                            ; EB46  4C 26 EB
 
 
 L37_EB49:
     cmp #$5F                                    ; EB49  C9 5F
     bcs L37_EB50                                ; EB4B  B0 03
-    jmp L37_EC65                                ; EB4D  4C 65 EC
+    jmp _FT2PlainNote                           ; EB4D  4C 65 EC
 
 
 L37_EB50:
     beq L37_EB79                                ; EB50  F0 27       (nt)
     cmp #$6E                                    ; EB52  C9 6E       (nt)
     bne L37_EB59                                ; EB54  D0 03       (nt)
-    jmp L37_EBCA                                ; EB56  4C CA EB    (nt)
+    jmp _FT2NoteShiftUp                         ; EB56  4C CA EB    (nt)
 
 
 L37_EB59:
     cmp #$6F                                    ; EB59  C9 6F       (nt)
     bne L37_EB60                                ; EB5B  D0 03       (nt)
-    jmp L37_EC20                                ; EB5D  4C 20 EC    (nt)
+    jmp _FT2NoteShiftDown                       ; EB5D  4C 20 EC    (nt)
 
 
 L37_EB60:
@@ -1152,7 +1152,7 @@ L37_EB60:
     ldy ram_0479                                ; EB6E  AC 79 04    (nt)
     sta ram_0467,y                              ; EB71  99 67 04    (nt)
     ldy #$00                                    ; EB74  A0 00       (nt)
-    jmp L37_EB26                                ; EB76  4C 26 EB    (nt)
+    jmp _FT2ReadByte                            ; EB76  4C 26 EB    (nt)
 
 
 L37_EB79:
@@ -1164,55 +1164,55 @@ L37_EB79:
     lda #$01                                    ; EB87  A9 01       (nt)
     sta ram_047E,y                              ; EB89  99 7E 04    (nt)
     ldy #$00                                    ; EB8C  A0 00       (nt)
-    jmp L37_EB26                                ; EB8E  4C 26 EB    (nt)
+    jmp _FT2ReadByte                            ; EB8E  4C 26 EB    (nt)
 
 
 L37_EB91:
-    jsr L37_ED18                                ; EB91  20 18 ED    (nt)
+    jsr _FT2ReadParam                           ; EB91  20 18 ED    (nt)
     ldy ram_0479                                ; EB94  AC 79 04    (nt)
     sta ram_046E,y                              ; EB97  99 6E 04    (nt)
     lda #$01                                    ; EB9A  A9 01       (nt)
     sta ram_046B,y                              ; EB9C  99 6B 04    (nt)
     ldy #$00                                    ; EB9F  A0 00       (nt)
-    jmp L37_EB26                                ; EBA1  4C 26 EB    (nt)
+    jmp _FT2ReadByte                            ; EBA1  4C 26 EB    (nt)
 
 
 L37_EBA4:
-    jsr L37_ED18                                ; EBA4  20 18 ED    (nt)
+    jsr _FT2ReadParam                           ; EBA4  20 18 ED    (nt)
     ldy ram_0479                                ; EBA7  AC 79 04    (nt)
     sta ram_046E,y                              ; EBAA  99 6E 04    (nt)
     lda #$02                                    ; EBAD  A9 02       (nt)
     sta ram_046B,y                              ; EBAF  99 6B 04    (nt)
     ldy #$00                                    ; EBB2  A0 00       (nt)
-    jmp L37_EB26                                ; EBB4  4C 26 EB    (nt)
+    jmp _FT2ReadByte                            ; EBB4  4C 26 EB    (nt)
 
 
 L37_EBB7:
-    jsr L37_ED18                                ; EBB7  20 18 ED    (nt)
+    jsr _FT2ReadParam                           ; EBB7  20 18 ED    (nt)
     ldy ram_0479                                ; EBBA  AC 79 04    (nt)
     sta ram_046E,y                              ; EBBD  99 6E 04    (nt)
     lda #$03                                    ; EBC0  A9 03       (nt)
     sta ram_046B,y                              ; EBC2  99 6B 04    (nt)
     ldy #$00                                    ; EBC5  A0 00       (nt)
-    jmp L37_EB26                                ; EBC7  4C 26 EB    (nt)
+    jmp _FT2ReadByte                            ; EBC7  4C 26 EB    (nt)
 
 
 ; <- jmp L37_EB50
-L37_EBCA:
-    jsr L37_EC4C                                ; EBCA  20 4C EC    (nt)
+_FT2NoteShiftUp:
+    jsr _FT2ReadShift                           ; EBCA  20 4C EC    comando $6E: sobe a nota em N semitons (le o deslocamento) (nt)
 
-; <- jmp L37_EBCA
-L37_EBCD:
-    lda (FT_TEMP_PTR_L),y                       ; EBCD  B1 83       (nt)
-L37_EBCF:
-    beq L37_EB79                                ; EBCF  F0 A8       (nt)
+; <- jmp _FT2NoteShiftUp
+_FT2ShiftUpReadNote:
+    lda (FT_TEMP_PTR_L),y                       ; EBCD  B1 83       le o proximo byte nao-comando da sequencia (nota) (nt)
+_FT2ShiftUpNext:
+    beq L37_EB79                                ; EBCF  F0 A8       decodifica o byte: $00 encerra, >= $58 e comando, senao nota (nt)
     cmp #$58                                    ; EBD1  C9 58       (nt)
     bcc L37_EBDF                                ; EBD3  90 0A       (nt)
     and #$81                                    ; EBD5  29 81       (nt)
     cmp #$81                                    ; EBD7  C9 81       (nt)
     beq L37_EC11                                ; EBD9  F0 36       (nt)
     iny                                         ; EBDB  C8          (nt)
-    jmp L37_EBCD                                ; EBDC  4C CD EB    (nt)
+    jmp _FT2ShiftUpReadNote                     ; EBDC  4C CD EB    (nt)
 
 
 L37_EBDF:
@@ -1221,8 +1221,8 @@ L37_EBDF:
     adc ram_047C                                ; EBE1  6D 7C 04    (nt)
 
 ; <- jmp L37_EC35
-L37_EBE4:
-    sta ram_010A,x                              ; EBE4  9D 0A 01    (nt)
+_FT2NoteShiftApply:
+    sta ram_010A,x                              ; EBE4  9D 0A 01    aplica o deslocamento de nota: grava a nova nota e o modo de slide 4 (nt)
     stx zp_85                                   ; EBE7  86 85       (nt)
     pla                                         ; EBE9  68          (nt)
     tax                                         ; EBEA  AA          (nt)
@@ -1239,7 +1239,7 @@ L37_EBE4:
     sta ram_047E,y                              ; EC07  99 7E 04    (nt)
     ldy #$00                                    ; EC0A  A0 00       (nt)
     ldx zp_85                                   ; EC0C  A6 85       (nt)
-    jmp L37_EB26                                ; EC0E  4C 26 EB    (nt)
+    jmp _FT2ReadByte                            ; EC0E  4C 26 EB    (nt)
 
 
 L37_EC11:
@@ -1248,31 +1248,31 @@ L37_EC11:
     adc ram_047C                                ; EC15  6D 7C 04    (nt)
     sta ram_010A,x                              ; EC18  9D 0A 01    (nt)
     ldy #$00                                    ; EC1B  A0 00       (nt)
-    jmp L37_EB26                                ; EC1D  4C 26 EB    (nt)
+    jmp _FT2ReadByte                            ; EC1D  4C 26 EB    (nt)
 
 
 ; <- jmp L37_EB59
-L37_EC20:
-    jsr L37_EC4C                                ; EC20  20 4C EC    (nt)
+_FT2NoteShiftDown:
+    jsr _FT2ReadShift                           ; EC20  20 4C EC    comando $6F: desce a nota em N semitons (nt)
 
-; <- jmp L37_EC20
-L37_EC23:
-    lda (FT_TEMP_PTR_L),y                       ; EC23  B1 83       (nt)
-    beq L37_EBCF                                ; EC25  F0 A8       (nt)
+; <- jmp _FT2NoteShiftDown
+_FT2ShiftDownReadNote:
+    lda (FT_TEMP_PTR_L),y                       ; EC23  B1 83       le o proximo byte nao-comando da sequencia (nota) (nt)
+    beq _FT2ShiftUpNext                         ; EC25  F0 A8       (nt)
     cmp #$58                                    ; EC27  C9 58       (nt)
     bcc L37_EC35                                ; EC29  90 0A       (nt)
     and #$81                                    ; EC2B  29 81       (nt)
     cmp #$81                                    ; EC2D  C9 81       (nt)
     beq L37_EC3D                                ; EC2F  F0 0C       (nt)
     iny                                         ; EC31  C8          (nt)
-    jmp L37_EC23                                ; EC32  4C 23 EC    (nt)
+    jmp _FT2ShiftDownReadNote                   ; EC32  4C 23 EC    (nt)
 
 
 L37_EC35:
     pha                                         ; EC35  48          (nt)
     sec                                         ; EC36  38          (nt)
     sbc ram_047C                                ; EC37  ED 7C 04    (nt)
-    jmp L37_EBE4                                ; EC3A  4C E4 EB    (nt)
+    jmp _FT2NoteShiftApply                      ; EC3A  4C E4 EB    (nt)
 
 
 L37_EC3D:
@@ -1281,13 +1281,13 @@ L37_EC3D:
     sbc ram_047C                                ; EC41  ED 7C 04    (nt)
     sta ram_010A,x                              ; EC44  9D 0A 01    (nt)
     ldy #$00                                    ; EC47  A0 00       (nt)
-    jmp L37_EB26                                ; EC49  4C 26 EB    (nt)
+    jmp _FT2ReadByte                            ; EC49  4C 26 EB    (nt)
 
 
-; <- jsr L37_EBCA, jsr L37_EC20
-L37_EC4C:
-    inc ram_047B                                ; EC4C  EE 7B 04    (nt)
-    jsr L37_ED18                                ; EC4F  20 18 ED    (nt)
+; <- jsr _FT2NoteShiftUp, jsr _FT2NoteShiftDown
+_FT2ReadShift:
+    inc ram_047B                                ; EC4C  EE 7B 04    le o deslocamento de nota ($6E/$6F): parte baixa = passos, alta = modo (nt)
+    jsr _FT2ReadParam                           ; EC4F  20 18 ED    (nt)
     pha                                         ; EC52  48          (nt)
     and #$0F                                    ; EC53  29 0F       (nt)
     sta ram_047C                                ; EC55  8D 7C 04    (nt)
@@ -1304,8 +1304,8 @@ L37_EC4C:
 
 ; <- jmp L37_EB49
 ; modos: titulo, selecao, VS, intro do round, luta, fim do round, frase final
-L37_EC65:
-    ldy ram_0479                                ; EC65  AC 79 04
+_FT2PlainNote:
+    ldy ram_0479                                ; EC65  AC 79 04    nota simples: grava o indice em ram_010A e desliga o modo de afinacao fixa
     cpy #$03                                    ; EC68  C0 03
     bcs L37_EC8B                                ; EC6A  B0 1F
     ldy ram_047B                                ; EC6C  AC 7B 04
@@ -1329,14 +1329,14 @@ L37_EC8B:
 
 ; <- jmp L37_EB1A
 ; modos: titulo, selecao, VS, intro do round, luta, fim do round, frase final
-L37_EC91:
-    and #$7F                                    ; EC91  29 7F
+_FT2SpecialCode:
+    and #$7F                                    ; EC91  29 7F       comandos $70-$7F: instrumento/volume (bit 0 = volume, senao instrumento)
     lsr a                                       ; EC93  4A
     bcs L37_EC9E                                ; EC94  B0 08
     asl a                                       ; EC96  0A
     asl a                                       ; EC97  0A
     sta ram_010F,x                              ; EC98  9D 0F 01
-    jmp L37_EB26                                ; EC9B  4C 26 EB
+    jmp _FT2ReadByte                            ; EC9B  4C 26 EB
 
 
 L37_EC9E:
@@ -1363,7 +1363,7 @@ L37_EC9E:
     lda zp_85                                   ; ECC6  A5 85
     sta FT_TEMP_PTR_L                           ; ECC8  85 83
     ldy #$00                                    ; ECCA  A0 00
-    jmp L37_EB26                                ; ECCC  4C 26 EB
+    jmp _FT2ReadByte                            ; ECCC  4C 26 EB
 
 
 L37_ECCF:
@@ -1371,13 +1371,13 @@ L37_ECCF:
     sta ram_0159                                ; ECD1  8D 59 01
     inc FT_TEMP_PTR_L                           ; ECD4  E6 83
     beq L37_ECDB                                ; ECD6  F0 03
-    jmp L37_EB26                                ; ECD8  4C 26 EB
+    jmp _FT2ReadByte                            ; ECD8  4C 26 EB
 
 
 L37_ECDB:
     inc FT_TEMP_PTR_H                           ; ECDB  E6 84       (nt)
     beq L37_ECE2                                ; ECDD  F0 03       (nt)
-    jmp L37_EB26                                ; ECDF  4C 26 EB    (nt)
+    jmp _FT2ReadByte                            ; ECDF  4C 26 EB    (nt)
 
 
 L37_ECE2:
@@ -1389,7 +1389,7 @@ L37_ECE2:
     lda zp_85                                   ; ECEB  A5 85
     sta FT_TEMP_PTR_L                           ; ECED  85 83
     dey                                         ; ECEF  88
-    jmp L37_EB26                                ; ECF0  4C 26 EB
+    jmp _FT2ReadByte                            ; ECF0  4C 26 EB
 
 
 L37_ECF3:
@@ -1414,9 +1414,9 @@ L37_ED0D:
     rts                                         ; ED17  60
 
 
-; <- jsr L37_EB91, jsr L37_EBA4, jsr L37_EBB7, jsr L37_EC4C
-L37_ED18:
-    lda (FT_TEMP_PTR_L),y                       ; ED18  B1 83       (nt)
+; <- jsr L37_EB91, jsr L37_EBA4, jsr L37_EBB7, jsr _FT2ReadShift
+_FT2ReadParam:
+    lda (FT_TEMP_PTR_L),y                       ; ED18  B1 83       le um byte do ponteiro e avanca (parametro de comando) (nt)
     inc FT_TEMP_PTR_L                           ; ED1A  E6 83       (nt)
     bne L37_ED20                                ; ED1C  D0 02       (nt)
     inc FT_TEMP_PTR_H                           ; ED1E  E6 84       (nt)
@@ -1523,7 +1523,7 @@ _FT2SfxClearChannel:
     rts                                         ; EDAF  60
 
 
-; <- jmp SfxPlay, jsr L37_E40B
+; <- jmp SfxPlay, jsr SfxPlayByState
 ; modos: luta
 FamiToneSfxPlay:
     asl a                                       ; EDB0  0A
@@ -1547,7 +1547,7 @@ _FT2SfxUpdate:
     lda ram_018C,x                              ; EDCB  BD 8C 01
     beq L37_EDD5                                ; EDCE  F0 05
     dec ram_018C,x                              ; EDD0  DE 8C 01
-    bne L37_EE1A                                ; EDD3  D0 45
+    bne _FT2SfxUpdateBuf                        ; EDD3  D0 45
 L37_EDD5:
     lda ram_018E,x                              ; EDD5  BD 8E 01
     bne L37_EDDB                                ; EDD8  D0 01
@@ -1563,33 +1563,33 @@ L37_EDDB:
 
 ; <- jmp L37_EDF9
 ; modos: luta, fim do round
-L37_EDE6:
-    lda (FT_TEMP_PTR_L),y                       ; EDE6  B1 83       [le bancos $37]
+_FT2SfxReadByte:
+    lda (FT_TEMP_PTR_L),y                       ; EDE6  B1 83       [le bancos $37] le o byte do roteiro de sfx: $80+ = comando, $00 = fim
     bmi L37_EDF9                                ; EDE8  30 0F
     beq L37_EE17                                ; EDEA  F0 2B
-    jsr L37_EE0E                                ; EDEC  20 0E EE
+    jsr _FT2SfxAdvance                          ; EDEC  20 0E EE
     sta ram_018C,x                              ; EDEF  9D 8C 01
     tya                                         ; EDF2  98
     sta ram_018F,x                              ; EDF3  9D 8F 01
-    jmp L37_EE1A                                ; EDF6  4C 1A EE
+    jmp _FT2SfxUpdateBuf                        ; EDF6  4C 1A EE
 
 
 L37_EDF9:
-    jsr L37_EE0E                                ; EDF9  20 0E EE
+    jsr _FT2SfxAdvance                          ; EDF9  20 0E EE
     stx zp_85                                   ; EDFC  86 85
     adc zp_85                                   ; EDFE  65 85
     tax                                         ; EE00  AA
     lda (FT_TEMP_PTR_L),y                       ; EE01  B1 83       [le bancos $37]
     sta ram_0110,x                              ; EE03  9D 10 01
     ldx zp_85                                   ; EE06  A6 85
-    jsr L37_EE0E                                ; EE08  20 0E EE
-    jmp L37_EDE6                                ; EE0B  4C E6 ED
+    jsr _FT2SfxAdvance                          ; EE08  20 0E EE
+    jmp _FT2SfxReadByte                         ; EE0B  4C E6 ED
 
 
 ; <- jsr L37_EDDB, jsr L37_EDF9
 ; modos: luta, fim do round
-L37_EE0E:
-    iny                                         ; EE0E  C8
+_FT2SfxAdvance:
+    iny                                         ; EE0E  C8          avanca o ponteiro do sfx (Y e o offset corrente)
     bne L37_EE16                                ; EE0F  D0 05
     inc FT_TEMP_PTR_H                           ; EE11  E6 84       (nt)
     inc ram_018E,x                              ; EE13  FE 8E 01    (nt)
@@ -1602,8 +1602,8 @@ L37_EE17:
 
 ; <- jmp L37_EDDB
 ; modos: luta, fim do round
-L37_EE1A:
-    lda ram_0190,x                              ; EE1A  BD 90 01
+_FT2SfxUpdateBuf:
+    lda ram_0190,x                              ; EE1A  BD 90 01    copia os parametros do sfx para as variaveis do canal (volume, etc.)
     and #$0F                                    ; EE1D  29 0F
     beq L37_EE33                                ; EE1F  F0 12
     lda ram_0190,x                              ; EE21  BD 90 01    (nt)
@@ -1660,8 +1660,8 @@ _FT2NoteTableMSB:
 
 ; <- jsr L37_E70C
 ; modos: titulo, selecao, VS, intro do round, luta, fim do round, frase final
-L37_EF27:
-    sta ram_0465                                ; EF27  8D 65 04
+_FT2ScaleVolume:
+    sta ram_0465                                ; EF27  8D 65 04    escala o volume (A) pela atenuacao da voz e devolve no minimo 1 (0 = mudo)
     lda ram_0465                                ; EF2A  AD 65 04
     beq L37_EF48                                ; EF2D  F0 19
     inx                                         ; EF2F  E8
@@ -1703,19 +1703,19 @@ ScreenPlayerSelect:
     sta a:ScrollX                               ; EF5A  8D EF 00
     lda #$E0                                    ; EF5D  A9 E0
     sta a:ScrollY                               ; EF5F  8D F0 00
-    farcall L3B_F376                            ; EF62  A9 EF 48 A9 73 48 A9 37 .. -> 3B:F376
+    farcall SelectScreenBuild                   ; EF62  A9 EF 48 A9 73 48 A9 37 .. -> 3B:F376
     cli                                         ; EF74  58
     lda #$FF                                    ; EF75  A9 FF
     sta IrqStage                                ; EF77  8D FF 03
     farcall FadeIn                              ; EF7A  A9 EF 48 A9 8B 48 A9 37 .. -> 3B:E4D6
-    jsr L37_EF92                                ; EF8C  20 92 EF
-    jmp L37_F0CF                                ; EF8F  4C CF F0
+    jsr SelectInit                              ; EF8C  20 92 EF
+    jmp SelectFighterIntro                      ; EF8F  4C CF F0
 
 
 ; <- jsr ScreenPlayerSelect
 ; modos: selecao
-L37_EF92:
-    lda #$29                                    ; EF92  A9 29
+SelectInit:
+    lda #$29                                    ; EF92  A9 29       inicia a tela de selecao: carrega a musica $29 e zera a escolha
     sta MusicBank                               ; EF94  8D 5F 04
     lda #<D29_AAB6                              ; EF97  A9 B6
     sta zp_D5                                   ; EF99  85 D5
@@ -1732,16 +1732,16 @@ L37_EF92:
 L37_EFBF:
     lda FighterChar+1                           ; EFBF  A5 01
     sta zp_D8                                   ; EFC1  85 D8
-    bpl L37_EFC9                                ; EFC3  10 04
+    bpl SelectCheckDone                         ; EFC3  10 04
     lda #$00                                    ; EFC5  A9 00
     sta zp_13                                   ; EFC7  85 13
 
-; <- jmp L37_F0CB
+; <- jmp SelectLoopNext
 ; modos: selecao
-L37_EFC9:
-    lda zp_D7                                   ; EFC9  A5 D7
+SelectCheckDone:
+    lda zp_D7                                   ; EFC9  A5 D7       se os dois jogadores ja escolheram, retorna; senao continua
     bmi L37_EFD0                                ; EFCB  30 03
-    jmp L37_F0CE                                ; EFCD  4C CE F0
+    jmp SelectReturn                            ; EFCD  4C CE F0
 
 
 L37_EFD0:
@@ -1753,10 +1753,10 @@ L37_EFD4:
     lda ram_0390                                ; EFD8  AD 90 03
     sta ram_0391                                ; EFDB  8D 91 03
     farcall SoundUpdate                         ; EFDE  A9 EF 48 A9 EF 48 A9 37 .. -> 37:E45F
-    jsr L37_F1CC                                ; EFF0  20 CC F1
+    jsr SelectReadInput                         ; EFF0  20 CC F1
     lda FighterIsCpu                            ; EFF3  A5 02
     beq L37_EFFA                                ; EFF5  F0 03
-    jmp L37_F0CB                                ; EFF7  4C CB F0    (nt)
+    jmp SelectLoopNext                          ; EFF7  4C CB F0    (nt)
 
 
 L37_EFFA:
@@ -1778,7 +1778,7 @@ L37_EFFA:
     sta zp_E4                                   ; F01B  85 E4
     lda #$02                                    ; F01D  A9 02
     sta zp_E1                                   ; F01F  85 E1
-    farcall L3B_F359                            ; F021  A9 F0 48 A9 32 48 A9 37 .. -> 3B:F359
+    farcall SelectDrawBlink                     ; F021  A9 F0 48 A9 32 48 A9 37 .. -> 3B:F359
     ldx zp_E9                                   ; F033  A6 E9
     lda D37_F29B,x                              ; F035  BD 9B F2    [idx $00..$07]
     sta zp_D9                                   ; F038  85 D9
@@ -1793,7 +1793,7 @@ L37_EFFA:
     bne L37_F052                                ; F04E  D0 02
     inc zp_E1                                   ; F050  E6 E1
 L37_F052:
-    farcall L3B_F36C                            ; F052  A9 F0 48 A9 63 48 A9 37 .. -> 3B:F36C
+    farcall SelectDrawFighter                   ; F052  A9 F0 48 A9 63 48 A9 37 .. -> 3B:F36C
     ldx zp_E9                                   ; F064  A6 E9
     lda D37_F293,x                              ; F066  BD 93 F2    [idx $00..$07]
     sta FighterChar                             ; F069  85 00
@@ -1801,12 +1801,12 @@ L37_F052:
     beq L37_F076                                ; F06D  F0 07
     lda #$FF                                    ; F06F  A9 FF
     sta zp_D7                                   ; F071  85 D7
-    jmp L37_F093                                ; F073  4C 93 F0
+    jmp SelectDrawCurrent                       ; F073  4C 93 F0
 
 
 L37_F076:
     ldx zp_D7                                   ; F076  A6 D7
-    bmi L37_F093                                ; F078  30 19
+    bmi SelectDrawCurrent                       ; F078  30 19
     stx zp_12                                   ; F07A  86 12
     lda #$12                                    ; F07C  A9 12
     sta VoiceQueued                             ; F07E  8D 5E 04
@@ -1814,8 +1814,8 @@ L37_F076:
 
 ; <- jmp L37_EFFA
 ; modos: selecao
-L37_F093:
-    lda #$00                                    ; F093  A9 00
+SelectDrawCurrent:
+    lda #$00                                    ; F093  A9 00       desenha o retrato e o nome do lutador atual na selecao
     sta zp_D5                                   ; F095  85 D5
     lda #$2A                                    ; F097  A9 2A
     sta zp_D6                                   ; F099  85 D6
@@ -1823,27 +1823,27 @@ L37_F093:
     sta zp_D9                                   ; F09D  85 D9
     lda #$2B                                    ; F09F  A9 2B
     sta zp_DA                                   ; F0A1  85 DA
-    farcall L3B_EE38                            ; F0A3  A9 F0 48 A9 B4 48 A9 37 .. -> 3B:EE38
+    farcall PortraitSetupP1                     ; F0A3  A9 F0 48 A9 B4 48 A9 37 .. -> 3B:EE38
     lda #$00                                    ; F0B5  A9 00
     sta zp_D5                                   ; F0B7  85 D5
-    farcall L3B_EFD3                            ; F0B9  A9 F0 48 A9 CA 48 A9 37 .. -> 3B:EFD3
+    farcall PortraitDrawName                    ; F0B9  A9 F0 48 A9 CA 48 A9 37 .. -> 3B:EFD3
 
 ; <- jmp L37_EFD0
 ; modos: selecao
-L37_F0CB:
-    jmp L37_EFC9                                ; F0CB  4C C9 EF
+SelectLoopNext:
+    jmp SelectCheckDone                         ; F0CB  4C C9 EF    proximo lutador: volta ao inicio do laco da selecao
 
 
-; <- jmp L37_EF92
+; <- jmp SelectInit
 ; modos: selecao
-L37_F0CE:
-    rts                                         ; F0CE  60
+SelectReturn:
+    rts                                         ; F0CE  60          fim do laco da selecao: retorna
 
 
 ; <- jmp ScreenPlayerSelect
 ; modos: selecao
-L37_F0CF:
-    lda #$00                                    ; F0CF  A9 00
+SelectFighterIntro:
+    lda #$00                                    ; F0CF  A9 00       entrada do lutador escolhido: prepara paleta, sprite e som da selecao
     sta FighterChar+1                           ; F0D1  85 01
     sta ram_03B5                                ; F0D3  8D B5 03
     lda zp_12                                   ; F0D6  A5 12
@@ -1872,7 +1872,7 @@ L37_F0CF:
     bne L37_F10E                                ; F10A  D0 02
     inc zp_E1                                   ; F10C  E6 E1       (nt)
 L37_F10E:
-    farcall L3B_F36C                            ; F10E  A9 F1 48 A9 1F 48 A9 37 .. -> 3B:F36C
+    farcall SelectDrawFighter                   ; F10E  A9 F1 48 A9 1F 48 A9 37 .. -> 3B:F36C
     lda #$00                                    ; F120  A9 00
     sta FrameCounter                            ; F122  85 B1
 L37_F124:
@@ -1903,17 +1903,17 @@ L37_F159:
     sta OamIndex                                ; F171  85 AD
     lda zp_EC                                   ; F173  A5 EC
     beq L37_F18C                                ; F175  F0 15
-    farcall L3B_F36C                            ; F177  A9 F1 48 A9 88 48 A9 37 .. -> 3B:F36C
-    jmp L37_F19E                                ; F189  4C 9E F1
+    farcall SelectDrawFighter                   ; F177  A9 F1 48 A9 88 48 A9 37 .. -> 3B:F36C
+    jmp SelectWaitEnd                           ; F189  4C 9E F1
 
 
 L37_F18C:
     farcall OamHideRest                         ; F18C  A9 F1 48 A9 9D 48 A9 37 .. -> 3B:F2DF
 
-; <- jmp L37_F0CF
+; <- jmp SelectFighterIntro
 ; modos: selecao
-L37_F19E:
-    lda FrameCounter                            ; F19E  A5 B1
+SelectWaitEnd:
+    lda FrameCounter                            ; F19E  A5 B1       espera o fim da animacao (contador zp_EB) e faz o fade para o VS
     and #$07                                    ; F1A0  29 07
     bne L37_F155                                ; F1A2  D0 B1
     lda zp_EC                                   ; F1A4  A5 EC
@@ -1927,22 +1927,22 @@ L37_F19E:
 
 ; <- jsr L37_EFD0
 ; modos: selecao
-L37_F1CC:
-    farcall L3F_F09B                            ; F1CC  A9 F1 48 A9 DD 48 A9 37 .. -> 3F:F09B
+SelectReadInput:
+    farcall JoyPollBothSel                      ; F1CC  A9 F1 48 A9 DD 48 A9 37 .. -> 3F:F09B le os dois controles (JoyPollSafe) e processa a escolha de cada jogador
     ldx #$01                                    ; F1DE  A2 01
 
 ; <- jmp L37_F271
 ; modos: selecao
-L37_F1E0:
-    lda FighterIsCpu,x                          ; F1E0  B5 02
+SelectPlayerInput:
+    lda FighterIsCpu,x                          ; F1E0  B5 02       processa a entrada do jogador X (pula se for CPU)
     beq L37_F1E7                                ; F1E2  F0 03
-    jmp L37_F27B                                ; F1E4  4C 7B F2
+    jmp SelectNextPlayer                        ; F1E4  4C 7B F2
 
 
 L37_F1E7:
     lda zp_D7,x                                 ; F1E7  B5 D7
     bmi L37_F1EE                                ; F1E9  30 03
-    jmp L37_F27B                                ; F1EB  4C 7B F2    (nt)
+    jmp SelectNextPlayer                        ; F1EB  4C 7B F2    (nt)
 
 
 L37_F1EE:
@@ -1954,24 +1954,24 @@ L37_F1EE:
     bne L37_F20C                                ; F1F8  D0 12
     lda zp_E9,x                                 ; F1FA  B5 E9
     cmp #$04                                    ; F1FC  C9 04
-    bcc L37_F227                                ; F1FE  90 27
+    bcc SelectMoveLeft                          ; F1FE  90 27
     sbc #$04                                    ; F200  E9 04
     sta zp_E9,x                                 ; F202  95 E9
     lda #$11                                    ; F204  A9 11
     sta VoiceQueued                             ; F206  8D 5E 04
-    jmp L37_F227                                ; F209  4C 27 F2
+    jmp SelectMoveLeft                          ; F209  4C 27 F2
 
 
 L37_F20C:
     lda JoyState,x                              ; F20C  B5 F2
     and #$04                                    ; F20E  29 04
-    beq L37_F227                                ; F210  F0 15
+    beq SelectMoveLeft                          ; F210  F0 15
     lda JoyPrev,x                               ; F212  B5 F6
     and #$04                                    ; F214  29 04
-    bne L37_F227                                ; F216  D0 0F
+    bne SelectMoveLeft                          ; F216  D0 0F
     lda zp_E9,x                                 ; F218  B5 E9
     cmp #$04                                    ; F21A  C9 04
-    bcs L37_F227                                ; F21C  B0 09
+    bcs SelectMoveLeft                          ; F21C  B0 09
     adc #$04                                    ; F21E  69 04
     sta zp_E9,x                                 ; F220  95 E9
     lda #$11                                    ; F222  A9 11
@@ -1979,36 +1979,36 @@ L37_F20C:
 
 ; <- jmp L37_F1EE
 ; modos: selecao
-L37_F227:
-    lda JoyState,x                              ; F227  B5 F2
+SelectMoveLeft:
+    lda JoyState,x                              ; F227  B5 F2       esquerda na borda: move o cursor para o lutador anterior
     and #$02                                    ; F229  29 02
     beq L37_F246                                ; F22B  F0 19
     lda JoyPrev,x                               ; F22D  B5 F6
     and #$02                                    ; F22F  29 02
     bne L37_F246                                ; F231  D0 13
     ldy zp_E9,x                                 ; F233  B4 E9
-    beq L37_F264                                ; F235  F0 2D
+    beq SelectConfirm                           ; F235  F0 2D
     cpy #$04                                    ; F237  C0 04
-    beq L37_F264                                ; F239  F0 29
+    beq SelectConfirm                           ; F239  F0 29
     dey                                         ; F23B  88
     sty zp_E9,x                                 ; F23C  94 E9
     lda #$11                                    ; F23E  A9 11
     sta VoiceQueued                             ; F240  8D 5E 04
-    jmp L37_F264                                ; F243  4C 64 F2
+    jmp SelectConfirm                           ; F243  4C 64 F2
 
 
 L37_F246:
     lda JoyState,x                              ; F246  B5 F2
     and #$01                                    ; F248  29 01
-    beq L37_F264                                ; F24A  F0 18
+    beq SelectConfirm                           ; F24A  F0 18
     lda JoyPrev,x                               ; F24C  B5 F6
     and #$01                                    ; F24E  29 01
-    bne L37_F264                                ; F250  D0 12
+    bne SelectConfirm                           ; F250  D0 12
     ldy zp_E9,x                                 ; F252  B4 E9
     cpy #$03                                    ; F254  C0 03
-    beq L37_F264                                ; F256  F0 0C
+    beq SelectConfirm                           ; F256  F0 0C
     cpy #$07                                    ; F258  C0 07
-    beq L37_F264                                ; F25A  F0 08
+    beq SelectConfirm                           ; F25A  F0 08
     iny                                         ; F25C  C8
     sty zp_E9,x                                 ; F25D  94 E9
     lda #$11                                    ; F25F  A9 11
@@ -2016,28 +2016,28 @@ L37_F246:
 
 ; <- jmp L37_F20C
 ; modos: selecao
-L37_F264:
-    lda JoyState,x                              ; F264  B5 F2
+SelectConfirm:
+    lda JoyState,x                              ; F264  B5 F2       A na borda: confirma o lutador atual (P1/P2)
     and #$80                                    ; F266  29 80
     beq L37_F271                                ; F268  F0 07
     lda #$01                                    ; F26A  A9 01
     sta zp_D7,x                                 ; F26C  95 D7
-    jmp L37_F27B                                ; F26E  4C 7B F2
+    jmp SelectNextPlayer                        ; F26E  4C 7B F2
 
 
 L37_F271:
     lda JoyState,x                              ; F271  B5 F2
     and #$40                                    ; F273  29 40
-    beq L37_F27B                                ; F275  F0 04
+    beq SelectNextPlayer                        ; F275  F0 04
     lda #$00                                    ; F277  A9 00
     sta zp_D7,x                                 ; F279  95 D7
 
-; <- jmp L37_F1CC, jmp L37_F1E7, jmp L37_F246
+; <- jmp SelectReadInput, jmp L37_F1E7, jmp L37_F246
 ; modos: selecao
-L37_F27B:
-    dex                                         ; F27B  CA
+SelectNextPlayer:
+    dex                                         ; F27B  CA          passa ao outro jogador (X=1 -> 0) ou encerra
     bmi L37_F281                                ; F27C  30 03
-    jmp L37_F1E0                                ; F27E  4C E0 F1
+    jmp SelectPlayerInput                       ; F27E  4C E0 F1
 
 
 L37_F281:
@@ -2309,8 +2309,8 @@ L37_F558:
 
 ; <- jmp L37_F5E6, jmp L37_F601, jmp L37_F616, jmp L37_F63B, jmp L37_F645
 ; modos: titulo
-L37_F57E:
-    lda #$00                                    ; F57E  A9 00
+TitleLoop:
+    lda #$00                                    ; F57E  A9 00       laco do titulo: zera rolagem e espera o START
     sta a:ScrollX                               ; F580  8D EF 00
     sta a:ScrollY                               ; F583  8D F0 00
     lda PpuCtrlShadow                           ; F586  A5 ED
@@ -2354,7 +2354,7 @@ L37_F5C7:
     txa                                         ; F5DE  8A
     axs #$04                                    ; F5DF  CB 04
     stx zp_EB                                   ; F5E1  86 EB
-    jmp L37_F5F8                                ; F5E3  4C F8 F5
+    jmp TitleScrollSet                          ; F5E3  4C F8 F5
 
 
 L37_F5E6:
@@ -2370,10 +2370,10 @@ L37_F5E6:
 
 ; <- jmp L37_F5BB
 ; modos: titulo
-L37_F5F8:
-    stx PPUSCROLL                               ; F5F8  8E 05 20
+TitleScrollSet:
+    stx PPUSCROLL                               ; F5F8  8E 05 20    grava X nas duas portas de rolagem e volta ao laco do titulo
     stx PPUSCROLL                               ; F5FB  8E 05 20
-    jmp L37_F57E                                ; F5FE  4C 7E F5
+    jmp TitleLoop                               ; F5FE  4C 7E F5
 
 
 L37_F601:
@@ -2384,13 +2384,13 @@ L37_F601:
     beq L37_F645                                ; F60A  F0 39
     lda FrameCounter                            ; F60C  A5 B1
     and #$01                                    ; F60E  29 01
-    jsr L37_F670                                ; F610  20 70 F6
-    jmp L37_F57E                                ; F613  4C 7E F5
+    jsr TitleBlinkPushStart                     ; F610  20 70 F6
+    jmp TitleLoop                               ; F613  4C 7E F5
 
 
 L37_F616:
     lda #$01                                    ; F616  A9 01
-    jsr L37_F670                                ; F618  20 70 F6
+    jsr TitleBlinkPushStart                     ; F618  20 70 F6
     farcall JoyPollBoth                         ; F61B  A9 F6 48 A9 2C 48 A9 37 .. -> 3F:F8E7
     ldx #$00                                    ; F62D  A2 00
 L37_F62F:
@@ -2399,22 +2399,22 @@ L37_F62F:
     bne L37_F63B                                ; F633  D0 06
     dex                                         ; F635  CA
     bpl L37_F62F                                ; F636  10 F7
-    jmp L37_F57E                                ; F638  4C 7E F5
+    jmp TitleLoop                               ; F638  4C 7E F5
 
 
 L37_F63B:
     stx zp_EA                                   ; F63B  86 EA
     lda #$10                                    ; F63D  A9 10
     sta VoiceQueued                             ; F63F  8D 5E 04
-    jmp L37_F57E                                ; F642  4C 7E F5
+    jmp TitleLoop                               ; F642  4C 7E F5
 
 
 L37_F645:
     lda FadePalette+11                          ; F645  AD 90 04
     beq L37_F652                                ; F648  F0 08
     lda #$00                                    ; F64A  A9 00
-    jsr L37_F670                                ; F64C  20 70 F6
-    jmp L37_F57E                                ; F64F  4C 7E F5
+    jsr TitleBlinkPushStart                     ; F64C  20 70 F6
+    jmp TitleLoop                               ; F64F  4C 7E F5
 
 
 L37_F652:
@@ -2424,8 +2424,8 @@ L37_F652:
 
 ; <- jsr L37_F601, jsr L37_F616, jsr L37_F645
 ; modos: titulo
-L37_F670:
-    ldy #$09                                    ; F670  A0 09
+TitleBlinkPushStart:
+    ldy #$09                                    ; F670  A0 09       pisca o PRESS START alternando a cor 10 da paleta
     sty FadePalette+10                          ; F672  8C 8F 04
     cmp #$01                                    ; F675  C9 01
     beq L37_F682                                ; F677  F0 09
