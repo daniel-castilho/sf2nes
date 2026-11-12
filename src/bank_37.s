@@ -159,7 +159,7 @@ SoundInitSfx:
     jmp FamiToneSfxInit                         ; E3FE  4C 76 ED
 
 
-; <- farcall StateAdvance, farcall SoundProc, farcall MoveGrabEscape
+; <- farcall StateAdvance, farcall SoundProc_EEB8, farcall MoveGrabEscape
 ; modos: luta
 SfxPlay:
     ldy zp_DC                                   ; E401  A4 DC

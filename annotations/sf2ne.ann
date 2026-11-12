@@ -73,33 +73,33 @@ label 3F:EF5 EffectEnd
 comment 3F:EF5 EffectEnd
 label 3F:E048 End
 comment 3F:E048 End
-label 3F:E054 End
+label 3F:E054 End_E054
 comment 3F:E054 End
-label 3F:E167 End
+label 3F:E167 End_E167
 comment 3F:E167 End
-label 3F:E1AA End
+label 3F:E1AA End_E1AA
 comment 3F:E1AA End
-label 3F:E1AD End
+label 3F:E1AD End_E1AD
 comment 3F:E1AD End
-label 3F:E1C3 End
+label 3F:E1C3 End_E1C3
 comment 3F:E1C3 End
-label 3F:E1D5 End
+label 3F:E1D5 End_E1D5
 comment 3F:E1D5 End
-label 3F:E1EC End
+label 3F:E1EC End_E1EC
 comment 3F:E1EC End
-label 3F:E203 End
+label 3F:E203 End_E203
 comment 3F:E203 End
-label 3F:E211 End
+label 3F:E211 End_E211
 comment 3F:E211 End
-label 3F:E222 End
+label 3F:E222 End_E222
 comment 3F:E222 End
-label 3F:E22B End
+label 3F:E22B End_E22B
 comment 3F:E22B End
-label 3F:E26B End
+label 3F:E26B End_E26B
 comment 3F:E26B End
-label 3F:E26E End
+label 3F:E26E End_E26E
 comment 3F:E26E End
-label 3F:E293 End
+label 3F:E293 End_E293
 comment 3F:E293 End
 label 3F:E33C AnimLoop
 comment 3F:E33C AnimLoop
@@ -119,9 +119,9 @@ label 3F:E448 FrameEffect
 comment 3F:E448 FrameEffect
 label 3F:E469 ProjCheck
 comment 3F:E469 ProjCheck
-label 3F:E47B End
+label 3F:E47B End_E47B
 comment 3F:E47B End
-label 3F:E47E End
+label 3F:E47E End_E47E
 comment 3F:E47E End
 label 3F:E4A1 ScreenConfig
 comment 3F:E4A1 ScreenConfig
@@ -131,7 +131,7 @@ label 3F:E4C1 BankSwitch
 comment 3F:E4C1 BankSwitch
 label 3F:E517 TimerUpdate
 comment 3F:E517 TimerUpdate
-label 3F:E538 End
+label 3F:E538 End_E538
 comment 3F:E538 End
 label 3F:E55A RoundCond
 comment 3F:E55A RoundCond
@@ -195,7 +195,7 @@ label 3F:E836 IntroEnd
 comment 3F:E836 IntroEnd
 label 3F:E846 CamConfig
 comment 3F:E846 CamConfig
-label 3F:E896 RoundCond
+label 3F:E896 RoundCond_E896
 comment 3F:E896 RoundCond
 label 3F:E8AC ScreenCheck
 comment 3F:E8AC ScreenCheck
@@ -211,7 +211,7 @@ label 3F:E91E VictoryCond
 comment 3F:E91E VictoryCond
 label 3F:E95A DefeatCond
 comment 3F:E95A DefeatCond
-label 3F:E962 ProjCheck
+label 3F:E962 ProjCheck_E962
 comment 3F:E962 ProjCheck
 label 3F:EA0F SelInput
 comment 3F:EA0F SelInput
@@ -233,17 +233,17 @@ label 3F:EBEC EffectEnd
 comment 3F:EBEC EffectEnd
 label 3F:EC0C TransState
 comment 3F:EC0C TransState
-label 3F:EC36 RoundCond
+label 3F:EC36 RoundCond_EC36
 comment 3F:EC36 RoundCond
 label 3F:EC59 CondCheck
 comment 3F:EC59 CondCheck
 label 3F:EC83 SfxStart
 comment 3F:EC83 SfxStart
-label 3F:ECA6 StateBranch
+label 3F:ECA6 StateBranch_ECA6
 comment 3F:ECA6 StateBranch
-label 3F:ECCE DamageProc
+label 3F:ECCE DamageProc_ECCE
 comment 3F:ECCE DamageProc
-label 3F:ECD4 AnimChange
+label 3F:ECD4 AnimChange_ECD4
 comment 3F:ECD4 AnimChange
 label 3F:ECE4 EffectCont
 comment 3F:ECE4 EffectCont
@@ -261,9 +261,9 @@ label 3F:ED82 DamageBranch
 comment 3F:ED82 DamageBranch
 label 3F:EDB5 DmgApply
 comment 3F:EDB5 DmgApply
-label 3F:EDC2 StateBranch
+label 3F:EDC2 StateBranch_EDC2
 comment 3F:EDC2 StateBranch
-label 3F:EDD6 KOCond
+label 3F:EDD6 KOCond_EDD6
 comment 3F:EDD6 KOCond
 label 3F:EDE9 PostProc
 comment 3F:EDE9 PostProc
@@ -273,19 +273,19 @@ label 3F:EE15 RoundStart2
 comment 3F:EE15 RoundStart2
 label 3F:EE4B DmgReaction
 comment 3F:EE4B DmgReaction
-label 3F:EE78 AnimUpdate
+label 3F:EE78 AnimUpdate_EE78
 comment 3F:EE78 AnimUpdate
 label 3F:EE8B TimerCheck
 comment 3F:EE8B TimerCheck
 label 3F:EEA7 PhaseChange
 comment 3F:EEA7 PhaseChange
-label 3F:EEB8 SoundProc
+label 3F:EEB8 SoundProc_EEB8
 comment 3F:EEB8 SoundProc
 label 3F:EFBB ModeChange
 comment 3F:EFBB ModeChange
 label 3F:EFC1 FightStart
 comment 3F:EFC1 FightStart
-label 3F:EFCB AIBranch
+label 3F:EFCB AIBranch_EFCB
 comment 3F:EFCB AIBranch
 label 3F:EFD9 PostAnim
 comment 3F:EFD9 PostAnim
@@ -295,115 +295,115 @@ label 3F:F032 AnimState
 comment 3F:F032 AnimState
 label 3F:F06B CondBranch
 comment 3F:F06B CondBranch
-label 3F:F08F SelInput
+label 3F:F08F SelInput_F08F
 comment 3F:F08F SelInput
-label 3F:F09A FighterSwap
+label 3F:F09A FighterSwap_F09A
 comment 3F:F09A FighterSwap
 label 3F:F0CF FighterDraw
 comment 3F:F0CF FighterDraw
-label 3F:F0E2 CamConfig
+label 3F:F0E2 CamConfig_F0E2
 comment 3F:F0E2 CamConfig
-label 3F:F0ED TimerUpdate
+label 3F:F0ED TimerUpdate_F0ED
 comment 3F:F0ED TimerUpdate
-label 3F:F101 MoveDispatch
+label 3F:F101 MoveDispatch_F101
 comment 3F:F101 MoveDispatch
 label 3F:F10B InputCheck
 comment 3F:F10B InputCheck
 label 3F:F112 SeqContinue
 comment 3F:F112 SeqContinue
-label 3F:F125 IntroState
+label 3F:F125 IntroState_F125
 comment 3F:F125 IntroState
 label 3F:F12F SeqEnd
 comment 3F:F12F SeqEnd
-label 3F:F147 AttackStart
+label 3F:F147 AttackStart_F147
 comment 3F:F147 AttackStart
 label 3F:F15F AttackEnd
 comment 3F:F15F AttackEnd
-label 3F:F16C PosChange
+label 3F:F16C PosChange_F16C
 comment 3F:F16C PosChange
 label 3F:F181 GuardCond
 comment 3F:F181 GuardCond
-label 3F:F1A6 InputCheck
+label 3F:F1A6 InputCheck_F1A6
 comment 3F:F1A6 InputCheck
-label 3F:F1B7 FighterSwap
+label 3F:F1B7 FighterSwap_F1B7
 comment 3F:F1B7 FighterSwap
-label 3F:F1E8 RoundEnd
+label 3F:F1E8 RoundEnd_F1E8
 comment 3F:F1E8 RoundEnd
-label 3F:F21C MoveDispatch
+label 3F:F21C MoveDispatch_F21C
 comment 3F:F21C MoveDispatch
-label 3F:F24E ColCheck
+label 3F:F24E ColCheck_F24E
 comment 3F:F24E ColCheck
 label 3F:F251 StateChange
 comment 3F:F251 StateChange
-label 3F:F26E SoundEffect
+label 3F:F26E SoundEffect_F26E
 comment 3F:F26E SoundEffect
-label 3F:F277 AnimEffect
+label 3F:F277 AnimEffect_F277
 comment 3F:F277 AnimEffect
 label 3F:F28A BranchCond
 comment 3F:F28A BranchCond
 label 3F:F2B2 LoopCont
 comment 3F:F2B2 LoopCont
-label 3F:F2DA EffectEnd
+label 3F:F2DA EffectEnd_F2DA
 comment 3F:F2DA EffectEnd
-label 3F:F35A PosChange
+label 3F:F35A PosChange_F35A
 comment 3F:F35A PosChange
-label 3F:F36E SoundEffect
+label 3F:F36E SoundEffect_F36E
 comment 3F:F36E SoundEffect
 label 3F:F376 MetaSpriteDraw
 comment 3F:F376 MetaSpriteDraw
 label 3F:F388 BlockEnd
 comment 3F:F388 BlockEnd
-label 3F:F38F AnimChange
+label 3F:F38F AnimChange_F38F
 comment 3F:F38F AnimChange
-label 3F:F3A6 StateChange
+label 3F:F3A6 StateChange_F3A6
 comment 3F:F3A6 StateChange
-label 3F:F3A9 CharSelect
+label 3F:F3A9 CharSelect_F3A9
 comment 3F:F3A9 CharSelect
-label 3F:F3B9 RoundEnd
+label 3F:F3B9 RoundEnd_F3B9
 comment 3F:F3B9 RoundEnd
-label 3F:F3CA StateChange
+label 3F:F3CA StateChange_F3CA
 comment 3F:F3CA StateChange
 label 3F:F3DA RoundTrans
 comment 3F:F3DA RoundTrans
-label 3F:F404 AnimState
+label 3F:F404 AnimState_F404
 comment 3F:F404 AnimState
-label 3F:F411 PalConfig
+label 3F:F411 PalConfig_F411
 comment 3F:F411 PalConfig
-label 3F:F414 StateChange
+label 3F:F414 StateChange_F414
 comment 3F:F414 StateChange
 label 3F:F430 EffectStart
 comment 3F:F430 EffectStart
 label 3F:F436 InputProc
 comment 3F:F436 InputProc
-label 3F:F46D ColCheck
+label 3F:F46D ColCheck_F46D
 comment 3F:F46D ColCheck
 label 3F:F470 SfxPlay
 comment 3F:F470 SfxPlay
-label 3F:F487 BankChange
+label 3F:F487 BankChange_F487
 comment 3F:F487 BankChange
 label 3F:F48D SoundConfig
 comment 3F:F48D SoundConfig
 label 3F:F4E1 FrameUpdate
 comment 3F:F4E1 FrameUpdate
-label 3F:F52A StateChange
+label 3F:F52A StateChange_F52A
 comment 3F:F52A StateChange
-label 3F:F551 RoundEnd
+label 3F:F551 RoundEnd_F551
 comment 3F:F551 RoundEnd
-label 3F:F55B RoundEnd
+label 3F:F55B RoundEnd_F55B
 comment 3F:F55B RoundEnd
-label 3F:F566 InputProc
+label 3F:F566 InputProc_F566
 comment 3F:F566 InputProc
-label 3F:F56D SfxPlay
+label 3F:F56D SfxPlay_F56D
 comment 3F:F56D SfxPlay
-label 3F:F583 AICheck
+label 3F:F583 AICheck_F583
 comment 3F:F583 AICheck
-label 3F:F58A AILevelCheck
+label 3F:F58A AILevelCheck_F58A
 comment 3F:F58A AILevelCheck
-label 3F:F596 EffectStart
+label 3F:F596 EffectStart_F596
 comment 3F:F596 EffectStart
-label 3F:F5A6 StateChange
+label 3F:F5A6 StateChange_F5A6
 comment 3F:F5A6 StateChange
-label 3F:F5AD SoundProc
+label 3F:F5AD SoundProc_F5AD
 comment 3F:F5AD SoundProc
 label 3F:F5FC SfxEnd
 comment 3F:F5FC SfxEnd
@@ -415,21 +415,21 @@ label 3F:F68A ScreenStart
 comment 3F:F68A ScreenStart
 label 3F:F695 InputDispatch
 comment 3F:F695 InputDispatch
-label 3F:F6B2 StateChange
+label 3F:F6B2 StateChange_F6B2
 comment 3F:F6B2 StateChange
-label 3F:F6D6 FadeOut
+label 3F:F6D6 FadeOut_F6D6
 comment 3F:F6D6 FadeOut
-label 3F:F703 SelInput
+label 3F:F703 SelInput_F703
 comment 3F:F703 SelInput
-label 3F:F81C ModeChange
+label 3F:F81C ModeChange_F81C
 comment 3F:F81C ModeChange
-label 3F:F8CD PalConfig
+label 3F:F8CD PalConfig_F8CD
 comment 3F:F8CD PalConfig
-label 3F:F8DB PRGBank
+label 3F:F8DB PRGBank_F8DB
 comment 3F:F8DB PRGBank
 label 3F:F8E6 PalRestore
 comment 3F:F8E6 PalRestore
-label 3F:F917 RoundCond
+label 3F:F917 RoundCond_F917
 comment 3F:F917 RoundCond
 label 3F:FF9F Reset
 block 3F:FF9F ------------------------------------------------------------------------------------------------
@@ -464,7 +464,7 @@ label 3F:E5B9 Random
 label 3F:E03D DistanceX
 comment 3F:E03D A = |x do P2 - x do P1|
 label 3F:E049 DistanceY
-label 3F:E000 HitFreeze
+label 3F:E000 HitFreeze_E000
 comment 3F:E000 congela o lutador atingido: salva movimento/velocidades/timer em ram_0312-031C e para no quadro atual por $0E quadros
 label 3F:E0CE StateCheckTransitions
 block 3F:E0CE ------------------------------------------------------------------------------------------------
@@ -570,7 +570,7 @@ label 3F:E963 DirCodeTbl
 comment 3F:E963 bits do controle -> codigo de direcao (bit 0 frente, 1 tras, 2 baixo, 3 cima): $04 neutro, $05 frente, $06 tras, $07 cima, $08 baixo, $09-$0A diagonais de cima, $0B-$0C diagonais de baixo
 label 3F:F799 GuardClassTbl
 comment 3F:F799 byte de classe da guarda pela direcao (indice InputDir-$04): $29 em pe, $2A agachado
-label 3F:F671 InputDispatch
+label 3F:F671 InputDispatch_F671
 comment 3F:F671 entrada do jogador: vira transicao de estado — direcao (flag de quadro bit 2), botao (bit 1) ou especial (bit 0); a classe do proximo estado ($58-$68 aceita direcao) decide o que passa
 label 3F:F6F5 TransViaTbl
 comment 3F:F6F5 le o ponteiro da tabela de estados e chama o caminhador de transicoes
@@ -761,7 +761,7 @@ label 3F:F037 GrabCheckOne
 comment 3F:F037 testa o agarrao de X em Y e aplica o deslocamento/estado
 label 3F:F09B JoyPollBothSel
 comment 3F:F09B le os dois controles na selecao (JoyPollSafe 0 e 1)
-label 3F:F0A5 MoveDispatch
+label 3F:F0A5 MoveDispatch_F0A5
 comment 3F:F0A5 despacha a aplicacao do movimento pelo MoveMode (tabela D3F_F0B1)
 label 3F:F0BD MoveOpponentRel
 comment 3F:F0BD modo $00: posiciona X relativo ao oponente (X = X do oponente +/- VelX)
@@ -1465,11 +1465,9 @@ alt FIX_SELECT_VERSUS 37:EF92 3
 |   sta ScreenMode      ; modo versus
 |   jmp ScreenVersus
 |;;
-|+
 # ============================================================================================================
 
 
-|    lda #$00                                    ; era lda #$01 (P2 = CPU)
 
 
 # ============================================================================================================
@@ -1497,6 +1495,5 @@ alt FIX_SELECT_DIFFICULTY 37:EF92 2
 |    sta AiLevel,x
 |++;
 
-| ; AiLevel 2/4/7: Fácil/Normal/Difícil
 
 # ============================================================================================================
