@@ -37,7 +37,7 @@ Leia nesta ordem:
 
 ## O que ainda **não** está pronto
 
-* **Nomes.** Há 1.793 rótulos; 161 têm nome de verdade (`Main`, `FightFrame`, `DrawMetasprite`, `InputButtons`,
+Há 1.795 rótulos; 304 têm nome de verdade
   `FamiToneUpdate`…). O resto ainda é `L3F_E4DA`, `D01_A4CB`. Das variáveis, 78 têm nome. É o grosso do trabalho
   que falta na fase de entendimento — e é onde a IA mais ajuda.
 * **Formatos de dados parcialmente documentados:** metasprites e estados estão entendidos; caixas de colisão,

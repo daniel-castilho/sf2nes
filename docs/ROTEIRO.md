@@ -67,7 +67,7 @@ validação fica para depois, registrada como pendência, não como critério).
   feito como `FIX_EDGE_ATTACK`: `InputButtons` (`3F:E99A–E9FB`) reescrito num bloco só + marcador seletivo
   `EdgeMarkHold` (`$F949`) no lugar da gravação cega de `$15`; `-D FIX_HEAVY_ONCE` continua independente e é
   subsumido quando o `FIX_EDGE_ATTACK` está ligado; validação de jogabilidade pendente
-- [ ] **2.2** dificuldade: SELECT na tela de seleção alterna Fácil/Normal/Difícil (`AiLevel` 2/4/7,
+- [ ] **2.2** dificuldade: SELECT na seleção alterna Fácil/Normal/Difícil (`AiLevel` 2/4/7,
   padrão 4) + ler/documentar a IA — depende da 2.0
 - [ ] **2.3** versus: P2 entra com START na tela de seleção, HUD "PRESS START" → "P2", P2 travado no
   Ryu (sem seleção de personagem para o P2) — o motor em si já funciona com dois humanos
