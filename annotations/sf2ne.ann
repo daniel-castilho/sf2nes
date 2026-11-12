@@ -351,6 +351,106 @@ comment 3F:EFC1 CPU ou humano?
 comment 3F:EFC5 CPU -> IA
 comment 3F:EFCB humano -> controle
 
+
+# --- rotinas e continuacoes nomeadas na revisao de documentacao (ordem de endereco) ---
+label 3F:E357 AnimAdvanceEnter
+comment 3F:E357 entra num quadro cujo ponteiro vem em A (lo) e no byte seguinte (hi), nos desvios do laco de AnimAdvance
+label 3F:E701 AiStartScriptCheck
+comment 3F:E701 trecho comum de AiStartScript*: bit 6 de zp_DD inicia sempre; senao sorteia Random&7 contra AiLevel
+label 3F:E74C AiDefaultGuard
+comment 3F:E74C passo da IA: em estado neutro segura tras (guarda) e sai; senao decide ou continua o roteiro
+label 3F:E7E7 AiScriptLoop
+comment 3F:E7E7 laco do roteiro: $FF encerra; senao decodifica o opcode e copia os operandos
+label 3F:E7FE AiScriptCopyArgs
+comment 3F:E7FE copia os operandos positivos para zp_6D.. ate o proximo opcode (negativo)
+label 3F:E82B AiOpRun
+comment 3F:E82B Y = opcode lido; cai no despacho AiOpDispatch
+label 3F:E89F ProjUpdateStore
+comment 3F:E89F grava ProjX se dentro de $0C-$FB e conta o passo; fora disso mata o projetil
+label 3F:EC45 LoadBoxBody2
+comment 3F:EC45 le a caixa de corpo 2 (altura 0 = ausente), espelhada por FighterFlip
+label 3F:EC92 LoadBoxAttack
+comment 3F:EC92 le a caixa de ataque (altura 0 = ausente), travada em $20-$E0
+label 3F:ECE7 LoadBoxesNext
+comment 3F:ECE7 fim das caixas: recarrega para o lutador 0 ou arma o HitTest (x=1 ataca y=0)
+label 3F:ED6C HitTestApply
+comment 3F:ED6C acerto: passa EffectParam e o lutador atingido (Y) para a rotina de dano
+label 3F:ED7A HitTestNext
+comment 3F:ED7A troca os papeis (0 ataca 1) e repete o HitTest; senao encerra
+label 3F:ED83 HitDamageApply
+comment 3F:ED83 aplica o dano: se o alvo esta em guarda compativel, bloqueia; senao soma o dano pendente
+label 3F:EE27 HitDamageHeavy
+comment 3F:EE27 dano >= $20: zera o estado, arma HitStop=$78 e escolhe a reacao pesada
+label 3F:EE4E HitDamageReact
+comment 3F:EE4E escolhe a reacao de dano (HitReactClass) e o estado correspondente
+label 3F:EEC2 HitDamageSfx
+comment 3F:EEC2 toca o efeito sonoro do dano e indexa a tabela de reacao
+label 3F:EEDF HitDamageTrans
+comment 3F:EEDF carrega o banco de estados e aplica a transicao de dano (zp_DD=4)
+label 3F:EEF7 HitDamageKO
+comment 3F:EEF7 dano mata: converte a classe de reacao para o estado de KO
+label 3F:EFCE FighterUpdateExec
+comment 3F:EFCE executa a entrada e a animacao do lutador X (InputDispatch + AnimAdvance)
+label 3F:EFF8 HitRecoverTick
+comment 3F:EFF8 conta o HitStop e, ao terminar, restaura o proximo estado do lutador
+label 3F:F033 GrabCheck
+comment 3F:F033 verifica agarrao: lutador X agarra Y se estiver no estado $A0-$A8 e alinhado
+label 3F:F037 GrabCheckOne
+comment 3F:F037 testa o agarrao de X em Y e aplica o deslocamento/estado
+label 3F:F09B JoyPollBothSel
+comment 3F:F09B le os dois controles na selecao (JoyPollSafe 0 e 1)
+label 3F:F0A5 MoveDispatch
+comment 3F:F0A5 despacha a aplicacao do movimento pelo MoveMode (tabela D3F_F0B1)
+label 3F:F0BD MoveOpponentRel
+comment 3F:F0BD modo $00: posiciona X relativo ao oponente (X = X do oponente +/- VelX)
+label 3F:F0F2 MoveAbsolute
+comment 3F:F0F2 modo $01: aplica VelY e VelX direto (movimento absoluto)
+label 3F:F156 MoveAbsLeft
+comment 3F:F156 modo absoluto: aplica o deslocamento para a esquerda
+label 3F:F194 MoveAbsLeftFwd
+comment 3F:F194 modo absoluto para a esquerda com avanco/recuo de camera
+label 3F:F1C0 MoveScrollCamera
+comment 3F:F1C0 aplica o deslocamento de camera e o repassa aos outros objetos
+label 3F:F204 MoveScrollOthers
+comment 3F:F204 move o oponente e o projetil junto com a camera
+label 3F:F225 MoveApplyX
+comment 3F:F225 aplica o deslocamento em FighterX e zera VelX
+label 3F:F236 MoveAir
+comment 3F:F236 modo $02/$03: integra VelY com gravidade e chao
+label 3F:F279 MoveAirScroll
+comment 3F:F279 integra o subpixel de VelY (deslocamento aereo)
+label 3F:F2C0 MoveAirScrollApply
+comment 3F:F2C0 aplica o deslocamento aereo e ajusta o chao/oponente
+label 3F:F317 MoveAirGravity
+comment 3F:F317 aplica a gravidade ($30 por quadro) e testa o chao
+label 3F:F332 MoveAirGround
+comment 3F:F332 no ar: move horizontalmente e aplica atrito ao pousar
+label 3F:F377 MoveHorizontal
+comment 3F:F377 modo $04/$05: aplica VelX com regras de canto
+label 3F:F3FB MoveHorizLeft
+comment 3F:F3FB movimento horizontal para a esquerda (conforme FighterFlip)
+label 3F:F453 MoveHorizLeftFwd
+comment 3F:F453 movimento horizontal para a esquerda com avanco de camera
+label 3F:F49A MoveScrollStage
+comment 3F:F49A aplica o deslocamento do cenario e move a camera
+label 3F:F512 MoveScrollStageOthers
+comment 3F:F512 move o oponente e o projetil junto com o cenario
+label 3F:F533 MoveHorizApply
+comment 3F:F533 aplica o deslocamento horizontal em FighterXSub/FighterX
+label 3F:F543 MovePushApart
+comment 3F:F543 se os lutadores se sobrepoem, empurra cada um metade da invasao
+label 3F:F5B5 MovePushApply
+comment 3F:F5B5 aplica o empurrao em FighterX
+label 3F:F5C5 MoveClampEdges
+comment 3F:F5C5 inicia o clamp de X nas bordas da tela
+label 3F:F5CD MoveClampX
+comment 3F:F5CD trava o X em $20-$E0 e guarda o transbordo
+label 3F:F621 MoveClampNext
+comment 3F:F621 passa ao outro lutador para o clamp
+label 3F:F62C MoveClampPush
+comment 3F:F62C soma o transbordo do clamp ao X do oponente (empurrao atraves da vitima)
+label 3F:F648 MoveGrabEscape
+comment 3F:F648 escapa do agarrao: hit-freeze, zera a classe de reacao e toca o som
 # ============================================================================================================
 # BANCO $3B — luta (rounds, HUD, desenho), telas VS e frase final, utilitarios de video
 # ============================================================================================================
@@ -408,6 +508,102 @@ label 3B:FADC DrawTitleScreen
 label 3B:F98C RleSupportScreen
 label 3B:FAED RleTitleScreen
 
+
+# --- rotinas e continuacoes nomeadas na revisao de documentacao (ordem de endereco) ---
+label 3B:E181 PortraitLoadPalettes
+comment 3B:E181 carrega as 3 paletas (9 cores) do lutador das tabelas do banco $3C
+label 3B:E20F PortraitDecodeChunk
+comment 3B:E20F laco do PortraitBuild: decodifica um bloco de pixels e grava em ram_034E
+label 3B:E28A VersusLoadStage
+comment 3B:E28A carrega o cenario da tela VS: RLE, atributos e dados do chao
+label 3B:E377 RoundInitLoadStage
+comment 3B:E377 carrega a paleta do cenario e zera camera/chao no inicio do round
+label 3B:E3F5 PpuWrite64
+comment 3B:E3F5 copia 64 bytes crus (duas linhas de nametable) para o PPUDATA
+label 3B:E428 FadeOutStep
+comment 3B:E428 passo do fade-out: espera o vblank, marca a paleta e trata a troca de CHR do titulo
+label 3B:E47E FadeOutDarken
+comment 3B:E47E prepara o escurecimento das 24 cores (Y=$17) e cai no laco
+label 3B:E480 FadeOutDarkenLoop
+comment 3B:E480 escurece uma cor da paleta em um degrau conforme o passo do fade
+label 3B:E4D8 FadeInPrepare
+comment 3B:E4D8 salva a paleta original em FadePalette e apaga as cores para o fade-in
+label 3B:E59D RoundIntro_HudRowP1
+comment 3B:E59D rotulo do P1: 'P1' fixo se humano, senao inicia o texto rolando
+label 3B:E5C3 RoundIntro_HudRowP2
+comment 3B:E5C3 rotulo do P2: 'P2' fixo se humano, senao inicia o texto rolando
+label 3B:E5E9 RoundIntro_HudBars
+comment 3B:E5E9 inicializa as barras de energia e os digitos do relogio
+label 3B:E63E RoundIntro_DrawNames
+comment 3B:E63E escreve os nomes dos lutadores no nametable (2 linhas)
+label 3B:E689 HudUpdate
+comment 3B:E689 atualiza o HUD: energia, relogio e avisos (a cada 32 quadros)
+label 3B:E7A5 HudWarnLowHp
+comment 3B:E7A5 pisca o aviso de energia baixa (HP < $2C) a cada 8 quadros
+label 3B:E7C6 HudWarnLowHpDraw
+comment 3B:E7C6 desenha o aviso de energia baixa para o lutador X
+label 3B:E98C NmiFightVram_Health
+comment 3B:E98C envia ao PPU as barras de energia e o relogio no NMI
+label 3B:EAF2 VersusDraw
+comment 3B:EAF2 monta a tela VS: RLE do fundo, retratos e nomes
+label 3B:EBF2 VersusDrawFighters
+comment 3B:EBF2 desenha os dois lutadores e os nomes na tela VS
+label 3B:ECE1 WinQuoteWait
+comment 3B:ECE1 espera (2 ou 3) x 64 quadros conforme RoundResult e faz o fade
+label 3B:ED24 WinQuoteLineStart
+comment 3B:ED24 inicio da frase do vencedor: Y=0
+label 3B:ED26 WinQuoteLineLoop
+comment 3B:ED26 copia as duas linhas de 22 caracteres da frase para ram_03AF..
+label 3B:EE38 PortraitSetupP1
+comment 3B:EE38 prepara o retrato do P1 (paleta, tiles e nome)
+label 3B:EE6B PortraitLoadPalettesP1
+comment 3B:EE6B carrega as paletas do P1 e marca PaletteDirty
+label 3B:EEB6 PortraitBuildP1
+comment 3B:EEB6 monta o retrato do P1: decodifica, salva o ponteiro e carrega os tiles
+label 3B:EEE0 PortraitTilesP1
+comment 3B:EEE0 envia os tiles do retrato do P1 para a CHR
+label 3B:EF24 PortraitSetupP2
+comment 3B:EF24 prepara o retrato do P2 (paleta, tiles e nome)
+label 3B:EF57 PortraitLoadPalettesP2
+comment 3B:EF57 carrega as paletas do P2 e marca PaletteDirty
+label 3B:EF5C PortraitPalCopyP2
+comment 3B:EF5C copia as 3 paletas do P2 (ram_0309/030C/030F) para PaletteBuf
+label 3B:EF92 PortraitBuildP2
+comment 3B:EF92 monta o retrato do P2 e o desenha
+label 3B:EFD3 PortraitDrawName
+comment 3B:EFD3 desenha o nome do lutador no retrato (P1/P2 conforme zp_D5)
+label 3B:F02E NmiVsPortraitUpload
+comment 3B:F02E NMI: envia os tiles do retrato do buffer ram_034E (passo 6)
+label 3B:F225 NmiVsQuoteUpload
+comment 3B:F225 NMI: envia o caractere atual da frase do vencedor
+label 3B:F24A AiScriptInit
+comment 3B:F24A inicia o roteiro de IA do lutador: le o ponteiro da ficha e zera o estado
+label 3B:F27A DrawProjectile
+comment 3B:F27A desenha o projetil do lutador X (se ativo)
+label 3B:F2D0 DrawProjectileSprite
+comment 3B:F2D0 desenha o sprite do projetil: pagina CHR em D20 e metasprite
+label 3B:F2E3 OamHideRestFill
+comment 3B:F2E3 preenche OamBuf com $FE a partir de X (continuacao de OamHideRest)
+label 3B:F2FB DrawMetasprite_Group
+comment 3B:F2FB laco do metasprite: le quantidade, dx, dy e tiles de cada grupo
+label 3B:F317 DrawMetasprite_Position
+comment 3B:F317 posiciona o grupo: dx/dy somados a base, espelhando se zp_DD
+label 3B:F359 SelectDrawBlink
+comment 3B:F359 pisca o lutador da selecao em quadros alternados (FrameCounter bit 0)
+label 3B:F36C SelectDrawFighter
+comment 3B:F36C desenha o lutador da selecao e esconde o resto da OAM
+label 3B:F376 SelectScreenBuild
+comment 3B:F376 monta a tela de selecao: paletas e fundo
+label 3B:F71C RoundIntroDraw
+comment 3B:F71C desenha o lutador da intro do round (RoundNumber/RoundStep) e o 'FIGHT'
+label 3B:F85C RoundEndDrawCenter
+comment 3B:F85C posiciona e desenha o lutador no centro do fim do round
+label 3B:F8B5 RoundEndDraw
+comment 3B:F8B5 desenha o lutador do fim do round a partir do ponteiro em zp_D9
+label 3B:F8D3 PaletteFlashStart
+comment 3B:F8D3 acende a paleta do cenario (cores 15-17) para o flash do round
+label 3B:F8E6 PaletteFlashRestore
+comment 3B:F8E6 restaura a paleta do cenario depois do flash
 # ============================================================================================================
 # BANCO $37 — som (FamiTone2 + vozes DPCM), telas de aviso / titulo / selecao
 # ============================================================================================================
@@ -463,6 +659,90 @@ label 37:F4E5 ScreenTitle
 label 37:F391 TextDisclaimer
 label 37:F68F TextPushStart
 
+
+# --- rotinas e continuacoes nomeadas na revisao de documentacao (ordem de endereco) ---
+label 37:E394 TitleDrawPushStart
+comment 37:E394 restaura as 11 cores do PRESS START no PPU ($2ACB) durante o fade do titulo
+label 37:E40B SfxPlayByState
+comment 37:E40B efeito sonoro por classe de estado: canal em D37_E199[x], sfx em SfxChannelOfs[estado]
+label 37:E6DD _FT2UpdateEnvelopes
+comment 37:E6DD laco das 5 vozes: atualiza os envelopes de volume (X=0)
+label 37:E6DF _FT2EnvProcess
+comment 37:E6DF processa o envelope da voz X: contador ram_010E e ponteiro
+label 37:E6F6 _FT2EnvReadValue
+comment 37:E6F6 le o valor do envelope; $80-$FF vira $40-$7F (offset no volume)
+label 37:E719 _FT2UpdateSound
+comment 37:E719 avanca a fase do vibrato global (ram_046A, 0..10)
+label 37:E8B5 _FT2ChannelPitch
+comment 37:E8B5 calcula o tom da voz: se nao ha slide, carrega a nota atual de _FT2NoteTable
+label 37:E940 _FT2SlideToNote
+comment 37:E940 slide/portamento: carrega o tom alvo quando o deslocamento zera
+label 37:E9CA _FT2PitchCompare
+comment 37:E9CA compara o tom atual com o alvo: devolve 2 se igual, 0/1 se abaixo/acima
+label 37:E9E8 _FT2LoadNotePitch
+comment 37:E9E8 carrega o tom alvo da nota atual em ram_0477/0478
+label 37:E9F9 _FT2Vibrato
+comment 37:E9F9 aplica o vibrato: profundidade ram_0467 e fase ram_046A somam ao tom
+label 37:EB26 _FT2ReadByte
+comment 37:EB26 le um byte do ponteiro do canal e avanca o ponteiro de 16 bits
+label 37:EBCA _FT2NoteShiftUp
+comment 37:EBCA comando $6E: sobe a nota em N semitons (le o deslocamento)
+label 37:EBCD _FT2ShiftUpReadNote
+comment 37:EBCD le o proximo byte nao-comando da sequencia (nota)
+label 37:EBCF _FT2ShiftUpNext
+comment 37:EBCF decodifica o byte: $00 encerra, >= $58 e comando, senao nota
+label 37:EBE4 _FT2NoteShiftApply
+comment 37:EBE4 aplica o deslocamento de nota: grava a nova nota e o modo de slide 4
+label 37:EC20 _FT2NoteShiftDown
+comment 37:EC20 comando $6F: desce a nota em N semitons
+label 37:EC23 _FT2ShiftDownReadNote
+comment 37:EC23 le o proximo byte nao-comando da sequencia (nota)
+label 37:EC4C _FT2ReadShift
+comment 37:EC4C le o deslocamento de nota ($6E/$6F): parte baixa = passos, alta = modo
+label 37:EC65 _FT2PlainNote
+comment 37:EC65 nota simples: grava o indice em ram_010A e desliga o modo de afinacao fixa
+label 37:EC91 _FT2SpecialCode
+comment 37:EC91 comandos $70-$7F: instrumento/volume (bit 0 = volume, senao instrumento)
+label 37:ED18 _FT2ReadParam
+comment 37:ED18 le um byte do ponteiro e avanca (parametro de comando)
+label 37:EDE6 _FT2SfxReadByte
+comment 37:EDE6 le o byte do roteiro de sfx: $80+ = comando, $00 = fim
+label 37:EE0E _FT2SfxAdvance
+comment 37:EE0E avanca o ponteiro do sfx (Y e o offset corrente)
+label 37:EE1A _FT2SfxUpdateBuf
+comment 37:EE1A copia os parametros do sfx para as variaveis do canal (volume, etc.)
+label 37:EF27 _FT2ScaleVolume
+comment 37:EF27 escala o volume (A) pela atenuacao da voz e devolve no minimo 1 (0 = mudo)
+label 37:EF92 SelectInit
+comment 37:EF92 inicia a tela de selecao: carrega a musica $29 e zera a escolha
+label 37:EFC9 SelectCheckDone
+comment 37:EFC9 se os dois jogadores ja escolheram, retorna; senao continua
+label 37:F093 SelectDrawCurrent
+comment 37:F093 desenha o retrato e o nome do lutador atual na selecao
+label 37:F0CB SelectLoopNext
+comment 37:F0CB proximo lutador: volta ao inicio do laco da selecao
+label 37:F0CE SelectReturn
+comment 37:F0CE fim do laco da selecao: retorna
+label 37:F0CF SelectFighterIntro
+comment 37:F0CF entrada do lutador escolhido: prepara paleta, sprite e som da selecao
+label 37:F19E SelectWaitEnd
+comment 37:F19E espera o fim da animacao (contador zp_EB) e faz o fade para o VS
+label 37:F1CC SelectReadInput
+comment 37:F1CC le os dois controles (JoyPollSafe) e processa a escolha de cada jogador
+label 37:F1E0 SelectPlayerInput
+comment 37:F1E0 processa a entrada do jogador X (pula se for CPU)
+label 37:F227 SelectMoveLeft
+comment 37:F227 esquerda na borda: move o cursor para o lutador anterior
+label 37:F264 SelectConfirm
+comment 37:F264 A na borda: confirma o lutador atual (P1/P2)
+label 37:F27B SelectNextPlayer
+comment 37:F27B passa ao outro jogador (X=1 -> 0) ou encerra
+label 37:F57E TitleLoop
+comment 37:F57E laco do titulo: zera rolagem e espera o START
+label 37:F5F8 TitleScrollSet
+comment 37:F5F8 grava X nas duas portas de rolagem e volta ao laco do titulo
+label 37:F670 TitleBlinkPushStart
+comment 37:F670 pisca o PRESS START alternando a cor 10 da paleta
 # ============================================================================================================
 # BANCO $00 — dados do Ryu (frames) + IA do Ryu
 # ============================================================================================================
@@ -471,6 +751,12 @@ block 00:8F46 ------------------------------------------------------------------
 block 00:8F46 IA do Ryu (codigo nativo dentro do banco de dados do personagem). Decide pelo estado e distancia do
 block 00:8F46 oponente e sorteia (Random) qual roteiro de IA disparar.
 
+
+# --- rotinas e continuacoes nomeadas na revisao de documentacao (ordem de endereco) ---
+label 00:914A RyuAiAntiAir
+comment 00:914A IA do Ryu contra oponente no ar ($C0/$C8): dispara o roteiro de anti-aereo (tabela D00_9148)
+label 00:91BA RyuAiAirAttack
+comment 00:91BA IA do Ryu: inicia o roteiro D00_8F24 (ataque aereo) sempre
 # ============================================================================================================
 # BANCO $01 — dados do Ryu: banco de estados do lutador (statebank no fim) + tabelas de transicao
 # ============================================================================================================
@@ -800,3 +1086,33 @@ alt FIX_EDGE_ATTACK 3F:F949 36
 # Com este bloco o P2 e' sempre o controle 2 (nao ha mais adversario CPU) — serve para testar o modo versus.
 alt MODE_VERSUS 3F:F868 2
 |    lda #$00                                    ; era lda #$01 (P2 = CPU)
+
+
+# ============================================================================================================
+# DIFICULDADE (FIX_SELECT_DIFFICULTY): SELECT na tela de seleção alterna Fácil/Normal/Difícil
+# bit $20 de JoyState, banco $37 (SelectInit/EF92, SelectReadInput/F1CC)
+# AiLevel: 2=Fácil, 4=Normal, 7=Difícil, padrão 4
+# Lê SELECT em SelectInit/EF92 ao invés de MainLoop/F7A2
+# usa ram_0412/0413 (livre) em vez de $B6=RoundStep
+
+alt FIX_SELECT_DIFFICULTY 37:EF92 2
+|    ; le bit $20 (SELECT) do JoyState do jogador corrente
+|    lda JoyState,x
+|    and #$20
+|    beq +
+|    ; SELECT apertado: alterna AiLevel
+|    lda AiLevel,x
+|    clc
+|    adc #$02
+|    cmp #$09
+|    bcs ++
+|    sta AiLevel,x
+|    jmp ++
+|++;
+|    lda #$04
+|    sta AiLevel,x
+|++;
+
+| ; AiLevel 2/4/7: Fácil/Normal/Difícil
+
+# ============================================================================================================
