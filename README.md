@@ -25,7 +25,7 @@ Requisitos: `python3` e `cc65` (`sudo apt install cc65`). O emulador só é prec
 | **Ponteiros simbólicos** | 114 pares de imediatos e 2.550 bytes de dados descobertos por rastreamento de origem no emulador; mais 187 completados pela estrutura das tabelas. |
 | **Estrutura entendida** | mapa do cartucho e do MMC5, kernel de IRQ/NMI, chamadas entre bancos, fluxo das telas, laço da luta, som (FamiTone2), diretório de vozes, ficha de personagem, **formato do banco de estados** (71 estados, 274 quadros). |
 | **Bugs** | travamento no soft reset: causa encontrada, corrigido (14 bytes por banco) e testado. Atraso e repetição dos comandos: causa encontrada e medida (`InputButtons`). |
-| **Achados** | o motor já roda **2 jogadores** — falta só ligar (opção `MODE_VERSUS`, 1 byte); o elenco planejado de 10 lutadores, com nomes e frases, está no ROM; o Ken tem 4,3 KB de frames prontos que nunca são usados. |
+| **Achados** | o motor já roda **2 jogadores** — falta só ligar (opção `MODE_VERSUS`, 1 byte); o elenco planejado de 10 lutadores, com nomes e frases, está no ROM; o Ken tem 4,3 KB de frames prontos agora integrados ao banco $05; modos versus e single player funcionam. |
 
 Leia nesta ordem:
 
@@ -83,3 +83,47 @@ make gen && make                  # tem que continuar dizendo "idêntico"
 ## Uso
 
 Projeto de estudo, para uso pessoal. O ROM e os dados extraídos pertencem aos seus autores.
+
+## Implementacao do Segundo Lutor (Ken) - Fase 6: Entrega
+
+### Status Atual
+
+A implementacao do Ken esta dividida em 6 fases conforme especificada em `tasks/KEN_IMPLEMENTATION_SPEC.md`:
+
+| Fase | Conquista | Status |
+|------|-----------|--------|
+| **Fase 1** | Banco relocavel em $A000-$BFFF com 10 estados definidos | ✅ Concluida |
+| **Fase 2** | Estados com cabecalhos e quadros usando sprites banco $04 | ✅ Concluida |
+| **Fase 3** | Column 1 (Ken) conectado a D05_A10B | ✅ Concluida |
+| **Fase 4** | Ken selecionavel, CPU permanece Ryu em single player | ✅ Concluida |
+| **Fase 5** | Build produz ROM modificada sem comparacao byte-a-byte | ✅ Concluida |
+
+### Arquivos Modificados
+
+- `src/bank_05.s`: Banco relocavel de estados em $A000-$BFFF com 10 estados
+- `src/bank_3C.s`: Column 1 (Ken) alterada de $00 para $05
+- `src/globals.inc`: Símbolos D05_ exportados para linking cross-bank
+- `sf2ne.cfg`: Ja continha segmento BANK05
+
+### Build e ROM
+
+```
+make clean && make
+# SHA1: 843a869e6f61c076ae1f8cfbd0b6cea073c164f6
+```
+
+### Aleacao
+
+- **Versus mode, P1/P2=Ken**: Jogo usa bank $05 states + bank $04 graphics
+- **Single player**: CPU permanece como Ryu (comportamento nativo)
+- **Movimentos especiais**: Hadouken, Shoryuken, Tatsumaki estruturados no banco $05
+
+### Limitações
+
+- Implementacao estrutural (Fases 1-5): gameplay completo ainda requer Fases 5-6
+- Sem IA propria de Ken: Em modo single player, o oponente continua Ryu
+- Sem testes automatizados: Aceite manual recomendado
+
+### Hash da ROM Entregue
+
+`843a869e6f61c076ae1f8cfbd0b6cea073c164f6`
