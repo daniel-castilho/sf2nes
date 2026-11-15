@@ -1,0 +1,26 @@
+# Validação simplificada — 1 estado + 1 quadro do Ryu (D01_A0B0 + D01_A0B7)
+# Para comparação byte a byte com o assembly original.
+
+[[personagem]]
+id = "ryu_validacao"
+banco_estados = "BancoEstadosRyu"
+banco_frames = "BancoFramesRyu"
+
+[[personagem.estado]]
+id = "EstadoVitoria"
+condicao_entrada = { simbolo = "CondVitoria", bruto = 10 }
+classe = { simbolo = "ClasseE9", bruto = 233 }
+acertos_golpe = 0
+quadro_inicial = "qVit1"
+
+[[personagem.estado.quadro]]
+id = "qVit1"
+duracao = 8
+metasprite = "MsVit1"
+efeito_parametro = { bruto = 0 }
+efeito_tipo = { simbolo = "EfeitoNenhum", bruto = 0 }
+flags = { bruto = 16 }
+movimento_modo = { simbolo = "MovAbsoluto", bruto = 4 }
+velocidade_x = 0
+velocidade_y = 0
+repeticao = 0

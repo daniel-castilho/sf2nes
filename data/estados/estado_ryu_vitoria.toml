@@ -1,0 +1,67 @@
+# Validação de equivalência — estado real do Ryu (D01_A0B0) + quadro (D01_A0B7)
+# Valores extraídos do src/bank_01.s gerado pelo disasm.py
+# Este arquivo é apenas para validar o conversor (Fase 2, Peça 3).
+
+[[personagem]]
+id = "ryu_validacao"
+banco_estados = "BancoEstadosRyu"
+banco_frames = "BancoFramesRyu"
+
+[[personagem.estado]]
+id = "EstadoVitoria"
+condicao_entrada = { simbolo = "CondVitoria", bruto = 10 }
+proxima_alternativa = "EstadoProx"
+cadeia_natural = "EstadoSeguinte"
+classe = { simbolo = "ClasseE9", bruto = 233 }
+acertos_golpe = 0
+quadro_inicial = "qVit1"
+
+[[personagem.estado.quadro]]
+id = "qVit1"
+duracao = 8
+metasprite = "MsVit1"
+efeito_parametro = { bruto = 0 }
+efeito_tipo = { simbolo = "EfeitoNenhum", bruto = 0 }
+flags = { bruto = 16 }
+movimento_modo = { simbolo = "MovAbsoluto", bruto = 4 }
+velocidade_x = 0
+velocidade_y = 0
+repeticao = 0
+
+[[personagem.estado]]
+id = "EstadoProx"
+condicao_entrada = { simbolo = "CondVitoria", bruto = 10 }
+classe = { simbolo = "ClasseE9", bruto = 233 }
+acertos_golpe = 0
+quadro_inicial = "qProx1"
+
+[[personagem.estado.quadro]]
+id = "qProx1"
+duracao = 8
+metasprite = "MsProx1"
+efeito_parametro = { bruto = 0 }
+efeito_tipo = { simbolo = "EfeitoNenhum", bruto = 0 }
+flags = { bruto = 16 }
+movimento_modo = { simbolo = "MovAbsoluto", bruto = 4 }
+velocidade_x = 0
+velocidade_y = 0
+repeticao = 0
+
+[[personagem.estado]]
+id = "EstadoSeguinte"
+condicao_entrada = { simbolo = "CondVitoria", bruto = 10 }
+classe = { simbolo = "ClasseE9", bruto = 233 }
+acertos_golpe = 0
+quadro_inicial = "qSeg1"
+
+[[personagem.estado.quadro]]
+id = "qSeg1"
+duracao = 8
+metasprite = "MsSeg1"
+efeito_parametro = { bruto = 0 }
+efeito_tipo = { simbolo = "EfeitoNenhum", bruto = 0 }
+flags = { bruto = 16 }
+movimento_modo = { simbolo = "MovAbsoluto", bruto = 4 }
+velocidade_x = 0
+velocidade_y = 0
+repeticao = 0

@@ -40,6 +40,22 @@ verify: $(BUILD)/sf2ne.nes
 gen:
 	python3 tools/disasm.py
 
+# Conversao de estados/quadros do formato declarativo (TOML) para assembly.
+# Alvo separado e nao destrutivo: nao modifica o make gen existente.
+# Os arquivos .s gerados sao colocados em src/ e podem ser incluidos no build
+# via annotations/sf2ne.ann (keepbank) ou sf2ne.cfg.
+STATE_TOML_DIR := data/estados
+STATE_GEN_DIR  := src
+STATE_GEN_TOOL := tools/state_data_gen.py
+
+gen-states:
+	@mkdir -p $(STATE_GEN_DIR)
+	@for f in $(STATE_TOML_DIR)/*.toml; do \
+		base=$$(basename "$$f" .toml); \
+		echo "Convertendo $$f -> $(STATE_GEN_DIR)/$$base.s"; \
+		python3 $(STATE_GEN_TOOL) "$$f" "$(STATE_GEN_DIR)/$$base.s"; \
+	done
+
 # ---- versao com correcoes (nao e' identica ao original, de proposito)
 # correcoes ligadas no `make fixed`. Para experimentar outras:  make fixed FIXDEFS="-D FIX_SOFT_RESET -D FIX_HEAVY_ONCE"
 FIXDEFS  ?= -D FIX_SOFT_RESET
