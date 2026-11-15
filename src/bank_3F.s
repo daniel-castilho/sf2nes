@@ -90,50 +90,51 @@ CmdKeyListRyu:
 ; Com zp_DD = $04 e classe $28/$30: pula o 1o no' quando ele e' o proprio estado atual.
 ; Com zp_DD = $02 e classe $70-$98 e no' != estado atual: pula o 1o no'. E com o bit 2 da classe zerado
 ; e CondOponenteLongeCostas: pula o 1o no' tambem (nao reage de costas).
-; <- jmp L3F_E0F2, jmp SoundProc_EEB8, jmp GrabCheck, jmp TransViaTbl, jsr GuardRedirect
+; <- jmp StateCondDispatchLoop, jmp SoundProc_EEB8, jmp GrabCheck, jmp TransViaTbl, jsr GuardRedirect
 ; modos: intro do round, luta
 StateCheckTransitions:
     lda zp_DD                                   ; E0CE  A5 DD
     cmp #$04                                    ; E0D0  C9 04
-    bne L3F_E0F2                                ; E0D2  D0 1E
+    bne StateCondDispatchLoop                   ; E0D2  D0 1E
     lda a:FighterState,x                        ; E0D4  BD 26 00
     and #$F8                                    ; E0D7  29 F8
     cmp #$28                                    ; E0D9  C9 28
-    beq L3F_E11D                                ; E0DB  F0 40
+    beq StateCondTableContinue                  ; E0DB  F0 40
     cmp #$30                                    ; E0DD  C9 30
-    beq L3F_E11D                                ; E0DF  F0 3C
+    beq StateCondTableContinue                  ; E0DF  F0 3C
     lda zp_DC                                   ; E0E1  A5 DC
     cmp a:FighterStatePtrHi,x                   ; E0E3  DD 20 00
-    bne L3F_E11D                                ; E0E6  D0 35
+    bne StateCondTableContinue                  ; E0E6  D0 35
     lda zp_DB                                   ; E0E8  A5 DB
     cmp a:FighterStatePtrLo,x                   ; E0EA  DD 1E 00
-    bne L3F_E11D                                ; E0ED  D0 2E
+    bne StateCondTableContinue                  ; E0ED  D0 2E
     jmp TransNextNode                           ; E0EF  4C 29 E1
 
 
-L3F_E0F2:
-    cmp #$02                                    ; E0F2  C9 02
-    bne L3F_E111                                ; E0F4  D0 1B
+; modos: luta
+StateCondDispatchLoop:
+    cmp #$02                                    ; E0F2  C9 02       StateCondDispatchLoop — loop de despacho das condições de transição de estado
+    bne StateCondTableEntry                     ; E0F4  D0 1B
     lda a:FighterState,x                        ; E0F6  BD 26 00
     and #$F8                                    ; E0F9  29 F8
     cmp #$70                                    ; E0FB  C9 70
-    bcc L3F_E111                                ; E0FD  90 12
+    bcc StateCondTableEntry                     ; E0FD  90 12
     cmp #$99                                    ; E0FF  C9 99
-    bcs L3F_E111                                ; E101  B0 0E
+    bcs StateCondTableEntry                     ; E101  B0 0E
     lda zp_DC                                   ; E103  A5 DC
     cmp a:FighterStatePtrHi,x                   ; E105  DD 20 00
     bne TransNextNode                           ; E108  D0 1F
     lda zp_DB                                   ; E10A  A5 DB
     cmp a:FighterStatePtrLo,x                   ; E10C  DD 1E 00
     bne TransNextNode                           ; E10F  D0 18
-L3F_E111:
-    lda a:FighterState,x                        ; E111  BD 26 00
+StateCondTableEntry:
+    lda a:FighterState,x                        ; E111  BD 26 00    StateCondTableEntry — entrada da tabela de condições de transição
     and #$04                                    ; E114  29 04
-    bne L3F_E11D                                ; E116  D0 05
+    bne StateCondTableContinue                  ; E116  D0 05
     jsr CondOponenteLongeCostas                 ; E118  20 B1 E1
     bne TransNextNode                           ; E11B  D0 0C
-L3F_E11D:
-    ldy #$00                                    ; E11D  A0 00
+StateCondTableContinue:
+    ldy #$00                                    ; E11D  A0 00       StateCondTableContinue — continuação da tabela de condições
     lda (zp_DB),y                               ; E11F  B1 DB       [le bancos $01]
     bmi TransApply                              ; E121  30 18
     tay                                         ; E123  A8
@@ -183,7 +184,7 @@ End_E167:
     rts                                         ; E167  60          End
 
 
-; <- jsr L3F_E0F2
+; <- jsr StateCondDispatchLoop
 ; modos: intro do round, luta
 StateCondDispatch:
     lda StateCondHi,y                           ; E168  B9 7D E1    [idx $00..$0B]
@@ -253,7 +254,7 @@ End_E1AD:
     rts                                         ; E1B0  60
 
 
-; <- jsr L3F_E0F2, tabela StateCondLo
+; <- jsr StateCondDispatchLoop, tabela StateCondLo
 ; modos: intro do round, luta
 CondOponenteLongeCostas:
     txa                                         ; E1B1  8A          verdadeiro se o oponente esta a |dx| >= $0F E eu de costas para ele: devolve $40 (e' o bit 6 de FighterFlip) para virar, 0 se esta encarando ou colado
@@ -2838,18 +2839,18 @@ PostAnim:
     jsr ProjUpdate                              ; EFDC  20 54 E8
     lda a:FrameFlags,x                          ; EFDF  BD 38 00
     and #$10                                    ; EFE2  29 10
-    beq L3F_EFF7                                ; EFE4  F0 11
+    beq TimerUpdateContinue                     ; EFE4  F0 11
     ldy OtherFighter                            ; EFE6  A4 65
     lda FighterX,x                              ; EFE8  B5 08
     cmp a:FighterX,y                            ; EFEA  D9 08 00
-    beq L3F_EFF7                                ; EFED  F0 08
+    beq TimerUpdateContinue                     ; EFED  F0 08
     lda #$40                                    ; EFEF  A9 40
-    bcs L3F_EFF5                                ; EFF1  B0 02
+    bcs TimerUpdateFlip                         ; EFF1  B0 02
     lda #$00                                    ; EFF3  A9 00
-L3F_EFF5:
-    sta FighterFlip,x                           ; EFF5  95 04
-L3F_EFF7:
-    rts                                         ; EFF7  60
+TimerUpdateFlip:
+    sta FighterFlip,x                           ; EFF5  95 04       TimerUpdateFlip — define FighterFlip no loop do temporizador (chamado por FightFrame)
+TimerUpdateContinue:
+    rts                                         ; EFF7  60          TimerUpdateContinue — continuação do loop do temporizador
 
 
 ; <- jsr FighterUpdate
@@ -4326,12 +4327,12 @@ JoyRead:
     sta JOY1                                    ; F920  8D 16 40
     lsr a                                       ; F923  4A
     sta JOY1                                    ; F924  8D 16 40
-L3F_F927:
-    lda JOY1,x                                  ; F927  BD 16 40
+JoyReadLoop:
+    lda JOY1,x                                  ; F927  BD 16 40    JoyReadLoop — loop de leitura de bits do controle dentro de JoyRead
     and #$03                                    ; F92A  29 03
     cmp #$01                                    ; F92C  C9 01
     rol JoyState,x                              ; F92E  36 F2
-    bcc L3F_F927                                ; F930  90 F5
+    bcc JoyReadLoop                             ; F930  90 F5
     lda JoyState,x                              ; F932  B5 F2
     rts                                         ; F934  60
 
@@ -4410,7 +4411,7 @@ ResetStub:
 
 ; ------------------------------------------------------------------------------------------------
 ; RESET. Este codigo so existe no banco $3F (ver a correcao FIX_SOFT_RESET no fim de annotations/).
-; <- tabela L3F_FFE6
+; <- tabela NmiVector
 ; modos: aviso/QR
 Reset:
     sei                                         ; FF9F  78
@@ -4427,12 +4428,12 @@ Reset:
     sta JOY2                                    ; FFB6  8D 17 40
     lda #$0F                                    ; FFB9  A9 0F
     sta SND_CHN                                 ; FFBB  8D 15 40
-L3F_FFBE:
-    bit PPUSTATUS                               ; FFBE  2C 02 20
-    bpl L3F_FFBE                                ; FFC1  10 FB
+ResetVector37:
+    bit PPUSTATUS                               ; FFBE  2C 02 20    ResetVector37 — vetor de reset do banco $37
+    bpl ResetVector37                           ; FFC1  10 FB
     txa                                         ; FFC3  8A
-L3F_FFC4:
-    sta FighterChar,x                           ; FFC4  95 00
+ResetVector3B:
+    sta FighterChar,x                           ; FFC4  95 00       ResetVector3B — vetor de reset do banco $3B
     sta ram_0100,x                              ; FFC6  9D 00 01
     sta ram_0300,x                              ; FFC9  9D 00 03
     sta ram_0400,x                              ; FFCC  9D 00 04
@@ -4440,18 +4441,18 @@ L3F_FFC4:
     sta ram_0600,x                              ; FFD2  9D 00 06
     sta ram_0700,x                              ; FFD5  9D 00 07
     inx                                         ; FFD8  E8
-    bne L3F_FFC4                                ; FFD9  D0 E9
+    bne ResetVector3B                           ; FFD9  D0 E9
     lda #$EF                                    ; FFDB  A9 EF
-L3F_FFDD:
-    sta OamBuf,x                                ; FFDD  9D 00 02
+ResetVector3F:
+    sta OamBuf,x                                ; FFDD  9D 00 02    ResetVector3F — vetor de reset do banco $3F
     inx                                         ; FFE0  E8
     inx                                         ; FFE1  E8
     inx                                         ; FFE2  E8
     inx                                         ; FFE3  E8
-    bne L3F_FFDD                                ; FFE4  D0 F7
-L3F_FFE6:
-    bit PPUSTATUS                               ; FFE6  2C 02 20
-    bpl L3F_FFE6                                ; FFE9  10 FB
+    bne ResetVector3F                           ; FFE4  D0 F7
+NmiVector:
+    bit PPUSTATUS                               ; FFE6  2C 02 20    NmiVector — vetor de NMI comum aos bancos de código
+    bpl NmiVector                               ; FFE9  10 FB
     stx OAMADDR                                 ; FFEB  8E 03 20
     lda #$02                                    ; FFEE  A9 02
     sta OAMDMA                                  ; FFF0  8D 14 40

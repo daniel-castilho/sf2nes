@@ -75,10 +75,10 @@ FighterLoadChar:
 FighterRoundInit:
     lda #$5A                                    ; E098  A9 5A       posicao inicial: P1 x=$5A, P2 x=$A6, y=$CD (chao)
     cpx #$00                                    ; E09A  E0 00
-    beq L3B_E0A0                                ; E09C  F0 02
+    beq PortraitLoadPalettesLoop                ; E09C  F0 02
     lda #$A6                                    ; E09E  A9 A6
-L3B_E0A0:
-    sta FighterX,x                              ; E0A0  95 08
+PortraitLoadPalettesLoop:
+    sta FighterX,x                              ; E0A0  95 08       laco de copia de paletas dentro de PortraitLoadPalettes
     lda #$CD                                    ; E0A2  A9 CD
     sta FighterY,x                              ; E0A4  95 0C
     lda #$00                                    ; E0A6  A9 00
@@ -139,10 +139,10 @@ L3B_E0A0:
     sta a:EffectType,x                          ; E126  9D 3C 00
     sta a:HitThisFrame,x                        ; E129  9D 3E 00
     txa                                         ; E12C  8A
-    beq L3B_E131                                ; E12D  F0 02
+    beq FighterFlipSet                          ; E12D  F0 02
     lda #$40                                    ; E12F  A9 40
-L3B_E131:
-    sta FighterFlip,x                           ; E131  95 04
+FighterFlipSet:
+    sta FighterFlip,x                           ; E131  95 04       define o bit de espelhamento (FighterFlip) do lutador
     lda #$00                                    ; E133  A9 00
     sta a:zp_5E,x                               ; E135  9D 5E 00
     sta a:zp_60,x                               ; E138  9D 60 00
@@ -165,8 +165,8 @@ L3B_E131:
     sta zp_E0                                   ; E15E  85 E0
     jsr PortraitLoadPalettes                    ; E160  20 81 E1
     ldx #$02                                    ; E163  A2 02
-L3B_E165:
-    lda ram_0303,x                              ; E165  BD 03 03
+PortraitPaletteCopyLoop:
+    lda ram_0303,x                              ; E165  BD 03 03    laco de copia de 3 bytes de paleta para ram_0300/0303/0306
     sta a:PaletteBuf+12,x                       ; E168  9D C8 00
     lda ram_030C,x                              ; E16B  BD 0C 03
     sta a:PaletteBuf+15,x                       ; E16E  9D CB 00
@@ -175,7 +175,7 @@ L3B_E165:
     lda ram_0309,x                              ; E177  BD 09 03
     sta a:PaletteBuf+21,x                       ; E17A  9D D1 00
     dex                                         ; E17D  CA
-    bpl L3B_E165                                ; E17E  10 E5
+    bpl PortraitPaletteCopyLoop                 ; E17E  10 E5
     rts                                         ; E180  60
 
 
@@ -1624,7 +1624,7 @@ L3B_ED72:
 ; modos: intro do round, luta, fim do round
 DrawFighters:
     ldx OtherFighter                            ; ED81  A6 65
-    jsr DrawProjectile                          ; ED83  20 7A F2
+    jsr L3B_F27A                                ; ED83  20 7A F2
     lda #$E9                                    ; ED86  A9 E9
     cmp a:FighterState                          ; ED88  CD 26 00
     beq L3B_EDC5                                ; ED8B  F0 38
@@ -2249,14 +2249,15 @@ AiScriptInit:
 
 ; <- jsr DrawFighters
 ; modos: intro do round, luta, fim do round
-DrawProjectile:
-    lda ProjX,x                                 ; F27A  B5 7B       desenha o projetil do lutador X (se ativo)
-    bne L3B_F27F                                ; F27C  D0 01
+L3B_F27A:
+    lda ProjX,x                                 ; F27A  B5 7B
+    bne DrawProjectile                          ; F27C  D0 01
     rts                                         ; F27E  60
 
 
-L3B_F27F:
-    lda ProjX,x                                 ; F27F  B5 7B
+; modos: luta, fim do round
+DrawProjectile:
+    lda ProjX,x                                 ; F27F  B5 7B       desenha o projetil (hadouken) do lutador
     sta zp_DB                                   ; F281  85 DB
     lda ProjY,x                                 ; F283  B5 7D
     sta zp_DC                                   ; F285  85 DC
@@ -2271,7 +2272,7 @@ L3B_F27F:
     sta MMC5_PRG_8000                           ; F297  8D 14 51
     lda ProjFlags,x                             ; F29A  B5 81
     and #$80                                    ; F29C  29 80
-    beq L3B_F2B5                                ; F29E  F0 15
+    beq DrawProjectileSprite                    ; F29E  F0 15
     lda ProjStep,x                              ; F2A0  B5 7F
     lsr a                                       ; F2A2  4A
     and #$07                                    ; F2A3  29 07
@@ -2282,11 +2283,12 @@ L3B_F27F:
     sta zp_D9                                   ; F2AB  85 D9
     lda D3B_E595+1,y                            ; F2AD  B9 96 E5    [idx $00..$06]
     sta zp_DA                                   ; F2B0  85 DA
-    jmp DrawProjectileSprite                    ; F2B2  4C D0 F2
+    jmp L3B_F2D0                                ; F2B2  4C D0 F2
 
 
-L3B_F2B5:
-    lda ProjSpeed,x                             ; F2B5  B5 77
+; modos: luta, fim do round
+DrawProjectileSprite:
+    lda ProjSpeed,x                             ; F2B5  B5 77       desenha o sprite do projetil na OAM
     lsr a                                       ; F2B7  4A
     asl a                                       ; F2B8  0A
     asl a                                       ; F2B9  0A
@@ -2303,10 +2305,10 @@ L3B_F2B5:
     lda D3B_E57D+1,y                            ; F2CB  B9 7E E5    [idx $00..$06]
     sta zp_DA                                   ; F2CE  85 DA
 
-; <- jmp L3B_F27F
+; <- jmp DrawProjectile
 ; modos: luta, fim do round
-DrawProjectileSprite:
-    ldy #$00                                    ; F2D0  A0 00       desenha o sprite do projetil: pagina CHR em D20 e metasprite
+L3B_F2D0:
+    ldy #$00                                    ; F2D0  A0 00
     lda (zp_D9),y                               ; F2D2  B1 D9       [le bancos $20]
     sta MMC5_CHR_SPR5                           ; F2D4  8D 25 51
     ldx OamIndex                                ; F2D7  A6 AD
@@ -2328,31 +2330,31 @@ OamHideRestFill:
 
 ; Desenha um metasprite (lista de sprites 8x16) na OAM. Dados em (zp_D9): atributo, depois grupos
 ; "quantidade, dx, dy, tiles..." ate um byte negativo. zp_DB/zp_DC = posicao base, zp_DD = espelhado.
-; <- jsr DrawFighter, jmp DrawFighter, jsr L3B_EF8C, jmp L3B_EF8C, jsr L3B_F2B5, jmp L3B_F2B5 ... (+6)
+; <- jsr DrawFighter, jmp DrawFighter, jsr L3B_EF8C, jmp L3B_EF8C, jsr DrawProjectileSprite, jmp DrawProjectileSprite ... (+6)
 ; modos: selecao, VS, intro do round, luta, fim do round, frase final
 DrawMetasprite:
     iny                                         ; F2EA  C8
     lda (zp_D9),y                               ; F2EB  B1 D9       [le bancos $00,$20]
     cmp #$FF                                    ; F2ED  C9 FF
-    beq L3B_F356                                ; F2EF  F0 65
+    beq DrawMetaspriteEnd                       ; F2EF  F0 65
     eor zp_DD                                   ; F2F1  45 DD
     ora zp_E1                                   ; F2F3  05 E1
     sta zp_E0                                   ; F2F5  85 E0
     lda #$08                                    ; F2F7  A9 08
     sta zp_E3                                   ; F2F9  85 E3
 
-; <- jmp L3B_F315, jmp L3B_F331
+; <- jmp DrawMetaspritePosition, jmp DrawMetaspriteWriteOAM
 ; modos: selecao, VS, intro do round, luta, fim do round, frase final
 DrawMetasprite_Group:
     iny                                         ; F2FB  C8          laco do metasprite: le quantidade, dx, dy e tiles de cada grupo
     lda (zp_D9),y                               ; F2FC  B1 D9       [le bancos $00,$20]
-    bmi L3B_F356                                ; F2FE  30 56
+    bmi DrawMetaspriteEnd                       ; F2FE  30 56
     sta zp_E2                                   ; F300  85 E2
     iny                                         ; F302  C8
     lda (zp_D9),y                               ; F303  B1 D9       [le bancos $00,$20]
     sta zp_DE                                   ; F305  85 DE
     lda zp_DD                                   ; F307  A5 DD
-    beq L3B_F315                                ; F309  F0 0A
+    beq DrawMetaspritePosition                  ; F309  F0 0A
     lda #$F8                                    ; F30B  A9 F8
     sta zp_E3                                   ; F30D  85 E3
     sec                                         ; F30F  38
@@ -2360,8 +2362,9 @@ DrawMetasprite_Group:
     jmp DrawMetasprite_Position                 ; F312  4C 17 F3
 
 
-L3B_F315:
-    lda zp_DE                                   ; F315  A5 DE
+; modos: selecao, intro do round, luta, fim do round
+DrawMetaspritePosition:
+    lda zp_DE                                   ; F315  A5 DE       posiciona um grupo de metasprite na tela
 
 ; <- jmp DrawMetasprite
 ; modos: selecao, VS, intro do round, luta, fim do round, frase final
@@ -2374,18 +2377,19 @@ DrawMetasprite_Position:
     clc                                         ; F31F  18
     adc zp_DC                                   ; F320  65 DC
     sta zp_DF                                   ; F322  85 DF
-L3B_F324:
-    lda zp_DE                                   ; F324  A5 DE
+DrawMetaspriteGroupLoop:
+    lda zp_DE                                   ; F324  A5 DE       laco de grupos de metasprite
     cmp #$08                                    ; F326  C9 08
-    bcs L3B_F331                                ; F328  B0 07
+    bcs DrawMetaspriteWriteOAM                  ; F328  B0 07
     tya                                         ; F32A  98
     adc zp_E2                                   ; F32B  65 E2
     tay                                         ; F32D  A8
     jmp DrawMetasprite_Group                    ; F32E  4C FB F2
 
 
-L3B_F331:
-    sta OamBuf+3,x                              ; F331  9D 03 02
+; modos: selecao, VS, intro do round, luta, fim do round, frase final
+DrawMetaspriteWriteOAM:
+    sta OamBuf+3,x                              ; F331  9D 03 02    escreve um sprite na OAM
     clc                                         ; F334  18
     adc zp_E3                                   ; F335  65 E3
     sta zp_DE                                   ; F337  85 DE
@@ -2401,12 +2405,13 @@ L3B_F331:
     txa                                         ; F34C  8A
     axs #$FC                                    ; F34D  CB FC
     dec zp_E2                                   ; F34F  C6 E2
-    bne L3B_F324                                ; F351  D0 D1
+    bne DrawMetaspriteGroupLoop                 ; F351  D0 D1
     jmp DrawMetasprite_Group                    ; F353  4C FB F2
 
 
-L3B_F356:
-    stx OamIndex                                ; F356  86 AD
+; modos: selecao, VS, intro do round, luta, fim do round, frase final
+DrawMetaspriteEnd:
+    stx OamIndex                                ; F356  86 AD       termino do desenho de metasprite
     rts                                         ; F358  60
 
 
@@ -2417,12 +2422,13 @@ SelectDrawBlink:
     stx OamIndex                                ; F35B  86 AD
     lda FrameCounter                            ; F35D  A5 B1
     and #$01                                    ; F35F  29 01
-    bne L3B_F364                                ; F361  D0 01
+    bne SelectDrawBlinkDraw                     ; F361  D0 01
     rts                                         ; F363  60
 
 
-L3B_F364:
-    ldy #$00                                    ; F364  A0 00
+; modos: selecao
+SelectDrawBlinkDraw:
+    ldy #$00                                    ; F364  A0 00       desenha o lutador piscando na tela de selecao
     jsr DrawMetasprite                          ; F366  20 EA F2
     jmp DrawMetasprite                          ; F369  4C EA F2
 
@@ -2442,13 +2448,13 @@ SelectScreenBuild:
     lda #$00                                    ; F376  A9 00       monta a tela de selecao: paletas e fundo
     sta a:FighterChrPage+1                      ; F378  8D 41 00
     ldx #$05                                    ; F37B  A2 05
-L3B_F37D:
-    lda D3B_F545,x                              ; F37D  BD 45 F5    [idx $00..$05]
+SelectScreenBuildPaletteLoop:
+    lda D3B_F545,x                              ; F37D  BD 45 F5    [idx $00..$05] laco de copia de paletas na construcao da tela de selecao
     sta a:PaletteBuf+6,x                        ; F380  9D C2 00
     lda D3B_F54B,x                              ; F383  BD 4B F5    [idx $00..$05]
     sta a:PaletteBuf+18,x                       ; F386  9D CE 00
     dex                                         ; F389  CA
-    bpl L3B_F37D                                ; F38A  10 F1
+    bpl SelectScreenBuildPaletteLoop            ; F38A  10 F1
     lda #$28                                    ; F38C  A9 28
     sta PPUADDR                                 ; F38E  8D 06 20
     lda #$00                                    ; F391  A9 00

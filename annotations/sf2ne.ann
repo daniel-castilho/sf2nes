@@ -114,6 +114,12 @@ label 3F:E38D AnimRotate
 comment 3F:E38D AnimRotate
 label 3F:E38F AnimEffect
 comment 3F:E38F AnimEffect
+label 3F:E0F2 StateCondDispatchLoop
+comment 3F:E0F2 StateCondDispatchLoop — loop de despacho das condições de transição de estado
+label 3F:E111 StateCondTableEntry
+comment 3F:E111 StateCondTableEntry — entrada da tabela de condições de transição
+label 3F:E11D StateCondTableContinue
+comment 3F:E11D StateCondTableContinue — continuação da tabela de condições
 label 3F:E420 StateBlockStart
 comment 3F:E420 StateBlockStart
 label 3F:E429 StateBlockContinue
@@ -134,6 +140,20 @@ label 3F:E4C1 BankSwitch
 comment 3F:E4C1 BankSwitch
 label 3F:E517 TimerUpdate
 comment 3F:E517 TimerUpdate
+label 3F:EFF5 TimerUpdateFlip
+comment 3F:EFF5 TimerUpdateFlip — define FighterFlip no loop do temporizador (chamado por FightFrame)
+label 3F:EFF7 TimerUpdateContinue
+comment 3F:EFF7 TimerUpdateContinue — continuação do loop do temporizador
+label 3F:F927 JoyReadLoop
+comment 3F:F927 JoyReadLoop — loop de leitura de bits do controle dentro de JoyRead
+label 3F:FFBE ResetVector37
+comment 3F:FFBE ResetVector37 — vetor de reset do banco $37
+label 3F:FFC4 ResetVector3B
+comment 3F:FFC4 ResetVector3B — vetor de reset do banco $3B
+label 3F:FFDD ResetVector3F
+comment 3F:FFDD ResetVector3F — vetor de reset do banco $3F
+label 3F:FFE6 NmiVector
+comment 3F:FFE6 NmiVector — vetor de NMI comum aos bancos de código
 label 3F:E538 End_E538
 comment 3F:E538 End
 label 3F:E55A RoundCond
@@ -895,6 +915,28 @@ label 3B:E47E FadeOutDarken
 comment 3B:E47E prepara o escurecimento das 24 cores (Y=$17) e cai no laco
 label 3B:E480 FadeOutDarkenLoop
 comment 3B:E480 escurece uma cor da paleta em um degrau conforme o passo do fade
+label 3B:E0A0 PortraitLoadPalettesLoop
+comment 3B:E0A0 laco de copia de paletas dentro de PortraitLoadPalettes
+label 3B:E131 FighterFlipSet
+comment 3B:E131 define o bit de espelhamento (FighterFlip) do lutador
+label 3B:E165 PortraitPaletteCopyLoop
+comment 3B:E165 laco de copia de 3 bytes de paleta para ram_0300/0303/0306
+label 3B:F27F DrawProjectile
+comment 3B:F27F desenha o projetil (hadouken) do lutador
+label 3B:F2B5 DrawProjectileSprite
+comment 3B:F2B5 desenha o sprite do projetil na OAM
+label 3B:F315 DrawMetaspritePosition
+comment 3B:F315 posiciona um grupo de metasprite na tela
+label 3B:F324 DrawMetaspriteGroupLoop
+comment 3B:F324 laco de grupos de metasprite
+label 3B:F331 DrawMetaspriteWriteOAM
+comment 3B:F331 escreve um sprite na OAM
+label 3B:F356 DrawMetaspriteEnd
+comment 3B:F356 termino do desenho de metasprite
+label 3B:F364 SelectDrawBlinkDraw
+comment 3B:F364 desenha o lutador piscando na tela de selecao
+label 3B:F37D SelectScreenBuildPaletteLoop
+comment 3B:F37D laco de copia de paletas na construcao da tela de selecao
 label 3B:E4D8 FadeInPrepare
 comment 3B:E4D8 salva a paleta original em FadePalette e apaga as cores para o fade-in
 label 3B:E59D RoundIntro_HudRowP1
@@ -947,10 +989,6 @@ label 3B:F225 NmiVsQuoteUpload
 comment 3B:F225 NMI: envia o caractere atual da frase do vencedor
 label 3B:F24A AiScriptInit
 comment 3B:F24A inicia o roteiro de IA do lutador: le o ponteiro da ficha e zera o estado
-label 3B:F27A DrawProjectile
-comment 3B:F27A desenha o projetil do lutador X (se ativo)
-label 3B:F2D0 DrawProjectileSprite
-comment 3B:F2D0 desenha o sprite do projetil: pagina CHR em D20 e metasprite
 label 3B:F2E3 OamHideRestFill
 comment 3B:F2E3 preenche OamBuf com $FE a partir de X (continuacao de OamHideRest)
 label 3B:F2FB DrawMetasprite_Group
