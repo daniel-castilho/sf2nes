@@ -4190,7 +4190,24 @@ ModeChange_F81C:
 ; <- jmp Main
 ; modos: aviso/QR, frase final
 MainLoop:
-    farcall ScreenDisclaimer                    ; F828  A9 F8 48 A9 39 48 A9 3F .. -> 37:F2CB ScreenDisclaimer
+    nop                                         ; F828  EA          ScreenDisclaimer
+    nop                                         ; F829  EA          (nt)
+    nop                                         ; F82A  EA
+    nop                                         ; F82B  EA
+    nop                                         ; F82C  EA          (nt)
+    nop                                         ; F82D  EA
+    nop                                         ; F82E  EA
+    nop                                         ; F82F  EA          (nt)
+    nop                                         ; F830  EA
+    nop                                         ; F831  EA
+    nop                                         ; F832  EA          (nt)
+    nop                                         ; F833  EA
+    nop                                         ; F834  EA          (nt)
+    nop                                         ; F835  EA
+    nop                                         ; F836  EA          (nt)
+    nop                                         ; F837  EA
+    nop                                         ; F838  EA          (nt)
+    nop                                         ; F839  EA          (nt)
     farcall ScreenTitle                         ; F83A  A9 F8 48 A9 4B 48 A9 3F .. -> 37:F4E5 ScreenTitle
     lda #$07                                    ; F84C  A9 07       nivel da IA (0..7). E' o unico lugar que define a dificuldade
     sta a:AiLevel                               ; F84E  8D B4 00

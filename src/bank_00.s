@@ -537,9 +537,9 @@ L00_8FCF:
     bcs L00_8FE9                                ; 8FDA  B0 0D
     lda a:FighterChar,y                         ; 8FDC  B9 00 00
     tay                                         ; 8FDF  A8
-    lda D00_9148+1,y                            ; 8FE0  B9 49 91    [idx $00..$00]
+    lda D00_9148+1                              ; 8FE0  AD 49 91    todos os oponentes usam RyuAiAntiAir (D00_9148 tem uma entrada so')
     pha                                         ; 8FE3  48
-    lda D00_9148,y                              ; 8FE4  B9 48 91    [idx $00..$00]
+    lda D00_9148                                ; 8FE4  AD 48 91    idem: sem indexar por personagem, o RTS-trick nao cai em $A492 (JAM)
     pha                                         ; 8FE7  48
     rts                                         ; 8FE8  60
 

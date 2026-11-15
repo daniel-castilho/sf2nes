@@ -13,20 +13,22 @@ tools/mesen/setup_mesen.sh       # opcional: baixa o Mesen 2.1.1 e deixa pronto 
 ```
  rom/sf2ne_demo.nes ──┐
  trace/*.txt ─────────┼──> tools/disasm.py ──> src/*.s, sf2ne.cfg, assets/ ──> ca65/ld65 ──> build/sf2ne.nes
- annotations/sf2ne.ann┘        (make gen)                                        (make)        == ROM original
+ annotations/sf2ne.ann┘        (make gen)                                        (make)        build canônico (Ken)
 ```
 
 * O que é **código** e o que é **dado** não é chute: vem da execução real no emulador (`trace/opstarts.txt`),
   completada por análise estática (alvos de desvio, tabelas de salto, rotinas nunca chamadas).
 * O que é **ponteiro** também vem da execução (`trace/pointers.txt`).
-* Nomes, comentários e correções ficam em `annotations/sf2ne.ann`. **Nesta fase não edite `src/` à mão** —
-  o gerador sobrescreve.
+* Nomes, comentários, correções e dados novos ficam em `annotations/sf2ne.ann`. **Não edite `src/` à mão** —
+  o gerador sobrescreve. A exceção é um banco declarado com `keepbank` (hoje só `src/bank_05.s`, o banco de
+  estados do Ken).
 
 ## Makefile
 
 | Comando | O que faz |
 |---|---|
-| `make` | monta `build/sf2ne.nes` e confere que é **idêntico** ao original (byte a byte) |
+| `make` | monta `build/sf2ne.nes` (build canônico, com o Ken); não compara com o original |
+| `make verify` | conferência **histórica** opcional: avisa se o build diverge do ROM original |
 | `make gen` | regenera `src/`, `sf2ne.cfg` e `assets/` a partir de ROM + trace + anotações |
 | `make fixed` | monta `build/sf2ne_fixed.nes` com as correções opcionais (`-D FIX_SOFT_RESET`) |
 | `make fixed FIXDEFS="-D A -D B"` | escolhe quais blocos `alt` ligar: `FIX_SOFT_RESET`, `FIX_HEAVY_ONCE`, `FIX_EDGE_ATTACK`, `MODE_VERSUS` |
@@ -51,8 +53,11 @@ Uma diretiva por linha. `BB:AAAA` = banco:endereço; `K:AAAA` = kernel (vale par
 | `statebank BB frames=BB from=AAAA to=AAAA` | banco de estados de um lutador: lê cabeçalhos e quadros pela estrutura |
 | `ramcode BB:AAAA TAM ORG` | trecho copiado para a RAM e executado lá (o trampolim `FarCall`) |
 | `alt SIMBOLO BB:AAAA TAM` + linhas `\|…` | código alternativo montado só com `-D SIMBOLO` (correções opcionais). `TAM` é o tamanho do trecho substituído, **em hexadecimal**, e precisa cair no fim de uma instrução original |
+| `patch BB:AAAA XX XX …` | sobrescreve bytes da imagem de referência antes da análise/emissão (dados novos ou correções do build canônico); não pode cruzar banco |
+| `keepbank BB` | banco mantido à mão (não gerado); garante o segmento no `sf2ne.cfg` (hoje `05`, estados do Ken) |
 
-Depois de qualquer mudança: `make gen && make`. Se aparecer `DIFERENTE do original`, a anotação quebrou algo.
+Depois de qualquer mudança: `make gen && make`. O build canônico inclui o Ken e pode divergir do original;
+`make verify` faz a conferência histórica opcional.
 
 Um `alt` cujo intervalo contenha a âncora de outro `alt` emite o menor **aninhado** dentro do ramo `.else`
 do maior: assim o menor continua valendo sozinho e é simplesmente ignorado quando o maior está ligado.

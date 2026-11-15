@@ -20,6 +20,9 @@
 #                                        (ponteiros para o ROM vistos no trace ja saem simbolicos sozinhos)
 #   alt     SIMBOLO BB:AAAA TAM          codigo alternativo (linhas seguintes comecando com "|"), montado so com
 #                                        -D SIMBOLO; sem o simbolo sai o original. Usado para correcoes opcionais.
+#   patch   BB:AAAA XX XX ...            sobrescreve bytes da imagem de referencia antes da analise/emissao (dados
+#                                        novos ou correcoes que devem entrar no build canonico; nao cruza banco).
+#   keepbank BB                          banco mantido a mao (nao gerado): so garante o segmento no sf2ne.cfg.
 #   ram AAAA Nome N  nomeia N bytes seguidos: Nome, Nome+1, ... (vetores, pares P1/P2).
 
 ramcode 3F:F935 14 049E
@@ -441,6 +444,10 @@ block 3F:F7A2 ExRAM modo 3; nametables $44), zera rolagem/paleta, instala o tram
 label 3F:F828 MainLoop
 block 3F:F828 Laco do jogo: aviso -> titulo -> selecao -> VS -> luta -> frase do vencedor -> volta ao comeco.
 comment 3F:F828 ScreenDisclaimer
+# TEMPORARIO (Ken): pula as telas de aviso/QR para agilizar o teste manual. Sao 18 NOPs no lugar do
+# farcall de 18 bytes, entao o kernel continua comecando em $FC7C. TODO: remover este patch para o
+# aviso/QR voltar a aparecer.
+patch 3F:F828 EA EA EA EA EA EA EA EA EA EA EA EA EA EA EA EA EA EA
 comment 3F:F83A ScreenTitle
 comment 3F:F86C ScreenPlayerSelect
 comment 3F:F87E ScreenVersus
@@ -1097,6 +1104,15 @@ label 37:F227 SelectMoveLeft
 comment 37:F227 esquerda na borda: move o cursor para o lutador anterior
 label 37:F264 SelectConfirm
 comment 37:F264 A na borda: confirma o lutador atual (P1/P2)
+# Ken jogavel: a comparacao original so' aceitava Ryu (0). Passa a aceitar 0 e 1 (Ken); 2..9 seguem bloqueados.
+patch 37:F06B C9 02 90 07
+comment 37:F06B Ryu (0) e Ken (1) confirmam; os demais seguem bloqueados
+# Mapa de selecao: o narrador anuncia o Japao (ram_03B5 = 0, destino = Ryu). O pisca-pisca deve
+# ficar na posicao do Japao (indice 0), nao na dos EUA (indice 4, posicao do Ken). D37_F2BB sao
+# as colunas X e D37_F2C3 as linhas Y; o indice 4 (Ken) e' o byte $F2C7. O sprite do Ken no mapa
+# (D37_F2AB/F2B3) nao muda: so' a bandeira piscante aponta para o destino.
+patch 37:F2C7 B8
+comment 37:F2C7 Ken (indice 4): bandeira piscante na posicao do Japao (Y = $B8, como o indice 0)
 label 37:F27B SelectNextPlayer
 comment 37:F27B passa ao outro jogador (X=1 -> 0) ou encerra
 label 37:F57E TitleLoop
@@ -1108,6 +1124,15 @@ comment 37:F670 pisca o PRESS START alternando a cor 10 da paleta
 # ============================================================================================================
 # BANCO $00 — dados do Ryu (frames) + IA do Ryu
 # ============================================================================================================
+# Ken jogavel: o despacho anti-aereo em $8FDC-$8FE8 usa o truque do RTS sobre D00_9148, indexado por
+# FighterChar,y. A tabela tem UMA entrada (2 bytes) e o indice avanca de 1 em 1, entao so' o Ryu (0)
+# funciona; para Ken (1) os bytes lidos sao $91/$A4 -> alvo $A491 -> o RTS cai em $A492 ($02 = JAM) e a
+# CPU trava (halt infinito). Como a IA desta entrega e' sempre a do Ryu, fixamos o indice em 0
+# (LDA abs,Y -> LDA abs): qualquer oponente usa RyuAiAntiAir, exatamente como no Ryu-vs-Ryu.
+patch 00:8FE0 AD
+patch 00:8FE4 AD
+comment 00:8FE0 todos os oponentes usam RyuAiAntiAir (D00_9148 tem uma entrada so')
+comment 00:8FE4 idem: sem indexar por personagem, o RTS-trick nao cai em $A492 (JAM)
 label 00:8F46 RyuAiThink
 block 00:8F46 ------------------------------------------------------------------------------------------------
 block 00:8F46 IA do Ryu (codigo nativo dentro do banco de dados do personagem). Decide pelo estado e distancia do
@@ -1119,6 +1144,35 @@ label 00:914A RyuAiAntiAir
 comment 00:914A IA do Ryu contra oponente no ar ($C0/$C8): dispara o roteiro de anti-aereo (tabela D00_9148)
 label 00:91BA RyuAiAirAttack
 comment 00:91BA IA do Ryu: inicia o roteiro D00_8F24 (ataque aereo) sempre
+# ============================================================================================================
+# BANCO $04 — frames/metasprites/colisao do Ken (dados originais) + stub de IA
+# ============================================================================================================
+# Stub de IA do Ken (a CPU desta entrega continua sendo o Ryu). A ficha do Ken aponta para $90E0.
+# Sao 8 roteiros, como a tabela do Ryu em $00:8E72, e todos levam ao terminador $FF, para que
+# nenhum ponteiro caia em dados de colisao.
+patch 04:90E0 F0 90 F0 90 F0 90 F0 90 F0 90 F0 90 F0 90 F0 90
+table 04:90E0 words n=8
+block 04:90E0 Stub de IA do Ken (a CPU desta entrega continua sendo o Ryu).
+block 04:90E0 A ficha do Ken aponta para ca ($90E0). Sao 8 roteiros, como a tabela do Ryu em $00:8E72,
+block 04:90E0 e todos levam ao terminador $FF, para que nenhum ponteiro caia em dados de colisao.
+# Layout do retrato de derrota do Ken. Na derrota, PortraitBuildP1 usa DE=3, mas o layout normal do
+# Ken ($8A59) so' tem 2 grupos; ler o byte seguinte ($8A92, atributo do metasprite $8A91) como
+# contagem $00 dispara 255 iteracoes e transborda o buffer do retrato (a "foto quebrada").
+# Solucao: copiar o layout normal para o espaco livre e acrescentar um terceiro grupo vazio.
+# O byte $90F0 continua $FF (terminador do stub de IA acima); o layout comeca em $90F1.
+patch 04:90F1 10 00 06 00 AF 08 0A 0C 0E 10 12 06 00 BF 14 16
+patch 04:9101 18 1A 1C 1E 06 00 CF 20 22 24 26 28 2A 04 00 DF
+patch 04:9111 2C 2E 30 32 04 00 EF 34 36 38 3A 80 00 02 20 DF
+patch 04:9121 00 02 02 20 EF 04 06 80 00 80
+comment 04:90F1 layout do retrato de derrota do Ken: copia do normal + grupo 3 vazio (DE=3)
+
+# ============================================================================================================
+# BANCO $05 — banco de estados do Ken (fonte mantida a mao em src/bank_05.s)
+# ============================================================================================================
+# O banco $05 original e' todo $FF. A fonte do Ken e' escrita a mao (nao ha dados a regenerar), mas o
+# segmento precisa continuar no sf2ne.cfg para o linker.
+keepbank 05
+
 # ============================================================================================================
 # BANCO $01 — dados do Ryu: banco de estados do lutador (statebank no fim) + tabelas de transicao
 # ============================================================================================================
@@ -1133,7 +1187,75 @@ label 3C:80D2 CharFrameBankTbl
 block 3C:8000 ------------------------------------------------------------------------------------------------
 block 3C:8000 FICHAS DOS PERSONAGENS: 23 tabelas de 10 bytes (uma coluna por personagem), lidas por FighterLoadChar.
 block 3C:8000 Ordem das colunas: 0 RYU, 1 KEN, 2 CHUN LI, 3 GUILE, 4 BLANKA, 5 EHONDA, 6 BALROG, 7 SAGAT, 8 M.BISON, 9 ZANGIEF.
-block 3C:8000 So a coluna 0 esta preenchida nas tabelas de ponteiros.
+block 3C:8000 Colunas 0 (Ryu) e 1 (Ken) preenchidas nas tabelas de ponteiros. A coluna 1 aponta para o banco de
+block 3C:8000 estados $05 (janela $A000) e para os frames/colisoes do banco $04.
+# Ken: coluna 1 da ficha. Os patches caem sempre no offset +1 da tabela (a coluna 0 do Ryu nao muda).
+patch 3C:800B A0
+comment 3C:800B Ken: >D05_A000
+patch 3C:8015 12
+comment 3C:8015 Ken: <D05_A012
+patch 3C:801F A0
+comment 3C:801F Ken: >D05_A012
+patch 3C:8029 1A
+comment 3C:8029 Ken: <KenSpcTrans
+patch 3C:8033 A0
+comment 3C:8033 Ken: >KenSpcTrans
+patch 3C:803D 26
+comment 3C:803D Ken: <D05_A026
+patch 3C:8047 A0
+comment 3C:8047 Ken: >D05_A026
+patch 3C:8051 3E
+comment 3C:8051 Ken: <D05_A03E
+patch 3C:805B A0
+comment 3C:805B Ken: >D05_A03E
+patch 3C:8065 56
+comment 3C:8065 Ken: <D05_A056
+patch 3C:806F A0
+comment 3C:806F Ken: >D05_A056
+patch 3C:8079 6E
+comment 3C:8079 Ken: <D05_A06E
+patch 3C:8083 A0
+comment 3C:8083 Ken: >D05_A06E
+patch 3C:808D 86
+comment 3C:808D Ken: <D05_A086
+patch 3C:8097 A0
+comment 3C:8097 Ken: >D05_A086
+patch 3C:80A1 C0
+comment 3C:80A1 Ken: <CmdKeyListRyu
+patch 3C:80AB E0
+comment 3C:80AB Ken: >CmdKeyListRyu
+patch 3C:80B5 E0
+comment 3C:80B5 Ken: <D04_90E0 (stub de IA)
+patch 3C:80BF 90
+comment 3C:80BF Ken: >D04_90E0 (stub de IA)
+patch 3C:80C9 05
+comment 3C:80C8 coluna 1 (Ken) = banco de estados $05
+# Ken: tripla 0 = azul (B) e tripla 1 = vermelho (A). O motor grava em zp_12 o botao de
+# confirmacao (A -> 1, B -> 0) e usa esse indice como paleta do P1; a linha do Ken e' $80F2-$80FD.
+block 3C:80E6 Ken: tripla 0 = azul (B) e tripla 1 = vermelho (A). O motor grava em zp_12 o
+block 3C:80E6 botao de confirmacao (A -> 1, B -> 0) e usa esse indice como paleta do P1.
+patch 3C:80F4 02
+patch 3C:80F7 16
+# Retrato (selecao/VS): a mesma logica de botao da paleta de luta. Em D3C_81D6 (BG1 do retrato),
+# o indice 2 e' a faixa/gi; a tripla 0 vira azul (B) e a tripla 1 vira vermelho (A).
+patch 3C:81E3 01
+comment 3C:81E3 Ken retrato: tripla 0 (B) = azul
+patch 3C:81E6 16
+comment 3C:81E6 Ken retrato: tripla 1 (A) = vermelho
+# Retrato de derrota do Ken (RoundResult != 0). Nao ha arte "machucada" propria do Ken; reutilizamos
+# o layout normal ($04:8A59) com as paletas de derrota, como o Ryu faz na coluna 0:
+#   82C6 (BG1) = paleta normal (no Ryu, 82C6 == 81D6) -> mantem a cor do gi consistente com a luta;
+#   833E (BG0) = paleta normal com as cores 1/2 trocadas (pele mais clara, efeito de derrota);
+#   83B6 (BG2) = paleta 2 de derrota (mesma do Ryu), pronta para o mapa de atributos;
+#   846A (atributos) = mapa normal: as regioes de paleta 1 do Ken sao o gi (indice 2), entao troca-las
+#   por paleta 2 apagaria a cor do gi. O efeito de derrota fica por conta da troca de pele em 833E.
+patch 3C:82D2 26 01 27 26 16 27 26 3D 27 26 11 27
+patch 3C:834A 36 26 27 36 26 27 36 26 27 36 26 27
+patch 3C:83C2 26 36 16 26 36 16 26 36 16 26 36 16
+patch 3C:8470 00 CC 00 DC F0 FD
+# Ponteiro do layout de derrota do Ken -> $04:90F1 (copia do layout normal + grupo 3 vazio).
+patch 3C:84BC F1 90
+comment 3C:84BC Ken: layout de derrota em $04:90F1
 label 3C:84CE CharNameTbl
 comment 3C:84CE nomes dos 10 personagens, 8 caracteres cada
 label 3C:8528 WinQuoteLine1

@@ -144,6 +144,13 @@
 3F:F32F-F331
 3F:F54E-F550
 3F:F692-F694
+3F:F829-F829
+3F:F82C-F82C
+3F:F82F-F82F
+3F:F832-F832
+3F:F834-F834
+3F:F836-F836
+3F:F838-F839
 3F:F8CD-F8DA
 3F:FC89-FC8A
 3F:FC8B-FC8D
@@ -353,7 +360,6 @@
 3F:FF9A-FF9A
 # entradas rejeitadas
 # tabelas de salto via RTS: local tipo lo hi n
-00:8FE0 words lo=9148 hi=9149 n=1
 37:FE68 split lo=FE71 hi=FE79 n=8
 3B:FE68 split lo=FE71 hi=FE79 n=8
 3F:E168 split lo=E171 hi=E17D n=12

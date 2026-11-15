@@ -276,5 +276,23 @@ D04_8A59:
     .byte $11,$00,$00,$00,$00,$3C,$C4,$FE,$20,$0C,$C3,$FE,$0C,$33,$CC,$F5; 90A9
     .byte $15,$00,$0D,$BF,$FD,$0D,$33,$CC,$F5,$15,$00,$0C,$BF,$FF,$0D,$33; 90B9
     .byte $CC,$F5,$15,$00,$0C,$C0,$FA,$0D,$33,$CC,$F5,$15,$00,$0D,$C0,$FC; 90C9
-    .byte $0C,$33,$CC,$F5,$15,$00               ; 90D9
-    .res 3873, $FF                              ; 90DF
+    .byte $0C,$33,$CC,$F5,$15,$00,$FF           ; 90D9
+
+; Stub de IA do Ken (a CPU desta entrega continua sendo o Ryu).
+; A ficha do Ken aponta para ca ($90E0). Sao 8 roteiros, como a tabela do Ryu em $00:8E72,
+; e todos levam ao terminador $FF, para que nenhum ponteiro caia em dados de colisao.
+D04_90E0:
+    .word D04_90F0                              ; 90E0  F0 90
+    .word D04_90F0                              ; 90E2  F0 90
+    .word D04_90F0                              ; 90E4  F0 90
+    .word D04_90F0                              ; 90E6  F0 90
+    .word D04_90F0                              ; 90E8  F0 90
+    .word D04_90F0                              ; 90EA  F0 90
+    .word D04_90F0                              ; 90EC  F0 90
+    .word D04_90F0                              ; 90EE  F0 90
+D04_90F0:
+    .byte $FF,$10,$00,$06,$00,$AF,$08,$0A,$0C,$0E,$10,$12,$06,$00,$BF,$14; 90F0
+    .byte $16,$18,$1A,$1C,$1E,$06,$00,$CF,$20,$22,$24,$26,$28,$2A,$04,$00; 9100
+    .byte $DF,$2C,$2E,$30,$32,$04,$00,$EF,$34,$36,$38,$3A,$80,$00,$02,$20; 9110
+    .byte $DF,$00,$02,$02,$20,$EF,$04,$06,$80,$00,$80; 9120
+    .res 3797, $FF                              ; 912B

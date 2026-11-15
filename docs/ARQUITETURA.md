@@ -43,7 +43,7 @@ O autor ligou cada banco numa janela fixa: **o banco `n` sempre aparece na janel
 
 | Janela | Conteúdo | Bancos usados |
 |---|---|---|
-| `$8000` (`$5114`) | dados de personagem: frames/metasprites (+ IA) | `$00` Ryu, `$04` Ken (não usado), `$08` `$0C` `$10` `$1C` `$24` (só retratos), `$20` (HUD/efeitos + retrato), `$3C` (fichas, nomes, frases, seleção, VS) |
+| `$8000` (`$5114`) | dados de personagem: frames/metasprites (+ IA) | `$00` Ryu, `$04` Ken (frames/colisões do Ken jogável), `$08` `$0C` `$10` `$1C` `$24` (só retratos), `$20` (HUD/efeitos + retrato), `$3C` (fichas, nomes, frases, seleção, VS) |
 | `$A000` (`$5115`) | estados do lutador; música | `$01` (estados do Ryu), `$29` e `$2D` (músicas, formato FamiTone2) |
 | `$C000` (`$5116`) | vozes DPCM; telas comprimidas | `$02 $06 $0A $0E $12 $16 $1A $1E $22 $26 $2A` (DPCM), `$36` (nametables RLE) |
 | `$E000` (`$5117`) | **código** | `$37`, `$3B`, `$3F` |
@@ -169,9 +169,9 @@ Todos os dez têm nome, frase de vitória e voz de país (`CountryVoiceTbl`, `37
 | Tabela | Conteúdo | Valores hoje |
 |---|---|---|
 | `$80D2` `CharFrameBankTbl` | banco dos frames (janela `$8000`) | `00 04 08 0C 10 00 00 1C 20 24` |
-| `$80C8` `CharStateBankTbl` | banco dos estados (janela `$A000`) | `01 00 01 01 01 01 01 01 00 01` (só o do Ryu é real) |
+| `$80C8` `CharStateBankTbl` | banco dos estados (janela `$A000`) | `01 05 01 01 01 01 01 01 00 01` (Ryu e Ken reais) |
 | `$80DC` | terceiro banco (uso a confirmar) | `00 04 00 00 00 00 00 00 20 00` |
-| `$8000`–`$80BE` | 10 pares de ponteiros (lo/hi) para os estados básicos e tabelas do personagem | **só a coluna 0 (Ryu)** |
+| `$8000`–`$80BE` | 10 pares de ponteiros (lo/hi) para os estados básicos e tabelas do personagem | **colunas 0 (Ryu) e 1 (Ken)** |
 
 Os ponteiros da coluna do Ryu: oito tabelas de ponteiros no início do banco de estados, mais `3F:E0C0` (lista dos
 golpes especiais do personagem: índices em `CmdMotionTbl`, terminada por `$FF`) e `00:8E72` (tabela de roteiros de IA).
@@ -343,7 +343,8 @@ revisados: são coordenadas e endereços de vídeo).
 |---|---|---|---|
 | `$00` | `$8000` | 5,2 KB | Ryu: metasprites, roteiros de IA, `RyuAiThink` (código), caixas de colisão |
 | `$01` | `$A000` | 4,5 KB | Ryu: estados / animações |
-| `$04` | `$8000` | 4,3 KB | Ken: frames (nunca usados no demo) + retrato |
+| `$04` | `$8000` | 4,3 KB | Ken: frames/metasprites/colisões + retrato; stub de IA em `$90E0` |
+| `$05` | `$A000` | 4,5 KB | Ken: estados/animações (fonte à mão em `src/bank_05.s`; o banco original é todo `$FF`) |
 | `$08 $0C $10 $1C $24` | `$8000` | ~50 cada | retratos da seleção |
 | `$20` | `$8000` | 1,6 KB | sprites de HUD/efeitos ("ROUND", "FIGHT", "YOU WIN"…) |
 | `$29`, `$2D` | `$A000` | 5,7 / 4,9 KB | músicas (FamiTone2) |

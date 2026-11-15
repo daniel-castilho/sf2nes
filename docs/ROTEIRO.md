@@ -80,13 +80,18 @@ próximo adversário/tela de continue, frase do vencedor por personagem.
 
 É o caso mais barato: os frames já estão no banco `$04` e ele é quase um Ryu.
 
+**Estado atual:** banco de estados `$05`, coluna 1 da ficha, seleção, paleta (A = vermelho, B = azul) e stub de IA
+já estão ligados; Ryu (coluna 0) permanece intocado. Moveset completo e aceite manual ainda pendentes.
+
 1. conferir os gráficos: `make assets` e localizar os tiles do Ken nas páginas de CHR;
 2. banco de estados do Ken: copiar o do Ryu para um banco livre da janela `$A000` (`$05`), trocando os ponteiros de
    metasprite para o banco `$04` — com o fonte realocável é copiar e renomear rótulos, não recalcular endereços;
 3. preencher a **coluna 1** das tabelas da ficha (`3C:8000`–`80E5`) e `CharStateBankTbl`;
-4. IA: entrada em `AiCharRoutine` (pode reaproveitar `RyuAiThink` no começo);
+4. IA: a CPU desta entrega continua sendo o Ryu; a ficha do Ken aponta para um stub (`$04:90E0`) que termina em
+   `$FF`, para nunca cair em dados de colisão. IA própria de Ken fica fora do escopo;
 5. vozes: coluna 1 de `FighterVoiceTbl`; paleta; liberar o cursor da tela de seleção;
-6. acrescentar `statebank 05 frames=04 from=… to=…` nas anotações (ou, se o fonte já estiver congelado, nada).
+6. como o banco `$05` é fonte à mão (o original é todo `$FF`), usar `keepbank 05` nas anotações em vez de
+   `statebank`; as edições na ficha/paleta/seleção/stub entram como `patch` e sobrevivem ao `make gen`.
 
 Quando o Ken funcionar, o caminho para os outros está provado; o que sobra é arte.
 

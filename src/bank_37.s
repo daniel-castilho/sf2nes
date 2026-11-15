@@ -1821,8 +1821,8 @@ L37_F052:
     ldx zp_E9                                   ; F064  A6 E9
     lda D37_F293,x                              ; F066  BD 93 F2    [idx $00..$07]
     sta FighterChar                             ; F069  85 00
-    cmp #$00                                    ; F06B  C9 00
-    beq L37_F076                                ; F06D  F0 07
+    cmp #$02                                    ; F06B  C9 02       Ryu (0) e Ken (1) confirmam; os demais seguem bloqueados
+    bcc L37_F076                                ; F06D  90 07
     lda #$FF                                    ; F06F  A9 FF
     sta zp_D7                                   ; F071  85 D7
     jmp SelectDrawCurrent                       ; F073  4C 93 F0
@@ -2100,9 +2100,8 @@ D37_F2B3:
 D37_F2BB:
     .byte $50,$68,$80,$98,$50,$68,$80,$98       ; F2BB
 D37_F2C3:
-    .byte $B8,$B8,$B8,$B8,$D8,$D8,$D8,$D8       ; F2C3
+    .byte $B8,$B8,$B8,$B8,$B8,$D8,$D8,$D8       ; F2C3
 
-; <- farcall Main
 ; modos: aviso/QR, frase final
 ScreenDisclaimer:
     lda #$00                                    ; F2CB  A9 00

@@ -60,7 +60,7 @@ class Project:
     def __init__(self):
         rom = open(ROMFILE, 'rb').read()
         self.header = rom[:16]
-        self.prg = rom[16:16 + 0x80000]
+        self.prg = bytearray(rom[16:16 + 0x80000])
         self.chr = rom[16 + 0x80000:]
         self.kind = bytearray(0x80000)
         self.traced = bytearray(0x80000)          # 1 = instrucao vista no trace
@@ -86,6 +86,8 @@ class Project:
         self.warn = set()
         self.rts_sites = set(); self.rts_tables = []; self.islands = []; self.island_fail = set()
         self.alts = {}; self.immtext = {}; self.manual_ptr = []; self.inferred = set(); self.statebanks = []; self.struct_fail = []; self.struct_kind = {}
+        self.patches = []                          # (off, bytes) sobrescritas da imagem de referencia (diretiva `patch`)
+        self.keepbanks = set()                     # bancos mantidos a mao, que so precisam do segmento no cfg (`keepbank`)
         self.stateconds = []                        # (off da tabela lo, n) — condicoes da maquina de estados
         self.cond_names = {}                        # numero da condicao -> nome da rotina
         self.immsym = {}; self.ptr_conflicts = []; self.ptr_stats = (0, 0); self.ptr_ev = []
@@ -165,10 +167,20 @@ class Project:
                     q = ln.split()
                     cur_alt = (q[1], int(q[3], 16), [])
                     self.alts[self.parse(q[2])] = cur_alt
+                elif cmd == 'patch':                    # patch BB:AAAA XX XX ...   (sobrescreve bytes da imagem de referencia)
+                    q = ln.split()
+                    self.patches.append((self.parse(q[1]), [int(x, 16) for x in q[2:]]))
+                elif cmd == 'keepbank':                 # keepbank BB   (banco mantido a mao: garante o segmento no cfg)
+                    self.keepbanks.add(int(p[1], 16))
                 else:
                     raise ValueError('diretiva desconhecida')
             except Exception as e:
                 sys.exit('%s:%d: %s  (%s)' % (ANN, lineno, ln, e))
+        # as sobrescritas valem para a analise e para a emissao (codigo e dados saem ja' alterados)
+        for off, bs in self.patches:
+            if not bs or off < 0 or off + len(bs) > len(self.prg) or (off >> 13) != ((off + len(bs) - 1) >> 13):
+                sys.exit('%s: patch em %s precisa ter bytes e nao pode cruzar banco' % (ANN, fmt_off(off)))
+            self.prg[off:off + len(bs)] = bytes(bs)
 
     def parse(self, s):
         b, a = s.split(':')
@@ -1103,6 +1115,7 @@ class Project:
                 f.write('.endif\n')
             f.write('\n'.join(kout) + '\n')
         for b, out in bank_out.items():
+            if b in self.keepbanks: continue        # fonte mantida a mao: nao sobrescreve
             with open(os.path.join(SRC, 'bank_%02X.s' % b), 'w') as f:
                 f.write(hdr)
                 kindtxt = 'CODIGO' if b in CODE_BANKS else 'dados'
@@ -1183,7 +1196,7 @@ class Project:
                 f.write('    PRG%02X: file = %%O, start = $%04X, size = $2000, fill = yes, fillval = $FF, bank = $%02X;\n' % (b, bank_base(b), b))
             f.write('    CHR:   file = %O, start = $0000, size = $80000, fill = yes, fillval = $FF;\n}\nSEGMENTS {\n')
             f.write('    HEADER: load = HDR, type = ro;\n')
-            for b in self.nonempty:
+            for b in sorted(set(self.nonempty) | self.keepbanks):
                 f.write('    BANK%02X: load = PRG%02X, type = ro;\n' % (b, b))
             f.write('    CHR:    load = CHR, type = ro;\n}\n')
 

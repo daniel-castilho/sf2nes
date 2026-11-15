@@ -4,7 +4,8 @@ Disassembly **remontável** do demo de NES `Street Fighter II – Nostalgic Edit
 continuar o jogo. O fonte é assembly 6502 para o `ca65` (a mesma ferramenta que o autor usa).
 
 ```
-make          # monta build/sf2ne.nes e confere: IDÊNTICO ao ROM original, byte a byte
+make          # monta build/sf2ne.nes (build canônico: ROM modificada, com o Ken jogável)
+make verify   # conferência HISTÓRICA opcional: compara o build com o ROM original
 make fixed    # monta build/sf2ne_fixed.nes com a correção do travamento no soft reset
 make fixed FIXDEFS="-D FIX_SOFT_RESET -D MODE_VERSUS"       # idem + modo versus (P2 no controle 2)
 make fixed FIXDEFS="-D FIX_SOFT_RESET -D FIX_HEAVY_ONCE"    # idem + golpe forte sem repetição (experimental)
@@ -19,7 +20,8 @@ Requisitos: `python3` e `cc65` (`sudo apt install cc65`). O emulador só é prec
 
 | | |
 |---|---|
-| **Monta idêntico** | `make` reproduz o ROM de 1.048.592 bytes; SHA-1 `0bf9dc57…a9aed`. |
+| **Reconstrução histórica** | A reconstrução original (sem os `patch` do Ken) reproduz o ROM de 1.048.592 bytes; SHA-1 `0bf9dc57…a9aed`. `make verify` faz essa conferência e avisa que o build com o Ken diverge. |
+| **Ken jogável (P1)** | Selecionável com A (vermelho) ou B (azul), luta contra Ryu CPU. A coluna 0 (Ryu) permanece byte a byte intocada. O travamento nos golpes especiais foi diagnosticado e corrigido (2 bytes no despacho anti-aéreo da IA); o passo a passo está em [`docs/lessons.md`](docs/lessons.md). Moveset completo e aceite manual ainda pendentes. |
 | **Realocável** | Todos os 11 bancos de código e dados deslocados em 1 byte ao mesmo tempo (44.892 bytes diferentes) → o jogo roda **igual ao original**: mesmas telas, mesmo som, mesmo resultado, em 5 partidas de teste de 9.000–12.000 quadros. Ou seja: dá para inserir e remover código e dados. |
 | **Código × dados** | Separação tirada da execução real no emulador (7.805 instruções vistas em 28 partidas roteirizadas) + análise estática. Cobertura por banco: `$00` 96%, `$37` 83%, `$3B` 98%, `$3F` 86%. |
 | **Ponteiros simbólicos** | 114 pares de imediatos e 2.550 bytes de dados descobertos por rastreamento de origem no emulador; mais 187 completados pela estrutura das tabelas. |
@@ -34,6 +36,7 @@ Leia nesta ordem:
 3. [`docs/BUGS.md`](docs/BUGS.md) — bugs relatados: o que já foi resolvido e onde estão os outros.
 4. [`docs/ROTEIRO.md`](docs/ROTEIRO.md) — o caminho para terminar o jogo, e como usar IA nisso sem se enganar.
 5. [`docs/FERRAMENTAS.md`](docs/FERRAMENTAS.md) — scripts, formato das anotações, emulador sem janela.
+6. [`docs/lessons.md`](docs/lessons.md) — lições aprendidas: como o travamento do Ken nos golpes especiais foi diagnosticado e corrigido (sintoma, traço de PC, causa raiz, correção e verificação).
 
 ## O que ainda **não** está pronto
 
@@ -64,21 +67,29 @@ build/                    saída da montagem (não versionar)
 
 ## Fluxo de trabalho
 
-**Fase atual — anotação.** `src/` é gerado; não edite à mão.
+**Fase atual — anotação e modificação.** `src/` é gerado; não edite à mão, exceto `src/bank_05.s`
+(banco de estados do Ken, mantido à mão e declarado com `keepbank 05` nas anotações).
 
 ```
 tools/show.py 3F:E4DA 60          # lê uma rotina (mostra quem chama e em que telas ela roda)
-$EDITOR annotations/sf2ne.ann     # label / ram / comment / block ...
-make gen && make                  # tem que continuar dizendo "idêntico"
+$EDITOR annotations/sf2ne.ann     # label / ram / comment / block / patch / keepbank ...
+make gen && make                  # regenera src/ e monta o build canônico (com o Ken)
+make verify                       # opcional: confere a reconstrução histórica contra o ROM original
 ```
 
-**Fase seguinte — modificação.** Quando quiser mudar o jogo de verdade (não só corrigir no lugar), há dois caminhos:
+Alterações em bancos gerados (ficha do Ken, paleta, seleção e stub de IA) são declaradas como `patch` nas
+anotações, no offset **+1** da coluna do personagem; assim `make gen` não apaga o Ken e a coluna 0 do Ryu
+continua intocada.
 
-* mudanças pequenas e opcionais: blocos `alt` nas anotações (é como a correção do reset foi feita) — o `make`
-  continua provando que o original está intacto e `make fixed` monta a versão alterada;
-* mudanças grandes: congelar `src/` (parar de rodar `make gen`) e editar o assembly diretamente. A partir daí o
-  teste deixa de ser "idêntico ao original" e passa a ser `tools/mesen/compare_roms.sh` (mesmas entradas, mesmas
-  telas e som) para tudo que **não** deveria mudar.
+**Fase seguinte — modificação.** Quando quiser mudar o jogo de verdade (não só corrigir no lugar), há três caminhos:
+
+* mudanças pequenas e opcionais: blocos `alt` nas anotações (é como a correção do reset foi feita) e
+  `make fixed` monta a variante;
+* dados novos ou correções que devem entrar no build canônico: diretivas `patch` (bytes) e `keepbank` (fonte
+  mantida à mão) nas anotações — é assim que a ficha, a paleta, a seleção e o stub de IA do Ken são ligados;
+* mudanças grandes que não passam pelo gerador: congelar o banco em `src/` e editá-lo à mão, como em
+  `src/bank_05.s`; nesse caso o teste deixa de ser "idêntico ao original" e passa a ser
+  `tools/mesen/compare_roms.sh` (mesmas entradas, mesmas telas e som) para tudo que **não** deveria mudar.
 
 ## Uso
 

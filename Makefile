@@ -1,7 +1,8 @@
 # Street Fighter II NE (DEMO by Parisoft) — disassembly remontavel
 #
-#   make          monta build/sf2ne.nes e confere que e' IDENTICO ao ROM original (byte a byte)
-#   make gen      regenera src/ a partir de rom/ + trace/ + annotations/sf2ne.ann  (fase de anotacao)
+#   make          monta build/sf2ne.nes (build canonico: ROM modificada, com o Ken jogavel)
+#   make verify   conferencia HISTORICA opcional: compara o build com rom/sf2ne_demo.nes
+#   make gen      regenera src/ a partir de rom/ + trace/ + annotations/sf2ne.ann
 #   make fixed    monta build/sf2ne_fixed.nes com as correcoes opcionais ligadas (blocos `alt` das anotacoes)
 #   make prontos  monta as variantes jogaveis em prontos/ (reset corrigido, versus, golpe forte unico, golpe na borda)
 #   make assets   exporta os graficos (PNG) e as vozes (WAV) para extracted/
@@ -27,8 +28,9 @@ $(BUILD)/%.o: src/%.s $(INCS)
 $(BUILD)/sf2ne.nes: $(OBJS) sf2ne.cfg
 	ld65 -C sf2ne.cfg $(OBJS) -o $@ -m $(BUILD)/sf2ne.map -Ln $(BUILD)/sf2ne.labels
 
+# Conferencia HISTORICA, opcional: o build canonico inclui o Ken e nao precisa ser igual ao demo.
 verify: $(BUILD)/sf2ne.nes
-	@if cmp -s $(BUILD)/sf2ne.nes $(ROM); then 	    echo "OK: build/sf2ne.nes e' identico ao ROM original (sha1 $(SHA1))"; 	else 	    echo "ATENCAO: build/sf2ne.nes diverge do ROM original (sha1 $(SHA1))"; 	fi
+	@if cmp -s $(BUILD)/sf2ne.nes $(ROM); then 	    echo "OK: build/sf2ne.nes e' identico ao ROM original (sha1 $(SHA1))"; 	else 	    echo "ATENCAO: build/sf2ne.nes diverge do ROM original (sha1 $(SHA1)); esperado no build com o Ken"; 	fi
 
 gen:
 	python3 tools/disasm.py
