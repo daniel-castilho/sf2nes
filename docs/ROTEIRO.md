@@ -20,6 +20,16 @@ O que muda de figura é o tamanho de "terminar":
 Para referência, o Ryu sozinho tem 71 estados e 274 quadros de animação.
 Programação: semanas. Conteúdo de um elenco inteiro: muito mais que isso. Planeje por lutador.
 
+## Fase atual — estabilização e manutenibilidade
+
+**Objetivo:** facilitar entendimento, autoria e manutenção do que já existe, sem ampliar o conteúdo do jogo.
+
+**Declaração de pausa:** novos personagens e funcionalidades de jogo não são trabalho ativo nesta fase. A pausa é adiamento, não cancelamento — o backlog antigo permanece documentado e será retomado depois da auditoria documental da Fase 1.
+
+**Documentos de planejamento:** `tasks/PROJECT_STABILIZATION_EXECUTION_PLAN.md` (plano global) e `tasks/PHASE_0_SCOPE_FREEZE_SPEC.md` (especificação desta fase). As próximas tarefas ativas serão escolhidas após a auditoria documental, não presumidas a partir da ordem antiga deste roteiro.
+
+Etapas futuras relacionadas a personagens, ferramentas de conteúdo, cenários/músicas/finais e outras funcionalidades estão rotuladas como `PAUSADO — fora da fase atual` dentro deste mesmo arquivo.
+
 ---------------------------------------------------------------------------------------------------
 
 ## Etapas
@@ -76,7 +86,7 @@ validação fica para depois, registrada como pendência, não como critério).
 Fora do escopo desta etapa (ficam para depois): IA menos mecânica além do seletor de dificuldade,
 próximo adversário/tela de continue, frase do vencedor por personagem.
 
-### Etapa 3 — segundo lutador (Ken)
+### Etapa 3 — segundo lutador (Ken) `PAUSADO — fora da fase atual`
 
 É o caso mais barato: os frames já estão no banco `$04` e ele é quase um Ryu.
 
@@ -95,7 +105,7 @@ já estão ligados; Ryu (coluna 0) permanece intocado. Moveset completo e aceite
 
 Quando o Ken funcionar, o caminho para os outros está provado; o que sobra é arte.
 
-### Etapa 4 — ferramentas de conteúdo
+### Etapa 4 — ferramentas de conteúdo `PAUSADO — fora da fase atual`
 
 Editar estados em `.byte` não escala. Antes do terceiro lutador vale construir:
 
@@ -103,7 +113,7 @@ Editar estados em `.byte` não escala. Antes do terceiro lutador vale construir:
 - [ ] um formato de texto para estados/quadros (macros do ca65 ou um script) no lugar de bytes soltos;
 - [ ] conversor WAV → DPCM alinhado em 64 bytes, atualizando o diretório de vozes.
 
-### Etapa 5 — cenários, músicas, finais
+### Etapa 5 — cenários, músicas, finais `PAUSADO — fora da fase atual`
 
 Há 36 bancos de PRG vazios e 198 páginas de CHR livres: espaço não é o problema. O banco `$3B` (código da luta) está
 cheio — código novo vai para um banco novo da janela `$E000` (`$33`, `$2F`…), que precisa da sua cópia do kernel:

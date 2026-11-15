@@ -40,6 +40,8 @@ Leia nesta ordem:
 
 ## O que ainda **não** está pronto
 
+**Foco atual — estabilização e manutenibilidade.** A implementação de novos personagens e funcionalidades de jogo está pausada, não cancelada. O próximo ciclo de trabalho será definido após a auditoria documental da Fase 1 (`docs/ROTEIRO.md`, `tasks/PROJECT_STABILIZATION_EXECUTION_PLAN.md` e `tasks/PHASE_0_SCOPE_FREEZE_SPEC.md`).
+
 Há 1.795 rótulos; 304 têm nome de verdade
   `FamiToneUpdate`…). O resto ainda é `L3F_E4DA`, `D01_A4CB`. Das variáveis, 78 têm nome. É o grosso do trabalho
   que falta na fase de entendimento — e é onde a IA mais ajuda.
@@ -67,13 +69,12 @@ build/                    saída da montagem (não versionar)
 
 ## Fluxo de trabalho
 
-**Fase atual — anotação e modificação.** `src/` é gerado; não edite à mão, exceto `src/bank_05.s`
-(banco de estados do Ken, mantido à mão e declarado com `keepbank 05` nas anotações).
+**Fase atual — estabilização e manutenibilidade (apenas documentação).** Nenhum novo personagem ou funcionalidade de jogo está sendo implementado nesta fase. `src/` permanece gerado a partir de `annotations/sf2ne.ann`; não edite à mão. A próxima etapa de implementação será definida após a auditoria documental da Fase 1.
 
 ```
 tools/show.py 3F:E4DA 60          # lê uma rotina (mostra quem chama e em que telas ela roda)
 $EDITOR annotations/sf2ne.ann     # label / ram / comment / block / patch / keepbank ...
-make gen && make                  # regenera src/ e monta o build canônico (com o Ken)
+make gen && make                  # regenera src/ e monta o build canônico
 make verify                       # opcional: confere a reconstrução histórica contra o ROM original
 ```
 
