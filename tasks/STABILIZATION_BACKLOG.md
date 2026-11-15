@@ -10,15 +10,13 @@ Este backlog separa o trabalho em três trilhas distintas. Nenhuma decisão D-01
 
 ## Trilha A — estabilização/manutenibilidade (candidatos, sem aprovação de implementação)
 
-Candidatos a serem avaliados na auditoria da Fase 1:
-
-- **Fase 1** — auditoria reproduzível de métricas, fontes de verdade, documentação, bancos e validações existentes.
+- **Fase 1** — auditoria reproduzível de métricas, fontes de verdade, documentação, bancos e validações existentes → **AUDITORIA CONCLUÍDA — DOCUMENTO ENTREGUE** (`docs/ESTADO_DO_PROJETO.md`, commit `ada6c6f`). Sem indicação de testes aprovados.
 - **Fase 2** — especificação do formato textual de autoria de estados/quadros e decisão sobre fonte canônica.
 - **Fase 3** — naming dirigido por criticidade e evidência.
 - **Fase 4** — reconciliação documental e registro de decisões técnicas.
 - **Fase 5** — proposta de validação futura, sem executar testes.
 
-Referenciar `tasks/PROJECT_STABILIZATION_EXECUTION_PLAN.md` em vez de duplicar os requisitos completos.
+Referenciar `tasks/PROJECT_STABILIZATION_EXECUTION_PLAN.md` e `docs/ESTADO_DO_PROJETO.md` em vez de duplicar os requisitos completos.
 
 ---
 
