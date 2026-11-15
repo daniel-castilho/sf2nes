@@ -18,6 +18,11 @@ OBJS     := $(patsubst src/%.s,$(BUILD)/%.o,$(SRCS))
 INCS     := $(wildcard src/*.inc)
 CA65FLAGS := -I src --bin-include-dir .
 
+# Definicoes do build canonico (make). O demo original nao tem o Ken nem a bandeira do pais de
+# destino visivel na selecao; `make fixed`/`make prontos` montam as variantes historicas, sem estas
+# definicoes.
+DEFS     := -D DEST_FLAG_BLINK
+
 .PHONY: all gen verify fixed prontos assets clean
 all: $(BUILD)/sf2ne.nes
 

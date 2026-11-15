@@ -1617,3 +1617,95 @@ alt FIX_SELECT_DIFFICULTY 37:EF92 2
 
 
 # ============================================================================================================
+# BANDEIRA DO PAIS DE DESTINO visivel (DEST_FLAG_BLINK) — build canonico
+#
+# REGRA DE OURO: apos a confirmacao (ram_03B5 = destino), a bandeira do PAIS DO OPONENTE
+# (destino da batalha) e' a que deve ficar visível no mapa, nao a do pais sob o cursor.
+# Hoje o oponente e' sempre Ryu (Japao), entao ram_03B5 = 0 e a bandeira do Japao e' a que
+# aparece. Quando houver oponentes de outros paises, o narrador anuncia o pais
+# (CountryVoiceTbl) e a bandeira desse pais fica visível.
+#
+# Durante a selecao livre (antes da confirmacao) a bandeira do pais sob o cursor continua
+# visível (original). Apos a confirmacao, o Japao e' desenhado como sprite extra na paleta 3
+# (PaletteBuf+21..23, em $3F1D..$3F1F), na mesma posicao do mapa, e a bandeira do cursor e'
+# escondida se o cursor nao estiver no Japão. O NMI da selecao reenvia a paleta ao PPU quando
+# suja. Ao fim da selecao (37:EF8F) deixa a bandeira do cursor acesa e remove a copia extra
+# do destino antes do fade para a tela VS.
+
+# chama o desenho do destino no lugar da leitura do controle (1 chamada por quadro do laco de selecao)
+alt DEST_FLAG_BLINK 37:EFF0 3
+|    jsr DestFlagBlink
+
+# depois de desenhar a bandeira do cursor, acrescenta a bandeira do destino. O hook substitui
+# "lda D37_F293,x"; a rotina devolve A com o mesmo índice de lutador para o "sta FighterChar" original.
+alt DEST_FLAG_BLINK 37:F066 3
+|    jsr DestFlagOam
+
+# ao fim da selecao (37:EF8F = jmp SelectFighterIntro) deixa a bandeira do cursor acesa e remove
+# a copia extra do destino antes do fade para a tela VS
+alt DEST_FLAG_BLINK 37:EF8F 3
+|    jmp DestFlagRestore
+
+# rotina da bandeira do destino, no espaco livre do banco $37 (F6A5)
+alt DEST_FLAG_BLINK 37:F6A5 C0
+|DestFlagBlink:
+|    lda zp_D7                   ; P1 confirmou o lutador? (setado em SelectConfirm)
+|    beq DestFlagFwd             ; nao confirmou ainda: comportamento normal (bandeira do cursor)
+|    lda ram_03B5                ; pais de destino: 0 = Japao (Ryu)
+|    cmp #$00
+|    bne DestFlagFwd             ; so' o Japao esta' implementado por enquanto
+|    ; prepara a paleta 3 com as cores do Japão (sol $16, campo $20)
+|    lda #$11
+|    sta a:PaletteBuf+21
+|    lda #$16
+|    sta a:PaletteBuf+22
+|    lda #$20
+|    sta a:PaletteBuf+23
+|    lda #$01
+|    sta a:PaletteDirty
+|    ; desenha a bandeira do Japão na paleta 3 (visível, sem pisca-pisca)
+|    lda #$4E                    ; OAM 6/7 Y do Japao (tiles $8C/$8E)
+|    sta OamBuf+24               ; sprite 6 Y
+|    sta OamBuf+28               ; sprite 7 Y
+|    lda #$8C                    ; tile $8C
+|    sta OamBuf+25
+|    lda #$8E                    ; tile $8E
+|    sta OamBuf+29
+|    lda #$03                    ; paleta 3, exclusiva da bandeira do destino
+|    sta OamBuf+26
+|    sta OamBuf+30
+|    lda #$80                    ; posicao X do Japao no mapa
+|    sta OamBuf+27
+|    lda #$88                    ; posicao X+8 do Japao no mapa
+|    sta OamBuf+31
+|DestFlagFwd:
+|    jmp SelectReadInput
+|
+|DestFlagOam:
+|    ldx zp_E9
+|    cpx #$00                    ; no Japao, nao esconde a copia normal (paleta 2)
+|    bne DestFlagDraw
+|    lda #$FE
+|    sta OamBuf+16               ; sprite 4 do pais do cursor
+|    sta OamBuf+20               ; sprite 5 do pais do cursor
+|DestFlagDraw:
+|    ldx zp_E9
+|    lda D37_F293,x              ; devolve o índice original para "sta FighterChar"
+|    rts
+|
+|DestFlagRestore:
+|    lda #$1A                    ; restaura a paleta 3 original da tela
+|    sta a:PaletteBuf+21
+|    lda #$27
+|    sta a:PaletteBuf+22
+|    lda #$21
+|    sta a:PaletteBuf+23
+|    lda #$FE                    ; remove a copia extra do destino
+|    sta OamBuf+24
+|    sta OamBuf+28
+|    lda #$01
+|    sta a:PaletteDirty
+|    jmp SelectFighterIntro
+
+
+# ============================================================================================================

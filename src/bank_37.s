@@ -1709,7 +1709,16 @@ ScreenPlayerSelect:
     sta IrqStage                                ; EF77  8D FF 03
     farcall FadeIn                              ; EF7A  A9 EF 48 A9 8B 48 A9 37 .. -> 3B:E4D6
     jsr SelectInit                              ; EF8C  20 92 EF
+
+.ifdef DEST_FLAG_BLINK
+__alt_37_EF8F:
+    jmp DestFlagRestore
+    .assert * - __alt_37_EF8F <= $3, error, "bloco alt DEST_FLAG_BLINK em $EF8F passou do tamanho"
+    .res $3 - (* - __alt_37_EF8F), $FF
+.else
     jmp SelectFighterIntro                      ; EF8F  4C CF F0
+
+.endif
 
 
 .ifdef FIX_SELECT_DIFFICULTY
@@ -1777,7 +1786,16 @@ L37_EFD4:
     lda ram_0390                                ; EFD8  AD 90 03
     sta ram_0391                                ; EFDB  8D 91 03
     farcall SoundUpdate                         ; EFDE  A9 EF 48 A9 EF 48 A9 37 .. -> 37:E45F
+
+.ifdef DEST_FLAG_BLINK
+__alt_37_EFF0:
+    jsr DestFlagBlink
+    .assert * - __alt_37_EFF0 <= $3, error, "bloco alt DEST_FLAG_BLINK em $EFF0 passou do tamanho"
+    .res $3 - (* - __alt_37_EFF0), $FF
+.else
     jsr SelectReadInput                         ; EFF0  20 CC F1
+.endif
+
     lda FighterIsCpu                            ; EFF3  A5 02
     beq L37_EFFA                                ; EFF5  F0 03
     jmp SelectLoopNext                          ; EFF7  4C CB F0    (nt)
@@ -1819,7 +1837,16 @@ L37_EFFA:
 L37_F052:
     farcall SelectDrawFighter                   ; F052  A9 F0 48 A9 63 48 A9 37 .. -> 3B:F36C
     ldx zp_E9                                   ; F064  A6 E9
+
+.ifdef DEST_FLAG_BLINK
+__alt_37_F066:
+    jsr DestFlagOam
+    .assert * - __alt_37_F066 <= $3, error, "bloco alt DEST_FLAG_BLINK em $F066 passou do tamanho"
+    .res $3 - (* - __alt_37_F066), $FF
+.else
     lda D37_F293,x                              ; F066  BD 93 F2    [idx $00..$07]
+.endif
+
     sta FighterChar                             ; F069  85 00
     cmp #$02                                    ; F06B  C9 02       Ryu (0) e Ken (1) confirmam; os demais seguem bloqueados
     bcc L37_F076                                ; F06D  90 07
@@ -2473,7 +2500,74 @@ TextPushStart:
     .byte $50,$55,$53,$48,$20,$53,$54,$41,$52,$54; F68F
 D37_F699:
     .byte $16,$27,$37,$21,$31,$01,$27,$37,$37,$0F,$0F,$0F; F699
-    .res 1480, $FF                              ; F6A5
+
+.ifdef DEST_FLAG_BLINK
+__alt_37_F6A5:
+DestFlagBlink:
+    lda zp_D7                   ; P1 confirmou o lutador? (setado em SelectConfirm)
+    beq DestFlagFwd             ; nao confirmou ainda: comportamento normal (bandeira do cursor)
+    lda ram_03B5                ; pais de destino: 0 = Japao (Ryu)
+    cmp #$00
+    bne DestFlagFwd             ; so' o Japao esta' implementado por enquanto
+    ; prepara a paleta 3 com as cores do Japão (sol $16, campo $20)
+    lda #$11
+    sta a:PaletteBuf+21
+    lda #$16
+    sta a:PaletteBuf+22
+    lda #$20
+    sta a:PaletteBuf+23
+    lda #$01
+    sta a:PaletteDirty
+    ; desenha a bandeira do Japão na paleta 3 (visível, sem pisca-pisca)
+    lda #$4E                    ; OAM 6/7 Y do Japao (tiles $8C/$8E)
+    sta OamBuf+24               ; sprite 6 Y
+    sta OamBuf+28               ; sprite 7 Y
+    lda #$8C                    ; tile $8C
+    sta OamBuf+25
+    lda #$8E                    ; tile $8E
+    sta OamBuf+29
+    lda #$03                    ; paleta 3, exclusiva da bandeira do destino
+    sta OamBuf+26
+    sta OamBuf+30
+    lda #$80                    ; posicao X do Japao no mapa
+    sta OamBuf+27
+    lda #$88                    ; posicao X+8 do Japao no mapa
+    sta OamBuf+31
+DestFlagFwd:
+    jmp SelectReadInput
+
+DestFlagOam:
+    ldx zp_E9
+    cpx #$00                    ; no Japao, nao esconde a copia normal (paleta 2)
+    bne DestFlagDraw
+    lda #$FE
+    sta OamBuf+16               ; sprite 4 do pais do cursor
+    sta OamBuf+20               ; sprite 5 do pais do cursor
+DestFlagDraw:
+    ldx zp_E9
+    lda D37_F293,x              ; devolve o índice original para "sta FighterChar"
+    rts
+
+DestFlagRestore:
+    lda #$1A                    ; restaura a paleta 3 original da tela
+    sta a:PaletteBuf+21
+    lda #$27
+    sta a:PaletteBuf+22
+    lda #$21
+    sta a:PaletteBuf+23
+    lda #$FE                    ; remove a copia extra do destino
+    sta OamBuf+24
+    sta OamBuf+28
+    lda #$01
+    sta a:PaletteDirty
+    jmp SelectFighterIntro
+    .assert * - __alt_37_F6A5 <= $C0, error, "bloco alt DEST_FLAG_BLINK em $F6A5 passou do tamanho"
+    .res $C0 - (* - __alt_37_F6A5), $FF
+.else
+    .res 192, $FF                               ; F6A5
+.endif
+
+    .res 1288, $FF                              ; F765
 
 .ifdef FIX_SOFT_RESET
 __alt_37_FC6D:
