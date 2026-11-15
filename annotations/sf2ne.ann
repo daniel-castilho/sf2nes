@@ -1111,8 +1111,6 @@ comment 37:F06B Ryu (0) e Ken (1) confirmam; os demais seguem bloqueados
 # ficar na posicao do Japao (indice 0), nao na dos EUA (indice 4, posicao do Ken). D37_F2BB sao
 # as colunas X e D37_F2C3 as linhas Y; o indice 4 (Ken) e' o byte $F2C7. O sprite do Ken no mapa
 # (D37_F2AB/F2B3) nao muda: so' a bandeira piscante aponta para o destino.
-patch 37:F2C7 B8
-comment 37:F2C7 Ken (indice 4): bandeira piscante na posicao do Japao (Y = $B8, como o indice 0)
 label 37:F27B SelectNextPlayer
 comment 37:F27B passa ao outro jogador (X=1 -> 0) ou encerra
 label 37:F57E TitleLoop

@@ -2100,7 +2100,7 @@ D37_F2B3:
 D37_F2BB:
     .byte $50,$68,$80,$98,$50,$68,$80,$98       ; F2BB
 D37_F2C3:
-    .byte $B8,$B8,$B8,$B8,$B8,$D8,$D8,$D8       ; F2C3
+    .byte $B8,$B8,$B8,$B8,$D8,$D8,$D8,$D8       ; F2C3
 
 ; modos: aviso/QR, frase final
 ScreenDisclaimer:
