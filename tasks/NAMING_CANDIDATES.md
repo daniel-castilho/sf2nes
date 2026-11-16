@@ -5,7 +5,7 @@
 - **ROM de verificação:** `build/sf2ne.nes` — SHA-1 `3ad177a0a7867a821e6c1709b4e6dbdda3555aa1`.
 - **Linha de base (Fase 1):** 379 rótulos automáticos de código, 1.213 de dados, 549 semânticos.
 - **Estado atual:** 0 rótulos automáticos de código; 1.213 de dados; 928 semânticos únicos; 2.141 nomes únicos em 2.145 definições.
-  *Este é o retrato do fim da Fase 3. Depois dele, o lote de dados `$3C` renomeou 33 labels (`tasks/DATA_NAMING_3C.md`), levando a 1.180 automáticos de dados e 961 semânticos únicos — ver `docs/ESTADO_DO_PROJETO.md` §11.*
+  *Este é o retrato do fim da Fase 3. Depois dele, os lotes de dados `$3C` (33 labels) e `$3F` (15) foram renomeados (`tasks/DATA_NAMING_3C.md`, `tasks/DATA_NAMING_3F.md`), levando a 1.165 automáticos de dados e 976 semânticos únicos — ver `docs/ESTADO_DO_PROJETO.md` §11.*
 - **Escopo:** somente rótulos e comentários; nenhum byte de código ou dado foi alterado.
 - **Data:** 2026-11-15
 

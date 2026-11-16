@@ -601,7 +601,7 @@ comment 3F:E53C soma com sinal vel/16 a velocidade atual (VelX, VelXSub e VelY)
 label 3F:E597 MoveVelAccel
 comment 3F:E597 modos 2/3: acelera com MoveVelAdd (o bit 0 do modo nao muda o efeito)
 label 3F:E837 ProjLaunch
-comment 3F:E837 A = velocidade ($00/$01/$02, passo em D3F_E05E): nasce em FighterX +/- $27, direcao = FighterFlip (bit 6 de ProjFlags)
+comment 3F:E837 A = velocidade ($00/$01/$02, passo em ProjSpeedStepTbl): nasce em FighterX +/- $27, direcao = FighterFlip (bit 6 de ProjFlags)
 label 3F:E854 ProjUpdate
 comment 3F:E854 anda 1/16 do passo por subquadro; Y = FloorY - $27; morre fora de $0C-$FB
 label 3F:E8BB ProjClash
@@ -631,7 +631,7 @@ comment 3F:F671 entrada do jogador: vira transicao de estado — direcao (flag d
 label 3F:F6F5 TransViaTbl
 comment 3F:F6F5 le o ponteiro da tabela de estados e chama o caminhador de transicoes
 label 3F:F704 GuardRedirect
-comment 3F:F704 em guarda ($28-$2F): troca para a defesa da direcao atual (D3F_F799) e do golpe recebido (tabela ram_032A), preservando o quadro e o timer
+comment 3F:F704 em guarda ($28-$2F): troca para a defesa da direcao atual (GuardClassTbl) e do golpe recebido (tabela ram_032A), preservando o quadro e o timer
 label 3F:E7D2 AiUpdate
 block 3F:E7D2 ------------------------------------------------------------------------------------------------
 block 3F:E7D2 IA DA CPU. Dois niveis: (1) uma rotina "pensar" em codigo nativo, propria de cada personagem
@@ -748,7 +748,7 @@ block 3F:EB4B Janela de $0C (12) quadros entre passos; byte $00 encerra a sequen
 label 3F:EB69 CmdMotionWinTick
 comment 3F:EB69 nenhuma direcao nova / bit exigido solto: conta a janela; passou de 12 -> zera o comando
 label 3F:EB73 CmdMotionAdvance
-comment 3F:EB73 passo cumprido: zera a janela, avanca o passo; D3F_E068,y (MESMO y) le o byte SEGUINTE — $0 cai ja na fase do botao
+comment 3F:EB73 passo cumprido: zera a janela, avanca o passo; CmdMotionTblNext,y (MESMO y) le o byte SEGUINTE — $0 cai ja na fase do botao
 label 3F:EB7F CmdMotionBtnWin
 comment 3F:EB7F fase do botao: mesma janela de 12 quadros
 label 3F:EB88 CmdMotionButton
@@ -756,6 +756,7 @@ comment 3F:EB88 botao exigido (CmdKeyAttackTbl[chave] == InputAttack) -> CmdMove
 label 3F:EB9C CmdMotionReset
 label 3F:E067 CmdMotionTbl
 comment 3F:E067 sequencias dos golpes especiais, 4 bytes por chave $00-$11 (bits do controle: 04 baixo, 01 frente, 02 tras, 08 cima, 80 A, 40 B; $00 encerra)
+label 3F:E068 CmdMotionTblNext
 comment 3F:E068 CmdMotionTbl+1: lido em EB73 com o MESMO indice para ver o proximo byte da sequencia sem iny
 label 3F:E0AF CmdKeyAttackTbl
 comment 3F:E0AF botao exigido por chave, 17 bytes ($00-$10): 0 soco fraco, 1 soco forte, 2 chute fraco, 3 chute forte
@@ -818,7 +819,7 @@ comment 3F:F037 testa o agarrao de X em Y e aplica o deslocamento/estado
 label 3F:F09B JoyPollBothSel
 comment 3F:F09B le os dois controles na selecao (JoyPollSafe 0 e 1)
 label 3F:F0A5 MoveDispatch_F0A5
-comment 3F:F0A5 despacha a aplicacao do movimento pelo MoveMode (tabela D3F_F0B1)
+comment 3F:F0A5 despacha a aplicacao do movimento pelo MoveMode (tabela MoveApplyDispatchLo/Hi)
 label 3F:F0BD MoveOpponentRel
 comment 3F:F0BD modo $00: posiciona X relativo ao oponente (X = X do oponente +/- VelX)
 label 3F:F0F2 MoveAbsolute
@@ -869,6 +870,35 @@ label 3F:F62C MoveClampPush
 comment 3F:F62C soma o transbordo do clamp ao X do oponente (empurrao atraves da vitima)
 label 3F:F648 MoveGrabEscape
 comment 3F:F648 escapa do agarrao: hit-freeze, zera a classe de reacao e toca o som
+
+# --- tabelas do nucleo de luta (projetil, impacto, knockback e despachos de movimento) ---
+label 3F:E055 HitSfxTbl
+comment 3F:E055 sfx de impacto por classe do atacante (6 bytes; so 0..2 usados)
+label 3F:E05B ProjSpawnYOffsetTbl
+comment 3F:E05B Y de nascimento do projetil: FloorY - $27 (2 bytes usados)
+label 3F:E05E ProjSpeedStepTbl
+comment 3F:E05E passo do projetil por velocidade ($17/$25 para velocidade 0/1)
+label 3F:E064 ProjSpawnXOffsetTbl
+comment 3F:E064 delta X de nascimento do projetil: FighterX +/- $27 (2 bytes usados)
+label 3F:E4CE MoveVelDispatchLo
+label 3F:E4D4 MoveVelDispatchHi
+comment 3F:E4CE despacho do modo de movimento em MoveVelSetup: endereco-1 por MoveMode (absoluta/aceleracao/subpixel)
+label 3F:EF06 KnockbackXGroundTbl
+comment 3F:EF06 knockback X por classe de reacao, vitima em pe/agachada (PostProc)
+label 3F:EF13 KnockbackXAirTbl
+comment 3F:EF13 knockback X por classe de reacao, vitima neutra/no ar (RoundStart2)
+label 3F:EF20 KnockbackYGroundTbl
+comment 3F:EF20 knockback Y por classe de reacao, vitima em pe/agachada (PostProc)
+label 3F:EF2D KnockbackYAirTbl
+comment 3F:EF2D knockback Y por classe de reacao, vitima neutra/no ar (RoundStart2)
+label 3F:EF3A KnockdownReactTbl
+comment 3F:EF3A nova classe de reacao quando o knockback acumulado derruba a vitima
+label 3F:EF47 KOReactTbl
+comment 3F:EF47 nova classe de reacao no KO (indexada por classe & $1F)
+label 3F:F0B1 MoveApplyDispatchLo
+label 3F:F0B7 MoveApplyDispatchHi
+comment 3F:F0B1 despacho da aplicacao do movimento: endereco-1 por MoveMode (relativo/absoluto/ar/horizontal)
+
 # ============================================================================================================
 # BANCO $3B — luta (rounds, HUD, desenho), telas VS e frase final, utilitarios de video
 # ============================================================================================================

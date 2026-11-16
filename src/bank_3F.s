@@ -58,17 +58,17 @@ DistanceY:
 End_E054:
     rts                                         ; E054  60          End
 
-D3F_E055:
-    .byte $05,$06,$07,$05,$06,$07               ; E055
-D3F_E05B:
-    .byte $D9,$D9,$D9                           ; E05B
-D3F_E05E:
-    .byte $17,$25,$00,$00,$00,$00               ; E05E
-D3F_E064:
-    .byte $27,$27,$27                           ; E064
+HitSfxTbl:
+    .byte $05,$06,$07,$05,$06,$07               ; E055              sfx de impacto por classe do atacante (6 bytes; so 0..2 usados)
+ProjSpawnYOffsetTbl:
+    .byte $D9,$D9,$D9                           ; E05B              Y de nascimento do projetil: FloorY - $27 (2 bytes usados)
+ProjSpeedStepTbl:
+    .byte $17,$25,$00,$00,$00,$00               ; E05E              passo do projetil por velocidade ($17/$25 para velocidade 0/1)
+ProjSpawnXOffsetTbl:
+    .byte $27,$27,$27                           ; E064              delta X de nascimento do projetil: FighterX +/- $27 (2 bytes usados)
 CmdMotionTbl:
     .byte $04                                   ; E067              sequencias dos golpes especiais, 4 bytes por chave $00-$11 (bits do controle: 04 baixo, 01 frente, 02 tras, 08 cima, 80 A, 40 B; $00 encerra)
-D3F_E068:
+CmdMotionTblNext:
     .byte $01,$00,$00,$04,$01,$00,$00,$04,$01,$00,$00,$04,$01,$00,$00,$04; E068              CmdMotionTbl+1: lido em EB73 com o MESMO indice para ver o proximo byte da sequencia sem iny
     .byte $02,$00,$00,$04,$02,$00,$00,$01,$04,$01,$00,$01,$04,$01,$00,$02; E078
     .byte $01,$00,$00,$02,$01,$00,$00,$02,$01,$00,$00,$02,$01,$00,$00,$04; E088
@@ -768,20 +768,20 @@ BankSwitch:
 ; modos: intro do round, luta, fim do round
 MoveVelSetup:
     ldy a:MoveMode,x                            ; E4C2  BC 2E 00    despacha pelo modo de movimento do quadro (+8): 0/1 absoluta, 2/3 aceleracao, 4/5 subpixel
-    lda D3F_E4D4,y                              ; E4C5  B9 D4 E4    [idx $00..$05]
+    lda MoveVelDispatchHi,y                     ; E4C5  B9 D4 E4    [idx $00..$05]
     pha                                         ; E4C8  48
-    lda D3F_E4CE,y                              ; E4C9  B9 CE E4    [idx $00..$05]
+    lda MoveVelDispatchLo,y                     ; E4C9  B9 CE E4    [idx $00..$05]
     pha                                         ; E4CC  48
     rts                                         ; E4CD  60
 
-D3F_E4CE:
-    .byte <(MoveVelAbs-1)                       ; E4CE  D9
+MoveVelDispatchLo:
+    .byte <(MoveVelAbs-1)                       ; E4CE  D9          despacho do modo de movimento em MoveVelSetup: endereco-1 por MoveMode (absoluta/aceleracao/subpixel)
     .byte <(MoveVelAbs-1)                       ; E4CF  D9
     .byte <(MoveVelAccel-1)                     ; E4D0  96
     .byte <(MoveVelAccel-1)                     ; E4D1  96
     .byte <(MoveVelSubpixel-1)                  ; E4D2  F0
     .byte <(MoveVelSubpixel-1)                  ; E4D3  F0
-D3F_E4D4:
+MoveVelDispatchHi:
     .byte >(MoveVelAbs-1)                       ; E4D4  E4
     .byte >(MoveVelAbs-1)                       ; E4D5  E4
     .byte >(MoveVelAccel-1)                     ; E4D6  E5
@@ -789,7 +789,7 @@ D3F_E4D4:
     .byte >(MoveVelSubpixel-1)                  ; E4D8  E4
     .byte >(MoveVelSubpixel-1)                  ; E4D9  E4
 
-; <- tabela D3F_E4CE
+; <- tabela MoveVelDispatchLo
 ; modos: luta
 MoveVelAbs:
     lda #$00                                    ; E4DA  A9 00       modos 0/1: VelX/VelY do quadro (+9/+10) sao a velocidade nova, direto
@@ -804,7 +804,7 @@ MoveVelAbs:
     rts                                         ; E4F0  60
 
 
-; <- jmp CharSelect, tabela D3F_E4CE
+; <- jmp CharSelect, tabela MoveVelDispatchLo
 ; modos: intro do round, luta, fim do round
 MoveVelSubpixel:
     lda #$00                                    ; E4F1  A9 00       modos 4/5: velocidade do quadro dividida por 16 — inteiro em VelX e resto<<4 em VelXSub
@@ -900,7 +900,7 @@ AICheck:
     rts                                         ; E596  60
 
 
-; <- tabela D3F_E4CE
+; <- tabela MoveVelDispatchLo
 ; modos: luta
 MoveVelAccel:
     ldy #$08                                    ; E597  A0 08       modos 2/3: acelera com MoveVelAdd (o bit 0 do modo nao muda o efeito)
@@ -1495,10 +1495,10 @@ IntroEnd:
 ; <- jsr AnimAdvance
 ; modos: luta
 ProjLaunch:
-    sta ProjSpeed,x                             ; E837  95 77       A = velocidade ($00/$01/$02, passo em D3F_E05E): nasce em FighterX +/- $27, direcao = FighterFlip (bit 6 de ProjFlags)
+    sta ProjSpeed,x                             ; E837  95 77       A = velocidade ($00/$01/$02, passo em ProjSpeedStepTbl): nasce em FighterX +/- $27, direcao = FighterFlip (bit 6 de ProjFlags)
     lsr a                                       ; E839  4A
     tay                                         ; E83A  A8
-    lda D3F_E064,y                              ; E83B  B9 64 E0    [idx $00..$00]
+    lda ProjSpawnXOffsetTbl,y                   ; E83B  B9 64 E0    [idx $00..$00]
     ldy FighterFlip,x                           ; E83E  B4 04
     beq CamConfig                               ; E840  F0 04
     eor #$FF                                    ; E842  49 FF
@@ -1526,14 +1526,14 @@ ProjUpdate:
     lda ProjSpeed,x                             ; E860  B5 77
     lsr a                                       ; E862  4A
     tay                                         ; E863  A8
-    lda D3F_E05B,x                              ; E864  BD 5B E0    [idx $00..$01]
+    lda ProjSpawnYOffsetTbl,x                   ; E864  BD 5B E0    [idx $00..$01]
     clc                                         ; E867  18
     adc FloorY                                  ; E868  6D BA 03
     sta ProjY,x                                 ; E86B  95 7D
     lda #$00                                    ; E86D  A9 00
     sta zp_D7                                   ; E86F  85 D7
     ldy ProjSpeed,x                             ; E871  B4 77
-    lda D3F_E05E,y                              ; E873  B9 5E E0    [idx $00..$01]
+    lda ProjSpeedStepTbl,y                      ; E873  B9 5E E0    [idx $00..$01]
     lsr a                                       ; E876  4A
     ror zp_D7                                   ; E877  66 D7
     lsr a                                       ; E879  4A
@@ -2209,10 +2209,10 @@ CmdMotionWinTick:
 
 ; modos: luta
 CmdMotionAdvance:
-    lda #$00                                    ; EB73  A9 00       passo cumprido: zera a janela, avanca o passo; D3F_E068,y (MESMO y) le o byte SEGUINTE — $0 cai ja na fase do botao
+    lda #$00                                    ; EB73  A9 00       passo cumprido: zera a janela, avanca o passo; CmdMotionTblNext,y (MESMO y) le o byte SEGUINTE — $0 cai ja na fase do botao
     sta CmdMotionWin,x                          ; EB75  95 9E
     inc CmdMotionStep,x                         ; EB77  F6 90
-    lda D3F_E068,y                              ; EB79  B9 68 E0    [idx $08..$1E]
+    lda CmdMotionTblNext,y                      ; EB79  B9 68 E0    [idx $08..$1E]
     beq CmdMotionButton                         ; EB7C  F0 0A
     rts                                         ; EB7E  60
 
@@ -2614,10 +2614,10 @@ FadeOut:
     lda a:FighterState,x                        ; EDF9  BD 26 00
     and #$03                                    ; EDFC  29 03
     beq RoundStart2                             ; EDFE  F0 15
-    lda D3F_EF20,y                              ; EE00  B9 20 EF    [idx $00..$0C]
+    lda KnockbackYGroundTbl,y                   ; EE00  B9 20 EF    [idx $00..$0C]
     adc a:zp_60,x                               ; EE03  7D 60 00
     sta a:zp_60,x                               ; EE06  9D 60 00
-    lda D3F_EF06,y                              ; EE09  B9 06 EF    [idx $00..$0C]
+    lda KnockbackXGroundTbl,y                   ; EE09  B9 06 EF    [idx $00..$0C]
     adc a:zp_5E,x                               ; EE0C  7D 5E 00
     sta a:zp_5E,x                               ; EE0F  9D 5E 00
     jmp HitDamageHeavy                          ; EE12  4C 27 EE
@@ -2625,10 +2625,10 @@ FadeOut:
 
 ; modos: luta
 RoundStart2:
-    lda D3F_EF2D,y                              ; EE15  B9 2D EF    [idx $00..$0B] RoundStart2
+    lda KnockbackYAirTbl,y                      ; EE15  B9 2D EF    [idx $00..$0B] RoundStart2
     adc a:zp_60,x                               ; EE18  7D 60 00
     sta a:zp_60,x                               ; EE1B  9D 60 00
-    lda D3F_EF13,y                              ; EE1E  B9 13 EF    [idx $00..$0B]
+    lda KnockbackXAirTbl,y                      ; EE1E  B9 13 EF    [idx $00..$0B]
     adc a:zp_5E,x                               ; EE21  7D 5E 00
     sta a:zp_5E,x                               ; EE24  9D 5E 00
 
@@ -2642,7 +2642,7 @@ HitDamageHeavy:
     sta a:zp_5E,x                               ; EE30  9D 5E 00
     lda #$78                                    ; EE33  A9 78
     sta a:zp_62,x                               ; EE35  9D 62 00
-    lda D3F_EF3A,y                              ; EE38  B9 3A EF    [idx $03..$0B]
+    lda KnockdownReactTbl,y                     ; EE38  B9 3A EF    [idx $03..$0B]
     cmp #$06                                    ; EE3B  C9 06
     bne DmgReaction                             ; EE3D  D0 0C
     sta a:HitReactClass,x                       ; EE3F  9D 16 00    (nt)
@@ -2697,7 +2697,7 @@ AnimUpdate_EE78:
     lda #$02                                    ; EE89  A9 02
 TimerCheck:
     tay                                         ; EE8B  A8          TimerCheck
-    lda D3F_E055,y                              ; EE8C  B9 55 E0    [idx $00..$05]
+    lda HitSfxTbl,y                             ; EE8C  B9 55 E0    [idx $00..$05]
     sta zp_DB                                   ; EE8F  85 DB
     lda a:FighterState,x                        ; EE91  BD 26 00
     and #$03                                    ; EE94  29 03
@@ -2761,22 +2761,22 @@ HitDamageKO:
     lda a:HitReactClass,x                       ; EEF7  BD 16 00    dano mata: converte a classe de reacao para o estado de KO
     and #$1F                                    ; EEFA  29 1F
     tay                                         ; EEFC  A8
-    lda D3F_EF47,y                              ; EEFD  B9 47 EF    [idx $00..$0C]
+    lda KOReactTbl,y                            ; EEFD  B9 47 EF    [idx $00..$0C]
     sta a:HitReactClass,x                       ; EF00  9D 16 00
     jmp HitDamageReact                          ; EF03  4C 4E EE
 
-D3F_EF06:
-    .byte $07,$0B,$0F,$07,$0B,$0F,$08,$0F,$10,$10,$10,$10,$0B; EF06
-D3F_EF13:
-    .byte $07,$0A,$0D,$07,$0A,$0D,$08,$0D,$0E,$0E,$0E,$0E,$0A; EF13
-D3F_EF20:
-    .byte $28,$3C,$50,$28,$3C,$50,$82,$50,$78,$78,$78,$78,$64; EF20
-D3F_EF2D:
-    .byte $28,$32,$3C,$28,$32,$3C,$82,$3C,$50,$50,$50,$50,$64; EF2D
-D3F_EF3A:
-    .byte $07,$07,$07,$07,$07,$07,$06,$07,$07,$09,$0A,$07,$0C; EF3A
-D3F_EF47:
-    .byte $07,$07,$07,$07,$07,$07,$07,$07,$07,$09,$0A,$07,$0C,$03,$02,$02; EF47
+KnockbackXGroundTbl:
+    .byte $07,$0B,$0F,$07,$0B,$0F,$08,$0F,$10,$10,$10,$10,$0B; EF06              knockback X por classe de reacao, vitima em pe/agachada (PostProc)
+KnockbackXAirTbl:
+    .byte $07,$0A,$0D,$07,$0A,$0D,$08,$0D,$0E,$0E,$0E,$0E,$0A; EF13              knockback X por classe de reacao, vitima neutra/no ar (RoundStart2)
+KnockbackYGroundTbl:
+    .byte $28,$3C,$50,$28,$3C,$50,$82,$50,$78,$78,$78,$78,$64; EF20              knockback Y por classe de reacao, vitima em pe/agachada (PostProc)
+KnockbackYAirTbl:
+    .byte $28,$32,$3C,$28,$32,$3C,$82,$3C,$50,$50,$50,$50,$64; EF2D              knockback Y por classe de reacao, vitima neutra/no ar (RoundStart2)
+KnockdownReactTbl:
+    .byte $07,$07,$07,$07,$07,$07,$06,$07,$07,$09,$0A,$07,$0C; EF3A              nova classe de reacao quando o knockback acumulado derruba a vitima
+KOReactTbl:
+    .byte $07,$07,$07,$07,$07,$07,$07,$07,$07,$09,$0A,$07,$0C,$03,$02,$02; EF47              nova classe de reacao no KO (indexada por classe & $1F)
     .byte $02,$02,$01,$01,$01,$01,$01,$00,$00,$00,$00,$00,$00,$00,$00,$00; EF57
     .byte $00,$00,$00,$FF,$FF,$FF,$FF,$FF,$FE,$FE,$FE,$FE,$FD; EF67
 
@@ -2972,21 +2972,21 @@ JoyPollBothSel:
 ; <- jsr AIBranch_EFCB
 ; modos: intro do round, luta, fim do round
 MoveDispatch_F0A5:
-    ldy a:MoveMode,x                            ; F0A5  BC 2E 00    despacha a aplicacao do movimento pelo MoveMode (tabela D3F_F0B1)
-    lda D3F_F0B7,y                              ; F0A8  B9 B7 F0    [idx $00..$05]
+    ldy a:MoveMode,x                            ; F0A5  BC 2E 00    despacha a aplicacao do movimento pelo MoveMode (tabela MoveApplyDispatchLo/Hi)
+    lda MoveApplyDispatchHi,y                   ; F0A8  B9 B7 F0    [idx $00..$05]
     pha                                         ; F0AB  48
-    lda D3F_F0B1,y                              ; F0AC  B9 B1 F0    [idx $00..$05]
+    lda MoveApplyDispatchLo,y                   ; F0AC  B9 B1 F0    [idx $00..$05]
     pha                                         ; F0AF  48
     rts                                         ; F0B0  60
 
-D3F_F0B1:
-    .byte <(MoveOpponentRel-1)                  ; F0B1  BC
+MoveApplyDispatchLo:
+    .byte <(MoveOpponentRel-1)                  ; F0B1  BC          despacho da aplicacao do movimento: endereco-1 por MoveMode (relativo/absoluto/ar/horizontal)
     .byte <(MoveAbsolute-1)                     ; F0B2  F1
     .byte <(MoveAir-1)                          ; F0B3  35
     .byte <(MoveAir-1)                          ; F0B4  35
     .byte <(MoveHorizontal-1)                   ; F0B5  76
     .byte <(MoveHorizontal-1)                   ; F0B6  76
-D3F_F0B7:
+MoveApplyDispatchHi:
     .byte >(MoveOpponentRel-1)                  ; F0B7  F0
     .byte >(MoveAbsolute-1)                     ; F0B8  F0
     .byte >(MoveAir-1)                          ; F0B9  F2
@@ -2994,7 +2994,7 @@ D3F_F0B7:
     .byte >(MoveHorizontal-1)                   ; F0BB  F3
     .byte >(MoveHorizontal-1)                   ; F0BC  F3
 
-; <- tabela D3F_F0B1
+; <- tabela MoveApplyDispatchLo
 ; modos: luta
 MoveOpponentRel:
     ldy OtherFighter                            ; F0BD  A4 65       modo $00: posiciona X relativo ao oponente (X = X do oponente +/- VelX)
@@ -3026,7 +3026,7 @@ TimerUpdate_F0ED:
     jmp MoveClampEdges                          ; F0EF  4C C5 F5
 
 
-; <- tabela D3F_F0B1
+; <- tabela MoveApplyDispatchLo
 ; modos: luta
 MoveAbsolute:
     lda a:FighterVelY,x                         ; F0F2  BD 36 00    modo $01: aplica VelY e VelX direto (movimento absoluto)
@@ -3253,7 +3253,7 @@ MoveApplyX:
     jmp MoveClampEdges                          ; F233  4C C5 F5
 
 
-; <- tabela D3F_F0B1
+; <- tabela MoveApplyDispatchLo
 ; modos: luta
 MoveAir:
     lda a:FighterVelYSub,x                      ; F236  BD 34 00    modo $02/$03: integra VelY com gravidade e chao
@@ -3444,7 +3444,7 @@ MetaSpriteDraw:
     rts                                         ; F376  60          MetaSpriteDraw
 
 
-; <- jsr MoveAirGround, tabela D3F_F0B1
+; <- jsr MoveAirGround, tabela MoveApplyDispatchLo
 ; modos: intro do round, luta, fim do round
 MoveHorizontal:
     lda a:FighterVelXSub,x                      ; F377  BD 30 00    modo $04/$05: aplica VelX com regras de canto
@@ -4055,7 +4055,7 @@ SelInput_F703:
 ; <- jmp InputDispatch_F671, jmp ScreenStart
 ; modos: intro do round, luta, fim do round
 GuardRedirect:
-    lda a:FighterState,x                        ; F704  BD 26 00    em guarda ($28-$2F): troca para a defesa da direcao atual (D3F_F799) e do golpe recebido (tabela ram_032A), preservando o quadro e o timer
+    lda a:FighterState,x                        ; F704  BD 26 00    em guarda ($28-$2F): troca para a defesa da direcao atual (GuardClassTbl) e do golpe recebido (tabela ram_032A), preservando o quadro e o timer
     and #$F8                                    ; F707  29 F8
     cmp #$28                                    ; F709  C9 28
     bne SelInput_F703                           ; F70B  D0 F6

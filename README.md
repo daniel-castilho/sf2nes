@@ -42,12 +42,12 @@ Leia nesta ordem:
 
 **Foco atual — estabilização e manutenibilidade.** A implementação de novos personagens e funcionalidades de jogo está pausada, não cancelada. O próximo ciclo de trabalho será definido após a Fase 3 de naming (`tasks/NAMING_CANDIDATES.md`, `docs/ESTADO_DO_PROJETO.md` e `tasks/PROJECT_STABILIZATION_EXECUTION_PLAN.md`).
 
-Há 2.145 definições de rótulo (2.141 nomes únicos): **961 semânticos** e **1.180 automáticos de dados**
+Há 2.145 definições de rótulo (2.141 nomes únicos): **976 semânticos** e **1.165 automáticos de dados**
   (`D01_A4CB`…). **Não resta nenhum rótulo automático de código** (`L3F_E4DA`…): os lotes P0/P1, P2 e
-  FamiTone2 da Fase 3 nomearam os 379 que existiam. O lote de dados `$3C` já nomeou 33 fichas, paletas e
-  retratos (`tasks/DATA_NAMING_3C.md`); os 1.180 restantes estão inventariados em
-  `tasks/DATA_LABEL_INVENTORY.tsv`. Das variáveis, 78 têm nome. O inventário da Fase 3 está em
-  `tasks/NAMING_CANDIDATES.md`.
+  FamiTone2 da Fase 3 nomearam os 379 que existiam. Os lotes de dados `$3C` (33) e `$3F` (15) já nomearam
+  fichas, paletas, retratos e as tabelas do núcleo de luta (`tasks/DATA_NAMING_3C.md`,
+  `tasks/DATA_NAMING_3F.md`); os 1.165 restantes estão inventariados em `tasks/DATA_LABEL_INVENTORY.tsv`.
+  Das variáveis, 78 têm nome. O inventário da Fase 3 está em `tasks/NAMING_CANDIDATES.md`.
 * **Formatos de dados parcialmente documentados:** metasprites e estados estão entendidos; caixas de colisão,
   bytes 5–10 do quadro de animação, opcodes dos roteiros de IA e condições de transição ainda não.
 * **Código nunca executado** (14–17% dos bancos `$37` e `$3F`): veio de análise estática. São sobretudo recursos

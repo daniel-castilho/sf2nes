@@ -256,7 +256,7 @@ e `vx = $17` (23) ≈ 1,4 px por quadro, só para frente (§8).
 |---|---|---|
 | `$00` | nada | — |
 | `$01` | não decifrado (1 quadro no Ryu) | — |
-| `$0B` | dispara **projetil** (`ProjLaunch`, §12) | velocidade `$00`/`$01`/`$02` (passo em `D3F_E05E`) |
+| `$0B` | dispara **projetil** (`ProjLaunch`, §12) | velocidade `$00`/`$01`/`$02` (passo em `ProjSpeedStepTbl`) |
 | `$0C` | **agarrão** | dano = `&$1F` (o valor real é `$16` = 22); `>>5` = índice do estado de agarrão do agarrador (§11) |
 | `$20` | efeito sonoro (índice) | índice do sfx |
 | `$43`/`$8x`/`$Cx` | **golpe** | ver decomposição abaixo |
@@ -277,7 +277,7 @@ Censo dos 269 quadros alcançáveis (§2): `+6` = `$00`×229, `$01`×1, `$0B`×2
 ## 8. Movimento (+8 modo, +9/+10 VelX/VelY)
 
 **Ao entrar no quadro** (`MoveVelSetup`, `3F:E4C2`), o modo +8 despacha pela tabela
-`D3F_E4CE`/`$E4D4` (6 words, endereço−1) e interpreta +9/+10 como velocidade; aqui o bit 0 do
+`MoveVelDispatchLo`/`MoveVelDispatchHi` (6 words, endereço−1) e interpreta +9/+10 como velocidade; aqui o bit 0 do
 modo não muda nada (0≡1, 2≡3, 4≡5):
 
 | Modo | Rotina | `+9`/`+10` significam |
@@ -291,7 +291,7 @@ Censo: modo `$02`×105, `$04`×143, `$01`×12, `$05`×8, `$00`×1. Andar usa `$0
 direções, §13); o ±32 = ±2 px é o tremor de guarda/reação (§6); pulos usam `$02`/`$04` com `VelY`
 negativo.
 
-**A cada quadro**, a aplicação despacha de novo pelo modo (`L3F_F0A5`, tabela `D3F_F0B1`): o modo
+**A cada quadro**, a aplicação despacha de novo pelo modo (`L3F_F0A5`, tabela `MoveApplyDispatchLo`/`MoveApplyDispatchHi`): o modo
 `$00` posiciona **relativo ao oponente** (`F0BD`: X = X do oponente ± `VelX`, consumido — o quadro
 da vítima de agarrão, único do censo); os outros são absolutos: `$01` aplica direto (`F0F2`),
 `$02`/`$03` integram `VelY` com chão e câmera (`F236`) e `$04`/`$05` aplicam `VelX` com regras de
@@ -381,15 +381,15 @@ timer em `ram_0312`–`$031C` e devolve tudo em `FreezeRestore` (`3F:E301`).
 3. Já derrubado (`zp_62 ≠ 0`): zera o knockback e pula para a reação.
 4. `HitReactClass & $3F = $0B` (projetil): `HitStop = $3C` (congela os DOIS lutadores).
 5. **Knockback** (acumula entre hits): vítima em pé/agachada (bits 0–1 da classe) soma
-   `D3F_EF06`/`$EF20`; neutra/no ar soma `D3F_EF13`/`$EF2D` — sempre indexadas por
+   `KnockbackXGroundTbl`/`KnockbackYGroundTbl`; neutra/no ar soma `KnockbackXAirTbl`/`KnockbackYAirTbl` — sempre indexadas por
    `classe & $3F`. Acumulou `$20` em `zp_5E` → **derruba**: `zp_62=$78` e classe nova por
-   `D3F_EF3A[classe & $3F]`.
+   `KnockdownReactTbl[classe & $3F]`.
 6. **Reação**: pela postura da vítima escolhe a tabela (`ram_032E` em pé, `ram_0336` agachada,
    `ram_0332` neutra), pega a word em `(classe & $3F)×2` e chama o caminhador com `zp_DD=$04`.
    Classe `$0C` (agarrão): usa a tabela de agarrões `ram_033A` indexada por
    `(param >> 5) + char_do_agarrador × 4` (quem escolhe o estado é o agarrador). Som de impacto:
-   `D3F_E055` (`05 06 07 05 06 07`) indexado pela classe do **atacante**.
-7. **KO**: classe nova por `D3F_EF47[classe & $1F]` e segue o passo 6 (reação de derrota).
+   `HitSfxTbl` (`05 06 07 05 06 07`) indexado pela classe do **atacante**.
+7. **KO**: classe nova por `KOReactTbl[classe & $1F]` e segue o passo 6 (reação de derrota).
 
 ## 12. Projetil
 
@@ -397,9 +397,9 @@ RAM por lutador: `ProjSpeed $77`, `ProjXSub $79`, `ProjX $7B`, `ProjY $7D`, `Pro
 `ProjFlags $81` (bit 6 = direita, bit 7 = clash). `ProjX = 0` = vaga livre.
 
 * **Nasce** (`ProjLaunch`, `3F:E837`, no `AnimAdvance` do quadro com efeito `$0B`): X =
-  `FighterX ± $27` (`D3F_E064`), Y = `FloorY − $27` (`D3F_E05B`), direção = bit 6 do
+  `FighterX ± $27` (`ProjSpawnXOffsetTbl`), Y = `FloorY − $27` (`ProjSpawnYOffsetTbl`), direção = bit 6 do
   `FighterFlip` (vira a cargo do flip do lutador).
-* **Anda** (`ProjUpdate`, `3F:E854`): passo por velocidade (`D3F_E05E` = `$17`/`$25` para
+* **Anda** (`ProjUpdate`, `3F:E854`): passo por velocidade (`ProjSpeedStepTbl` = `$17`/`$25` para
   velocidade 0/1), 1/16 por quadro com subpixel (`ProjStep` conta os subpassos). Morre fora de
   `$0C`–`$FB`.
 * **Clash** (`ProjClash`, `3F:E8BB`): dois projéteis a `|ΔX| < $18` → os dois ganham bit 7 e
@@ -555,19 +555,21 @@ parado  espera neutro ($59)  espera projetil livre  hadouken (idx 0)  de novo  e
 
 | Endereço | Tamanho | Conteúdo |
 |---|---|---|
-| `3F:E055` | 6 | sfx de impacto por classe do atacante (`05 06 07 05 06 07`) |
-| `3F:E05B` | 2 | Y de nascimento do projetil (`−$27`) |
-| `3F:E05E` | 2 | passo do projetil por velocidade (`$17`/`$25`) |
-| `3F:E064` | 2 | ΔX de nascimento do projetil (`$27`) |
-| `3F:E067` | 64 | `CmdMotionTbl` — 16 golpes × 4 bytes (§13) |
-| `3F:E0AF` | 16 | botão exigido por golpe (§13) |
+| `3F:E055` | 6 (3 usados) | `HitSfxTbl` — sfx de impacto por classe do atacante (`05 06 07 05 06 07`) |
+| `3F:E05B` | 3 (2 usados) | `ProjSpawnYOffsetTbl` — Y de nascimento do projetil (`−$27`) |
+| `3F:E05E` | 6 (2 usados) | `ProjSpeedStepTbl` — passo do projetil por velocidade (`$17`/`$25`) |
+| `3F:E064` | 3 (2 usados) | `ProjSpawnXOffsetTbl` — ΔX de nascimento do projetil (`$27`) |
+| `3F:E067` | 72 | `CmdMotionTbl` — 18 golpes × 4 bytes (§13) |
+| `3F:E068` | — | `CmdMotionTblNext` — alias de `CmdMotionTbl+1`, lido em `EB73` |
+| `3F:E0AF` | 17 | `CmdKeyAttackTbl` — botão exigido por golpe (§13) |
 | `3F:E0C0` | 7 | lista de especiais do Ryu (§13) |
 | `3F:E171` | 24 | despacho das 12 condições (endereço−1) |
-| `3F:E4CE`/`$E4D4` | 6+6 | despacho do modo de movimento (endereço−1) |
-| `3F:EF06`/`$EF13` | 13+13 | knockback X por classe (em pé/agachado · neutro) |
-| `3F:EF20`/`$EF2D` | 13+13 | knockback Y por classe (em pé/agachado · neutro) |
-| `3F:EF3A` | 13 | classe de reação ao derrubar |
-| `3F:EF47` | 13 | classe de reação no KO |
+| `3F:E4CE`/`$E4D4` | 6+6 | `MoveVelDispatchLo`/`Hi` — despacho do modo de movimento (endereço−1) |
+| `3F:EF06`/`$EF13` | 13+13 | `KnockbackXGroundTbl`/`KnockbackXAirTbl` — knockback X por classe (em pé/agachado · neutro) |
+| `3F:EF20`/`$EF2D` | 13+13 | `KnockbackYGroundTbl`/`KnockbackYAirTbl` — knockback Y por classe (em pé/agachado · neutro) |
+| `3F:EF3A` | 13 | `KnockdownReactTbl` — classe de reação ao derrubar |
+| `3F:EF47` | 45 (13 usados) | `KOReactTbl` — classe de reação no KO |
+| `3F:F0B1`/`$F0B7` | 6+6 | `MoveApplyDispatchLo`/`Hi` — despacho da aplicação do movimento (endereço−1) |
 | `3F:F799` | 9 | `GuardClassTbl` — guarda por direção |
 | `00:8E72` | 16 | tabela de roteiros de IA (8 ponteiros) |
 | `00:8E82`–`$8F45` | — | roteiros de IA do Ryu |
