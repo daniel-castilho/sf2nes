@@ -179,7 +179,7 @@ PortraitPaletteCopyLoop:
     rts                                         ; E180  60
 
 
-; <- jsr FighterRoundInit, jsr L3B_EE5B, jsr L3B_EF47
+; <- jsr FighterRoundInit, jsr PortraitP1LoseSet, jsr PortraitP2LoseSet
 ; modos: selecao, VS, intro do round, frase final
 PortraitLoadPalettes:
     lda #$3C                                    ; E181  A9 3C       carrega as 3 paletas (9 cores) do lutador das tabelas do banco $3C
@@ -199,32 +199,32 @@ PortraitLoadPalettes:
     lda zp_DB                                   ; E19B  A5 DB
     adc zp_E1                                   ; E19D  65 E1
     sta zp_DB                                   ; E19F  85 DB
-    bcc L3B_E1A6                                ; E1A1  90 03
+    bcc PortraitPalPtr2Add                      ; E1A1  90 03
     inc zp_DC                                   ; E1A3  E6 DC
     clc                                         ; E1A5  18
-L3B_E1A6:
-    lda zp_DD                                   ; E1A6  A5 DD
+PortraitPalPtr2Add:
+    lda zp_DD                                   ; E1A6  A5 DD       PortraitPalPtr2Add — em PortraitLoadPalettes: soma o offset do lutador no 2o ponteiro de paleta
     adc zp_E1                                   ; E1A8  65 E1
     sta zp_DD                                   ; E1AA  85 DD
-    bcc L3B_E1B1                                ; E1AC  90 03
+    bcc PortraitPalPtr3Add                      ; E1AC  90 03
     inc zp_DE                                   ; E1AE  E6 DE       (nt)
     clc                                         ; E1B0  18          (nt)
-L3B_E1B1:
-    lda zp_DF                                   ; E1B1  A5 DF
+PortraitPalPtr3Add:
+    lda zp_DF                                   ; E1B1  A5 DF       PortraitPalPtr3Add — em PortraitLoadPalettes: soma o offset do lutador no 3o ponteiro de paleta
     adc zp_E1                                   ; E1B3  65 E1
     sta zp_DF                                   ; E1B5  85 DF
-    bcc L3B_E1BB                                ; E1B7  90 02
+    bcc PortraitPalIndexCalc                    ; E1B7  90 02
     inc zp_E0                                   ; E1B9  E6 E0
-L3B_E1BB:
-    lda zp_12,x                                 ; E1BB  B5 12
+PortraitPalIndexCalc:
+    lda zp_12,x                                 ; E1BB  B5 12       PortraitPalIndexCalc — indice da paleta dentro do lutador (zp_12,x * 3)
     asl a                                       ; E1BD  0A
     adc zp_12,x                                 ; E1BE  75 12
     tay                                         ; E1C0  A8
     txa                                         ; E1C1  8A
-    beq L3B_E1C6                                ; E1C2  F0 02
+    beq PortraitPalCopyLoop                     ; E1C2  F0 02
     ldx #$09                                    ; E1C4  A2 09
-L3B_E1C6:
-    lda (zp_DB),y                               ; E1C6  B1 DB       [le bancos $3C]
+PortraitPalCopyLoop:
+    lda (zp_DB),y                               ; E1C6  B1 DB       [le bancos $3C] PortraitPalCopyLoop — copia as 3 paletas (9 bytes) do lutador para ram_0300/ram_0303/ram_0306
     sta ram_0300,x                              ; E1C8  9D 00 03
     lda (zp_DD),y                               ; E1CB  B1 DD       [le bancos $3C]
     sta ram_0303,x                              ; E1CD  9D 03 03
@@ -247,7 +247,7 @@ L3B_E1C6:
     rts                                         ; E1F5  60
 
 
-; <- jsr L3B_EEAE
+; <- jsr PortraitP1LoseLayout
 ; modos: selecao, VS, frase final
 PortraitBuild:
     lda zp_DD                                   ; E1F6  A5 DD
@@ -255,22 +255,22 @@ PortraitBuild:
     sta MMC5_PRG_8000                           ; E1FA  8D 14 51
     ldx #$3B                                    ; E1FD  A2 3B
     lda #$00                                    ; E1FF  A9 00
-L3B_E201:
-    sta ram_034E,x                              ; E201  9D 4E 03
+PortraitClearLoop:
+    sta ram_034E,x                              ; E201  9D 4E 03    PortraitClearLoop — limpa o buffer de pixels do retrato (ram_034E+)
     dex                                         ; E204  CA
-    bpl L3B_E201                                ; E205  10 FA
+    bpl PortraitClearLoop                       ; E205  10 FA
     ldy #$00                                    ; E207  A0 00
     lda (zp_DB),y                               ; E209  B1 DB       [le bancos $00,$04,$08,$0C,$10,$1C,$20,$24]
     sta ram_0390                                ; E20B  8D 90 03
-L3B_E20E:
-    iny                                         ; E20E  C8
+PortraitDecodeNextChunk:
+    iny                                         ; E20E  C8          PortraitDecodeNextChunk — em PortraitBuild: proximo bloco do decodificador de retrato
 
 ; <- jmp PortraitBuild
 ; modos: selecao, VS, frase final
 PortraitDecodeChunk:
     iny                                         ; E20F  C8          laco do PortraitBuild: decodifica um bloco de pixels e grava em ram_034E
     lda (zp_DB),y                               ; E210  B1 DB       [le bancos $00,$04,$08,$0C,$10,$1C,$20,$24]
-    bmi L3B_E241                                ; E212  30 2D
+    bmi PortraitRowShiftSetup                   ; E212  30 2D
     sta zp_DF                                   ; E214  85 DF
     iny                                         ; E216  C8
     lda (zp_DB),y                               ; E217  B1 DB       [le bancos $00,$04,$08,$0C,$10,$1C,$20,$24]
@@ -291,57 +291,58 @@ PortraitDecodeChunk:
     adc zp_E1                                   ; E22B  65 E1
     adc zp_E0                                   ; E22D  65 E0
     tax                                         ; E22F  AA
-L3B_E230:
-    iny                                         ; E230  C8
+PortraitDecodePixelLoop:
+    iny                                         ; E230  C8          PortraitDecodePixelLoop — em PortraitBuild: escreve os pixels do bloco em ram_034E,x
     lda (zp_DB),y                               ; E231  B1 DB       [le bancos $00,$04,$08,$0C,$10,$1C,$20,$24]
     clc                                         ; E233  18
     adc #$80                                    ; E234  69 80
     sta ram_034E,x                              ; E236  9D 4E 03
     inx                                         ; E239  E8
     dec zp_DF                                   ; E23A  C6 DF
-    bne L3B_E230                                ; E23C  D0 F2
+    bne PortraitDecodePixelLoop                 ; E23C  D0 F2
     jmp PortraitDecodeChunk                     ; E23E  4C 0F E2
 
 
-L3B_E241:
-    dec zp_DE                                   ; E241  C6 DE
-    bne L3B_E20E                                ; E243  D0 C9
+; modos: selecao, VS, frase final
+PortraitRowShiftSetup:
+    dec zp_DE                                   ; E241  C6 DE       PortraitRowShiftSetup — fim dos blocos: desloca as linhas do retrato (6 pixels) com a cor +1
+    bne PortraitDecodeNextChunk                 ; E243  D0 C9
     ldx #$30                                    ; E245  A2 30
-L3B_E247:
-    clc                                         ; E247  18
+PortraitRowShift1:
+    clc                                         ; E247  18          PortraitRowShift1 — 1a linha do grupo copiada de ram_034E para ram_0354
     lda ram_034E,x                              ; E248  BD 4E 03
-    beq L3B_E252                                ; E24B  F0 05
+    beq PortraitRowShift2                       ; E24B  F0 05
     adc #$01                                    ; E24D  69 01
     sta ram_0354,x                              ; E24F  9D 54 03
-L3B_E252:
-    lda ram_034F,x                              ; E252  BD 4F 03
-    beq L3B_E25C                                ; E255  F0 05
+PortraitRowShift2:
+    lda ram_034F,x                              ; E252  BD 4F 03    PortraitRowShift2 — 2a linha do grupo
+    beq PortraitRowShift3                       ; E255  F0 05
     adc #$01                                    ; E257  69 01
     sta ram_0355,x                              ; E259  9D 55 03
-L3B_E25C:
-    lda ram_0350,x                              ; E25C  BD 50 03
-    beq L3B_E266                                ; E25F  F0 05
+PortraitRowShift3:
+    lda ram_0350,x                              ; E25C  BD 50 03    PortraitRowShift3 — 3a linha do grupo
+    beq PortraitRowShift4                       ; E25F  F0 05
     adc #$01                                    ; E261  69 01
     sta ram_0356,x                              ; E263  9D 56 03
-L3B_E266:
-    lda ram_0351,x                              ; E266  BD 51 03
-    beq L3B_E270                                ; E269  F0 05
+PortraitRowShift4:
+    lda ram_0351,x                              ; E266  BD 51 03    PortraitRowShift4 — 4a linha do grupo
+    beq PortraitRowShift5                       ; E269  F0 05
     adc #$01                                    ; E26B  69 01
     sta ram_0357,x                              ; E26D  9D 57 03
-L3B_E270:
-    lda ram_0352,x                              ; E270  BD 52 03
-    beq L3B_E27A                                ; E273  F0 05
+PortraitRowShift5:
+    lda ram_0352,x                              ; E270  BD 52 03    PortraitRowShift5 — 5a linha do grupo
+    beq PortraitRowShift6                       ; E273  F0 05
     adc #$01                                    ; E275  69 01
     sta ram_0358,x                              ; E277  9D 58 03
-L3B_E27A:
-    lda ram_0353,x                              ; E27A  BD 53 03
-    beq L3B_E284                                ; E27D  F0 05
+PortraitRowShift6:
+    lda ram_0353,x                              ; E27A  BD 53 03    PortraitRowShift6 — 6a linha do grupo
+    beq PortraitRowShiftEnd                     ; E27D  F0 05
     adc #$01                                    ; E27F  69 01
     sta ram_0359,x                              ; E281  9D 59 03
-L3B_E284:
-    txa                                         ; E284  8A
+PortraitRowShiftEnd:
+    txa                                         ; E284  8A          PortraitRowShiftEnd — proximo grupo de linhas (X -= $0C)
     axs #$0C                                    ; E285  CB 0C
-    bpl L3B_E247                                ; E287  10 BE
+    bpl PortraitRowShift1                       ; E287  10 BE
     rts                                         ; E289  60
 
 
@@ -351,10 +352,10 @@ VersusLoadStage:
     ldx ram_03B5                                ; E28A  AE B5 03    carrega o cenario da tela VS: RLE, atributos e dados do chao
     txa                                         ; E28D  8A
     cmp #$05                                    ; E28E  C9 05
-    bcc L3B_E294                                ; E290  90 02
+    bcc VsStageIndex                            ; E290  90 02
     sbc #$05                                    ; E292  E9 05       (nt)
-L3B_E294:
-    asl a                                       ; E294  0A
+VsStageIndex:
+    asl a                                       ; E294  0A          VsStageIndex — tela VS: indice do cenario (x2) para as tabelas do banco $36
     sta zp_D5                                   ; E295  85 D5
     tay                                         ; E297  A8
     lda D3B_F8FE,x                              ; E298  BD FE F8    [idx $00..$00]
@@ -448,10 +449,10 @@ RoundInitLoadStage:
     ldx ram_03B5                                ; E377  AE B5 03    carrega a paleta do cenario e zera camera/chao no inicio do round
     txa                                         ; E37A  8A
     cmp #$05                                    ; E37B  C9 05
-    bcc L3B_E381                                ; E37D  90 02
+    bcc RoundStageIndex                         ; E37D  90 02
     sbc #$05                                    ; E37F  E9 05       (nt)
-L3B_E381:
-    asl a                                       ; E381  0A
+RoundStageIndex:
+    asl a                                       ; E381  0A          RoundStageIndex — inicio do round: indice do cenario (x2) para as tabelas do banco $36
     tay                                         ; E382  A8
     lda D3B_F8FE,x                              ; E383  BD FE F8    [idx $00..$00]
     ora #$80                                    ; E386  09 80
@@ -461,11 +462,11 @@ L3B_E381:
     lda D36_C08C+1,y                            ; E390  B9 8D C0    [bancos $36 idx $00..$00]
     sta zp_D6                                   ; E393  85 D6
     ldy #$0B                                    ; E395  A0 0B
-L3B_E397:
-    lda (zp_D5),y                               ; E397  B1 D5       [le bancos $36]
+StagePaletteCopyLoop:
+    lda (zp_D5),y                               ; E397  B1 D5       [le bancos $36] StagePaletteCopyLoop — copia 12 bytes da paleta do cenario para PaletteBuf
     sta a:PaletteBuf,y                          ; E399  99 BC 00
     dey                                         ; E39C  88
-    bpl L3B_E397                                ; E39D  10 F8
+    bpl StagePaletteCopyLoop                    ; E39D  10 F8
     lda #$00                                    ; E39F  A9 00
     sta HitStop                                 ; E3A1  8D 0C 04
     lda #$CD                                    ; E3A4  A9 CD
@@ -492,35 +493,35 @@ PpuUnRle:
     lda (RlePtr),y                              ; E3C5  B1 FA       [le bancos $36,$3B]
     sta RleTag                                  ; E3C7  85 FC
     iny                                         ; E3C9  C8
-    bne L3B_E3CE                                ; E3CA  D0 02
+    bne RleNextByte                             ; E3CA  D0 02
     inc RlePtr+1                                ; E3CC  E6 FB       (nt)
-L3B_E3CE:
-    lda (RlePtr),y                              ; E3CE  B1 FA       [le bancos $36,$3B]
+RleNextByte:
+    lda (RlePtr),y                              ; E3CE  B1 FA       [le bancos $36,$3B] RleNextByte — PpuUnRle: le o proximo byte do stream RLE
     iny                                         ; E3D0  C8
-    bne L3B_E3D5                                ; E3D1  D0 02
+    bne RleIsMarker                             ; E3D1  D0 02
     inc RlePtr+1                                ; E3D3  E6 FB
-L3B_E3D5:
-    cmp RleTag                                  ; E3D5  C5 FC
-    beq L3B_E3E0                                ; E3D7  F0 07
+RleIsMarker:
+    cmp RleTag                                  ; E3D5  C5 FC       RleIsMarker — o byte e' o marcador? entao e' uma repeticao
+    beq RleRepeatCount                          ; E3D7  F0 07
     sta PPUDATA                                 ; E3D9  8D 07 20
     sta RleLast                                 ; E3DC  85 FD
-    bne L3B_E3CE                                ; E3DE  D0 EE
-L3B_E3E0:
-    lda (RlePtr),y                              ; E3E0  B1 FA       [le bancos $36,$3B]
-    beq L3B_E3F4                                ; E3E2  F0 10
+    bne RleNextByte                             ; E3DE  D0 EE
+RleRepeatCount:
+    lda (RlePtr),y                              ; E3E0  B1 FA       [le bancos $36,$3B] RleRepeatCount — le a quantidade de repeticoes (0 = fim do stream)
+    beq RleEnd                                  ; E3E2  F0 10
     iny                                         ; E3E4  C8
-    bne L3B_E3E9                                ; E3E5  D0 02
+    bne RleLastByte                             ; E3E5  D0 02
     inc RlePtr+1                                ; E3E7  E6 FB       (nt)
-L3B_E3E9:
-    tax                                         ; E3E9  AA
+RleLastByte:
+    tax                                         ; E3E9  AA          RleLastByte — le o ultimo byte literal para repetir
     lda RleLast                                 ; E3EA  A5 FD
-L3B_E3EC:
-    sta PPUDATA                                 ; E3EC  8D 07 20
+RleWriteLoop:
+    sta PPUDATA                                 ; E3EC  8D 07 20    RleWriteLoop — escreve o byte repetido no PPUDATA
     dex                                         ; E3EF  CA
-    bne L3B_E3EC                                ; E3F0  D0 FA
-    beq L3B_E3CE                                ; E3F2  F0 DA
-L3B_E3F4:
-    rts                                         ; E3F4  60
+    bne RleWriteLoop                            ; E3F0  D0 FA
+    beq RleNextByte                             ; E3F2  F0 DA
+RleEnd:
+    rts                                         ; E3F4  60          RleEnd — fim do stream RLE
 
 
 ; <- jsr VersusLoadStage
@@ -529,12 +530,12 @@ PpuWrite64:
     sta RlePtr                                  ; E3F5  85 FA       copia 64 bytes crus (duas linhas de nametable) para o PPUDATA
     stx RlePtr+1                                ; E3F7  86 FB
     ldy #$00                                    ; E3F9  A0 00
-L3B_E3FB:
-    lda (RlePtr),y                              ; E3FB  B1 FA       [le bancos $36]
+PpuWrite64Loop:
+    lda (RlePtr),y                              ; E3FB  B1 FA       [le bancos $36] PpuWrite64Loop — copia 64 bytes crus para o PPUDATA
     sta PPUDATA                                 ; E3FD  8D 07 20
     iny                                         ; E400  C8
     cpy #$40                                    ; E401  C0 40
-    bne L3B_E3FB                                ; E403  D0 F6
+    bne PpuWrite64Loop                          ; E403  D0 F6
     rts                                         ; E405  60
 
 D3B_E406:
@@ -546,37 +547,38 @@ D3B_E41A:
 D3B_E420:
     .byte $30,$30,$20,$30,$20,$10               ; E420
 
-; <- farjmp SelectWaitEnd, farcall ScreenDisclaimer, farjmp ScreenSupport, farjmp L37_F652, jmp VersusDraw, jmp L3B_EC83 ... (+1)
+; <- farjmp SelectWaitEnd, farcall ScreenDisclaimer, farjmp ScreenSupport, farjmp TitleExit, jmp VersusDraw, jmp WinQuoteWinnerText ... (+1)
 ; modos: aviso/QR, titulo, selecao, VS, fim do round, frase final
 FadeOut_Bank3B:
     ldx #$09                                    ; E426  A2 09
 FadeOutStep:
     lda #$00                                    ; E428  A9 00       passo do fade-out: espera o vblank, marca a paleta e trata a troca de CHR do titulo
     sta VBlankFlag                              ; E42A  85 AC
-L3B_E42C:
-    lda VBlankFlag                              ; E42C  A5 AC
-    beq L3B_E42C                                ; E42E  F0 FC
+FadeOut_WaitVBlank:
+    lda VBlankFlag                              ; E42C  A5 AC       FadeOut_WaitVBlank — fade-out: espera o vblank antes de mexer na paleta
+    beq FadeOut_WaitVBlank                      ; E42E  F0 FC
     sta a:PaletteDirty                          ; E430  8D D4 00
     lda ScreenMode                              ; E433  A5 B0
     cmp #$01                                    ; E435  C9 01
-    bne L3B_E455                                ; E437  D0 1C
+    bne FadeOut_RoundEndPath                    ; E437  D0 1C
     lda #$2F                                    ; E439  A9 2F
     sta MMC5_CHR_BG1                            ; E43B  8D 29 51
     lda #$30                                    ; E43E  A9 30
     sta MMC5_CHR_BG3                            ; E440  8D 2B 51
-L3B_E443:
-    bit PPUSTATUS                               ; E443  2C 02 20
-    bvs L3B_E443                                ; E446  70 FB
-L3B_E448:
-    bit PPUSTATUS                               ; E448  2C 02 20
-    bvc L3B_E448                                ; E44B  50 FB
+FadeOut_WaitOverflowClear:
+    bit PPUSTATUS                               ; E443  2C 02 20    FadeOut_WaitOverflowClear — fade-out: espera o flag de overflow de sprites do PPU
+    bvs FadeOut_WaitOverflowClear               ; E446  70 FB
+FadeOut_WaitVBlankStart:
+    bit PPUSTATUS                               ; E448  2C 02 20    FadeOut_WaitVBlankStart — fade-out: espera o inicio do vblank
+    bvc FadeOut_WaitVBlankStart                 ; E44B  50 FB
     lda #$0D                                    ; E44D  A9 0D
     sta MMC5_CHR_BG1                            ; E44F  8D 29 51
     jmp FadeOutDarken                           ; E452  4C 7E E4
 
 
-L3B_E455:
-    cmp #$06                                    ; E455  C9 06
+; modos: aviso/QR, selecao, VS, fim do round, frase final
+FadeOut_RoundEndPath:
+    cmp #$06                                    ; E455  C9 06       FadeOut_RoundEndPath — fade-out no fim do round: redesenha os lutadores com a paleta de fade
     bne FadeOutDarken                           ; E457  D0 25
     stx FadePalette                             ; E459  8E 85 04
     lda #$00                                    ; E45C  A9 00
@@ -594,16 +596,16 @@ FadeOutDarken:
 FadeOutDarkenLoop:
     lda a:PaletteBuf,y                          ; E480  B9 BC 00    escurece uma cor da paleta em um degrau conforme o passo do fade
     cmp D3B_E406,x                              ; E483  DD 06 E4    [idx $00..$80]
-    bcs L3B_E496                                ; E486  B0 0E
+    bcs FadeOut_NextColor                       ; E486  B0 0E
     cmp D3B_E410,x                              ; E488  DD 10 E4    [idx $00..$7B]
-    bcc L3B_E496                                ; E48B  90 09
+    bcc FadeOut_NextColor                       ; E48B  90 09
     sbc #$10                                    ; E48D  E9 10
-    bpl L3B_E493                                ; E48F  10 02
+    bpl FadeOut_StoreColor                      ; E48F  10 02
     lda #$0F                                    ; E491  A9 0F
-L3B_E493:
-    sta a:PaletteBuf,y                          ; E493  99 BC 00
-L3B_E496:
-    dey                                         ; E496  88
+FadeOut_StoreColor:
+    sta a:PaletteBuf,y                          ; E493  99 BC 00    FadeOut_StoreColor — grava a cor escurecida
+FadeOut_NextColor:
+    dey                                         ; E496  88          FadeOut_NextColor — proxima cor do fade (24 cores)
     bpl FadeOutDarkenLoop                       ; E497  10 E7
     dex                                         ; E499  CA
     bpl FadeOutStep                             ; E49A  10 8C
@@ -612,15 +614,15 @@ L3B_E496:
     lda PpuMaskShadow                           ; E4A0  A5 EE
     and #$E7                                    ; E4A2  29 E7
     sta PpuMaskShadow                           ; E4A4  85 EE
-L3B_E4A6:
-    lda #$00                                    ; E4A6  A9 00
+FadeOut_WaitNextFrame:
+    lda #$00                                    ; E4A6  A9 00       FadeOut_WaitNextFrame — fade-out: espera mais 32 quadros antes de aplicar o PPU
     sta VBlankFlag                              ; E4A8  85 AC
-L3B_E4AA:
-    lda VBlankFlag                              ; E4AA  A5 AC
-    beq L3B_E4AA                                ; E4AC  F0 FC
+FadeOut_WaitVBlankFinal:
+    lda VBlankFlag                              ; E4AA  A5 AC       FadeOut_WaitVBlankFinal — fade-out: espera o vblank final
+    beq FadeOut_WaitVBlankFinal                 ; E4AC  F0 FC
     lda FrameCounter                            ; E4AE  A5 B1
     and #$1F                                    ; E4B0  29 1F
-    bne L3B_E4A6                                ; E4B2  D0 F2
+    bne FadeOut_WaitNextFrame                   ; E4B2  D0 F2
     lda PpuCtrlShadow                           ; E4B4  A5 ED
     and #$FC                                    ; E4B6  29 FC
     ora #$02                                    ; E4B8  09 02
@@ -655,45 +657,45 @@ FadeInPrepare:
     sta PPUCTRL                                 ; E4EC  8D 00 20
     lda #$00                                    ; E4EF  A9 00
     sta VBlankFlag                              ; E4F1  85 AC
-L3B_E4F3:
-    lda VBlankFlag                              ; E4F3  A5 AC
-    beq L3B_E4F3                                ; E4F5  F0 FC
+FadeIn_WaitVBlank:
+    lda VBlankFlag                              ; E4F3  A5 AC       FadeIn_WaitVBlank — fade-in: espera o vblank antes de marcar a paleta
+    beq FadeIn_WaitVBlank                       ; E4F5  F0 FC
     sta a:PaletteDirty                          ; E4F7  8D D4 00
     lda ScreenMode                              ; E4FA  A5 B0
     cmp #$04                                    ; E4FC  C9 04
-    bne L3B_E521                                ; E4FE  D0 21
+    bne FadeIn_PpuMask                          ; E4FE  D0 21
     cli                                         ; E500  58
     lda #$1F                                    ; E501  A9 1F
     sta FrameCounter                            ; E503  85 B1
     lda #$00                                    ; E505  A9 00
     sta VBlankFlag                              ; E507  85 AC
-L3B_E509:
-    lda VBlankFlag                              ; E509  A5 AC
-    beq L3B_E509                                ; E50B  F0 FC
+FadeIn_WaitVBlankStage1:
+    lda VBlankFlag                              ; E509  A5 AC       FadeIn_WaitVBlankStage1 — fade-in na luta: espera o vblank para dividir a tela
+    beq FadeIn_WaitVBlankStage1                 ; E50B  F0 FC
     jsr StageSplitSetup                         ; E50D  20 08 F9
     jsr StageParallaxCalc                       ; E510  20 40 F9
     lda #$00                                    ; E513  A9 00
     sta VBlankFlag                              ; E515  85 AC
-L3B_E517:
-    lda VBlankFlag                              ; E517  A5 AC
-    beq L3B_E517                                ; E519  F0 FC
+FadeIn_WaitVBlankStage2:
+    lda VBlankFlag                              ; E517  A5 AC       FadeIn_WaitVBlankStage2 — fade-in na luta: segundo vblank antes do parallax
+    beq FadeIn_WaitVBlankStage2                 ; E519  F0 FC
     jsr StageSplitSetup                         ; E51B  20 08 F9
     jsr StageParallaxCalc                       ; E51E  20 40 F9
-L3B_E521:
-    lda PpuMaskShadow                           ; E521  A5 EE
+FadeIn_PpuMask:
+    lda PpuMaskShadow                           ; E521  A5 EE       FadeIn_PpuMask — fade-in: ajusta a mascara do PPU ($18)
     ora #$18                                    ; E523  09 18
     sta PpuMaskShadow                           ; E525  85 EE
     ldx #$06                                    ; E527  A2 06
-L3B_E529:
-    lda #$00                                    ; E529  A9 00
+FadeIn_VBlankFlagClear:
+    lda #$00                                    ; E529  A9 00       FadeIn_VBlankFlagClear — fade-in: inicia a espera do proximo vblank
     sta VBlankFlag                              ; E52B  85 AC
-L3B_E52D:
-    lda VBlankFlag                              ; E52D  A5 AC
-    beq L3B_E52D                                ; E52F  F0 FC
+FadeIn_WaitVBlankLoop:
+    lda VBlankFlag                              ; E52D  A5 AC       FadeIn_WaitVBlankLoop — fade-in: espera o vblank de cada degrau
+    beq FadeIn_WaitVBlankLoop                   ; E52F  F0 FC
     sta a:PaletteDirty                          ; E531  8D D4 00
     lda ScreenMode                              ; E534  A5 B0
     cmp #$04                                    ; E536  C9 04
-    bne L3B_E55F                                ; E538  D0 25
+    bne FadeIn_StepPrepare                      ; E538  D0 25
     stx ram_049D                                ; E53A  8E 9D 04
     lda #$00                                    ; E53D  A9 00
     sta OamIndex                                ; E53F  85 AD
@@ -702,22 +704,22 @@ L3B_E52D:
     jsr StageParallaxCalc                       ; E556  20 40 F9
     jsr OamHideRest                             ; E559  20 DF F2
     ldx ram_049D                                ; E55C  AE 9D 04
-L3B_E55F:
-    ldy #$17                                    ; E55F  A0 17
-L3B_E561:
-    lda FadePalette,y                           ; E561  B9 85 04
+FadeIn_StepPrepare:
+    ldy #$17                                    ; E55F  A0 17       FadeIn_StepPrepare — fade-in: prepara o degrau (24 cores)
+FadeIn_ColorLoop:
+    lda FadePalette,y                           ; E561  B9 85 04    FadeIn_ColorLoop — fade-in: clareia as cores dentro da faixa do degrau
     cmp D3B_E420,x                              ; E564  DD 20 E4    [idx $00..$06]
-    bcc L3B_E576                                ; E567  90 0D
+    bcc FadeIn_NextColor                        ; E567  90 0D
     cmp D3B_E41A,x                              ; E569  DD 1A E4    [idx $00..$05]
-    bcs L3B_E576                                ; E56C  B0 08
+    bcs FadeIn_NextColor                        ; E56C  B0 08
     lda a:PaletteBuf,y                          ; E56E  B9 BC 00
     adc #$10                                    ; E571  69 10
     sta a:PaletteBuf,y                          ; E573  99 BC 00
-L3B_E576:
-    dey                                         ; E576  88
-    bpl L3B_E561                                ; E577  10 E8
+FadeIn_NextColor:
+    dey                                         ; E576  88          FadeIn_NextColor — fade-in: proxima cor
+    bpl FadeIn_ColorLoop                        ; E577  10 E8
     dex                                         ; E579  CA
-    bpl L3B_E529                                ; E57A  10 AD
+    bpl FadeIn_VBlankFlagClear                  ; E57A  10 AD
     rts                                         ; E57C  60
 
 D3B_E57D:
@@ -736,14 +738,15 @@ D3B_E595:
 ; modos: intro do round
 RoundIntro_HudRowP1:
     lda FighterIsCpu                            ; E59D  A5 02       rotulo do P1: 'P1' fixo se humano, senao inicia o texto rolando
-    beq L3B_E5A9                                ; E59F  F0 08
+    beq RoundIntro_HudFixedP1                   ; E59F  F0 08
     lda #$00                                    ; E5A1  A9 00       (nt)
     sta ram_0412                                ; E5A3  8D 12 04    (nt)
     jmp RoundIntro_HudRowP2                     ; E5A6  4C C3 E5    (nt)
 
 
-L3B_E5A9:
-    lda #$50                                    ; E5A9  A9 50
+; modos: intro do round
+RoundIntro_HudFixedP1:
+    lda #$50                                    ; E5A9  A9 50       RoundIntro_HudFixedP1 — intro do round: P1 humano -> texto fixo 'P1'
     sta ram_040D                                ; E5AB  8D 0D 04
     lda #$31                                    ; E5AE  A9 31
     sta ram_040E                                ; E5B0  8D 0E 04
@@ -758,7 +761,7 @@ L3B_E5A9:
 ; modos: intro do round
 RoundIntro_HudRowP2:
     lda FighterIsCpu+1                          ; E5C3  A5 03       rotulo do P2: 'P2' fixo se humano, senao inicia o texto rolando
-    bne L3B_E5E4                                ; E5C5  D0 1D
+    bne RoundIntro_HudScrollP2                  ; E5C5  D0 1D
     lda #$20                                    ; E5C7  A9 20
     sta ram_0413                                ; E5C9  8D 13 04
     sta ram_0414                                ; E5CC  8D 14 04
@@ -772,11 +775,12 @@ RoundIntro_HudRowP2:
     jmp RoundIntro_HudBars                      ; E5E1  4C E9 E5
 
 
-L3B_E5E4:
-    lda #$00                                    ; E5E4  A9 00
+; modos: intro do round
+RoundIntro_HudScrollP2:
+    lda #$00                                    ; E5E4  A9 00       RoundIntro_HudScrollP2 — intro do round: P2 e' CPU -> inicia o texto rolando
     sta ram_0418                                ; E5E6  8D 18 04
 
-; <- jmp L3B_E5A9
+; <- jmp RoundIntro_HudFixedP1
 ; modos: intro do round
 RoundIntro_HudBars:
     lda #$08                                    ; E5E9  A9 08       inicializa as barras de energia e os digitos do relogio
@@ -787,20 +791,20 @@ RoundIntro_HudBars:
     ldx #$0A                                    ; E5F6  A2 0A
     stx ram_0453                                ; E5F8  8E 53 04
     lda #$70                                    ; E5FB  A9 70
-L3B_E5FD:
-    sta ram_0425,x                              ; E5FD  9D 25 04
+RoundIntro_HudBarFill:
+    sta ram_0425,x                              ; E5FD  9D 25 04    RoundIntro_HudBarFill — preenche as barras de energia dos dois lutadores (tiles $70)
     sta ram_043D,x                              ; E600  9D 3D 04
     dex                                         ; E603  CA
-    bpl L3B_E5FD                                ; E604  10 F7
+    bpl RoundIntro_HudBarFill                   ; E604  10 F7
     ldx #$0A                                    ; E606  A2 0A
     lda #$78                                    ; E608  A9 78
-L3B_E60A:
-    sta ram_0430,x                              ; E60A  9D 30 04
+RoundIntro_HudBarFill2:
+    sta ram_0430,x                              ; E60A  9D 30 04    RoundIntro_HudBarFill2 — segunda linha das barras de energia (tiles $78)
     sta ram_0448,x                              ; E60D  9D 48 04
     dex                                         ; E610  CA
-    bpl L3B_E60A                                ; E611  10 F7
+    bpl RoundIntro_HudBarFill2                  ; E611  10 F7
     lda a:TimerOff                              ; E613  AD B5 00
-    beq L3B_E62F                                ; E616  F0 17
+    beq RoundIntro_HudTimerBlank                ; E616  F0 17
     lda #$C4                                    ; E618  A9 C4       (nt)
     sta ram_045A                                ; E61A  8D 5A 04    (nt)
     lda #$C6                                    ; E61D  A9 C6       (nt)
@@ -812,15 +816,16 @@ L3B_E60A:
     jmp RoundIntro_DrawNames                    ; E62C  4C 3E E6    (nt)
 
 
-L3B_E62F:
-    ldx #$C2                                    ; E62F  A2 C2
+; modos: intro do round
+RoundIntro_HudTimerBlank:
+    ldx #$C2                                    ; E62F  A2 C2       RoundIntro_HudTimerBlank — sem cronometro na tela: limpa os digitos do relogio
     stx ram_045A                                ; E631  8E 5A 04
     stx ram_045B                                ; E634  8E 5B 04
     inx                                         ; E637  E8
     stx ram_045C                                ; E638  8E 5C 04
     stx ram_045D                                ; E63B  8E 5D 04
 
-; <- jmp L3B_E5E4
+; <- jmp RoundIntro_HudScrollP2
 ; modos: intro do round
 RoundIntro_DrawNames:
     lda #$3C                                    ; E63E  A9 3C       escreve os nomes dos lutadores no nametable (2 linhas)
@@ -837,12 +842,12 @@ RoundIntro_DrawNames:
     sta PPUADDR                                 ; E651  8D 06 20
     lda #$C4                                    ; E654  A9 C4
     sta PPUADDR                                 ; E656  8D 06 20
-L3B_E659:
-    lda CharNameTbl,x                           ; E659  BD CE 84    [bancos $3C idx $00..$02]
+RoundIntro_NameP1:
+    lda CharNameTbl,x                           ; E659  BD CE 84    [bancos $3C idx $00..$02] RoundIntro_NameP1 — escreve o nome do P1 na nametable ($28C4)
     sta PPUDATA                                 ; E65C  8D 07 20
     inx                                         ; E65F  E8
     dey                                         ; E660  88
-    bne L3B_E659                                ; E661  D0 F6
+    bne RoundIntro_NameP1                       ; E661  D0 F6
     lda FighterChar+1                           ; E663  A5 01
     tax                                         ; E665  AA
     ldy D3C_851E,x                              ; E666  BC 1E 85    [bancos $3C idx $00..$00]
@@ -857,30 +862,30 @@ L3B_E659:
     sec                                         ; E676  38
     sbc zp_D5                                   ; E677  E5 D5
     sta PPUADDR                                 ; E679  8D 06 20
-L3B_E67C:
-    lda CharNameTbl,x                           ; E67C  BD CE 84    [bancos $3C idx $00..$02]
+RoundIntro_NameP2:
+    lda CharNameTbl,x                           ; E67C  BD CE 84    [bancos $3C idx $00..$02] RoundIntro_NameP2 — escreve o nome do P2 na nametable
     sta PPUDATA                                 ; E67F  8D 07 20
     inx                                         ; E682  E8
     dey                                         ; E683  88
-    bne L3B_E67C                                ; E684  D0 F6
+    bne RoundIntro_NameP2                       ; E684  D0 F6
     jmp HudUpdate                               ; E686  4C 89 E6
 
 
-; <- jmp L3B_E62F, jsr StageSplitSetup
+; <- jmp RoundIntro_HudTimerBlank, jsr StageSplitSetup
 ; modos: intro do round, luta, fim do round
 HudUpdate:
     lda FrameCounter                            ; E689  A5 B1       atualiza o HUD: energia, relogio e avisos (a cada 32 quadros)
     and #$1F                                    ; E68B  29 1F
-    bne L3B_E6ED                                ; E68D  D0 5E
+    bne HudWinsUpdate                           ; E68D  D0 5E
     ldx ram_0412                                ; E68F  AE 12 04
-    bmi L3B_E6BE                                ; E692  30 2A
+    bmi HudNameScrollP2                         ; E692  30 2A
     txa                                         ; E694  8A          (nt)
     axs #$FB                                    ; E695  CB FB       (nt)
     cpx #$10                                    ; E697  E0 10       (nt)
-    bcc L3B_E69D                                ; E699  90 02       (nt)
+    bcc HudNameScrollP1Set                      ; E699  90 02       (nt)
     ldx #$00                                    ; E69B  A2 00       (nt)
-L3B_E69D:
-    stx ram_0412                                ; E69D  8E 12 04    (nt)
+HudNameScrollP1Set:
+    stx ram_0412                                ; E69D  8E 12 04    HudNameScrollP1Set — atualiza o nome rolante do P1 (ram_040D-ram_0411) (nt)
     lda D3B_E808,x                              ; E6A0  BD 08 E8    (nt)
     sta ram_040D                                ; E6A3  8D 0D 04    (nt)
     lda D3B_E809,x                              ; E6A6  BD 09 E8    (nt)
@@ -891,16 +896,16 @@ L3B_E69D:
     sta ram_0410                                ; E6B5  8D 10 04    (nt)
     lda D3B_E80C,x                              ; E6B8  BD 0C E8    (nt)
     sta ram_0411                                ; E6BB  8D 11 04    (nt)
-L3B_E6BE:
-    ldx ram_0418                                ; E6BE  AE 18 04
-    bmi L3B_E6ED                                ; E6C1  30 2A
+HudNameScrollP2:
+    ldx ram_0418                                ; E6BE  AE 18 04    HudNameScrollP2 — le o indice de rolagem do nome do P2
+    bmi HudWinsUpdate                           ; E6C1  30 2A
     txa                                         ; E6C3  8A
     axs #$FB                                    ; E6C4  CB FB
     cpx #$10                                    ; E6C6  E0 10
-    bcc L3B_E6CC                                ; E6C8  90 02
+    bcc HudNameScrollP2Set                      ; E6C8  90 02
     ldx #$00                                    ; E6CA  A2 00
-L3B_E6CC:
-    stx ram_0418                                ; E6CC  8E 18 04
+HudNameScrollP2Set:
+    stx ram_0418                                ; E6CC  8E 18 04    HudNameScrollP2Set — atualiza o nome rolante do P2 (ram_0413-ram_0417)
     lda D3B_E808,x                              ; E6CF  BD 08 E8    [idx $00..$0F]
     sta ram_0413                                ; E6D2  8D 13 04
     lda D3B_E809,x                              ; E6D5  BD 09 E8    [idx $00..$0F]
@@ -911,10 +916,10 @@ L3B_E6CC:
     sta ram_0416                                ; E6E4  8D 16 04
     lda D3B_E80C,x                              ; E6E7  BD 0C E8    [idx $00..$0F]
     sta ram_0417                                ; E6EA  8D 17 04
-L3B_E6ED:
-    lda ScreenMode                              ; E6ED  A5 B0
+HudWinsUpdate:
+    lda ScreenMode                              ; E6ED  A5 B0       HudWinsUpdate — escreve os placares de vitorias dos dois lutadores
     cmp #$05                                    ; E6EF  C9 05
-    beq L3B_E741                                ; E6F1  F0 4E
+    beq HudDamageUpdate                         ; E6F1  F0 4E
     lda FighterWins                             ; E6F3  A5 10
     asl a                                       ; E6F5  0A
     adc FighterWins                             ; E6F6  65 10
@@ -947,8 +952,8 @@ L3B_E6ED:
     sta ram_0421                                ; E739  8D 21 04
     adc #$10                                    ; E73C  69 10
     sta ram_0424                                ; E73E  8D 24 04
-L3B_E741:
-    lda FrameCounter                            ; E741  A5 B1
+HudDamageUpdate:
+    lda FrameCounter                            ; E741  A5 B1       HudDamageUpdate — desconta o dano pendente e ajusta a barra de energia
     and #$01                                    ; E743  29 01
     tax                                         ; E745  AA
     lda a:HitReactClass,x                       ; E746  BD 16 00
@@ -963,18 +968,18 @@ L3B_E741:
     dey                                         ; E759  88
     sty FighterHP,x                             ; E75A  94 0E
     cpx #$00                                    ; E75C  E0 00
-    bne L3B_E785                                ; E75E  D0 25
+    bne HudDamageUpdateP2                       ; E75E  D0 25
     ldy ram_043B                                ; E760  AC 3B 04
     ldx ram_043C                                ; E763  AE 3C 04
     dex                                         ; E766  CA
-    bpl L3B_E773                                ; E767  10 0A
+    bpl HudBarTileP1                            ; E767  10 0A
     iny                                         ; E769  C8
     cpy #$0B                                    ; E76A  C0 0B
     bcs HudWarnLowHp                            ; E76C  B0 37
     sty ram_043B                                ; E76E  8C 3B 04
     ldx #$07                                    ; E771  A2 07
-L3B_E773:
-    stx ram_043C                                ; E773  8E 3C 04
+HudBarTileP1:
+    stx ram_043C                                ; E773  8E 3C 04    HudBarTileP1 — escreve os tiles da barra do P1 (ram_0425/ram_0430)
     lda D3B_E82E,x                              ; E776  BD 2E E8    [idx $00..$07]
     sta ram_0425,y                              ; E779  99 25 04
     clc                                         ; E77C  18
@@ -983,17 +988,18 @@ L3B_E773:
     jmp HudWarnLowHp                            ; E782  4C A5 E7
 
 
-L3B_E785:
-    ldy ram_0453                                ; E785  AC 53 04
+; modos: luta
+HudDamageUpdateP2:
+    ldy ram_0453                                ; E785  AC 53 04    HudDamageUpdateP2 — mesmo ajuste de dano para o P2
     ldx ram_0454                                ; E788  AE 54 04
     dex                                         ; E78B  CA
-    bpl L3B_E796                                ; E78C  10 08
+    bpl HudBarTileP2                            ; E78C  10 08
     dey                                         ; E78E  88
     bmi HudWarnLowHp                            ; E78F  30 14
     sty ram_0453                                ; E791  8C 53 04
     ldx #$07                                    ; E794  A2 07
-L3B_E796:
-    stx ram_0454                                ; E796  8E 54 04
+HudBarTileP2:
+    stx ram_0454                                ; E796  8E 54 04    HudBarTileP2 — escreve os tiles da barra do P2 (ram_043D/ram_0448)
     lda D3B_E837,x                              ; E799  BD 37 E8    [idx $00..$07]
     sta ram_043D,y                              ; E79C  99 3D 04
     clc                                         ; E79F  18
@@ -1005,26 +1011,27 @@ L3B_E796:
 HudWarnLowHp:
     lda FrameCounter                            ; E7A5  A5 B1       pisca o aviso de energia baixa (HP < $2C) a cada 8 quadros
     and #$07                                    ; E7A7  29 07
-    bne L3B_E7E0                                ; E7A9  D0 35
+    bne HudTimerUpdate                          ; E7A9  D0 35
     lda ScreenMode                              ; E7AB  A5 B0
     cmp #$05                                    ; E7AD  C9 05
-    bne L3B_E7C4                                ; E7AF  D0 13
+    bne HudWarnSelectP1                         ; E7AF  D0 13
     lda #$2C                                    ; E7B1  A9 2C
     cmp FighterHP                               ; E7B3  C5 0E
-    bcs L3B_E7BB                                ; E7B5  B0 04
+    bcs HudWarnBlinkToggle                      ; E7B5  B0 04
     cmp FighterHP+1                             ; E7B7  C5 0F
-    bcc L3B_E7E0                                ; E7B9  90 25
-L3B_E7BB:
-    lda ram_0459                                ; E7BB  AD 59 04
+    bcc HudTimerUpdate                          ; E7B9  90 25
+HudWarnBlinkToggle:
+    lda ram_0459                                ; E7BB  AD 59 04    HudWarnBlinkToggle — alterna o estado de pisca do aviso de energia baixa
     eor #$01                                    ; E7BE  49 01
     tax                                         ; E7C0  AA
     jmp HudWarnLowHpDraw                        ; E7C1  4C C6 E7
 
 
-L3B_E7C4:
-    ldx #$00                                    ; E7C4  A2 00
+; modos: intro do round, fim do round
+HudWarnSelectP1:
+    ldx #$00                                    ; E7C4  A2 00       HudWarnSelectP1 — fora do fim de round: o aviso de energia baixa e' do P1
 
-; <- jmp L3B_E785
+; <- jmp HudDamageUpdateP2
 ; modos: intro do round, luta, fim do round
 HudWarnLowHpDraw:
     stx ram_0459                                ; E7C6  8E 59 04    desenha o aviso de energia baixa para o lutador X
@@ -1037,12 +1044,12 @@ HudWarnLowHpDraw:
     sta ram_0456                                ; E7D8  8D 56 04
     adc #$10                                    ; E7DB  69 10
     sta ram_0458                                ; E7DD  8D 58 04
-L3B_E7E0:
-    lda FrameCounter                            ; E7E0  A5 B1
+HudTimerUpdate:
+    lda FrameCounter                            ; E7E0  A5 B1       HudTimerUpdate — atualiza os digitos do relogio do round (a cada 32 quadros)
     and #$1F                                    ; E7E2  29 1F
-    bne L3B_E807                                ; E7E4  D0 21
+    bne HudTimerUpdateEnd                       ; E7E4  D0 21
     lda a:TimerOff                              ; E7E6  AD B5 00
-    bne L3B_E807                                ; E7E9  D0 1C
+    bne HudTimerUpdateEnd                       ; E7E9  D0 1C
     lda a:TimerTens                             ; E7EB  AD BB 00
     asl a                                       ; E7EE  0A
     adc #$B0                                    ; E7EF  69 B0
@@ -1055,8 +1062,8 @@ L3B_E7E0:
     sta ram_045B                                ; E7FF  8D 5B 04
     adc #$01                                    ; E802  69 01
     sta ram_045D                                ; E804  8D 5D 04
-L3B_E807:
-    rts                                         ; E807  60
+HudTimerUpdateEnd:
+    rts                                         ; E807  60          HudTimerUpdateEnd — fim do bloco do relogio
 
 D3B_E808:
     .byte $20                                   ; E808
@@ -1094,7 +1101,7 @@ D3B_E842:
 NmiFightVram:
     lda FrameCounter                            ; E844  A5 B1
     and #$1F                                    ; E846  29 1F
-    bne L3B_E8C6                                ; E848  D0 7C
+    bne NmiFightVramTick                        ; E848  D0 7C
     lda #$28                                    ; E84A  A9 28
     sta PPUADDR                                 ; E84C  8D 06 20
     lda #$CF                                    ; E84F  A9 CF
@@ -1139,15 +1146,16 @@ NmiFightVram:
     sta PPUDATA                                 ; E8BD  8D 07 20
     lda ram_0417                                ; E8C0  AD 17 04
     sta PPUDATA                                 ; E8C3  8D 07 20
-L3B_E8C6:
-    lda FrameCounter                            ; E8C6  A5 B1
+NmiFightVramTick:
+    lda FrameCounter                            ; E8C6  A5 B1       NmiFightVramTick — NMI da luta: alterna entre barras e placar a cada quadro
     and #$01                                    ; E8C8  29 01
-    beq L3B_E8CF                                ; E8CA  F0 03
+    beq NmiFightVramWins                        ; E8CA  F0 03
     jmp NmiFightVram_Health                     ; E8CC  4C 8C E9
 
 
-L3B_E8CF:
-    lda #$28                                    ; E8CF  A9 28
+; modos: intro do round, luta, fim do round
+NmiFightVramWins:
+    lda #$28                                    ; E8CF  A9 28       NmiFightVramWins — NMI da luta: envia os placares de vitorias para a VRAM
     sta PPUADDR                                 ; E8D1  8D 06 20
     lda #$81                                    ; E8D4  A9 81
     sta PPUADDR                                 ; E8D6  8D 06 20
@@ -1300,15 +1308,15 @@ ScreenVersus:
     ldx zp_B2                                   ; EA65  A6 B2
     inx                                         ; EA67  E8
     cpx #$0A                                    ; EA68  E0 0A
-    bcc L3B_EA77                                ; EA6A  90 0B
+    bcc VsScreenIndexSet                        ; EA6A  90 0B
     ldx zp_B3                                   ; EA6C  A6 B3       (nt)
     cpx #$09                                    ; EA6E  E0 09       (nt)
-    bcs L3B_EA77                                ; EA70  B0 05       (nt)
+    bcs VsScreenIndexSet                        ; EA70  B0 05       (nt)
     inx                                         ; EA72  E8          (nt)
     stx zp_B3                                   ; EA73  86 B3       (nt)
     ldx #$00                                    ; EA75  A2 00       (nt)
-L3B_EA77:
-    stx zp_B2                                   ; EA77  86 B2
+VsScreenIndexSet:
+    stx zp_B2                                   ; EA77  86 B2       VsScreenIndexSet — tela VS: guarda o indice do cenario da VS
     ldx #$00                                    ; EA79  A2 00
     stx CurFighter                              ; EA7B  86 64
     jsr FighterLoadChar                         ; EA7D  20 00 E0
@@ -1347,11 +1355,11 @@ VersusDraw:
     jsr PpuUnRle                                ; EB00  20 BE E3
     jsr VersusDrawFighters                      ; EB03  20 F2 EB
     ldx #$05                                    ; EB06  A2 05
-L3B_EB08:
-    lda D3B_EA8E,x                              ; EB08  BD 8E EA    [idx $00..$05]
+VsPaletteCopyLoop:
+    lda D3B_EA8E,x                              ; EB08  BD 8E EA    [idx $00..$05] VsPaletteCopyLoop — copia 6 bytes da paleta da tela VS para PaletteBuf
     sta a:PaletteBuf+6,x                        ; EB0B  9D C2 00
     dex                                         ; EB0E  CA
-    bpl L3B_EB08                                ; EB0F  10 F7
+    bpl VsPaletteCopyLoop                       ; EB0F  10 F7
     lda #$00                                    ; EB11  A9 00
     sta zp_D5                                   ; EB13  85 D5
     jsr PortraitDrawName                        ; EB15  20 D3 EF
@@ -1360,23 +1368,23 @@ L3B_EB08:
     lda #$64                                    ; EB1D  A9 64
     sta PPUADDR                                 ; EB1F  8D 06 20
     ldx #$00                                    ; EB22  A2 00
-L3B_EB24:
-    lda ram_0392,x                              ; EB24  BD 92 03
+VsTextP1Line1Loop:
+    lda ram_0392,x                              ; EB24  BD 92 03    VsTextP1Line1Loop — texto de 7 caracteres do P1 (ram_0392) para a nametable $2A64
     sta PPUDATA                                 ; EB27  8D 07 20
     inx                                         ; EB2A  E8
     cpx #$07                                    ; EB2B  E0 07
-    bcc L3B_EB24                                ; EB2D  90 F5
+    bcc VsTextP1Line1Loop                       ; EB2D  90 F5
     lda #$2A                                    ; EB2F  A9 2A
     sta PPUADDR                                 ; EB31  8D 06 20
     lda #$84                                    ; EB34  A9 84
     sta PPUADDR                                 ; EB36  8D 06 20
     ldx #$00                                    ; EB39  A2 00
-L3B_EB3B:
-    lda ram_0399,x                              ; EB3B  BD 99 03
+VsTextP1Line2Loop:
+    lda ram_0399,x                              ; EB3B  BD 99 03    VsTextP1Line2Loop — texto de 7 caracteres do P1 (ram_0399) para a nametable $2A84
     sta PPUDATA                                 ; EB3E  8D 07 20
     inx                                         ; EB41  E8
     cpx #$07                                    ; EB42  E0 07
-    bcc L3B_EB3B                                ; EB44  90 F5
+    bcc VsTextP1Line2Loop                       ; EB44  90 F5
     lda #$01                                    ; EB46  A9 01
     sta zp_D5                                   ; EB48  85 D5
     jsr PortraitDrawName                        ; EB4A  20 D3 EF
@@ -1385,23 +1393,23 @@ L3B_EB3B:
     lda #$75                                    ; EB52  A9 75
     sta PPUADDR                                 ; EB54  8D 06 20
     ldx #$00                                    ; EB57  A2 00
-L3B_EB59:
-    lda ram_03A0,x                              ; EB59  BD A0 03
+VsTextP2Line1Loop:
+    lda ram_03A0,x                              ; EB59  BD A0 03    VsTextP2Line1Loop — texto de 7 caracteres do P2 (ram_03A0) para a nametable $2A75
     sta PPUDATA                                 ; EB5C  8D 07 20
     inx                                         ; EB5F  E8
     cpx #$07                                    ; EB60  E0 07
-    bcc L3B_EB59                                ; EB62  90 F5
+    bcc VsTextP2Line1Loop                       ; EB62  90 F5
     lda #$2A                                    ; EB64  A9 2A
     sta PPUADDR                                 ; EB66  8D 06 20
     lda #$95                                    ; EB69  A9 95
     sta PPUADDR                                 ; EB6B  8D 06 20
     ldx #$00                                    ; EB6E  A2 00
-L3B_EB70:
-    lda ram_03A7,x                              ; EB70  BD A7 03
+VsTextP2Line2Loop:
+    lda ram_03A7,x                              ; EB70  BD A7 03    VsTextP2Line2Loop — texto de 7 caracteres do P2 (ram_03A7) para a nametable $2A95
     sta PPUDATA                                 ; EB73  8D 07 20
     inx                                         ; EB76  E8
     cpx #$07                                    ; EB77  E0 07
-    bcc L3B_EB70                                ; EB79  90 F5
+    bcc VsTextP2Line2Loop                       ; EB79  90 F5
     lda #$00                                    ; EB7B  A9 00
     sta ram_03AF                                ; EB7D  8D AF 03
     sta ram_03B0                                ; EB80  8D B0 03
@@ -1421,18 +1429,18 @@ L3B_EB70:
     sta FrameCounter                            ; EBB3  85 B1
     ldx #$03                                    ; EBB5  A2 03
     stx zp_E9                                   ; EBB7  86 E9
-L3B_EBB9:
-    lda #$00                                    ; EBB9  A9 00
+VsWaitFlagClear:
+    lda #$00                                    ; EBB9  A9 00       VsWaitFlagClear — tela VS: inicia a espera do proximo vblank
     sta VBlankFlag                              ; EBBB  85 AC
-L3B_EBBD:
-    lda VBlankFlag                              ; EBBD  A5 AC
-    beq L3B_EBBD                                ; EBBF  F0 FC
+VsWaitVBlank:
+    lda VBlankFlag                              ; EBBD  A5 AC       VsWaitVBlank — tela VS: espera o vblank (3 x 64 quadros)
+    beq VsWaitVBlank                            ; EBBF  F0 FC
     farcall SoundUpdate                         ; EBC1  A9 EB 48 A9 D2 48 A9 3B .. -> 37:E45F
     lda FrameCounter                            ; EBD3  A5 B1
     and #$3F                                    ; EBD5  29 3F
-    bne L3B_EBB9                                ; EBD7  D0 E0
+    bne VsWaitFlagClear                         ; EBD7  D0 E0
     dec zp_E9                                   ; EBD9  C6 E9
-    bne L3B_EBB9                                ; EBDB  D0 DC
+    bne VsWaitFlagClear                         ; EBDB  D0 DC
     farcall SoundStopMusic                      ; EBDD  A9 EB 48 A9 EE 48 A9 3B .. -> 37:E479
     jmp FadeOut_Bank3B                          ; EBEF  4C 26 E4
 
@@ -1471,20 +1479,20 @@ ScreenWinQuote:
     sta PPUADDR                                 ; EC26  8D 06 20
     lda #$00                                    ; EC29  A9 00
     ldx #$20                                    ; EC2B  A2 20
-L3B_EC2D:
-    ldy #$1E                                    ; EC2D  A0 1E
-L3B_EC2F:
-    sta PPUDATA                                 ; EC2F  8D 07 20
+WinQuoteClearRows:
+    ldy #$1E                                    ; EC2D  A0 1E       WinQuoteClearRows — frase final: limpa 32 linhas da nametable
+WinQuoteClearCols:
+    sta PPUDATA                                 ; EC2F  8D 07 20    WinQuoteClearCols — frase final: limpa as 30 colunas da linha
     dey                                         ; EC32  88
-    bne L3B_EC2F                                ; EC33  D0 FA
+    bne WinQuoteClearCols                       ; EC33  D0 FA
     dex                                         ; EC35  CA
-    bne L3B_EC2D                                ; EC36  D0 F5
+    bne WinQuoteClearRows                       ; EC36  D0 F5
     lda #$FF                                    ; EC38  A9 FF
     ldx #$40                                    ; EC3A  A2 40
-L3B_EC3C:
-    sta PPUDATA                                 ; EC3C  8D 07 20
+WinQuoteClearAttr:
+    sta PPUDATA                                 ; EC3C  8D 07 20    WinQuoteClearAttr — frase final: limpa 64 bytes de atributos
     dex                                         ; EC3F  CA
-    bne L3B_EC3C                                ; EC40  D0 FA
+    bne WinQuoteClearAttr                       ; EC40  D0 FA
     jsr VersusDrawFighters                      ; EC42  20 F2 EB
     lda D3B_EA91                                ; EC45  AD 91 EA
     sta a:PaletteBuf+9                          ; EC48  8D C5 00
@@ -1502,12 +1510,13 @@ L3B_EC3C:
     farcall SoundLoadSong                       ; EC67  A9 EC 48 A9 78 48 A9 3B .. -> 37:E3E0
     ldx a:RoundResult                           ; EC79  AE B9 00
     cpx #$02                                    ; EC7C  E0 02
-    bne L3B_EC83                                ; EC7E  D0 03
+    bne WinQuoteWinnerText                      ; EC7E  D0 03
     jmp WinQuoteWait                            ; EC80  4C E1 EC
 
 
-L3B_EC83:
-    lda #$3C                                    ; EC83  A9 3C
+; modos: frase final
+WinQuoteWinnerText:
+    lda #$3C                                    ; EC83  A9 3C       WinQuoteWinnerText — frase final: calcula o ponteiro da frase do vencedor e a escreve
     ora #$80                                    ; EC85  09 80
     sta MMC5_PRG_8000                           ; EC87  8D 14 51
     lda FighterChar,x                           ; EC8A  B5 00
@@ -1559,27 +1568,27 @@ L3B_EC83:
 WinQuoteWait:
     ldx #$02                                    ; ECE1  A2 02       espera (2 ou 3) x 64 quadros conforme RoundResult e faz o fade
     cpx a:RoundResult                           ; ECE3  EC B9 00
-    beq L3B_ECE9                                ; ECE6  F0 01
+    beq WinQuoteWaitCount                       ; ECE6  F0 01
     inx                                         ; ECE8  E8
-L3B_ECE9:
-    stx zp_E9                                   ; ECE9  86 E9
-L3B_ECEB:
-    lda #$00                                    ; ECEB  A9 00
+WinQuoteWaitCount:
+    stx zp_E9                                   ; ECE9  86 E9       WinQuoteWaitCount — frase final: guarda o contador de espera (2 ou 3 x 64 quadros)
+WinQuoteWaitFlagClear:
+    lda #$00                                    ; ECEB  A9 00       WinQuoteWaitFlagClear — frase final: inicia a espera do proximo vblank
     sta VBlankFlag                              ; ECED  85 AC
-L3B_ECEF:
-    lda VBlankFlag                              ; ECEF  A5 AC
-    beq L3B_ECEF                                ; ECF1  F0 FC
+WinQuoteWaitVBlank:
+    lda VBlankFlag                              ; ECEF  A5 AC       WinQuoteWaitVBlank — frase final: espera o vblank
+    beq WinQuoteWaitVBlank                      ; ECF1  F0 FC
     farcall SoundUpdate                         ; ECF3  A9 ED 48 A9 04 48 A9 3B .. -> 37:E45F
     lda FrameCounter                            ; ED05  A5 B1
     and #$3F                                    ; ED07  29 3F
-    bne L3B_ECEB                                ; ED09  D0 E0
+    bne WinQuoteWaitFlagClear                   ; ED09  D0 E0
     dec zp_E9                                   ; ED0B  C6 E9
-    bne L3B_ECEB                                ; ED0D  D0 DC
+    bne WinQuoteWaitFlagClear                   ; ED0D  D0 DC
     farcall SoundStopMusic                      ; ED0F  A9 ED 48 A9 20 48 A9 3B .. -> 37:E479
     jmp FadeOut_Bank3B                          ; ED21  4C 26 E4
 
 
-; <- jsr L3B_EC83
+; <- jsr WinQuoteWinnerText
 ; modos: frase final
 WinQuoteLineStart:
     ldy #$00                                    ; ED24  A0 00       inicio da frase do vencedor: Y=0
@@ -1587,15 +1596,15 @@ WinQuoteLineLoop:
     sty zp_D8                                   ; ED26  84 D8       copia as duas linhas de 22 caracteres da frase para ram_03AF..
     lda #$00                                    ; ED28  A9 00
     sta VBlankFlag                              ; ED2A  85 AC
-L3B_ED2C:
-    lda VBlankFlag                              ; ED2C  A5 AC
-    beq L3B_ED2C                                ; ED2E  F0 FC
+WinQuoteLineWaitVBlank1:
+    lda VBlankFlag                              ; ED2C  A5 AC       WinQuoteLineWaitVBlank1 — frase final: 1o vblank do avanco do texto
+    beq WinQuoteLineWaitVBlank1                 ; ED2E  F0 FC
     farcall SoundUpdate                         ; ED30  A9 ED 48 A9 41 48 A9 3B .. -> 37:E45F
     lda #$00                                    ; ED42  A9 00
     sta VBlankFlag                              ; ED44  85 AC
-L3B_ED46:
-    lda VBlankFlag                              ; ED46  A5 AC
-    beq L3B_ED46                                ; ED48  F0 FC
+WinQuoteLineWaitVBlank2:
+    lda VBlankFlag                              ; ED46  A5 AC       WinQuoteLineWaitVBlank2 — frase final: 2o vblank do avanco do texto
+    beq WinQuoteLineWaitVBlank2                 ; ED48  F0 FC
     farcall SoundUpdate                         ; ED4A  A9 ED 48 A9 5B 48 A9 3B .. -> 37:E45F
     ldy zp_D8                                   ; ED5C  A4 D8
     lda (zp_D6),y                               ; ED5E  B1 D6       [le bancos $3C]
@@ -1603,15 +1612,15 @@ L3B_ED46:
     sec                                         ; ED61  38
     sbc #$3A                                    ; ED62  E9 3A
     cmp #$30                                    ; ED64  C9 30
-    bcs L3B_ED6A                                ; ED66  B0 02
+    bcs WinQuoteCharTile                        ; ED66  B0 02
     lda #$00                                    ; ED68  A9 00
-L3B_ED6A:
-    sta ram_03B3                                ; ED6A  8D B3 03
-    beq L3B_ED72                                ; ED6D  F0 03
+WinQuoteCharTile:
+    sta ram_03B3                                ; ED6A  8D B3 03    WinQuoteCharTile — frase final: converte o caractere em tile (0 = espaco)
+    beq WinQuoteCharTile2                       ; ED6D  F0 03
     clc                                         ; ED6F  18
     adc #$01                                    ; ED70  69 01
-L3B_ED72:
-    sta ram_03B4                                ; ED72  8D B4 03
+WinQuoteCharTile2:
+    sta ram_03B4                                ; ED72  8D B4 03    WinQuoteCharTile2 — frase final: segundo tile do caractere (shift)
     inc ram_03AF                                ; ED75  EE AF 03
     inc ram_03B1                                ; ED78  EE B1 03
     iny                                         ; ED7B  C8
@@ -1624,62 +1633,64 @@ L3B_ED72:
 ; modos: intro do round, luta, fim do round
 DrawFighters:
     ldx OtherFighter                            ; ED81  A6 65
-    jsr L3B_F27A                                ; ED83  20 7A F2
+    jsr DrawFightersProjectile                  ; ED83  20 7A F2
     lda #$E9                                    ; ED86  A9 E9
     cmp a:FighterState                          ; ED88  CD 26 00
-    beq L3B_EDC5                                ; ED8B  F0 38
+    beq DrawFightersKoOrder                     ; ED8B  F0 38
     cmp a:FighterState+1                        ; ED8D  CD 27 00
-    beq L3B_EDBB                                ; ED90  F0 29
+    beq DrawFightersNormal                      ; ED90  F0 29
     sec                                         ; ED92  38
     lda FighterX                                ; ED93  A5 08
     sbc FighterX+1                              ; ED95  E5 09
-    bpl L3B_ED9D                                ; ED97  10 04
+    bpl DrawFightersDistCheck                   ; ED97  10 04
     eor #$FF                                    ; ED99  49 FF
     adc #$01                                    ; ED9B  69 01
-L3B_ED9D:
-    cmp #$20                                    ; ED9D  C9 20
-    bcs L3B_EDCF                                ; ED9F  B0 2E
+DrawFightersDistCheck:
+    cmp #$20                                    ; ED9D  C9 20       DrawFightersDistCheck — FightersUpdate: |dx| < $20 -> ordem invertida de desenho
+    bcs DrawFightersCurOrder                    ; ED9F  B0 2E
     lda a:FighterState+1                        ; EDA1  AD 27 00
     and #$F8                                    ; EDA4  29 F8
     cmp #$70                                    ; EDA6  C9 70
-    bcc L3B_EDC5                                ; EDA8  90 1B
+    bcc DrawFightersKoOrder                     ; EDA8  90 1B
     cmp #$E1                                    ; EDAA  C9 E1
-    bcs L3B_EDC5                                ; EDAC  B0 17
+    bcs DrawFightersKoOrder                     ; EDAC  B0 17
     lda a:FighterState                          ; EDAE  AD 26 00
     and #$F8                                    ; EDB1  29 F8
     cmp #$70                                    ; EDB3  C9 70
-    bcc L3B_EDBB                                ; EDB5  90 04
+    bcc DrawFightersNormal                      ; EDB5  90 04
     cmp #$E1                                    ; EDB7  C9 E1
-    bcc L3B_EDCF                                ; EDB9  90 14
-L3B_EDBB:
-    ldx #$01                                    ; EDBB  A2 01
+    bcc DrawFightersCurOrder                    ; EDB9  90 14
+DrawFightersNormal:
+    ldx #$01                                    ; EDBB  A2 01       DrawFightersNormal — desenha o P2 e depois o P1
     jsr DrawFighter                             ; EDBD  20 D9 ED
     ldx #$00                                    ; EDC0  A2 00
     jmp DrawFighter                             ; EDC2  4C D9 ED
 
 
-L3B_EDC5:
-    ldx #$00                                    ; EDC5  A2 00
+; modos: luta, fim do round
+DrawFightersKoOrder:
+    ldx #$00                                    ; EDC5  A2 00       DrawFightersKoOrder — desenha o P1 e depois o P2 (um deles esta em KO)
     jsr DrawFighter                             ; EDC7  20 D9 ED
     ldx #$01                                    ; EDCA  A2 01
     jmp DrawFighter                             ; EDCC  4C D9 ED
 
 
-L3B_EDCF:
-    ldx OtherFighter                            ; EDCF  A6 65
+; modos: intro do round, luta, fim do round
+DrawFightersCurOrder:
+    ldx OtherFighter                            ; EDCF  A6 65       DrawFightersCurOrder — desenha o oponente e depois o lutador atual
     jsr DrawFighter                             ; EDD1  20 D9 ED
     ldx CurFighter                              ; EDD4  A6 64
     jmp DrawFighter                             ; EDD6  4C D9 ED
 
 
-; <- jsr DrawFighters, jmp DrawFighters, jsr L3B_EDC5, jmp L3B_EDC5, jsr L3B_EDCF, jmp L3B_EDCF
+; <- jsr DrawFighters, jmp DrawFighters, jsr DrawFightersKoOrder, jmp DrawFightersKoOrder, jsr DrawFightersCurOrder, jmp DrawFightersCurOrder
 ; modos: intro do round, luta, fim do round
 DrawFighter:
     txa                                         ; EDD9  8A
-    beq L3B_EDDE                                ; EDDA  F0 02
+    beq DrawFighterSide                         ; EDDA  F0 02
     lda #$80                                    ; EDDC  A9 80
-L3B_EDDE:
-    sta zp_E4                                   ; EDDE  85 E4
+DrawFighterSide:
+    sta zp_E4                                   ; EDDE  85 E4       DrawFighterSide — DrawFighter: lutador 1 = sem espelhamento, lutador 2 = $80
     lda FighterX,x                              ; EDE0  B5 08
     sta zp_DB                                   ; EDE2  85 DB
     lda FighterY,x                              ; EDE4  B5 0C
@@ -1687,13 +1698,13 @@ L3B_EDDE:
     lda FighterFlip,x                           ; EDE8  B5 04
     sta zp_DD                                   ; EDEA  85 DD
     txa                                         ; EDEC  8A
-    beq L3B_EDF7                                ; EDED  F0 08
+    beq DrawFighterVariant                      ; EDED  F0 08
     ldy ScreenMode                              ; EDEF  A4 B0
     cpy #$05                                    ; EDF1  C0 05
-    beq L3B_EDF7                                ; EDF3  F0 02
+    beq DrawFighterVariant                      ; EDF3  F0 02
     lda #$03                                    ; EDF5  A9 03
-L3B_EDF7:
-    sta zp_E1                                   ; EDF7  85 E1
+DrawFighterVariant:
+    sta zp_E1                                   ; EDF7  85 E1       DrawFighterVariant — DrawFighter: escolhe a variante do metasprite (lutador 2 na tela de luta)
     lda a:FighterFramePtrLo,x                   ; EDF9  BD 2A 00
     sta zp_D7                                   ; EDFC  85 D7
     lda a:FighterFramePtrHi,x                   ; EDFE  BD 2C 00
@@ -1717,12 +1728,12 @@ L3B_EDF7:
     jsr DrawMetasprite                          ; EE27  20 EA F2
     lda zp_E1                                   ; EE2A  A5 E1
     cmp #$03                                    ; EE2C  C9 03
-    bcs L3B_EE35                                ; EE2E  B0 05
+    bcs DrawFighterSecond                       ; EE2E  B0 05
     clc                                         ; EE30  18
     adc #$02                                    ; EE31  69 02
     sta zp_E1                                   ; EE33  85 E1
-L3B_EE35:
-    jmp DrawMetasprite                          ; EE35  4C EA F2
+DrawFighterSecond:
+    jmp DrawMetasprite                          ; EE35  4C EA F2    DrawFighterSecond — DrawFighter: desenha o segundo metasprite do lutador
 
 
 ; <- farcall SelectDrawCurrent, jsr VersusDrawFighters
@@ -1731,11 +1742,11 @@ PortraitSetupP1:
     ldx #$00                                    ; EE38  A2 00       prepara o retrato do P1 (paleta, tiles e nome)
     lda ScreenMode                              ; EE3A  A5 B0
     cmp #$07                                    ; EE3C  C9 07
-    beq L3B_EE43                                ; EE3E  F0 03
+    beq PortraitP1WinSet                        ; EE3E  F0 03
     stx a:RoundResult                           ; EE40  8E B9 00
-L3B_EE43:
-    cpx a:RoundResult                           ; EE43  EC B9 00
-    bne L3B_EE5B                                ; EE46  D0 13
+PortraitP1WinSet:
+    cpx a:RoundResult                           ; EE43  EC B9 00    PortraitP1WinSet — retrato do P1: P1 venceu (RoundResult = 0) -> layout de vitoria
+    bne PortraitP1LoseSet                       ; EE46  D0 13
     lda #<D3C_81D6                              ; EE48  A9 D6
     sta zp_DB                                   ; EE4A  85 DB
     lda #>D3C_81D6                              ; EE4C  A9 81
@@ -1747,8 +1758,9 @@ L3B_EE43:
     jmp PortraitLoadPalettesP1                  ; EE58  4C 6B EE
 
 
-L3B_EE5B:
-    lda #<D3C_82C6                              ; EE5B  A9 C6
+; modos: frase final
+PortraitP1LoseSet:
+    lda #<D3C_82C6                              ; EE5B  A9 C6       PortraitP1LoseSet — retrato do P1: P1 perdeu -> layout de derrota
     sta zp_DB                                   ; EE5D  85 DB
     lda #>D3C_82C6                              ; EE5F  A9 82
     sta zp_DC                                   ; EE61  85 DC
@@ -1763,18 +1775,18 @@ PortraitLoadPalettesP1:
     jsr PortraitLoadPalettes                    ; EE6B  20 81 E1    carrega as paletas do P1 e marca PaletteDirty
     ldx #$02                                    ; EE6E  A2 02
     stx a:PaletteDirty                          ; EE70  8E D4 00
-L3B_EE73:
-    lda ram_0303,x                              ; EE73  BD 03 03
+PortraitPalCopyLoopP1:
+    lda ram_0303,x                              ; EE73  BD 03 03    PortraitPalCopyLoopP1 — copia as 3 cores de cada paleta do P1 para PaletteBuf
     sta a:PaletteBuf,x                          ; EE76  9D BC 00
     lda ram_0300,x                              ; EE79  BD 00 03
     sta a:PaletteBuf+3,x                        ; EE7C  9D BF 00
     lda a:RoundResult                           ; EE7F  AD B9 00
-    beq L3B_EE8A                                ; EE82  F0 06
+    beq PortraitPalCopyLoopP1End                ; EE82  F0 06
     lda ram_0306,x                              ; EE84  BD 06 03
     sta a:PaletteBuf+6,x                        ; EE87  9D C2 00
-L3B_EE8A:
-    dex                                         ; EE8A  CA
-    bpl L3B_EE73                                ; EE8B  10 E6
+PortraitPalCopyLoopP1End:
+    dex                                         ; EE8A  CA          PortraitPalCopyLoopP1End — fim do laco de paletas do P1
+    bpl PortraitPalCopyLoopP1                   ; EE8B  10 E6
     lda #$3C                                    ; EE8D  A9 3C
     ora #$80                                    ; EE8F  09 80
     sta MMC5_PRG_8000                           ; EE91  8D 14 51
@@ -1785,19 +1797,20 @@ L3B_EE8A:
     asl a                                       ; EE9C  0A
     tax                                         ; EE9D  AA
     lda a:RoundResult                           ; EE9E  AD B9 00
-    bne L3B_EEAE                                ; EEA1  D0 0B
+    bne PortraitP1LoseLayout                    ; EEA1  D0 0B
     lda D3C_84A6,x                              ; EEA3  BD A6 84    [bancos $3C idx $00..$12]
     ldy D3C_84A6+1,x                            ; EEA6  BC A7 84    [bancos $3C idx $00..$12]
     ldx #$02                                    ; EEA9  A2 02
     jmp PortraitBuildP1                         ; EEAB  4C B6 EE
 
 
-L3B_EEAE:
-    lda D3C_84BA,x                              ; EEAE  BD BA 84    [bancos $3C idx $00..$00]
+; modos: frase final
+PortraitP1LoseLayout:
+    lda D3C_84BA,x                              ; EEAE  BD BA 84    [bancos $3C idx $00..$00] PortraitP1LoseLayout — layout (metasprites) do retrato de derrota do P1
     ldy D3C_84BA+1,x                            ; EEB1  BC BB 84    [bancos $3C idx $00..$00]
     ldx #$03                                    ; EEB4  A2 03
 
-; <- jmp L3B_EE5B
+; <- jmp PortraitP1LoseSet
 ; modos: selecao, VS, frase final
 PortraitBuildP1:
     sta zp_DB                                   ; EEB6  85 DB       monta o retrato do P1: decodifica, salva o ponteiro e carrega os tiles
@@ -1812,17 +1825,18 @@ PortraitBuildP1:
     ora #$80                                    ; EECB  09 80
     sta MMC5_PRG_8000                           ; EECD  8D 14 51
     lda a:RoundResult                           ; EED0  AD B9 00
-    bne L3B_EEDC                                ; EED3  D0 07
+    bne PortraitP1LoseTiles                     ; EED3  D0 07
     lda #<D3C_842E                              ; EED5  A9 2E
     ldx #>D3C_842E                              ; EED7  A2 84
     jmp PortraitTilesP1                         ; EED9  4C E0 EE
 
 
-L3B_EEDC:
-    lda #<D3C_846A                              ; EEDC  A9 6A
+; modos: frase final
+PortraitP1LoseTiles:
+    lda #<D3C_846A                              ; EEDC  A9 6A       PortraitP1LoseTiles — tiles do retrato de derrota do P1
     ldx #>D3C_846A                              ; EEDE  A2 84
 
-; <- jmp L3B_EEAE
+; <- jmp PortraitP1LoseLayout
 ; modos: selecao, VS, frase final
 PortraitTilesP1:
     sta zp_DB                                   ; EEE0  85 DB       envia os tiles do retrato do P1 para a CHR
@@ -1833,13 +1847,13 @@ PortraitTilesP1:
     asl a                                       ; EEE9  0A
     tay                                         ; EEEA  A8
     ldx #$00                                    ; EEEB  A2 00
-L3B_EEED:
-    lda (zp_DB),y                               ; EEED  B1 DB       [le bancos $3C]
+PortraitTilesCopyLoopP1:
+    lda (zp_DB),y                               ; EEED  B1 DB       [le bancos $3C] PortraitTilesCopyLoopP1 — copia 6 bytes de tiles do retrato do P1 para ram_038A
     sta ram_038A,x                              ; EEEF  9D 8A 03
     iny                                         ; EEF2  C8
     inx                                         ; EEF3  E8
     cpx #$06                                    ; EEF4  E0 06
-    bcc L3B_EEED                                ; EEF6  90 F5
+    bcc PortraitTilesCopyLoopP1                 ; EEF6  90 F5
     lda zp_DA                                   ; EEF8  A5 DA
     sta ram_0349                                ; EEFA  8D 49 03
     sta ram_034B                                ; EEFD  8D 4B 03
@@ -1849,16 +1863,16 @@ L3B_EEED:
     sta ram_0348                                ; EF06  8D 48 03
     adc #$08                                    ; EF09  69 08
     sta ram_034A                                ; EF0B  8D 4A 03
-    bcc L3B_EF14                                ; EF0E  90 04
+    bcc PortraitTilesPtr2                       ; EF0E  90 04
     inc ram_034B                                ; EF10  EE 4B 03    (nt)
     clc                                         ; EF13  18          (nt)
-L3B_EF14:
-    adc #$08                                    ; EF14  69 08
+PortraitTilesPtr2:
+    adc #$08                                    ; EF14  69 08       PortraitTilesPtr2 — 2o/3o endereco de tiles do retrato do P1 (ram_034A/ram_034C)
     sta ram_034C                                ; EF16  8D 4C 03
-    bcc L3B_EF1E                                ; EF19  90 03
+    bcc PortraitTilesReadyP1                    ; EF19  90 03
     inc ram_034D                                ; EF1B  EE 4D 03    (nt)
-L3B_EF1E:
-    lda #$01                                    ; EF1E  A9 01
+PortraitTilesReadyP1:
+    lda #$01                                    ; EF1E  A9 01       PortraitTilesReadyP1 — retrato do P1 pronto (ram_03AE = 1)
     sta ram_03AE                                ; EF20  8D AE 03
     rts                                         ; EF23  60
 
@@ -1869,11 +1883,11 @@ PortraitSetupP2:
     ldx #$01                                    ; EF24  A2 01       prepara o retrato do P2 (paleta, tiles e nome)
     lda ScreenMode                              ; EF26  A5 B0
     cmp #$07                                    ; EF28  C9 07
-    beq L3B_EF2F                                ; EF2A  F0 03
+    beq PortraitP2WinSet                        ; EF2A  F0 03
     stx a:RoundResult                           ; EF2C  8E B9 00
-L3B_EF2F:
-    cpx a:RoundResult                           ; EF2F  EC B9 00
-    bne L3B_EF47                                ; EF32  D0 13
+PortraitP2WinSet:
+    cpx a:RoundResult                           ; EF2F  EC B9 00    PortraitP2WinSet — retrato do P2: P2 venceu (RoundResult = 1) -> layout de vitoria
+    bne PortraitP2LoseSet                       ; EF32  D0 13
     lda #<D3C_81D6                              ; EF34  A9 D6
     sta zp_DB                                   ; EF36  85 DB
     lda #>D3C_81D6                              ; EF38  A9 81
@@ -1885,8 +1899,9 @@ L3B_EF2F:
     jmp PortraitLoadPalettesP2                  ; EF44  4C 57 EF
 
 
-L3B_EF47:
-    lda #<D3C_82C6                              ; EF47  A9 C6
+; modos: frase final
+PortraitP2LoseSet:
+    lda #<D3C_82C6                              ; EF47  A9 C6       PortraitP2LoseSet — retrato do P2: P2 perdeu -> layout de derrota
     sta zp_DB                                   ; EF49  85 DB
     lda #>D3C_82C6                              ; EF4B  A9 82
     sta zp_DC                                   ; EF4D  85 DC
@@ -1917,17 +1932,18 @@ PortraitPalCopyP2:
     tax                                         ; EF7B  AA
     lda a:RoundResult                           ; EF7C  AD B9 00
     cmp #$01                                    ; EF7F  C9 01
-    bne L3B_EF8C                                ; EF81  D0 09
+    bne PortraitP2LoseLayout                    ; EF81  D0 09
     lda D3C_84A6,x                              ; EF83  BD A6 84    [bancos $3C idx $00..$00]
     ldy D3C_84A6+1,x                            ; EF86  BC A7 84    [bancos $3C idx $00..$00]
     jmp PortraitBuildP2                         ; EF89  4C 92 EF
 
 
-L3B_EF8C:
-    lda D3C_84BA,x                              ; EF8C  BD BA 84    [bancos $3C idx $00..$00]
+; modos: frase final
+PortraitP2LoseLayout:
+    lda D3C_84BA,x                              ; EF8C  BD BA 84    [bancos $3C idx $00..$00] PortraitP2LoseLayout — layout (metasprites) do retrato de derrota do P2
     ldy D3C_84BA+1,x                            ; EF8F  BC BB 84    [bancos $3C idx $00..$00]
 
-; <- jmp L3B_EF47
+; <- jmp PortraitP2LoseSet
 ; modos: VS, frase final
 PortraitBuildP2:
     sta zp_D9                                   ; EF92  85 D9       monta o retrato do P2 e o desenha
@@ -1950,12 +1966,12 @@ PortraitBuildP2:
     sta zp_E4                                   ; EFB7  85 E4
     lda a:RoundResult                           ; EFB9  AD B9 00
     cmp #$01                                    ; EFBC  C9 01
-    beq L3B_EFC7                                ; EFBE  F0 07
+    beq PortraitP2WinMetasprite                 ; EFBE  F0 07
     lda #$02                                    ; EFC0  A9 02
     sta zp_E1                                   ; EFC2  85 E1
     jsr DrawMetasprite                          ; EFC4  20 EA F2
-L3B_EFC7:
-    lda #$00                                    ; EFC7  A9 00
+PortraitP2WinMetasprite:
+    lda #$00                                    ; EFC7  A9 00       PortraitP2WinMetasprite — retrato do P2: desenha o metasprite de vitoria
     sta zp_E1                                   ; EFC9  85 E1
     jsr DrawMetasprite                          ; EFCB  20 EA F2
     inc zp_E1                                   ; EFCE  E6 E1
@@ -1970,13 +1986,13 @@ PortraitDrawName:
     lda #$03                                    ; EFD7  A9 03
     sta zp_DA                                   ; EFD9  85 DA
     ldy zp_D5                                   ; EFDB  A4 D5
-    beq L3B_EFE7                                ; EFDD  F0 08
+    beq PortraitNameDestCalc                    ; EFDD  F0 08
     lda #$A0                                    ; EFDF  A9 A0
     sta zp_D9                                   ; EFE1  85 D9
     lda #$03                                    ; EFE3  A9 03
     sta zp_DA                                   ; EFE5  85 DA
-L3B_EFE7:
-    clc                                         ; EFE7  18
+PortraitNameDestCalc:
+    clc                                         ; EFE7  18          PortraitNameDestCalc — calcula o destino do nome do lutador (nametable + tiles)
     lda zp_D9                                   ; EFE8  A5 D9
     adc #$07                                    ; EFEA  69 07
     sta zp_D5                                   ; EFEC  85 D5
@@ -1986,11 +2002,11 @@ L3B_EFE7:
     ldx FighterChar,y                           ; EFF4  B6 00
     ldy #$06                                    ; EFF6  A0 06
     lda #$00                                    ; EFF8  A9 00
-L3B_EFFA:
-    sta (zp_D9),y                               ; EFFA  91 D9
+PortraitNameClearLoop:
+    sta (zp_D9),y                               ; EFFA  91 D9       PortraitNameClearLoop — limpa 7 bytes do nome nas duas nametables
     sta (zp_D5),y                               ; EFFC  91 D5
     dey                                         ; EFFE  88
-    bpl L3B_EFFA                                ; EFFF  10 F9
+    bpl PortraitNameClearLoop                   ; EFFF  10 F9
     lda #$3C                                    ; F001  A9 3C
     ora #$80                                    ; F003  09 80
     sta MMC5_PRG_8000                           ; F005  8D 14 51
@@ -2004,22 +2020,22 @@ L3B_EFFA:
     asl a                                       ; F012  0A
     asl a                                       ; F013  0A
     tax                                         ; F014  AA
-L3B_F015:
-    lda CharNameTbl,x                           ; F015  BD CE 84    [bancos $3C idx $00..$4E]
+PortraitNameCharLoop:
+    lda CharNameTbl,x                           ; F015  BD CE 84    [bancos $3C idx $00..$4E] PortraitNameCharLoop — escreve as tiles do nome do lutador
     asl a                                       ; F018  0A
     sec                                         ; F019  38
     sbc #$3A                                    ; F01A  E9 3A
     cmp #$30                                    ; F01C  C9 30
-    bcc L3B_F027                                ; F01E  90 07
+    bcc PortraitNameCharEnd                     ; F01E  90 07
     sta (zp_D9),y                               ; F020  91 D9
     clc                                         ; F022  18
     adc #$01                                    ; F023  69 01
     sta (zp_D5),y                               ; F025  91 D5
-L3B_F027:
-    inx                                         ; F027  E8
+PortraitNameCharEnd:
+    inx                                         ; F027  E8          PortraitNameCharEnd — fim do laco do nome (7 caracteres)
     iny                                         ; F028  C8
     cpy #$07                                    ; F029  C0 07
-    bcc L3B_F015                                ; F02B  90 E8
+    bcc PortraitNameCharLoop                    ; F02B  90 E8
     rts                                         ; F02D  60
 
 
@@ -2249,8 +2265,8 @@ AiScriptInit:
 
 ; <- jsr DrawFighters
 ; modos: intro do round, luta, fim do round
-L3B_F27A:
-    lda ProjX,x                                 ; F27A  B5 7B
+DrawFightersProjectile:
+    lda ProjX,x                                 ; F27A  B5 7B       DrawFightersProjectile — FightersUpdate: desenha o projetil do lutador, se houver
     bne DrawProjectile                          ; F27C  D0 01
     rts                                         ; F27E  60
 
@@ -2283,7 +2299,7 @@ DrawProjectile:
     sta zp_D9                                   ; F2AB  85 D9
     lda D3B_E595+1,y                            ; F2AD  B9 96 E5    [idx $00..$06]
     sta zp_DA                                   ; F2B0  85 DA
-    jmp L3B_F2D0                                ; F2B2  4C D0 F2
+    jmp DrawProjectileMetasprite                ; F2B2  4C D0 F2
 
 
 ; modos: luta, fim do round
@@ -2307,8 +2323,8 @@ DrawProjectileSprite:
 
 ; <- jmp DrawProjectile
 ; modos: luta, fim do round
-L3B_F2D0:
-    ldy #$00                                    ; F2D0  A0 00
+DrawProjectileMetasprite:
+    ldy #$00                                    ; F2D0  A0 00       DrawProjectileMetasprite — desenha os dois metasprites do projetil
     lda (zp_D9),y                               ; F2D2  B1 D9       [le bancos $20]
     sta MMC5_CHR_SPR5                           ; F2D4  8D 25 51
     ldx OamIndex                                ; F2D7  A6 AD
@@ -2316,7 +2332,7 @@ L3B_F2D0:
     jmp DrawMetasprite                          ; F2DC  4C EA F2
 
 
-; <- farcall L37_F18C, jsr L3B_E455, jmp L3B_E455, jsr FadeIn, jmp SelectDrawFighter, jsr FightFrame
+; <- farcall SelectIntroHideOam, jsr FadeOut_RoundEndPath, jmp FadeOut_RoundEndPath, jsr FadeIn, jmp SelectDrawFighter, jsr FightFrame
 ; modos: todos
 OamHideRest:
     ldx OamIndex                                ; F2DF  A6 AD       esconde os sprites nao usados neste quadro (Y = $FE do indice OamIndex ate o fim)
@@ -2330,7 +2346,7 @@ OamHideRestFill:
 
 ; Desenha um metasprite (lista de sprites 8x16) na OAM. Dados em (zp_D9): atributo, depois grupos
 ; "quantidade, dx, dy, tiles..." ate um byte negativo. zp_DB/zp_DC = posicao base, zp_DD = espelhado.
-; <- jsr DrawFighter, jmp DrawFighter, jsr L3B_EF8C, jmp L3B_EF8C, jsr DrawProjectileSprite, jmp DrawProjectileSprite ... (+6)
+; <- jsr DrawFighter, jmp DrawFighter, jsr PortraitP2LoseLayout, jmp PortraitP2LoseLayout, jsr DrawProjectileSprite, jmp DrawProjectileSprite ... (+6)
 ; modos: selecao, VS, intro do round, luta, fim do round, frase final
 DrawMetasprite:
     iny                                         ; F2EA  C8
@@ -2415,7 +2431,7 @@ DrawMetaspriteEnd:
     rts                                         ; F358  60
 
 
-; <- farcall L37_EFFA
+; <- farcall SelectDrawCursor
 ; modos: selecao
 SelectDrawBlink:
     ldx #$00                                    ; F359  A2 00       pisca o lutador da selecao em quadros alternados (FrameCounter bit 0)
@@ -2433,7 +2449,7 @@ SelectDrawBlinkDraw:
     jmp DrawMetasprite                          ; F369  4C EA F2
 
 
-; <- farcall L37_EFFA, farcall SelectFighterIntro
+; <- farcall SelectDrawCursor, farcall SelectFighterIntro
 ; modos: selecao
 SelectDrawFighter:
     ldx OamIndex                                ; F36C  A6 AD       desenha o lutador da selecao e esconde o resto da OAM
@@ -2511,7 +2527,7 @@ Match:
     lda #$FF                                    ; F551  A9 FF
     sta a:RoundNumber                           ; F553  8D B8 00
 
-; <- jmp FightFrame, jmp L3B_F605
+; <- jmp FightFrame, jmp FightFrame_DrawReset
 ; modos: VS, fim do round
 RoundStart:
     lda #$00                                    ; F556  A9 00
@@ -2531,9 +2547,9 @@ RoundStart:
 FightFrame:
     lda #$00                                    ; F58E  A9 00
     sta VBlankFlag                              ; F590  85 AC
-L3B_F592:
-    lda VBlankFlag                              ; F592  A5 AC
-    beq L3B_F592                                ; F594  F0 FC
+FightFrame_WaitVBlank:
+    lda VBlankFlag                              ; F592  A5 AC       FightFrame_WaitVBlank — laco principal da luta: espera o vblank
+    beq FightFrame_WaitVBlank                   ; F594  F0 FC
     lda #$00                                    ; F596  A9 00
     sta OamIndex                                ; F598  85 AD
     farcall SoundUpdate                         ; F59A  A9 F5 48 A9 AB 48 A9 3B .. -> 37:E45F
@@ -2554,24 +2570,26 @@ L3B_F592:
     jsr FadeOut_Bank3B                          ; F5EE  20 26 E4
     lda #$02                                    ; F5F1  A9 02
     cmp FighterWins                             ; F5F3  C5 10
-    beq L3B_F60E                                ; F5F5  F0 17
+    beq FightFrame_End                          ; F5F5  F0 17
     cmp FighterWins+1                           ; F5F7  C5 11
-    beq L3B_F60E                                ; F5F9  F0 13
+    beq FightFrame_End                          ; F5F9  F0 13
     cmp a:RoundNumber                           ; F5FB  CD B8 00
-    bcc L3B_F60E                                ; F5FE  90 0E
-    beq L3B_F605                                ; F600  F0 03
+    bcc FightFrame_End                          ; F5FE  90 0E
+    beq FightFrame_DrawReset                    ; F600  F0 03
     jmp RoundStart                              ; F602  4C 56 F5
 
 
-L3B_F605:
-    lda #$01                                    ; F605  A9 01
+; modos: fim do round
+FightFrame_DrawReset:
+    lda #$01                                    ; F605  A9 01       FightFrame_DrawReset — empate na melhor de 3: zera os placares e comeca outro round
     sta FighterWins                             ; F607  85 10
     sta FighterWins+1                           ; F609  85 11
     jmp RoundStart                              ; F60B  4C 56 F5
 
 
-L3B_F60E:
-    rts                                         ; F60E  60
+; modos: fim do round
+FightFrame_End:
+    rts                                         ; F60E  60          FightFrame_End — fim da luta
 
 
 ; <- jsr Match
@@ -2595,16 +2613,16 @@ RoundInit:
     ldx #$01                                    ; F635  A2 01
     jsr FighterRoundInit                        ; F637  20 98 E0
     lda FighterIsCpu                            ; F63A  A5 02
-    beq L3B_F643                                ; F63C  F0 05
+    beq RoundInit_CheckAiP2                     ; F63C  F0 05
     ldx #$00                                    ; F63E  A2 00       (nt)
     jsr AiScriptInit                            ; F640  20 4A F2    (nt)
-L3B_F643:
-    lda FighterIsCpu+1                          ; F643  A5 03
-    beq L3B_F64C                                ; F645  F0 05
+RoundInit_CheckAiP2:
+    lda FighterIsCpu+1                          ; F643  A5 03       RoundInit_CheckAiP2 — P1 humano: pula a IA do P1 e testa a IA do P2
+    beq RoundInit_StartRound                    ; F645  F0 05
     ldx #$01                                    ; F647  A2 01
     jsr AiScriptInit                            ; F649  20 4A F2
-L3B_F64C:
-    jmp PaletteFlashStart                       ; F64C  4C D3 F8
+RoundInit_StartRound:
+    jmp PaletteFlashStart                       ; F64C  4C D3 F8    RoundInit_StartRound — P2 humano: pula a IA do P2 e comeca o round (flash de paleta)
 
 
 ; <- jsr FightFrame
@@ -2612,32 +2630,34 @@ L3B_F64C:
 RoundLogic:
     lda ScreenMode                              ; F64F  A5 B0
     cmp #$04                                    ; F651  C9 04
-    bne L3B_F658                                ; F653  D0 03
+    bne RoundLogic_EndCheck                     ; F653  D0 03
     jmp RoundIntroStep                          ; F655  4C D0 F6
 
 
-L3B_F658:
-    cmp #$06                                    ; F658  C9 06
-    bne L3B_F65F                                ; F65A  D0 03
+; modos: luta, fim do round
+RoundLogic_EndCheck:
+    cmp #$06                                    ; F658  C9 06       RoundLogic_EndCheck — ScreenMode = 6 (fim de round) -> RoundEndStep
+    bne RoundLogic_KoCheck                      ; F65A  D0 03
     jmp RoundEndStep                            ; F65C  4C E1 F7
 
 
-L3B_F65F:
-    bit a:RoundResult                           ; F65F  2C B9 00
+; modos: luta
+RoundLogic_KoCheck:
+    bit a:RoundResult                           ; F65F  2C B9 00    RoundLogic_KoCheck — luta: verifica o estado do P1 (KO em $E9)
     bmi RoundTimerTick                          ; F662  30 27
     lda a:FighterState                          ; F664  AD 26 00
     cmp #$E9                                    ; F667  C9 E9
-    bcc L3B_F6CF                                ; F669  90 64
-    bne L3B_F66F                                ; F66B  D0 02
+    bcc RoundTimer_End                          ; F669  90 64
+    bne RoundLogic_KoCheckP2                    ; F66B  D0 02
     inc FighterWins                             ; F66D  E6 10
-L3B_F66F:
-    lda a:FighterState+1                        ; F66F  AD 27 00
+RoundLogic_KoCheckP2:
+    lda a:FighterState+1                        ; F66F  AD 27 00    RoundLogic_KoCheckP2 — luta: verifica o estado do P2
     cmp #$E9                                    ; F672  C9 E9
-    bcc L3B_F6CF                                ; F674  90 59
-    bne L3B_F67A                                ; F676  D0 02
+    bcc RoundTimer_End                          ; F674  90 59
+    bne RoundLogic_RoundOver                    ; F676  D0 02
     inc FighterWins+1                           ; F678  E6 11
-L3B_F67A:
-    lda #$00                                    ; F67A  A9 00
+RoundLogic_RoundOver:
+    lda #$00                                    ; F67A  A9 00       RoundLogic_RoundOver — round encerrado: ScreenMode = 6, RoundStep = $80
     sta a:RoundStepTimer                        ; F67C  8D B7 00
     lda #$80                                    ; F67F  A9 80
     sta a:RoundStep                             ; F681  8D B6 00
@@ -2650,47 +2670,48 @@ L3B_F67A:
 RoundTimerTick:
     lda FrameCounter                            ; F68B  A5 B1       o relogio desce 1 a cada 32 quadros
     and #$1F                                    ; F68D  29 1F
-    bne L3B_F6CF                                ; F68F  D0 3E
+    bne RoundTimer_End                          ; F68F  D0 3E
     dec a:TimerOnes                             ; F691  CE BA 00
-    bpl L3B_F6CF                                ; F694  10 39
+    bpl RoundTimer_End                          ; F694  10 39
     ldx a:TimerTens                             ; F696  AE BB 00
-    bne L3B_F6C6                                ; F699  D0 2B
+    bne RoundTimer_TensDec                      ; F699  D0 2B
     ldy a:TimerOff                              ; F69B  AC B5 00
-    bne L3B_F6CA                                ; F69E  D0 2A
+    bne RoundTimer_OnesReset                    ; F69E  D0 2A
     lda FighterHP                               ; F6A0  A5 0E       tempo esgotado: compara a energia dos dois
     sec                                         ; F6A2  38
     sbc a:FighterDmgPending                     ; F6A3  ED 14 00
-    bpl L3B_F6AA                                ; F6A6  10 02
+    bpl RoundTimer_P1Hp                         ; F6A6  10 02
     lda #$00                                    ; F6A8  A9 00       (nt)
-L3B_F6AA:
-    sta zp_D5                                   ; F6AA  85 D5
+RoundTimer_P1Hp:
+    sta zp_D5                                   ; F6AA  85 D5       RoundTimer_P1Hp — tempo esgotado: HP efetivo do P1 (HP - dano pendente)
     lda FighterHP+1                             ; F6AC  A5 0F
     sec                                         ; F6AE  38
     sbc a:FighterDmgPending+1                   ; F6AF  ED 15 00
-    bpl L3B_F6B6                                ; F6B2  10 02
+    bpl RoundTimer_CompareHp                    ; F6B2  10 02
     lda #$00                                    ; F6B4  A9 00       (nt)
-L3B_F6B6:
-    cmp zp_D5                                   ; F6B6  C5 D5
-    bcc L3B_F6BF                                ; F6B8  90 05
-    beq L3B_F6BD                                ; F6BA  F0 01
+RoundTimer_CompareHp:
+    cmp zp_D5                                   ; F6B6  C5 D5       RoundTimer_CompareHp — compara o HP efetivo do P2 com o do P1
+    bcc RoundTimer_SetResult                    ; F6B8  90 05
+    beq RoundTimer_ResultAdjust                 ; F6BA  F0 01
     dey                                         ; F6BC  88
-L3B_F6BD:
-    iny                                         ; F6BD  C8
+RoundTimer_ResultAdjust:
+    iny                                         ; F6BD  C8          RoundTimer_ResultAdjust — Y = 1 (P2 venceu) ou 2 (empate)
     iny                                         ; F6BE  C8
-L3B_F6BF:
-    sty a:RoundResult                           ; F6BF  8C B9 00
+RoundTimer_SetResult:
+    sty a:RoundResult                           ; F6BF  8C B9 00    RoundTimer_SetResult — grava RoundResult e reinicia o relogio
     stx a:TimerOnes                             ; F6C2  8E BA 00
     rts                                         ; F6C5  60
 
 
-L3B_F6C6:
-    dex                                         ; F6C6  CA
+; modos: luta
+RoundTimer_TensDec:
+    dex                                         ; F6C6  CA          RoundTimer_TensDec — dezena do relogio -1
     stx a:TimerTens                             ; F6C7  8E BB 00
-L3B_F6CA:
-    lda #$09                                    ; F6CA  A9 09
+RoundTimer_OnesReset:
+    lda #$09                                    ; F6CA  A9 09       RoundTimer_OnesReset — unidade do relogio = 9
     sta a:TimerOnes                             ; F6CC  8D BA 00
-L3B_F6CF:
-    rts                                         ; F6CF  60
+RoundTimer_End:
+    rts                                         ; F6CF  60          RoundTimer_End — fim do tique do relogio
 
 
 ; <- jmp RoundLogic
@@ -2698,18 +2719,19 @@ L3B_F6CF:
 RoundIntroStep:
     ldx a:RoundStep                             ; F6D0  AE B6 00
     cpx #$08                                    ; F6D3  E0 08
-    bcc L3B_F6DC                                ; F6D5  90 05
+    bcc RoundIntro_TimerTick                    ; F6D5  90 05
     dex                                         ; F6D7  CA
     stx a:RoundStep                             ; F6D8  8E B6 00
     rts                                         ; F6DB  60
 
 
-L3B_F6DC:
-    dec a:RoundStepTimer                        ; F6DC  CE B7 00
+; modos: intro do round
+RoundIntro_TimerTick:
+    dec a:RoundStepTimer                        ; F6DC  CE B7 00    RoundIntro_TimerTick — intro do round: -1 no temporizador do passo
     bpl RoundIntroDraw                          ; F6DF  10 3B
     dex                                         ; F6E1  CA
     stx a:RoundStep                             ; F6E2  8E B6 00
-    bpl L3B_F6F2                                ; F6E5  10 0B
+    bpl RoundIntro_StepDelay                    ; F6E5  10 0B
     lda #$05                                    ; F6E7  A9 05
     sta ScreenMode                              ; F6E9  85 B0
     lda #$01                                    ; F6EB  A9 01
@@ -2717,33 +2739,36 @@ L3B_F6DC:
     jmp PaletteFlashRestore                     ; F6EF  4C E6 F8
 
 
-L3B_F6F2:
-    ldy D3B_F7D9,x                              ; F6F2  BC D9 F7    [idx $00..$06]
+; modos: intro do round
+RoundIntro_StepDelay:
+    ldy D3B_F7D9,x                              ; F6F2  BC D9 F7    [idx $00..$06] RoundIntro_StepDelay — carrega o atraso do passo; passo 6 = voz "ROUND"
     dey                                         ; F6F5  88
     sty a:RoundStepTimer                        ; F6F6  8C B7 00
     cpx #$06                                    ; F6F9  E0 06
-    bne L3B_F705                                ; F6FB  D0 08
+    bne RoundIntro_RoundVoice                   ; F6FB  D0 08
     lda #$00                                    ; F6FD  A9 00       voz 0 = "ROUND"
     sta VoiceQueued                             ; F6FF  8D 5E 04
     jmp RoundIntroDraw                          ; F702  4C 1C F7
 
 
-L3B_F705:
-    cpx #$05                                    ; F705  E0 05
-    bne L3B_F713                                ; F707  D0 0A
+; modos: intro do round
+RoundIntro_RoundVoice:
+    cpx #$05                                    ; F705  E0 05       RoundIntro_RoundVoice — passo 5 = voz do numero do round
+    bne RoundIntro_FightVoice                   ; F707  D0 0A
     ldx a:RoundNumber                           ; F709  AE B8 00    vozes 1..3 = numero do round
     inx                                         ; F70C  E8
     stx VoiceQueued                             ; F70D  8E 5E 04
     jmp RoundIntroDraw                          ; F710  4C 1C F7
 
 
-L3B_F713:
-    cpx #$03                                    ; F713  E0 03
+; modos: intro do round
+RoundIntro_FightVoice:
+    cpx #$03                                    ; F713  E0 03       RoundIntro_FightVoice — passo 3 = voz "FIGHT"
     bne RoundIntroDraw                          ; F715  D0 05
     lda #$05                                    ; F717  A9 05       voz 5 = "FIGHT"
     sta VoiceQueued                             ; F719  8D 5E 04
 
-; <- jmp L3B_F6F2, jmp L3B_F705
+; <- jmp RoundIntro_StepDelay, jmp RoundIntro_RoundVoice
 ; modos: intro do round
 RoundIntroDraw:
     lda a:RoundNumber                           ; F71C  AD B8 00    desenha o lutador da intro do round (RoundNumber/RoundStep) e o 'FIGHT'
@@ -2842,24 +2867,24 @@ D3B_F799:
 D3B_F7D9:
     .byte $40,$01,$01,$02,$02,$50,$02,$02       ; F7D9
 
-; <- jmp L3B_F658
+; <- jmp RoundLogic_EndCheck
 ; modos: fim do round
 RoundEndStep:
     lda FrameCounter                            ; F7E1  A5 B1
     and #$07                                    ; F7E3  29 07
-    bne L3B_F7F0                                ; F7E5  D0 09
+    bne RoundEnd_TimeUpCheck                    ; F7E5  D0 09
     ldx ram_0460                                ; F7E7  AE 60 04
-    beq L3B_F7F0                                ; F7EA  F0 04
+    beq RoundEnd_TimeUpCheck                    ; F7EA  F0 04
     dex                                         ; F7EC  CA
     stx ram_0460                                ; F7ED  8E 60 04
-L3B_F7F0:
-    lda a:TimerOff                              ; F7F0  AD B5 00
+RoundEnd_TimeUpCheck:
+    lda a:TimerOff                              ; F7F0  AD B5 00    RoundEnd_TimeUpCheck — tempo zerado: mostra o aviso e comeca a contagem de $40
     ora a:TimerOnes                             ; F7F3  0D BA 00
     ora a:TimerTens                             ; F7F6  0D BB 00
-    bne L3B_F819                                ; F7F9  D0 1E
+    bne RoundEnd_StepCheck                      ; F7F9  D0 1E
     ldy a:RoundStepTimer                        ; F7FB  AC B7 00
     cpy #$40                                    ; F7FE  C0 40
-    bcs L3B_F819                                ; F800  B0 17
+    bcs RoundEnd_StepCheck                      ; F800  B0 17
     iny                                         ; F802  C8
     sty a:RoundStepTimer                        ; F803  8C B7 00
     lda #<D20_85CE                              ; F806  A9 CE
@@ -2873,50 +2898,53 @@ L3B_F7F0:
     jmp RoundEndDraw                            ; F816  4C B5 F8
 
 
-L3B_F819:
-    ldy a:RoundStep                             ; F819  AC B6 00
-    bne L3B_F81F                                ; F81C  D0 01
+; modos: fim do round
+RoundEnd_StepCheck:
+    ldy a:RoundStep                             ; F819  AC B6 00    RoundEnd_StepCheck — fim do round: RoundStep = 0 -> terminou
+    bne RoundEnd_NextStep                       ; F81C  D0 01
     rts                                         ; F81E  60          (nt)
 
 
-L3B_F81F:
-    dey                                         ; F81F  88
+; modos: fim do round
+RoundEnd_NextStep:
+    dey                                         ; F81F  88          RoundEnd_NextStep — fim do round: avanca para o proximo passo
     sty a:RoundStep                             ; F820  8C B6 00
     ldx a:RoundResult                           ; F823  AE B9 00    RoundResult: 0 = P1 venceu, 1 = P2 venceu, 2 = empate, $FF = luta em andamento
     cpx #$02                                    ; F826  E0 02
-    beq L3B_F887                                ; F828  F0 5D
+    beq RoundEnd_DrawTie                        ; F828  F0 5D
     cpy #$7F                                    ; F82A  C0 7F
-    bne L3B_F833                                ; F82C  D0 05
+    bne RoundEnd_WinnerIsCpu                    ; F82C  D0 05
     lda #$06                                    ; F82E  A9 06       voz 6 = "YOU"
     sta VoiceQueued                             ; F830  8D 5E 04
-L3B_F833:
-    lda FighterIsCpu,x                          ; F833  B5 02
-    bne L3B_F86B                                ; F835  D0 34
+RoundEnd_WinnerIsCpu:
+    lda FighterIsCpu,x                          ; F833  B5 02       RoundEnd_WinnerIsCpu — o vencedor e' a CPU?
+    bne RoundEnd_VoiceLose                      ; F835  D0 34
     lda FighterHP,x                             ; F837  B5 0E
     cmp #$58                                    ; F839  C9 58
-    beq L3B_F84D                                ; F83B  F0 10
-L3B_F83D:
-    cpy #$7E                                    ; F83D  C0 7E
-    bne L3B_F846                                ; F83F  D0 05
+    beq RoundEnd_VoicePerfect                   ; F83B  F0 10
+RoundEnd_VoiceWin:
+    cpy #$7E                                    ; F83D  C0 7E       RoundEnd_VoiceWin — passo $7E = voz "WIN"
+    bne RoundEnd_DrawYouWin                     ; F83F  D0 05
     lda #$07                                    ; F841  A9 07       voz 7 = "WIN"
     sta VoiceQueued                             ; F843  8D 5E 04
-L3B_F846:
-    lda #<D20_85EA                              ; F846  A9 EA
+RoundEnd_DrawYouWin:
+    lda #<D20_85EA                              ; F846  A9 EA       RoundEnd_DrawYouWin — desenha o sprite de "YOU WIN" ($20:85EA)
     ldx #>D20_85EA                              ; F848  A2 85
     jmp RoundEndDrawCenter                      ; F84A  4C 5C F8
 
 
-L3B_F84D:
-    cpy #$40                                    ; F84D  C0 40
-    bcc L3B_F858                                ; F84F  90 07
-    bne L3B_F83D                                ; F851  D0 EA
+; modos: fim do round
+RoundEnd_VoicePerfect:
+    cpy #$40                                    ; F84D  C0 40       RoundEnd_VoicePerfect — vencedor humano com energia cheia: voz "PERFECT"
+    bcc RoundEnd_DrawPerfect                    ; F84F  90 07
+    bne RoundEnd_VoiceWin                       ; F851  D0 EA
     lda #$09                                    ; F853  A9 09       voz 9 = "PERFECT" (vencedor humano com energia cheia, $58)
     sta VoiceQueued                             ; F855  8D 5E 04
-L3B_F858:
-    lda #<D20_852B                              ; F858  A9 2B
+RoundEnd_DrawPerfect:
+    lda #<D20_852B                              ; F858  A9 2B       RoundEnd_DrawPerfect — desenha o sprite de "PERFECT" ($20:852B)
     ldx #>D20_852B                              ; F85A  A2 85
 
-; <- jmp L3B_F81F
+; <- jmp RoundEnd_NextStep
 ; modos: fim do round
 RoundEndDrawCenter:
     sta zp_D9                                   ; F85C  85 D9       posiciona e desenha o lutador no centro do fim do round
@@ -2928,13 +2956,14 @@ RoundEndDrawCenter:
     jmp RoundEndDraw                            ; F868  4C B5 F8
 
 
-L3B_F86B:
-    cpy #$7E                                    ; F86B  C0 7E
-    bne L3B_F874                                ; F86D  D0 05
+; modos: fim do round
+RoundEnd_VoiceLose:
+    cpy #$7E                                    ; F86B  C0 7E       RoundEnd_VoiceLose — vencedor e' a CPU: passo $7E = voz "LOSE"
+    bne RoundEnd_DrawYouLose                    ; F86D  D0 05
     lda #$08                                    ; F86F  A9 08       voz 8 = "LOSE" (o vencedor e' a CPU)
     sta VoiceQueued                             ; F871  8D 5E 04
-L3B_F874:
-    lda #<D20_85D9                              ; F874  A9 D9
+RoundEnd_DrawYouLose:
+    lda #<D20_85D9                              ; F874  A9 D9       RoundEnd_DrawYouLose — desenha o sprite de "YOU LOSE" ($20:85D9)
     sta zp_D9                                   ; F876  85 D9
     lda #>D20_85D9                              ; F878  A9 85
     sta zp_DA                                   ; F87A  85 DA
@@ -2945,10 +2974,11 @@ L3B_F874:
     jmp RoundEndDraw                            ; F884  4C B5 F8
 
 
-L3B_F887:
-    lda a:TimerOnes                             ; F887  AD BA 00
+; modos: fim do round
+RoundEnd_DrawTie:
+    lda a:TimerOnes                             ; F887  AD BA 00    RoundEnd_DrawTie — empate: desenha o sprite de empate ($20:84A1)
     ora a:TimerTens                             ; F88A  0D BB 00
-    bne L3B_F8A2                                ; F88D  D0 13
+    bne RoundEnd_DrawTieAlt                     ; F88D  D0 13
     lda #<D20_84A1                              ; F88F  A9 A1
     sta zp_D9                                   ; F891  85 D9
     lda #>D20_84A1                              ; F893  A9 84
@@ -2960,8 +2990,8 @@ L3B_F887:
     jmp RoundEndDraw                            ; F89F  4C B5 F8
 
 
-L3B_F8A2:
-    lda #<D20_848B                              ; F8A2  A9 8B       (nt)
+RoundEnd_DrawTieAlt:
+    lda #<D20_848B                              ; F8A2  A9 8B       RoundEnd_DrawTieAlt — empate com relogio no ar: variante do sprite ($20:848B) (nt)
     sta zp_D9                                   ; F8A4  85 D9       (nt)
     lda #>D20_848B                              ; F8A6  A9 84       (nt)
     sta zp_DA                                   ; F8A8  85 DA       (nt)
@@ -2972,7 +3002,7 @@ L3B_F8A2:
     jmp RoundEndDraw                            ; F8B2  4C B5 F8    (nt)
 
 
-; <- jmp RoundEndStep, jmp L3B_F84D, jmp L3B_F86B, jmp L3B_F887, jmp L3B_F8A2
+; <- jmp RoundEndStep, jmp RoundEnd_VoicePerfect, jmp RoundEnd_VoiceLose, jmp RoundEnd_DrawTie, jmp RoundEnd_DrawTieAlt
 ; modos: fim do round
 RoundEndDraw:
     lda #$20                                    ; F8B5  A9 20       desenha o lutador do fim do round a partir do ponteiro em zp_D9
@@ -2991,7 +3021,7 @@ RoundEndDraw:
     jmp DrawMetasprite                          ; F8D0  4C EA F2
 
 
-; <- jmp RoundInit, jmp L3B_F65F
+; <- jmp RoundInit, jmp RoundLogic_KoCheck
 ; modos: intro do round, fim do round
 PaletteFlashStart:
     lda #$26                                    ; F8D3  A9 26       acende a paleta do cenario (cores 15-17) para o flash do round
@@ -3004,7 +3034,7 @@ PaletteFlashStart:
     rts                                         ; F8E5  60
 
 
-; <- jmp L3B_F6DC
+; <- jmp RoundIntro_TimerTick
 ; modos: luta
 PaletteFlashRestore:
     lda #$01                                    ; F8E6  A9 01       restaura a paleta do cenario depois do flash
@@ -3020,7 +3050,7 @@ PaletteFlashRestore:
 D3B_F8FE:
     .byte $36,$36,$36,$36,$36,$3A,$3A,$3A,$3A,$3A; F8FE
 
-; <- jsr L3B_E455, jsr FadeIn, jsr FightFrame
+; <- jsr FadeOut_RoundEndPath, jsr FadeIn, jsr FightFrame
 ; modos: intro do round, luta, fim do round
 StageSplitSetup:
     lda #$0E                                    ; F908  A9 0E
@@ -3039,16 +3069,16 @@ StageSplitSetup:
     sta MMC5_IRQ_STATUS                         ; F92C  8D 04 52
     jsr HudUpdate                               ; F92F  20 89 E6
     lda HitStop                                 ; F932  AD 0C 04
-    beq L3B_F93F                                ; F935  F0 08
+    beq StageSplit_HitStopTick                  ; F935  F0 08
     sec                                         ; F937  38
     sbc #$01                                    ; F938  E9 01
     sta HitStop                                 ; F93A  8D 0C 04
     and #$01                                    ; F93D  29 01
-L3B_F93F:
-    rts                                         ; F93F  60
+StageSplit_HitStopTick:
+    rts                                         ; F93F  60          StageSplit_HitStopTick — StageSplitSetup: -1 no HitStop e devolve a paridade nos flags
 
 
-; <- jsr L3B_E455, jsr FadeIn, jsr FightFrame
+; <- jsr FadeOut_RoundEndPath, jsr FadeIn, jsr FightFrame
 ; modos: intro do round, luta, fim do round
 StageParallaxCalc:
     sec                                         ; F940  38
@@ -3072,8 +3102,8 @@ StageParallaxCalc:
     adc zp_D6                                   ; F961  65 D6
     sta zp_D8                                   ; F963  85 D8
     ldx #$00                                    ; F965  A2 00
-L3B_F967:
-    clc                                         ; F967  18
+StageParallaxLoop:
+    clc                                         ; F967  18          StageParallaxLoop — calcula o deslocamento do parallax do cenario
     lda zp_D7                                   ; F968  A5 D7
     adc zp_D5                                   ; F96A  65 D5
     sta zp_D5                                   ; F96C  85 D5
@@ -3089,7 +3119,7 @@ L3B_F967:
     sta FloorScrollX,x                          ; F982  9D DF 03
     inx                                         ; F985  E8
     cpx FloorLines                              ; F986  EC BB 03
-    bcc L3B_F967                                ; F989  90 DC
+    bcc StageParallaxLoop                       ; F989  90 DC
     rts                                         ; F98B  60
 
 RleSupportScreen:

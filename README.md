@@ -40,11 +40,12 @@ Leia nesta ordem:
 
 ## O que ainda **não** está pronto
 
-**Foco atual — estabilização e manutenibilidade.** A implementação de novos personagens e funcionalidades de jogo está pausada, não cancelada. O próximo ciclo de trabalho será definido após a auditoria documental da Fase 1 (`docs/ROTEIRO.md`, `tasks/PROJECT_STABILIZATION_EXECUTION_PLAN.md` e `tasks/PHASE_0_SCOPE_FREEZE_SPEC.md`).
+**Foco atual — estabilização e manutenibilidade.** A implementação de novos personagens e funcionalidades de jogo está pausada, não cancelada. O próximo ciclo de trabalho será definido após a Fase 3 de naming (`tasks/NAMING_CANDIDATES.md`, `docs/ESTADO_DO_PROJETO.md` e `tasks/PROJECT_STABILIZATION_EXECUTION_PLAN.md`).
 
-Há 1.795 rótulos; 304 têm nome de verdade
-  `FamiToneUpdate`…). O resto ainda é `L3F_E4DA`, `D01_A4CB`. Das variáveis, 78 têm nome. É o grosso do trabalho
-  que falta na fase de entendimento — e é onde a IA mais ajuda.
+Há 2.145 definições de rótulo (2.141 nomes únicos): **928 semânticos** e **1.213 automáticos de dados**
+  (`D01_A4CB`…). **Não resta nenhum rótulo automático de código** (`L3F_E4DA`…): os lotes P0/P1, P2 e
+  FamiTone2 da Fase 3 nomearam os 379 que existiam. Das variáveis, 78 têm nome. O inventário completo está
+  em `tasks/NAMING_CANDIDATES.md`.
 * **Formatos de dados parcialmente documentados:** metasprites e estados estão entendidos; caixas de colisão,
   bytes 5–10 do quadro de animação, opcodes dos roteiros de IA e condições de transição ainda não.
 * **Código nunca executado** (14–17% dos bancos `$37` e `$3F`): veio de análise estática. São sobretudo recursos

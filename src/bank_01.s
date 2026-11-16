@@ -82,7 +82,7 @@ D01_A086:
     .byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00; A098
     .byte $00,$00,$00,$00,$00,$00,$00,$00       ; A0A8
 
-; -- ESTADO (cabecalho, 7 bytes)   [cond=$0A CondVitoria | classe=$E9 | acertos=0]
+; -- ESTADO (cabecalho, 7 bytes)   [cond=$0A CondVictory | classe=$E9 | acertos=0]
 D01_A0B0:
     .byte $0A                                   ; A0B0
     .word D01_A10B                              ; A0B1  0B A1
@@ -120,7 +120,7 @@ D01_A0E8:
     .byte $00,$00,$00,$00,$00,$04,$00,$00,$00   ; A0EB
     .word D01_A0E8                              ; A0F4  E8 A0
 
-; -- ESTADO (cabecalho, 7 bytes)   [cond=$0B CondRoundPerdido | classe=$F1 | acertos=0]
+; -- ESTADO (cabecalho, 7 bytes)   [cond=$0B CondRoundLost | classe=$F1 | acertos=0]
 D01_A0F6:
     .byte $0B                                   ; A0F6
     .word D01_A0B0                              ; A0F7  B0 A0
@@ -134,7 +134,7 @@ D01_A0FD:
     .byte $00,$00,$00,$00,$00,$04,$00,$00,$00   ; A100
     .word D01_A0FD                              ; A109  FD A0
 
-; -- ESTADO (cabecalho, 7 bytes)   [cond=$01 CondOponenteLongeCostas | classe=$59 | acertos=0]
+; -- ESTADO (cabecalho, 7 bytes)   [cond=$01 CondOpponentFarBack | classe=$59 | acertos=0]
 D01_A10B:
     .byte $01                                   ; A10B
     .word D01_A12E                              ; A10C  2E A1
@@ -510,7 +510,7 @@ D01_A373:
     .word D00_9443                              ; A392  43 94       (inferido)
     .byte $00,$00,$07,$04,$00,$00,$00,$00,$00   ; A394
 
-; -- ESTADO (cabecalho, 7 bytes)   [cond=$01 CondOponenteLongeCostas | classe=$5A | acertos=0]
+; -- ESTADO (cabecalho, 7 bytes)   [cond=$01 CondOpponentFarBack | classe=$5A | acertos=0]
 D01_A39D:
     .byte $01                                   ; A39D
     .word D01_A3C0                              ; A39E  C0 A3
@@ -543,7 +543,7 @@ D01_A3C7:
     .byte $00,$00,$0F,$04,$00,$00,$00           ; A3CC
     .word D01_A3C7                              ; A3D3  C7 A3       (inferido)
 
-; -- ESTADO (cabecalho, 7 bytes)   [cond=$00 CondOponenteAtaca | classe=$29 | acertos=0]
+; -- ESTADO (cabecalho, 7 bytes)   [cond=$00 CondOpponentAttacks | classe=$29 | acertos=0]
 D01_A3D5:
     .byte $00                                   ; A3D5
     .word D01_A1C8                              ; A3D6  C8 A1
@@ -558,7 +558,7 @@ D01_A3DC:
     .byte $00,$00,$1F,$04,$00,$00,$00           ; A3E1
     .word D01_A3DC                              ; A3E8  DC A3       (inferido)
 
-; -- ESTADO (cabecalho, 7 bytes)   [cond=$00 CondOponenteAtaca | classe=$2A | acertos=0]
+; -- ESTADO (cabecalho, 7 bytes)   [cond=$00 CondOpponentAttacks | classe=$2A | acertos=0]
 D01_A3EA:
     .byte $00                                   ; A3EA
     .word D01_A373                              ; A3EB  73 A3
@@ -1572,7 +1572,7 @@ D01_AAD1:
     .word D00_80E3                              ; AAD2  E3 80
     .byte $00,$00,$00,$00,$00,$02,$27,$E0,$00,$00,$00; AAD4
 
-; -- ESTADO (cabecalho, 7 bytes)   [cond=$09 CondPodeAgarrar | classe=$A1 | acertos=1]
+; -- ESTADO (cabecalho, 7 bytes)   [cond=$09 CondCanGrab | classe=$A1 | acertos=1]
 D01_AADF:
     .byte $09                                   ; AADF
     .word D01_ACC9                              ; AAE0  C9 AC
@@ -1641,7 +1641,7 @@ D01_AB4F:
     .word D00_93CB                              ; AB52  CB 93
     .byte $00,$00,$03,$04,$00,$00,$00,$00,$00   ; AB54
 
-; -- ESTADO (cabecalho, 7 bytes)   [cond=$02 CondOponentePerto | classe=$71 | acertos=1]
+; -- ESTADO (cabecalho, 7 bytes)   [cond=$02 CondOpponentNear | classe=$71 | acertos=1]
 D01_AB5D:
     .byte $02                                   ; AB5D
     .word D01_AB2C                              ; AB5E  2C AB
@@ -1764,7 +1764,7 @@ D01_AC21:
     .word D00_93CB                              ; AC24  CB 93
     .byte $00,$00,$00,$04,$00,$00,$00,$00,$00   ; AC26
 
-; -- ESTADO (cabecalho, 7 bytes)   [cond=$02 CondOponentePerto | classe=$81 | acertos=1]
+; -- ESTADO (cabecalho, 7 bytes)   [cond=$02 CondOpponentNear | classe=$81 | acertos=1]
 D01_AC2F:
     .byte $02                                   ; AC2F
     .word D01_ABE2                              ; AC30  E2 AB
@@ -2029,7 +2029,7 @@ D01_ADE8:
     .word D00_92ED                              ; ADEB  ED 92
     .byte $00,$00,$00,$04,$00,$00,$00,$00,$00   ; ADED
 
-; -- ESTADO (cabecalho, 7 bytes)   [cond=$02 CondOponentePerto | classe=$99 | acertos=2]
+; -- ESTADO (cabecalho, 7 bytes)   [cond=$02 CondOpponentNear | classe=$99 | acertos=2]
 D01_ADF6:
     .byte $02                                   ; ADF6
     .word D01_ADA9                              ; ADF7  A9 AD
@@ -2189,7 +2189,7 @@ D01_AEF9:
     .byte $00,$00,$00,$02,$00,$00,$00           ; AEFE
     .word D01_AEF9                              ; AF05  F9 AE       (inferido)
 
-; -- ESTADO (cabecalho, 7 bytes)   [cond=$06 CondNoChaoOuVelX | classe=$9C | acertos=1]
+; -- ESTADO (cabecalho, 7 bytes)   [cond=$06 CondOnGroundOrVelX | classe=$9C | acertos=1]
 D01_AF07:
     .byte $06                                   ; AF07
     .word D01_AEAC                              ; AF08  AC AE

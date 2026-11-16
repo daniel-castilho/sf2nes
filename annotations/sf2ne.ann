@@ -464,6 +464,35 @@ block 3F:F7A2 ExRAM modo 3; nametables $44), zera rolagem/paleta, instala o tram
 label 3F:F828 MainLoop
 block 3F:F828 Laco do jogo: aviso -> titulo -> selecao -> VS -> luta -> frase do vencedor -> volta ao comeco.
 comment 3F:F828 ScreenDisclaimer
+
+# ------------------------------------------------------------------------------------------------
+# LOTE P2 de naming (Fase 3): ultimos rotulos automaticos de codigo do banco $3F (nucleo do motor).
+# Nome pelo papel demonstrado pelo codigo; apenas rotulos, nenhuma mudanca de byte.
+label 3F:E158 TransAnimTimerSet
+comment 3F:E158 TransAnimTimerSet — em TransApply: quadro de golpe/reacao -> FighterAnimTimer = 1
+label 3F:E15D TransNextPtrSet
+comment 3F:E15D TransNextPtrSet — em TransApply: grava o ponteiro do proximo estado (FighterNextPtrLo/Hi)
+label 3F:E191 CondOpponentAttackClass
+comment 3F:E191 CondOpponentAttackClass — em CondOpponentAttacks: classe do oponente (reacao/golpe/projetil)
+label 3F:E1CA CondFarBackFacing
+comment 3F:E1CA CondFarBackFacing — em CondOpponentFarBack: devolve o bit de virada ($40)
+label 3F:E1E0 CondNearAbsDiff
+comment 3F:E1E0 CondNearAbsDiff — em CondOpponentNear: normaliza o sinal da diferenca de X
+label 3F:E1E6 CondNearLimit
+comment 3F:E1E6 CondNearLimit — em CondOpponentNear: compara |dx| com $21
+label 3F:E239 CondGrabAbsDiff
+comment 3F:E239 CondGrabAbsDiff — em CondCanGrab: normaliza o sinal da diferenca de X
+label 3F:E252 CondGrabOpponentClass
+comment 3F:E252 CondGrabOpponentClass — em CondCanGrab: classe do oponente ($30-$A8)
+label 3F:E2A3 CondRoundLostFalse
+comment 3F:E2A3 CondRoundLostFalse — em CondRoundLost: caminho falso (RoundResult = este lutador ou $FF)
+label 3F:E2B3 AnimNextStateCheck
+comment 3F:E2B3 AnimNextStateCheck — em AnimAdvance: ha proximo estado escolhido? (FighterNextPtrHi)
+label 3F:E2D8 AnimStatePtrSet
+comment 3F:E2D8 AnimStatePtrSet — em AnimAdvance: grava o ponteiro do novo estado e do novo quadro
+label 3F:E2F0 AnimStateClassSet
+comment 3F:E2F0 AnimStateClassSet — em AnimAdvance: aplica a classe do novo quadro (StateSetByte)
+
 # TEMPORARIO (Ken): pula as telas de aviso/QR para agilizar o teste manual. Sao 18 NOPs no lugar do
 # farcall de 18 bytes, entao o kernel continua comecando em $FC7C. TODO: remover este patch para o
 # aviso/QR voltar a aparecer.
@@ -503,7 +532,7 @@ block 3F:E0CE PROPRIO NO' como proximo estado (FighterNextPtr = endereco do no';
 block 3F:E0CE zp_DD marca a origem da busca: $04 = GuardRedirect, $02 = golpe por botao, $01 = golpe especial.
 block 3F:E0CE Com zp_DD = $04 e classe $28/$30: pula o 1o no' quando ele e' o proprio estado atual.
 block 3F:E0CE Com zp_DD = $02 e classe $70-$98 e no' != estado atual: pula o 1o no'. E com o bit 2 da classe zerado
-block 3F:E0CE e CondOponenteLongeCostas: pula o 1o no' tambem (nao reage de costas).
+block 3F:E0CE e CondOpponentFarBack: pula o 1o no' tambem (nao reage de costas).
 label 3F:E129 TransNextNode
 comment 3F:E129 condicao falsa: segue para o no' +1/+2 e repete a busca (ponteiro 0 = fim da lista, nada muda)
 label 3F:E13B TransApply
@@ -513,11 +542,11 @@ label 3F:E171 StateCondLo
 label 3F:E17D StateCondHi
 statecond 3F:E171 n=12
 comment 3F:E171 12 condicoes; cada entrada guarda endereco-1 (truque do RTS com pha/pha/rts)
-label 3F:E189 CondOponenteAtaca
+label 3F:E189 CondOpponentAttacks
 comment 3F:E189 verdadeiro se EU estou em pe/agachado (classe & 3) E o oponente esta em classe de reacao ($70-$98), de golpe ($B0-$E0) ou com projetil no ar (dele)
-label 3F:E1B1 CondOponenteLongeCostas
+label 3F:E1B1 CondOpponentFarBack
 comment 3F:E1B1 verdadeiro se o oponente esta a |dx| >= $0F E eu de costas para ele: devolve $40 (e' o bit 6 de FighterFlip) para virar, 0 se esta encarando ou colado
-label 3F:E1D6 CondOponentePerto
+label 3F:E1D6 CondOpponentNear
 comment 3F:E1D6 verdadeiro se |dx| < $21
 label 3F:E1ED CondEmPe
 comment 3F:E1ED bit 0 da classe = postura em pe
@@ -525,17 +554,17 @@ label 3F:E1F3 CondAgachado
 comment 3F:E1F3 bit 1 da classe = postura agachado
 label 3F:E1F9 CondNoAr
 comment 3F:E1F9 verdadeiro se FighterY < FloorY (acima do chao)
-label 3F:E204 CondNoChaoOuVelX
+label 3F:E204 CondOnGroundOrVelX
 comment 3F:E204 verdadeiro se FighterY = FloorY ou VelX/VelXSub != 0 (esta no chao ou deslizando)
 label 3F:E212 CondInputBaixo
 comment 3F:E212 verdadeiro se InputDir = $08/$0B/$0C (baixo reto ou diagonal-baixa); devolve o proprio InputDir
 label 3F:E224 CondProjetilLivre
 comment 3F:E224 verdadeiro se a vaga de projetil deste lutador esta livre (zp_7B dele = 0)
-label 3F:E22E CondPodeAgarrar
+label 3F:E22E CondCanGrab
 comment 3F:E22E |dx| < $18, os dois no chao, InputDir = frente/tras ($05/$06) e classe do oponente < $30 ou $50-$9F (estados de virar $A0-$A9 nao contam, nt)
-label 3F:E271 CondVitoria
+label 3F:E271 CondVictory
 comment 3F:E271 verdadeiro se RoundResult = este lutador E o oponente esta caido (classe >= $F0) E nao ha projeteis no ar E o canal de voz esta livre
-label 3F:E296 CondRoundPerdido
+label 3F:E296 CondRoundLost
 comment 3F:E296 verdadeiro se RoundResult != este lutador E RoundResult != $FF (round encerrado; vale para empate)
 label 3F:E2A6 AnimAdvance
 block 3F:E2A6 ------------------------------------------------------------------------------------------------
@@ -1011,9 +1040,621 @@ label 3B:F8D3 PaletteFlashStart
 comment 3B:F8D3 acende a paleta do cenario (cores 15-17) para o flash do round
 label 3B:F8E6 PaletteFlashRestore
 comment 3B:F8E6 restaura a paleta do cenario depois do flash
+
+# ------------------------------------------------------------------------------------------------
+# LOTE P2 de naming (Fase 3): rotulos automaticos das paletas e do retrato (banco $3B).
+# Nome pelo papel demonstrado pelo codigo; apenas rotulos, nenhuma mudanca de byte.
+label 3B:E1A6 PortraitPalPtr2Add
+comment 3B:E1A6 PortraitPalPtr2Add — em PortraitLoadPalettes: soma o offset do lutador no 2o ponteiro de paleta
+label 3B:E1B1 PortraitPalPtr3Add
+comment 3B:E1B1 PortraitPalPtr3Add — em PortraitLoadPalettes: soma o offset do lutador no 3o ponteiro de paleta
+label 3B:E1BB PortraitPalIndexCalc
+comment 3B:E1BB PortraitPalIndexCalc — indice da paleta dentro do lutador (zp_12,x * 3)
+label 3B:E1C6 PortraitPalCopyLoop
+comment 3B:E1C6 PortraitPalCopyLoop — copia as 3 paletas (9 bytes) do lutador para ram_0300/ram_0303/ram_0306
+label 3B:E201 PortraitClearLoop
+comment 3B:E201 PortraitClearLoop — limpa o buffer de pixels do retrato (ram_034E+)
+label 3B:E20E PortraitDecodeNextChunk
+comment 3B:E20E PortraitDecodeNextChunk — em PortraitBuild: proximo bloco do decodificador de retrato
+label 3B:E230 PortraitDecodePixelLoop
+comment 3B:E230 PortraitDecodePixelLoop — em PortraitBuild: escreve os pixels do bloco em ram_034E,x
+label 3B:E241 PortraitRowShiftSetup
+comment 3B:E241 PortraitRowShiftSetup — fim dos blocos: desloca as linhas do retrato (6 pixels) com a cor +1
+label 3B:E247 PortraitRowShift1
+comment 3B:E247 PortraitRowShift1 — 1a linha do grupo copiada de ram_034E para ram_0354
+label 3B:E252 PortraitRowShift2
+comment 3B:E252 PortraitRowShift2 — 2a linha do grupo
+label 3B:E25C PortraitRowShift3
+comment 3B:E25C PortraitRowShift3 — 3a linha do grupo
+label 3B:E266 PortraitRowShift4
+comment 3B:E266 PortraitRowShift4 — 4a linha do grupo
+label 3B:E270 PortraitRowShift5
+comment 3B:E270 PortraitRowShift5 — 5a linha do grupo
+label 3B:E27A PortraitRowShift6
+comment 3B:E27A PortraitRowShift6 — 6a linha do grupo
+label 3B:E284 PortraitRowShiftEnd
+comment 3B:E284 PortraitRowShiftEnd — proximo grupo de linhas (X -= $0C)
+label 3B:EE43 PortraitP1WinSet
+comment 3B:EE43 PortraitP1WinSet — retrato do P1: P1 venceu (RoundResult = 0) -> layout de vitoria
+label 3B:EE5B PortraitP1LoseSet
+comment 3B:EE5B PortraitP1LoseSet — retrato do P1: P1 perdeu -> layout de derrota
+label 3B:EE73 PortraitPalCopyLoopP1
+comment 3B:EE73 PortraitPalCopyLoopP1 — copia as 3 cores de cada paleta do P1 para PaletteBuf
+label 3B:EE8A PortraitPalCopyLoopP1End
+comment 3B:EE8A PortraitPalCopyLoopP1End — fim do laco de paletas do P1
+label 3B:EEAE PortraitP1LoseLayout
+comment 3B:EEAE PortraitP1LoseLayout — layout (metasprites) do retrato de derrota do P1
+label 3B:EEDC PortraitP1LoseTiles
+comment 3B:EEDC PortraitP1LoseTiles — tiles do retrato de derrota do P1
+label 3B:EEED PortraitTilesCopyLoopP1
+comment 3B:EEED PortraitTilesCopyLoopP1 — copia 6 bytes de tiles do retrato do P1 para ram_038A
+label 3B:EF14 PortraitTilesPtr2
+comment 3B:EF14 PortraitTilesPtr2 — 2o/3o endereco de tiles do retrato do P1 (ram_034A/ram_034C)
+label 3B:EF1E PortraitTilesReadyP1
+comment 3B:EF1E PortraitTilesReadyP1 — retrato do P1 pronto (ram_03AE = 1)
+label 3B:EF2F PortraitP2WinSet
+comment 3B:EF2F PortraitP2WinSet — retrato do P2: P2 venceu (RoundResult = 1) -> layout de vitoria
+label 3B:EF47 PortraitP2LoseSet
+comment 3B:EF47 PortraitP2LoseSet — retrato do P2: P2 perdeu -> layout de derrota
+label 3B:EF8C PortraitP2LoseLayout
+comment 3B:EF8C PortraitP2LoseLayout — layout (metasprites) do retrato de derrota do P2
+label 3B:EFC7 PortraitP2WinMetasprite
+comment 3B:EFC7 PortraitP2WinMetasprite — retrato do P2: desenha o metasprite de vitoria
+label 3B:EFE7 PortraitNameDestCalc
+comment 3B:EFE7 PortraitNameDestCalc — calcula o destino do nome do lutador (nametable + tiles)
+label 3B:EFFA PortraitNameClearLoop
+comment 3B:EFFA PortraitNameClearLoop — limpa 7 bytes do nome nas duas nametables
+label 3B:F015 PortraitNameCharLoop
+comment 3B:F015 PortraitNameCharLoop — escreve as tiles do nome do lutador
+label 3B:F027 PortraitNameCharEnd
+comment 3B:F027 PortraitNameCharEnd — fim do laco do nome (7 caracteres)
+label 3B:E5A9 RoundIntro_HudFixedP1
+comment 3B:E5A9 RoundIntro_HudFixedP1 — intro do round: P1 humano -> texto fixo 'P1'
+label 3B:E5E4 RoundIntro_HudScrollP2
+comment 3B:E5E4 RoundIntro_HudScrollP2 — intro do round: P2 e' CPU -> inicia o texto rolando
+label 3B:E5FD RoundIntro_HudBarFill
+comment 3B:E5FD RoundIntro_HudBarFill — preenche as barras de energia dos dois lutadores (tiles $70)
+label 3B:E60A RoundIntro_HudBarFill2
+comment 3B:E60A RoundIntro_HudBarFill2 — segunda linha das barras de energia (tiles $78)
+label 3B:E62F RoundIntro_HudTimerBlank
+comment 3B:E62F RoundIntro_HudTimerBlank — sem cronometro na tela: limpa os digitos do relogio
+label 3B:E659 RoundIntro_NameP1
+comment 3B:E659 RoundIntro_NameP1 — escreve o nome do P1 na nametable ($28C4)
+label 3B:E67C RoundIntro_NameP2
+comment 3B:E67C RoundIntro_NameP2 — escreve o nome do P2 na nametable
+label 3B:E69D HudNameScrollP1Set
+comment 3B:E69D HudNameScrollP1Set — atualiza o nome rolante do P1 (ram_040D-ram_0411)
+label 3B:E6BE HudNameScrollP2
+comment 3B:E6BE HudNameScrollP2 — le o indice de rolagem do nome do P2
+label 3B:E6CC HudNameScrollP2Set
+comment 3B:E6CC HudNameScrollP2Set — atualiza o nome rolante do P2 (ram_0413-ram_0417)
+label 3B:E6ED HudWinsUpdate
+comment 3B:E6ED HudWinsUpdate — escreve os placares de vitorias dos dois lutadores
+label 3B:E741 HudDamageUpdate
+comment 3B:E741 HudDamageUpdate — desconta o dano pendente e ajusta a barra de energia
+label 3B:E773 HudBarTileP1
+comment 3B:E773 HudBarTileP1 — escreve os tiles da barra do P1 (ram_0425/ram_0430)
+label 3B:E785 HudDamageUpdateP2
+comment 3B:E785 HudDamageUpdateP2 — mesmo ajuste de dano para o P2
+label 3B:E796 HudBarTileP2
+comment 3B:E796 HudBarTileP2 — escreve os tiles da barra do P2 (ram_043D/ram_0448)
+label 3B:E7BB HudWarnBlinkToggle
+comment 3B:E7BB HudWarnBlinkToggle — alterna o estado de pisca do aviso de energia baixa
+label 3B:E7C4 HudWarnSelectP1
+comment 3B:E7C4 HudWarnSelectP1 — fora do fim de round: o aviso de energia baixa e' do P1
+label 3B:E7E0 HudTimerUpdate
+comment 3B:E7E0 HudTimerUpdate — atualiza os digitos do relogio do round (a cada 32 quadros)
+label 3B:E807 HudTimerUpdateEnd
+comment 3B:E807 HudTimerUpdateEnd — fim do bloco do relogio
+label 3B:E8C6 NmiFightVramTick
+comment 3B:E8C6 NmiFightVramTick — NMI da luta: alterna entre barras e placar a cada quadro
+label 3B:E8CF NmiFightVramWins
+comment 3B:E8CF NmiFightVramWins — NMI da luta: envia os placares de vitorias para a VRAM
+label 3B:F643 RoundInit_CheckAiP2
+comment 3B:F643 RoundInit_CheckAiP2 — P1 humano: pula a IA do P1 e testa a IA do P2
+label 3B:F64C RoundInit_StartRound
+comment 3B:F64C RoundInit_StartRound — P2 humano: pula a IA do P2 e comeca o round (flash de paleta)
+label 3B:F658 RoundLogic_EndCheck
+comment 3B:F658 RoundLogic_EndCheck — ScreenMode = 6 (fim de round) -> RoundEndStep
+label 3B:F65F RoundLogic_KoCheck
+comment 3B:F65F RoundLogic_KoCheck — luta: verifica o estado do P1 (KO em $E9)
+label 3B:F66F RoundLogic_KoCheckP2
+comment 3B:F66F RoundLogic_KoCheckP2 — luta: verifica o estado do P2
+label 3B:F67A RoundLogic_RoundOver
+comment 3B:F67A RoundLogic_RoundOver — round encerrado: ScreenMode = 6, RoundStep = $80
+label 3B:F6AA RoundTimer_P1Hp
+comment 3B:F6AA RoundTimer_P1Hp — tempo esgotado: HP efetivo do P1 (HP - dano pendente)
+label 3B:F6B6 RoundTimer_CompareHp
+comment 3B:F6B6 RoundTimer_CompareHp — compara o HP efetivo do P2 com o do P1
+label 3B:F6BD RoundTimer_ResultAdjust
+comment 3B:F6BD RoundTimer_ResultAdjust — Y = 1 (P2 venceu) ou 2 (empate)
+label 3B:F6BF RoundTimer_SetResult
+comment 3B:F6BF RoundTimer_SetResult — grava RoundResult e reinicia o relogio
+label 3B:F6C6 RoundTimer_TensDec
+comment 3B:F6C6 RoundTimer_TensDec — dezena do relogio -1
+label 3B:F6CA RoundTimer_OnesReset
+comment 3B:F6CA RoundTimer_OnesReset — unidade do relogio = 9
+label 3B:F6CF RoundTimer_End
+comment 3B:F6CF RoundTimer_End — fim do tique do relogio
+label 3B:F6DC RoundIntro_TimerTick
+comment 3B:F6DC RoundIntro_TimerTick — intro do round: -1 no temporizador do passo
+label 3B:F6F2 RoundIntro_StepDelay
+comment 3B:F6F2 RoundIntro_StepDelay — carrega o atraso do passo; passo 6 = voz "ROUND"
+label 3B:F705 RoundIntro_RoundVoice
+comment 3B:F705 RoundIntro_RoundVoice — passo 5 = voz do numero do round
+label 3B:F713 RoundIntro_FightVoice
+comment 3B:F713 RoundIntro_FightVoice — passo 3 = voz "FIGHT"
+label 3B:F7F0 RoundEnd_TimeUpCheck
+comment 3B:F7F0 RoundEnd_TimeUpCheck — tempo zerado: mostra o aviso e comeca a contagem de $40
+label 3B:F819 RoundEnd_StepCheck
+comment 3B:F819 RoundEnd_StepCheck — fim do round: RoundStep = 0 -> terminou
+label 3B:F81F RoundEnd_NextStep
+comment 3B:F81F RoundEnd_NextStep — fim do round: avanca para o proximo passo
+label 3B:F833 RoundEnd_WinnerIsCpu
+comment 3B:F833 RoundEnd_WinnerIsCpu — o vencedor e' a CPU?
+label 3B:F83D RoundEnd_VoiceWin
+comment 3B:F83D RoundEnd_VoiceWin — passo $7E = voz "WIN"
+label 3B:F846 RoundEnd_DrawYouWin
+comment 3B:F846 RoundEnd_DrawYouWin — desenha o sprite de "YOU WIN" ($20:85EA)
+label 3B:F84D RoundEnd_VoicePerfect
+comment 3B:F84D RoundEnd_VoicePerfect — vencedor humano com energia cheia: voz "PERFECT"
+label 3B:F858 RoundEnd_DrawPerfect
+comment 3B:F858 RoundEnd_DrawPerfect — desenha o sprite de "PERFECT" ($20:852B)
+label 3B:F86B RoundEnd_VoiceLose
+comment 3B:F86B RoundEnd_VoiceLose — vencedor e' a CPU: passo $7E = voz "LOSE"
+label 3B:F874 RoundEnd_DrawYouLose
+comment 3B:F874 RoundEnd_DrawYouLose — desenha o sprite de "YOU LOSE" ($20:85D9)
+label 3B:F887 RoundEnd_DrawTie
+comment 3B:F887 RoundEnd_DrawTie — empate: desenha o sprite de empate ($20:84A1)
+label 3B:F8A2 RoundEnd_DrawTieAlt
+comment 3B:F8A2 RoundEnd_DrawTieAlt — empate com relogio no ar: variante do sprite ($20:848B)
+label 3B:E294 VsStageIndex
+comment 3B:E294 VsStageIndex — tela VS: indice do cenario (x2) para as tabelas do banco $36
+label 3B:E381 RoundStageIndex
+comment 3B:E381 RoundStageIndex — inicio do round: indice do cenario (x2) para as tabelas do banco $36
+label 3B:E397 StagePaletteCopyLoop
+comment 3B:E397 StagePaletteCopyLoop — copia 12 bytes da paleta do cenario para PaletteBuf
+label 3B:E3CE RleNextByte
+comment 3B:E3CE RleNextByte — PpuUnRle: le o proximo byte do stream RLE
+label 3B:E3D5 RleIsMarker
+comment 3B:E3D5 RleIsMarker — o byte e' o marcador? entao e' uma repeticao
+label 3B:E3E0 RleRepeatCount
+comment 3B:E3E0 RleRepeatCount — le a quantidade de repeticoes (0 = fim do stream)
+label 3B:E3E9 RleLastByte
+comment 3B:E3E9 RleLastByte — le o ultimo byte literal para repetir
+label 3B:E3EC RleWriteLoop
+comment 3B:E3EC RleWriteLoop — escreve o byte repetido no PPUDATA
+label 3B:E3F4 RleEnd
+comment 3B:E3F4 RleEnd — fim do stream RLE
+label 3B:E3FB PpuWrite64Loop
+comment 3B:E3FB PpuWrite64Loop — copia 64 bytes crus para o PPUDATA
+label 3B:E42C FadeOut_WaitVBlank
+comment 3B:E42C FadeOut_WaitVBlank — fade-out: espera o vblank antes de mexer na paleta
+label 3B:E443 FadeOut_WaitOverflowClear
+comment 3B:E443 FadeOut_WaitOverflowClear — fade-out: espera o flag de overflow de sprites do PPU
+label 3B:E448 FadeOut_WaitVBlankStart
+comment 3B:E448 FadeOut_WaitVBlankStart — fade-out: espera o inicio do vblank
+label 3B:E455 FadeOut_RoundEndPath
+comment 3B:E455 FadeOut_RoundEndPath — fade-out no fim do round: redesenha os lutadores com a paleta de fade
+label 3B:E493 FadeOut_StoreColor
+comment 3B:E493 FadeOut_StoreColor — grava a cor escurecida
+label 3B:E496 FadeOut_NextColor
+comment 3B:E496 FadeOut_NextColor — proxima cor do fade (24 cores)
+label 3B:E4A6 FadeOut_WaitNextFrame
+comment 3B:E4A6 FadeOut_WaitNextFrame — fade-out: espera mais 32 quadros antes de aplicar o PPU
+label 3B:E4AA FadeOut_WaitVBlankFinal
+comment 3B:E4AA FadeOut_WaitVBlankFinal — fade-out: espera o vblank final
+label 3B:E4F3 FadeIn_WaitVBlank
+comment 3B:E4F3 FadeIn_WaitVBlank — fade-in: espera o vblank antes de marcar a paleta
+label 3B:E509 FadeIn_WaitVBlankStage1
+comment 3B:E509 FadeIn_WaitVBlankStage1 — fade-in na luta: espera o vblank para dividir a tela
+label 3B:E517 FadeIn_WaitVBlankStage2
+comment 3B:E517 FadeIn_WaitVBlankStage2 — fade-in na luta: segundo vblank antes do parallax
+label 3B:E521 FadeIn_PpuMask
+comment 3B:E521 FadeIn_PpuMask — fade-in: ajusta a mascara do PPU ($18)
+label 3B:E529 FadeIn_VBlankFlagClear
+comment 3B:E529 FadeIn_VBlankFlagClear — fade-in: inicia a espera do proximo vblank
+label 3B:E52D FadeIn_WaitVBlankLoop
+comment 3B:E52D FadeIn_WaitVBlankLoop — fade-in: espera o vblank de cada degrau
+label 3B:E55F FadeIn_StepPrepare
+comment 3B:E55F FadeIn_StepPrepare — fade-in: prepara o degrau (24 cores)
+label 3B:E561 FadeIn_ColorLoop
+comment 3B:E561 FadeIn_ColorLoop — fade-in: clareia as cores dentro da faixa do degrau
+label 3B:E576 FadeIn_NextColor
+comment 3B:E576 FadeIn_NextColor — fade-in: proxima cor
+label 3B:EA77 VsScreenIndexSet
+comment 3B:EA77 VsScreenIndexSet — tela VS: guarda o indice do cenario da VS
+label 3B:EB08 VsPaletteCopyLoop
+comment 3B:EB08 VsPaletteCopyLoop — copia 6 bytes da paleta da tela VS para PaletteBuf
+label 3B:EB24 VsTextP1Line1Loop
+comment 3B:EB24 VsTextP1Line1Loop — texto de 7 caracteres do P1 (ram_0392) para a nametable $2A64
+label 3B:EB3B VsTextP1Line2Loop
+comment 3B:EB3B VsTextP1Line2Loop — texto de 7 caracteres do P1 (ram_0399) para a nametable $2A84
+label 3B:EB59 VsTextP2Line1Loop
+comment 3B:EB59 VsTextP2Line1Loop — texto de 7 caracteres do P2 (ram_03A0) para a nametable $2A75
+label 3B:EB70 VsTextP2Line2Loop
+comment 3B:EB70 VsTextP2Line2Loop — texto de 7 caracteres do P2 (ram_03A7) para a nametable $2A95
+label 3B:EBB9 VsWaitFlagClear
+comment 3B:EBB9 VsWaitFlagClear — tela VS: inicia a espera do proximo vblank
+label 3B:EBBD VsWaitVBlank
+comment 3B:EBBD VsWaitVBlank — tela VS: espera o vblank (3 x 64 quadros)
+label 3B:EC2D WinQuoteClearRows
+comment 3B:EC2D WinQuoteClearRows — frase final: limpa 32 linhas da nametable
+label 3B:EC2F WinQuoteClearCols
+comment 3B:EC2F WinQuoteClearCols — frase final: limpa as 30 colunas da linha
+label 3B:EC3C WinQuoteClearAttr
+comment 3B:EC3C WinQuoteClearAttr — frase final: limpa 64 bytes de atributos
+label 3B:EC83 WinQuoteWinnerText
+comment 3B:EC83 WinQuoteWinnerText — frase final: calcula o ponteiro da frase do vencedor e a escreve
+label 3B:ECE9 WinQuoteWaitCount
+comment 3B:ECE9 WinQuoteWaitCount — frase final: guarda o contador de espera (2 ou 3 x 64 quadros)
+label 3B:ECEB WinQuoteWaitFlagClear
+comment 3B:ECEB WinQuoteWaitFlagClear — frase final: inicia a espera do proximo vblank
+label 3B:ECEF WinQuoteWaitVBlank
+comment 3B:ECEF WinQuoteWaitVBlank — frase final: espera o vblank
+label 3B:ED2C WinQuoteLineWaitVBlank1
+comment 3B:ED2C WinQuoteLineWaitVBlank1 — frase final: 1o vblank do avanco do texto
+label 3B:ED46 WinQuoteLineWaitVBlank2
+comment 3B:ED46 WinQuoteLineWaitVBlank2 — frase final: 2o vblank do avanco do texto
+label 3B:ED6A WinQuoteCharTile
+comment 3B:ED6A WinQuoteCharTile — frase final: converte o caractere em tile (0 = espaco)
+label 3B:ED72 WinQuoteCharTile2
+comment 3B:ED72 WinQuoteCharTile2 — frase final: segundo tile do caractere (shift)
+label 3B:ED9D DrawFightersDistCheck
+comment 3B:ED9D DrawFightersDistCheck — FightersUpdate: |dx| < $20 -> ordem invertida de desenho
+label 3B:EDBB DrawFightersNormal
+comment 3B:EDBB DrawFightersNormal — desenha o P2 e depois o P1
+label 3B:EDC5 DrawFightersKoOrder
+comment 3B:EDC5 DrawFightersKoOrder — desenha o P1 e depois o P2 (um deles esta em KO)
+label 3B:EDCF DrawFightersCurOrder
+comment 3B:EDCF DrawFightersCurOrder — desenha o oponente e depois o lutador atual
+label 3B:EDDE DrawFighterSide
+comment 3B:EDDE DrawFighterSide — DrawFighter: lutador 1 = sem espelhamento, lutador 2 = $80
+label 3B:EDF7 DrawFighterVariant
+comment 3B:EDF7 DrawFighterVariant — DrawFighter: escolhe a variante do metasprite (lutador 2 na tela de luta)
+label 3B:EE35 DrawFighterSecond
+comment 3B:EE35 DrawFighterSecond — DrawFighter: desenha o segundo metasprite do lutador
+label 3B:F27A DrawFightersProjectile
+comment 3B:F27A DrawFightersProjectile — FightersUpdate: desenha o projetil do lutador, se houver
+label 3B:F2D0 DrawProjectileMetasprite
+comment 3B:F2D0 DrawProjectileMetasprite — desenha os dois metasprites do projetil
+label 3B:F592 FightFrame_WaitVBlank
+comment 3B:F592 FightFrame_WaitVBlank — laco principal da luta: espera o vblank
+label 3B:F605 FightFrame_DrawReset
+comment 3B:F605 FightFrame_DrawReset — empate na melhor de 3: zera os placares e comeca outro round
+label 3B:F60E FightFrame_End
+comment 3B:F60E FightFrame_End — fim da luta
+label 3B:F93F StageSplit_HitStopTick
+comment 3B:F93F StageSplit_HitStopTick — StageSplitSetup: -1 no HitStop e devolve a paridade nos flags
+label 3B:F967 StageParallaxLoop
+comment 3B:F967 StageParallaxLoop — calcula o deslocamento do parallax do cenario
 # ============================================================================================================
 # BANCO $37 — som (FamiTone2 + vozes DPCM), telas de aviso / titulo / selecao
 # ============================================================================================================
+# ------------------------------------------------------------------------------------------------
+# LOTE P2 de naming (Fase 3): rotulos automaticos das telas de selecao, aviso e titulo (banco $37).
+# Nome pelo papel demonstrado pelo codigo; apenas rotulos, nenhuma mudanca de byte.
+
+# ------------------------------------------------------------------------------------------------
+# LOTE FamiTone2 de naming (Fase 3): 109 rotulos internos do motor de som (banco $37).
+# Referencia estrutural: FamiTone2 v1.15 (Shiru). Apenas rotulos e comentarios; nenhum byte muda.
+# ------------------------------------------------------------------------------------------------
+label 37:E45E VoicePlayFighterEnd
+comment 37:E45E VoicePlayFighterEnd — FamiTone2/vozes: termina a voz do lutador apos encadear a continuacao
+label 37:E46E SoundUpdateMusic
+comment 37:E46E SoundUpdateMusic — som: mapeia o banco da musica e atualiza o FamiTone2
+label 37:E4E5 _FT2MusicStopChannels
+comment 37:E4E5 _FT2MusicStopChannels — FamiTone2: zera os campos das canais ao parar a musica
+label 37:E4FF _FT2MusicStopEnvelopes
+comment 37:E4FF _FT2MusicStopEnvelopes — FamiTone2: aponta todos os envelopes para o envelope mudo
+label 37:E56D _FT2MusicPlayChannels
+comment 37:E56D _FT2MusicPlayChannels — FamiTone2: inicializa os ponteiros e os campos das canais da musica
+label 37:E5AB _FT2MusicPlayDone
+comment 37:E5AB _FT2MusicPlayDone — FamiTone2: musica invalida ou musica iniciada; fim do carregamento
+label 37:E5C7 _FT2MusicPauseUnpause
+comment 37:E5C7 _FT2MusicPauseUnpause — FamiTone2: remove a marca de pausa da musica
+label 37:E5CC _FT2MusicPauseDone
+comment 37:E5CC _FT2MusicPauseDone — FamiTone2: grava o novo estado de pausa da musica
+label 37:E5D7 _FT2UpdateSoundPaused
+comment 37:E5D7 _FT2UpdateSoundPaused — FamiTone2: atualiza os sons mesmo com a musica pausada
+label 37:E5DA _FT2UpdateTempo
+comment 37:E5DA _FT2UpdateTempo — FamiTone2: soma o passo de tempo e decide se atualiza uma linha
+label 37:E5F5 _FT2UpdateRow
+comment 37:E5F5 _FT2UpdateRow — FamiTone2: aplica uma nova linha da musica as cinco canais
+label 37:E613 _FT2Channel1NewNote
+comment 37:E613 _FT2Channel1NewNote — FamiTone2: a canal 1 recebeu uma nota nova
+label 37:E630 _FT2Channel1Instrument
+comment 37:E630 _FT2Channel1Instrument — FamiTone2: instala o instrumento da canal 1
+label 37:E638 _FT2Channel2Update
+comment 37:E638 _FT2Channel2Update — FamiTone2: processa a canal 2
+label 37:E64F _FT2Channel2NewNote
+comment 37:E64F _FT2Channel2NewNote — FamiTone2: a canal 2 recebeu uma nota nova
+label 37:E66C _FT2Channel2Instrument
+comment 37:E66C _FT2Channel2Instrument — FamiTone2: instala o instrumento da canal 2
+label 37:E674 _FT2Channel3Update
+comment 37:E674 _FT2Channel3Update — FamiTone2: processa a canal 3
+label 37:E69B _FT2Channel3Instrument
+comment 37:E69B _FT2Channel3Instrument — FamiTone2: instala o instrumento da canal 3
+label 37:E6A3 _FT2Channel4Update
+comment 37:E6A3 _FT2Channel4Update — FamiTone2: processa a canal 4
+label 37:E6BA _FT2Channel4Instrument
+comment 37:E6BA _FT2Channel4Instrument — FamiTone2: instala o instrumento da canal 4
+label 37:E6C4 _FT2Channel5Update
+comment 37:E6C4 _FT2Channel5Update — FamiTone2: processa a canal 5 de amostras
+label 37:E6DA _FT2Channel5PlaySample
+comment 37:E6DA _FT2Channel5PlaySample — FamiTone2: inicia ou para a amostra da canal 5
+label 37:E6E9 _FT2EnvRead
+comment 37:E6E9 _FT2EnvRead — FamiTone2: le o ponteiro e o proximo valor do envelope
+label 37:E703 _FT2EnvSpecial
+comment 37:E703 _FT2EnvSpecial — FamiTone2: trata um codigo especial do envelope
+label 37:E70C _FT2EnvSetRepeat
+comment 37:E70C _FT2EnvSetRepeat — FamiTone2: grava o contador de repeticao do envelope
+label 37:E710 _FT2EnvStorePtr
+comment 37:E710 _FT2EnvStorePtr — FamiTone2: salva o ponteiro corrente do envelope
+label 37:E714 _FT2EnvNext
+comment 37:E714 _FT2EnvNext — FamiTone2: passa para o proximo envelope
+label 37:E728 _FT2UpdateSoundCh1Note
+comment 37:E728 _FT2UpdateSoundCh1Note — FamiTone2: calcula o periodo da nota da canal 1
+label 37:E74F _FT2UpdateSoundCh1Sign
+comment 37:E74F _FT2UpdateSoundCh1Sign — FamiTone2: prolonga o sinal do periodo da canal 1
+label 37:E76E _FT2UpdateSoundCh1ScaleLimit
+comment 37:E76E _FT2UpdateSoundCh1ScaleLimit — FamiTone2: limita a atenuacao de volume da canal 1
+label 37:E776 _FT2UpdateSoundCh1ApplyScale
+comment 37:E776 _FT2UpdateSoundCh1ApplyScale — FamiTone2: aplica a atenuacao de volume da canal 1
+label 37:E779 _FT2UpdateSoundCh1Volume
+comment 37:E779 _FT2UpdateSoundCh1Volume — FamiTone2: grava o volume final da canal 1
+label 37:E7A6 _FT2UpdateSoundCh2Sign
+comment 37:E7A6 _FT2UpdateSoundCh2Sign — FamiTone2: prolonga o sinal do periodo da canal 2
+label 37:E7C5 _FT2UpdateSoundCh2ScaleLimit
+comment 37:E7C5 _FT2UpdateSoundCh2ScaleLimit — FamiTone2: limita a atenuacao de volume da canal 2
+label 37:E7CD _FT2UpdateSoundCh2ApplyScale
+comment 37:E7CD _FT2UpdateSoundCh2ApplyScale — FamiTone2: aplica a atenuacao de volume da canal 2
+label 37:E7D0 _FT2UpdateSoundCh2Volume
+comment 37:E7D0 _FT2UpdateSoundCh2Volume — FamiTone2: grava o volume final da canal 2
+label 37:E7F1 _FT2UpdateSoundCh3Sign
+comment 37:E7F1 _FT2UpdateSoundCh3Sign — FamiTone2: prolonga o sinal do periodo da canal 3
+label 37:E80E _FT2UpdateSoundCh3Control
+comment 37:E80E _FT2UpdateSoundCh3Control — FamiTone2: prepara o controle linear do triangulo da canal 3
+label 37:E840 _FT2UpdateSoundCh4ScaleLimit
+comment 37:E840 _FT2UpdateSoundCh4ScaleLimit — FamiTone2: limita a atenuacao de volume da canal 4
+label 37:E848 _FT2UpdateSoundCh4ApplyScale
+comment 37:E848 _FT2UpdateSoundCh4ApplyScale — FamiTone2: aplica a atenuacao de volume da canal 4
+label 37:E84B _FT2UpdateSoundCh4Volume
+comment 37:E84B _FT2UpdateSoundCh4Volume — FamiTone2: grava o volume final do ruido da canal 4
+label 37:E874 _FT2UpdateSoundPulse2
+comment 37:E874 _FT2UpdateSoundPulse2 — FamiTone2: envia volume e periodo da canal 2 aos registradores da APU
+label 37:E88E _FT2UpdateSoundTriangle
+comment 37:E88E _FT2UpdateSoundTriangle — FamiTone2: envia volume e periodo do triangulo aos registradores da APU
+label 37:E8C2 _FT2ChannelPitchVibrato
+comment 37:E8C2 _FT2ChannelPitchVibrato — FamiTone2: recompoe o tom antes de aplicar o vibrato
+label 37:E8D6 _FT2ChannelPitchSlideMode
+comment 37:E8D6 _FT2ChannelPitchSlideMode — FamiTone2: le o modo de slide da canal
+label 37:E8DE _FT2ChannelPitchSlideType
+comment 37:E8DE _FT2ChannelPitchSlideType — FamiTone2: distingue slide para cima, para baixo e portamento
+label 37:E8E9 _FT2ChannelPitchSlideUp
+comment 37:E8E9 _FT2ChannelPitchSlideUp — FamiTone2: soma o deslocamento de slide para cima
+label 37:E8F6 _FT2ChannelPitchSlideUpStore
+comment 37:E8F6 _FT2ChannelPitchSlideUpStore — FamiTone2: grava a parte baixa do tom apos o slide para cima
+label 37:E905 _FT2ChannelPitchSlideUpLimit
+comment 37:E905 _FT2ChannelPitchSlideUpLimit — FamiTone2: limita a parte alta do tom apos o slide para cima
+label 37:E914 _FT2ChannelPitchSlideDown
+comment 37:E914 _FT2ChannelPitchSlideDown — FamiTone2: subtrai o deslocamento de slide para baixo
+label 37:E923 _FT2ChannelPitchSlideDownStore
+comment 37:E923 _FT2ChannelPitchSlideDownStore — FamiTone2: grava o tom apos o slide para baixo
+label 37:E933 _FT2ChannelPitchSlideEnd
+comment 37:E933 _FT2ChannelPitchSlideEnd — FamiTone2: encerra o slide quando o tom ultrapassa o limite
+label 37:E957 _FT2SlideToNoteLoad
+comment 37:E957 _FT2SlideToNoteLoad — FamiTone2: compara o tom corrente com o tom alvo
+label 37:E965 _FT2SlideToNoteDown
+comment 37:E965 _FT2SlideToNoteDown — FamiTone2: reduz o tom enquanto ele esta acima do alvo
+label 37:E974 _FT2SlideToNoteDownStore
+comment 37:E974 _FT2SlideToNoteDownStore — FamiTone2: grava o tom reduzido durante o slide
+label 37:E982 _FT2SlideToNoteApply
+comment 37:E982 _FT2SlideToNoteApply — FamiTone2: aplica o tom corrente ao registrador da voz
+label 37:E991 _FT2SlideToNoteReached
+comment 37:E991 _FT2SlideToNoteReached — FamiTone2: alcancou o tom alvo e substitui o tom corrente
+label 37:E9AC _FT2SlideToNoteDone
+comment 37:E9AC _FT2SlideToNoteDone — FamiTone2: termina o slide e segue para o vibrato
+label 37:E9AF _FT2SlideToNoteUp
+comment 37:E9AF _FT2SlideToNoteUp — FamiTone2: aumenta o tom enquanto ele esta abaixo do alvo
+label 37:E9BC _FT2SlideToNoteUpStore
+comment 37:E9BC _FT2SlideToNoteUpStore — FamiTone2: grava o tom aumentado durante o slide
+label 37:E9E2 _FT2PitchCompareAbove
+comment 37:E9E2 _FT2PitchCompareAbove — FamiTone2: indica que o tom corrente esta acima do alvo
+label 37:E9E5 _FT2PitchCompareBelow
+comment 37:E9E5 _FT2PitchCompareBelow — FamiTone2: indica que o tom corrente esta abaixo do alvo
+label 37:EA15 _FT2VibratoClampLow
+comment 37:EA15 _FT2VibratoClampLow — FamiTone2: limita o tom ao minimo quando o vibrato e negativo
+label 37:EA1D _FT2VibratoStore
+comment 37:EA1D _FT2VibratoStore — FamiTone2: grava o tom corrigido pelo vibrato
+label 37:EA20 _FT2VibratoReturn
+comment 37:EA20 _FT2VibratoReturn — FamiTone2: devolve o tom final da voz
+label 37:EAE7 _FT2SetInstrumentNoThirdEnv
+comment 37:EAE7 _FT2SetInstrumentNoThirdEnv — FamiTone2: encerra a parte opcional do instrumento sem terceiro envelope
+label 37:EAFD _FT2SetInstrumentSkipExtra
+comment 37:EAFD _FT2SetInstrumentSkipExtra — FamiTone2: avanca os dados extras do instrumento
+label 37:EAFF _FT2SetInstrumentLoadEnvelopes
+comment 37:EAFF _FT2SetInstrumentLoadEnvelopes — FamiTone2: carrega os ponteiros de envelope restantes do instrumento
+label 37:EB1A _FT2ChannelNoRepeat
+comment 37:EB1A _FT2ChannelNoRepeat — FamiTone2: o contador de repeticao terminou; le a proxima nota
+label 37:EB2E _FT2ReadByteAdvance
+comment 37:EB2E _FT2ReadByteAdvance — FamiTone2: terminou de avancar o ponteiro do canal
+label 37:EB35 _FT2ReadVolumeCommand
+comment 37:EB35 _FT2ReadVolumeCommand — FamiTone2: le um comando de volume
+label 37:EB43 _FT2ReadVolumeClamp
+comment 37:EB43 _FT2ReadVolumeClamp — FamiTone2: limita e grava o volume solicitado
+label 37:EB49 _FT2ReadCommand
+comment 37:EB49 _FT2ReadCommand — FamiTone2: distingue nota comum de comando do canal
+label 37:EB50 _FT2ReadStopSlide
+comment 37:EB50 _FT2ReadStopSlide — FamiTone2: comando $5F encerra o slide
+label 37:EB59 _FT2ReadShiftDown
+comment 37:EB59 _FT2ReadShiftDown — FamiTone2: comando $6F desloca a nota para baixo
+label 37:EB60 _FT2ReadSlideCommand
+comment 37:EB60 _FT2ReadSlideCommand — FamiTone2: seleciona os modos de slide ou a profundidade do vibrato
+label 37:EB79 _FT2ReadSlideStop
+comment 37:EB79 _FT2ReadSlideStop — FamiTone2: zera o deslocamento e habilita o tom fixo
+label 37:EB91 _FT2ReadSlideDownMode
+comment 37:EB91 _FT2ReadSlideDownMode — FamiTone2: comando $6B habilita o slide para baixo
+label 37:EBA4 _FT2ReadSlideUpMode
+comment 37:EBA4 _FT2ReadSlideUpMode — FamiTone2: comando $6C habilita o slide para cima
+label 37:EBB7 _FT2ReadPortamentoMode
+comment 37:EBB7 _FT2ReadPortamentoMode — FamiTone2: comando $6D habilita o portamento ate a nota
+label 37:EBDF _FT2ShiftUpNote
+comment 37:EBDF _FT2ShiftUpNote — FamiTone2: soma o deslocamento a uma nota da sequencia
+label 37:EC11 _FT2ShiftCurrentUp
+comment 37:EC11 _FT2ShiftCurrentUp — FamiTone2: soma o deslocamento a nota corrente
+label 37:EC35 _FT2ShiftDownNote
+comment 37:EC35 _FT2ShiftDownNote — FamiTone2: subtrai o deslocamento de uma nota da sequencia
+label 37:EC3D _FT2ShiftCurrentDown
+comment 37:EC3D _FT2ShiftCurrentDown — FamiTone2: subtrai o deslocamento da nota corrente
+label 37:EC83 _FT2PlainNoteClearPitch
+comment 37:EC83 _FT2PlainNoteClearPitch — FamiTone2: nota comum e desativacao do tom fixo
+label 37:EC8B _FT2PlainNoteStoreOnly
+comment 37:EC8B _FT2PlainNoteStoreOnly — FamiTone2: grava a nota sem alterar o estado de tom fixo
+label 37:EC9E _FT2SpecialEmptyRows
+comment 37:EC9E _FT2SpecialEmptyRows — FamiTone2: tratta linhas vazias e comandos de referencia do canal
+label 37:ECCF _FT2SpecialSpeed
+comment 37:ECCF _FT2SpecialSpeed — FamiTone2: le e grava a velocidade da musica
+label 37:ECDB _FT2SpecialSpeedAdvance
+comment 37:ECDB _FT2SpecialSpeedAdvance — FamiTone2: avanca o ponteiro apos ler a velocidade
+label 37:ECE2 _FT2SpecialLoop
+comment 37:ECE2 _FT2SpecialLoop — FamiTone2: troca o ponteiro do canal pelo destino do loop
+label 37:ECF3 _FT2SpecialRepeat
+comment 37:ECF3 _FT2SpecialRepeat — FamiTone2: grava o contador de repeticao do canal
+label 37:ECF6 _FT2SpecialDone
+comment 37:ECF6 _FT2SpecialDone — FamiTone2: finaliza o comando e trata a referencia ativa
+label 37:ED0D _FT2SpecialContinue
+comment 37:ED0D _FT2SpecialContinue — FamiTone2: mantem o ponteiro corrente do canal
+label 37:ED20 _FT2ReadParamDone
+comment 37:ED20 _FT2ReadParamDone — FamiTone2: devolve o parametro apos avancar o ponteiro
+label 37:ED35 _FT2SamplePlayMNotBusy
+comment 37:ED35 _FT2SamplePlayMNotBusy — FamiTone2: o canal DMC esta livre; inicia a amostra de musica
+label 37:ED89 _FT2SfxInitChannels
+comment 37:ED89 _FT2SfxInitChannels — FamiTone2: inicializa todos os canais de efeito sonoro
+label 37:EDD5 _FT2SfxUpdateNoRepeat
+comment 37:EDD5 _FT2SfxUpdateNoRepeat — FamiTone2: o contador de repeticao do efeito terminou
+label 37:EDDB _FT2SfxUpdateActive
+comment 37:EDDB _FT2SfxUpdateActive — FamiTone2: carrega o roteiro do efeito ativo
+label 37:EDF9 _FT2SfxReadData
+comment 37:EDF9 _FT2SfxReadData — FamiTone2: le um comando de escrita de registrador do efeito
+label 37:EE16 _FT2SfxAdvanceDone
+comment 37:EE16 _FT2SfxAdvanceDone — FamiTone2: terminou de avancar o ponteiro do efeito
+label 37:EE17 _FT2SfxEnd
+comment 37:EE17 _FT2SfxEnd — FamiTone2: marca o canal de efeito como inativo
+label 37:EE33 _FT2SfxUpdatePulse1
+comment 37:EE33 _FT2SfxUpdatePulse1 — FamiTone2: mistura o volume e o periodo da canal 1 do efeito
+label 37:EE4C _FT2SfxUpdatePulse2
+comment 37:EE4C _FT2SfxUpdatePulse2 — FamiTone2: mistura o volume e o periodo da canal 2 do efeito
+label 37:EE60 _FT2SfxUpdateTriangle
+comment 37:EE60 _FT2SfxUpdateTriangle — FamiTone2: mistura o controle e o periodo do triangulo do efeito
+label 37:EE73 _FT2SfxUpdateNoise
+comment 37:EE73 _FT2SfxUpdateNoise — FamiTone2: mistura o volume e o periodo do ruido do efeito
+label 37:EF35 _FT2ScaleVolumeLoop
+comment 37:EF35 _FT2ScaleVolumeLoop — FamiTone2: laco de escala do volume pela atenuacao
+label 37:EF3F _FT2ScaleVolumeNext
+comment 37:EF3F _FT2ScaleVolumeNext — FamiTone2: proximo passo da escala de volume
+label 37:EF48 _FT2ScaleVolumeReturn
+comment 37:EF48 _FT2ScaleVolumeReturn — FamiTone2: devolve o volume ja escalado
+label 37:EF49 _FT2ScaleVolumeMinimum
+comment 37:EF49 _FT2ScaleVolumeMinimum — FamiTone2: devolve volume minimo 1 quando o resultado seria zero
+label 37:EFBF SelectInitP2Char
+comment 37:EFBF SelectInitP2Char — selecao: carrega o lutador do P2 (zp_D8) e a paleta (zp_13)
+label 37:EFD0 SelectWaitFlagClear
+comment 37:EFD0 SelectWaitFlagClear — selecao: inicia a espera do proximo vblank
+label 37:EFD4 SelectWaitVBlank
+comment 37:EFD4 SelectWaitVBlank — selecao: espera o vblank do laco
+label 37:EFFA SelectDrawCursor
+comment 37:EFFA SelectDrawCursor — selecao: desenha o cursor e a bandeira do pais na posicao atual
+label 37:F052 SelectDrawFighterSprite
+comment 37:F052 SelectDrawFighterSprite — selecao: desenha o lutador sob o cursor
+label 37:F076 SelectConfirmVoice
+comment 37:F076 SelectConfirmVoice — selecao: P1 confirmou -> toca a voz do pais escolhido
+label 37:F10E SelectIntroDrawFighter
+comment 37:F10E SelectIntroDrawFighter — entrada do lutador escolhido: desenha o lutador
+label 37:F124 SelectIntroFlagClear
+comment 37:F124 SelectIntroFlagClear — entrada do lutador: inicia a espera do proximo vblank
+label 37:F128 SelectIntroWaitVBlank
+comment 37:F128 SelectIntroWaitVBlank — entrada do lutador: espera o vblank
+label 37:F155 SelectIntroFlagClear2
+comment 37:F155 SelectIntroFlagClear2 — entrada do lutador: 2o inicio de espera do vblank
+label 37:F159 SelectIntroWaitVBlank2
+comment 37:F159 SelectIntroWaitVBlank2 — entrada do lutador: 2o vblank da animacao
+label 37:F18C SelectIntroHideOam
+comment 37:F18C SelectIntroHideOam — entrada do lutador: esconde os sprites restantes da OAM
+label 37:F1E7 SelectInputRead
+comment 37:F1E7 SelectInputRead — selecao: o jogador ainda nao confirmou -> le o controle
+label 37:F1EE SelectInputUp
+comment 37:F1EE SelectInputUp — selecao: botao CIMA (novo flanco) -> cursor 4 casas para tras
+label 37:F20C SelectInputDown
+comment 37:F20C SelectInputDown — selecao: botao BAIXO (novo flanco) -> cursor 4 casas para frente
+label 37:F246 SelectInputRight
+comment 37:F246 SelectInputRight — selecao: botao DIREITA (novo flanco) -> cursor 1 casa para frente
+label 37:F271 SelectInputButtonB
+comment 37:F271 SelectInputButtonB — selecao: botao B -> zera a flag de confirmacao (zp_D7,x)
+label 37:F281 SelectEndVoice
+comment 37:F281 SelectEndVoice — selecao: toca a voz enfileirada
+label 37:F292 SelectEnd
+comment 37:F292 SelectEnd — fim da tela de selecao
+label 37:F2DD DisclaimerClearRows
+comment 37:F2DD DisclaimerClearRows — aviso/QR: limpa 4 linhas de 256 tiles da nametable
+label 37:F2DF DisclaimerClearCols
+comment 37:F2DF DisclaimerClearCols — aviso/QR: limpa as colunas da linha
+label 37:F324 DisclaimerTextFlagClear
+comment 37:F324 DisclaimerTextFlagClear — aviso/QR: inicia a espera do vblank do texto
+label 37:F328 DisclaimerTextWaitVBlank
+comment 37:F328 DisclaimerTextWaitVBlank — aviso/QR: espera o vblank do texto
+label 37:F33C DisclaimerTextAddr
+comment 37:F33C DisclaimerTextAddr — aviso/QR: calcula o endereco da nametable do proximo caractere
+label 37:F356 DisclaimerTextLineReset
+comment 37:F356 DisclaimerTextLineReset — aviso/QR: fim de linha -> volta para a primeira coluna
+label 37:F35A DisclaimerTextWrite
+comment 37:F35A DisclaimerTextWrite — aviso/QR: escreve o caractere na nametable
+label 37:F370 DisclaimerEndFlagClear
+comment 37:F370 DisclaimerEndFlagClear — aviso/QR: espera o fim do texto
+label 37:F374 DisclaimerEndWaitVBlank
+comment 37:F374 DisclaimerEndWaitVBlank — aviso/QR: espera o vblank do fim do texto
+label 37:F4A9 SupportWaitFlagClear
+comment 37:F4A9 SupportWaitFlagClear — tela de apoio: inicia a espera do vblank
+label 37:F4AD SupportWaitVBlank
+comment 37:F4AD SupportWaitVBlank — tela de apoio: espera o vblank
+label 37:F4B5 SupportInputFlagClear
+comment 37:F4B5 SupportInputFlagClear — tela de apoio: inicia a espera do vblank da leitura do controle
+label 37:F4B9 SupportInputWaitVBlank
+comment 37:F4B9 SupportInputWaitVBlank — tela de apoio: espera o vblank antes de ler o controle
+label 37:F4D9 SupportExit
+comment 37:F4D9 SupportExit — tela de apoio: sai com o fade
+label 37:F524 TitlePaletteCopyLoop
+comment 37:F524 TitlePaletteCopyLoop — titulo: copia 12 bytes de paleta
+label 37:F557 TitleClearRows
+comment 37:F557 TitleClearRows — titulo: limpa as linhas da nametable
+label 37:F558 TitleClearCols
+comment 37:F558 TitleClearCols — titulo: limpa as colunas da linha
+label 37:F592 TitleWaitVBlank
+comment 37:F592 TitleWaitVBlank — titulo: espera o vblank do laco
+label 37:F5BB TitleWaitOverflowClear
+comment 37:F5BB TitleWaitOverflowClear — titulo: espera o flag de overflow de sprites do PPU
+label 37:F5C0 TitleWaitVBlankStart
+comment 37:F5C0 TitleWaitVBlankStart — titulo: espera o inicio do vblank
+label 37:F5C7 TitleDelayLoop
+comment 37:F5C7 TitleDelayLoop — titulo: espera de sincronizacao (256 voltas)
+label 37:F5E6 TitleScrollStep
+comment 37:F5E6 TitleScrollStep — titulo: avanca a rolagem horizontal do titulo
+label 37:F601 TitleCheckStart
+comment 37:F601 TitleCheckStart — titulo: o START ja foi apertado?
+label 37:F616 TitleBlinkOn
+comment 37:F616 TitleBlinkOn — titulo: acende o "PRESS START" e le os controles
+label 37:F62F TitleCheckButtons
+comment 37:F62F TitleCheckButtons — titulo: procura START/A/B nos dois controles
+label 37:F63B TitleStartPressed
+comment 37:F63B TitleStartPressed — titulo: botao apertado -> guarda e toca a voz
+label 37:F645 TitleCheckPalette
+comment 37:F645 TitleCheckPalette — titulo: apaga o "PRESS START" ou sai da tela
+label 37:F652 TitleExit
+comment 37:F652 TitleExit — titulo: para a musica e sai com o fade
+label 37:F67B TitleBlinkOffLoop
+comment 37:F67B TitleBlinkOffLoop — titulo: apaga as 10 cores do "PRESS START"
+label 37:F682 TitleBlinkOnLoop
+comment 37:F682 TitleBlinkOnLoop — titulo: escreve as 10 cores do "PRESS START"
 label 37:E000 VoiceBankTbl
 block 37:E000 ------------------------------------------------------------------------------------------------
 block 37:E000 DIRETORIO DE VOZES (DPCM): 32 amostras. VoiceBankTbl[i] = banco de PRG mapeado em $C000;
@@ -1160,6 +1801,105 @@ comment 37:F670 pisca o PRESS START alternando a cor 10 da paleta
 # ============================================================================================================
 # BANCO $00 — dados do Ryu (frames) + IA do Ryu
 # ============================================================================================================
+# ------------------------------------------------------------------------------------------------
+# LOTE P2 de naming (Fase 3): rotulos automaticos da arvore de decisao da IA do Ryu.
+# Nome pelo papel demonstrado pelo codigo; apenas rotulos, nenhuma mudanca de byte.
+label 00:8F5C RyuAiAirDistY
+comment 00:8F5C RyuAiAirDistY — IA do Ryu: no ar, exige distancia vertical < $38
+label 00:8F66 RyuAiAirDistX
+comment 00:8F66 RyuAiAirDistX — IA do Ryu: no ar, exige distancia horizontal < $38
+label 00:8F70 RyuAiAirVelCheck
+comment 00:8F70 RyuAiAirVelCheck — IA do Ryu: no ar, so age se o proprio pulo termina ou o oponente esta no ar
+label 00:8F7F RyuAiAirScriptPick
+comment 00:8F7F RyuAiAirScriptPick — IA do Ryu: no ar, escolhe o roteiro pela classe de estado
+label 00:8F8F RyuAiAirScriptDefault
+comment 00:8F8F RyuAiAirScriptDefault — IA do Ryu: no ar, roteiro padrao ($00:8EFB)
+label 00:8F96 RyuAiProjCheck
+comment 00:8F96 RyuAiProjCheck — IA do Ryu: o oponente tem projetil no ar?
+label 00:8FA5 RyuAiProjAbsDist
+comment 00:8FA5 RyuAiProjAbsDist — IA do Ryu: distancia horizontal ate o projetil
+label 00:8FAB RyuAiProjDistDiv16
+comment 00:8FAB RyuAiProjDistDiv16 — IA do Ryu: distancia do projetil / 16
+label 00:8FB8 RyuAiProjDistDiv32
+comment 00:8FB8 RyuAiProjDistDiv32 — IA do Ryu: distancia do projetil / 32
+label 00:8FC2 RyuAiProjDistDiv64
+comment 00:8FC2 RyuAiProjDistDiv64 — IA do Ryu: distancia do projetil / 64 (longe demais: nao faz nada)
+label 00:8FC8 RyuAiProjScriptMid
+comment 00:8FC8 RyuAiProjScriptMid — IA do Ryu: projetil a 32-64 px -> roteiro $00:8E82
+label 00:8FCF RyuAiOpponentHitState
+comment 00:8FCF RyuAiOpponentHitState — IA do Ryu: sem projetil; o oponente esta em reacao de golpe?
+label 00:8FE9 RyuAiOpponentWalkCheck
+comment 00:8FE9 RyuAiOpponentWalkCheck — IA do Ryu: o oponente esta andando (classe >= $54)?
+label 00:8FFC RyuAiOpponentJumpUp
+comment 00:8FFC RyuAiOpponentJumpUp — IA do Ryu: o oponente esta subindo
+label 00:900F RyuAiJumpDistCheck
+comment 00:900F RyuAiJumpDistCheck — IA do Ryu: distancia horizontal do oponente que esta subindo
+label 00:9016 RyuAiJumpScriptMid
+comment 00:9016 RyuAiJumpScriptMid — IA do Ryu: oponente subindo a 40-96 px -> roteiro $00:8F0A
+label 00:901D RyuAiOpponentGrounded
+comment 00:901D RyuAiOpponentGrounded — IA do Ryu: o oponente esta no chao
+label 00:9028 RyuAiOpponentDistX
+comment 00:9028 RyuAiOpponentDistX — IA do Ryu: distancia horizontal ate o oponente que anda
+label 00:903D RyuAiOpponentDistY
+comment 00:903D RyuAiOpponentDistY — IA do Ryu: sorteia entre dois roteiros conforme a distancia vertical
+label 00:9055 RyuAiOpponentTooFar
+comment 00:9055 RyuAiOpponentTooFar — IA do Ryu: oponente longe demais -> nao faz nada
+label 00:905C RyuAiOpponentScript
+comment 00:905C RyuAiOpponentScript — IA do Ryu: oponente perto -> roteiro $00:8F1B
+label 00:9063 RyuAiOpponentSpecial
+comment 00:9063 RyuAiOpponentSpecial — IA do Ryu: oponente com estado especial (zp_62) -> roteiro $00:8ECA
+label 00:906F RyuAiOpponentStateHigh
+comment 00:906F RyuAiOpponentStateHigh — IA do Ryu: classe de estado do oponente >= $58?
+label 00:907B RyuAiState58Check
+comment 00:907B RyuAiState58Check — IA do Ryu: classe >= $69 tem outro tratamento
+label 00:9089 RyuAiState58DistDiv8
+comment 00:9089 RyuAiState58DistDiv8 — IA do Ryu: distancia horizontal / 8
+label 00:9095 RyuAiState58DistDiv16
+comment 00:9095 RyuAiState58DistDiv16 — IA do Ryu: distancia horizontal / 16
+label 00:9098 RyuAiState58Script32
+comment 00:9098 RyuAiState58Script32 — IA do Ryu: roteiro $00:8F32
+label 00:909F RyuAiState58DistDiv32
+comment 00:909F RyuAiState58DistDiv32 — IA do Ryu: distancia horizontal / 32 (longe: nao faz nada)
+label 00:90A5 RyuAiState58Random
+comment 00:90A5 RyuAiState58Random — IA do Ryu: sorteia o roteiro conforme a postura do oponente
+label 00:90C3 RyuAiState58Script
+comment 00:90C3 RyuAiState58Script — IA do Ryu: roteiro $00:8EAD
+label 00:90CA RyuAiState69Dist
+comment 00:90CA RyuAiState69Dist — IA do Ryu: classe >= $69, calcula a distancia horizontal
+label 00:90D4 RyuAiState69DistDiv8
+comment 00:90D4 RyuAiState69DistDiv8 — IA do Ryu: distancia horizontal / 8
+label 00:90F5 RyuAiState69DistDiv16
+comment 00:90F5 RyuAiState69DistDiv16 — IA do Ryu: distancia horizontal / 16
+label 00:910C RyuAiState69DistDiv32
+comment 00:910C RyuAiState69DistDiv32 — IA do Ryu: distancia horizontal / 32 (longe: nao faz nada)
+label 00:9113 RyuAiState69Random
+comment 00:9113 RyuAiState69Random — IA do Ryu: sorteia entre 4 roteiros
+label 00:912B RyuAiState69RandomNow
+comment 00:912B RyuAiState69RandomNow — IA do Ryu: sorteia entre 2 roteiros (execucao imediata)
+label 00:9159 RyuAiAntiAirDist
+comment 00:9159 RyuAiAntiAirDist — IA anti-aereo: distancia horizontal ate o oponente no ar
+label 00:9163 RyuAiAntiAirRange
+comment 00:9163 RyuAiAntiAirRange — IA anti-aereo: distancia < $28?
+label 00:916F RyuAiAntiAirVelCheck
+comment 00:916F RyuAiAntiAirVelCheck — IA anti-aereo: o oponente esta descendo?
+label 00:9174 RyuAiAntiAirScript8E9F
+comment 00:9174 RyuAiAntiAirScript8E9F — IA anti-aereo: roteiro $00:8E9F
+label 00:917B RyuAiAntiAirVelCheck2
+comment 00:917B RyuAiAntiAirVelCheck2 — IA anti-aereo (perto): o oponente esta descendo?
+label 00:9183 RyuAiAntiAirVelCheck3
+comment 00:9183 RyuAiAntiAirVelCheck3 — IA anti-aereo (perto): o oponente esta parado?
+label 00:9188 RyuAiAntiAirScript8F11
+comment 00:9188 RyuAiAntiAirScript8F11 — IA anti-aereo: roteiro $00:8F11
+label 00:918F RyuAiAntiAirStateCheck
+comment 00:918F RyuAiAntiAirStateCheck — IA anti-aereo: classes $D0/$D8 do oponente
+label 00:9197 RyuAiAntiAirDist2
+comment 00:9197 RyuAiAntiAirDist2 — IA anti-aereo ($D0/$D8): distancia horizontal
+label 00:91A5 RyuAiAntiAirDist3
+comment 00:91A5 RyuAiAntiAirDist3 — IA anti-aereo ($D0/$D8): distancia < $10?
+label 00:91B0 RyuAiAntiAirScript8F29
+comment 00:91B0 RyuAiAntiAirScript8F29 — IA anti-aereo ($D0/$D8): roteiro $00:8F29
+label 00:91B7 RyuAiAntiAirEnd
+comment 00:91B7 RyuAiAntiAirEnd — IA anti-aereo: nenhuma acao
 # Ken jogavel: o despacho anti-aereo em $8FDC-$8FE8 usa o truque do RTS sobre D00_9148, indexado por
 # FighterChar,y. A tabela tem UMA entrada (2 bytes) e o indice avanca de 1 em 1, entao so' o Ryu (0)
 # funciona; para Ken (1) os bytes lidos sao $91/$A4 -> alvo $A491 -> o RTS cai em $A492 ($02 = JAM) e a

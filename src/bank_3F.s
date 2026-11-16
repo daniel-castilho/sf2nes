@@ -33,7 +33,7 @@ HitFreeze_E000:
     rts                                         ; E03C  60
 
 
-; <- jsr L00_8F66, jsr L00_8FFC, jsr L00_9028, jsr L00_907B, jsr L00_90CA, jsr RyuAiAntiAir ... (+1)
+; <- jsr RyuAiAirDistX, jsr RyuAiOpponentJumpUp, jsr RyuAiOpponentDistX, jsr RyuAiState58Check, jsr RyuAiState69Dist, jsr RyuAiAntiAir ... (+1)
 ; modos: luta
 DistanceX:
     sec                                         ; E03D  38          A = |x do P2 - x do P1|
@@ -46,7 +46,7 @@ End:
     rts                                         ; E048  60          End
 
 
-; <- jsr L00_8F5C, jsr L00_9028
+; <- jsr RyuAiAirDistY, jsr RyuAiOpponentDistX
 ; modos: luta
 DistanceY:
     sec                                         ; E049  38
@@ -89,7 +89,7 @@ CmdKeyListRyu:
 ; zp_DD marca a origem da busca: $04 = GuardRedirect, $02 = golpe por botao, $01 = golpe especial.
 ; Com zp_DD = $04 e classe $28/$30: pula o 1o no' quando ele e' o proprio estado atual.
 ; Com zp_DD = $02 e classe $70-$98 e no' != estado atual: pula o 1o no'. E com o bit 2 da classe zerado
-; e CondOponenteLongeCostas: pula o 1o no' tambem (nao reage de costas).
+; e CondOpponentFarBack: pula o 1o no' tambem (nao reage de costas).
 ; <- jmp StateCondDispatchLoop, jmp SoundProc_EEB8, jmp GrabCheck, jmp TransViaTbl, jsr GuardRedirect
 ; modos: intro do round, luta
 StateCheckTransitions:
@@ -131,7 +131,7 @@ StateCondTableEntry:
     lda a:FighterState,x                        ; E111  BD 26 00    StateCondTableEntry — entrada da tabela de condições de transição
     and #$04                                    ; E114  29 04
     bne StateCondTableContinue                  ; E116  D0 05
-    jsr CondOponenteLongeCostas                 ; E118  20 B1 E1
+    jsr CondOpponentFarBack                     ; E118  20 B1 E1
     bne TransNextNode                           ; E11B  D0 0C
 StateCondTableContinue:
     ldy #$00                                    ; E11D  A0 00       StateCondTableContinue — continuação da tabela de condições
@@ -160,23 +160,23 @@ TransNextNode:
 TransApply:
     lda a:FrameFlags,x                          ; E13B  BD 38 00    condicao verdadeira: o no' atual vira o proximo estado; AnimTimer=1 nas classes de golpe/reacao ($28-$40/$B0-$E0) a menos que o quadro tenha a flag bit 3
     and #$08                                    ; E13E  29 08
-    bne L3F_E158                                ; E140  D0 16
+    bne TransAnimTimerSet                       ; E140  D0 16
     ldy #$05                                    ; E142  A0 05
     lda (zp_DB),y                               ; E144  B1 DB       [le bancos $01]
     and #$F8                                    ; E146  29 F8
     cmp #$28                                    ; E148  C9 28
-    bcc L3F_E15D                                ; E14A  90 11
+    bcc TransNextPtrSet                         ; E14A  90 11
     cmp #$41                                    ; E14C  C9 41
-    bcc L3F_E158                                ; E14E  90 08
+    bcc TransAnimTimerSet                       ; E14E  90 08
     cmp #$B0                                    ; E150  C9 B0
-    bcc L3F_E15D                                ; E152  90 09
+    bcc TransNextPtrSet                         ; E152  90 09
     cmp #$E1                                    ; E154  C9 E1
-    bcs L3F_E15D                                ; E156  B0 05
-L3F_E158:
-    lda #$01                                    ; E158  A9 01
+    bcs TransNextPtrSet                         ; E156  B0 05
+TransAnimTimerSet:
+    lda #$01                                    ; E158  A9 01       TransAnimTimerSet — em TransApply: quadro de golpe/reacao -> FighterAnimTimer = 1
     sta a:FighterAnimTimer,x                    ; E15A  9D 42 00
-L3F_E15D:
-    lda zp_DB                                   ; E15D  A5 DB
+TransNextPtrSet:
+    lda zp_DB                                   ; E15D  A5 DB       TransNextPtrSet — em TransApply: grava o ponteiro do proximo estado (FighterNextPtrLo/Hi)
     sta a:FighterNextPtrLo,x                    ; E15F  9D 22 00
     lda zp_DC                                   ; E162  A5 DC
     sta a:FighterNextPtrHi,x                    ; E164  9D 24 00
@@ -194,43 +194,44 @@ StateCondDispatch:
     rts                                         ; E170  60
 
 StateCondLo:
-    .byte <(CondOponenteAtaca-1)                ; E171  88          12 condicoes; cada entrada guarda endereco-1 (truque do RTS com pha/pha/rts)
-    .byte <(CondOponenteLongeCostas-1)          ; E172  B0
-    .byte <(CondOponentePerto-1)                ; E173  D5
+    .byte <(CondOpponentAttacks-1)              ; E171  88          12 condicoes; cada entrada guarda endereco-1 (truque do RTS com pha/pha/rts)
+    .byte <(CondOpponentFarBack-1)              ; E172  B0
+    .byte <(CondOpponentNear-1)                 ; E173  D5
     .byte <(CondEmPe-1)                         ; E174  EC
     .byte <(CondAgachado-1)                     ; E175  F2
     .byte <(CondNoAr-1)                         ; E176  F8
-    .byte <(CondNoChaoOuVelX-1)                 ; E177  03
+    .byte <(CondOnGroundOrVelX-1)               ; E177  03
     .byte <(CondInputBaixo-1)                   ; E178  11
     .byte <(CondProjetilLivre-1)                ; E179  23
-    .byte <(CondPodeAgarrar-1)                  ; E17A  2D
-    .byte <(CondVitoria-1)                      ; E17B  70
-    .byte <(CondRoundPerdido-1)                 ; E17C  95
+    .byte <(CondCanGrab-1)                      ; E17A  2D
+    .byte <(CondVictory-1)                      ; E17B  70
+    .byte <(CondRoundLost-1)                    ; E17C  95
 StateCondHi:
-    .byte >(CondOponenteAtaca-1)                ; E17D  E1
-    .byte >(CondOponenteLongeCostas-1)          ; E17E  E1
-    .byte >(CondOponentePerto-1)                ; E17F  E1
+    .byte >(CondOpponentAttacks-1)              ; E17D  E1
+    .byte >(CondOpponentFarBack-1)              ; E17E  E1
+    .byte >(CondOpponentNear-1)                 ; E17F  E1
     .byte >(CondEmPe-1)                         ; E180  E1
     .byte >(CondAgachado-1)                     ; E181  E1
     .byte >(CondNoAr-1)                         ; E182  E1
-    .byte >(CondNoChaoOuVelX-1)                 ; E183  E2
+    .byte >(CondOnGroundOrVelX-1)               ; E183  E2
     .byte >(CondInputBaixo-1)                   ; E184  E2
     .byte >(CondProjetilLivre-1)                ; E185  E2
-    .byte >(CondPodeAgarrar-1)                  ; E186  E2
-    .byte >(CondVitoria-1)                      ; E187  E2
-    .byte >(CondRoundPerdido-1)                 ; E188  E2
+    .byte >(CondCanGrab-1)                      ; E186  E2
+    .byte >(CondVictory-1)                      ; E187  E2
+    .byte >(CondRoundLost-1)                    ; E188  E2
 
 ; <- tabela StateCondLo
 ; modos: luta
-CondOponenteAtaca:
+CondOpponentAttacks:
     lda a:FighterState,x                        ; E189  BD 26 00    verdadeiro se EU estou em pe/agachado (classe & 3) E o oponente esta em classe de reacao ($70-$98), de golpe ($B0-$E0) ou com projetil no ar (dele)
     and #$03                                    ; E18C  29 03
-    bne L3F_E191                                ; E18E  D0 01
+    bne CondOpponentAttackClass                 ; E18E  D0 01
     rts                                         ; E190  60
 
 
-L3F_E191:
-    txa                                         ; E191  8A
+; modos: luta
+CondOpponentAttackClass:
+    txa                                         ; E191  8A          CondOpponentAttackClass — em CondOpponentAttacks: classe do oponente (reacao/golpe/projetil)
     eor #$01                                    ; E192  49 01
     tay                                         ; E194  A8
     lda a:FighterState,y                        ; E195  B9 26 00
@@ -256,7 +257,7 @@ End_E1AD:
 
 ; <- jsr StateCondDispatchLoop, tabela StateCondLo
 ; modos: intro do round, luta
-CondOponenteLongeCostas:
+CondOpponentFarBack:
     txa                                         ; E1B1  8A          verdadeiro se o oponente esta a |dx| >= $0F E eu de costas para ele: devolve $40 (e' o bit 6 de FighterFlip) para virar, 0 se esta encarando ou colado
     eor #$01                                    ; E1B2  49 01
     tay                                         ; E1B4  A8
@@ -269,13 +270,14 @@ CondOponenteLongeCostas:
     adc #$01                                    ; E1C1  69 01
 End_E1C3:
     cmp #$0F                                    ; E1C3  C9 0F       End
-    bcs L3F_E1CA                                ; E1C5  B0 03
+    bcs CondFarBackFacing                       ; E1C5  B0 03
     lda #$00                                    ; E1C7  A9 00
     rts                                         ; E1C9  60
 
 
-L3F_E1CA:
-    lda FighterX,x                              ; E1CA  B5 08
+; modos: intro do round, luta
+CondFarBackFacing:
+    lda FighterX,x                              ; E1CA  B5 08       CondFarBackFacing — em CondOpponentFarBack: devolve o bit de virada ($40)
     cmp a:FighterX,y                            ; E1CC  D9 08 00
     lda FighterFlip,x                           ; E1CF  B5 04
     bcc End_E1D5                                ; E1D1  90 02
@@ -286,21 +288,22 @@ End_E1D5:
 
 ; <- tabela StateCondLo
 ; modos: luta
-CondOponentePerto:
+CondOpponentNear:
     sec                                         ; E1D6  38          verdadeiro se |dx| < $21
     lda FighterX                                ; E1D7  A5 08
     sbc FighterX+1                              ; E1D9  E5 09
-    bne L3F_E1E0                                ; E1DB  D0 03
+    bne CondNearAbsDiff                         ; E1DB  D0 03
     lda #$01                                    ; E1DD  A9 01       (nt)
     rts                                         ; E1DF  60          (nt)
 
 
-L3F_E1E0:
-    bpl L3F_E1E6                                ; E1E0  10 04
+; modos: luta
+CondNearAbsDiff:
+    bpl CondNearLimit                           ; E1E0  10 04       CondNearAbsDiff — em CondOpponentNear: normaliza o sinal da diferenca de X
     eor #$FF                                    ; E1E2  49 FF
     adc #$01                                    ; E1E4  69 01
-L3F_E1E6:
-    cmp #$21                                    ; E1E6  C9 21
+CondNearLimit:
+    cmp #$21                                    ; E1E6  C9 21       CondNearLimit — em CondOpponentNear: compara |dx| com $21
     bcc End_E1EC                                ; E1E8  90 02
     lda #$00                                    ; E1EA  A9 00
 End_E1EC:
@@ -337,7 +340,7 @@ End_E203:
 
 ; <- tabela StateCondLo
 ; modos: luta
-CondNoChaoOuVelX:
+CondOnGroundOrVelX:
     lda FloorY                                  ; E204  AD BA 03    verdadeiro se FighterY = FloorY ou VelX/VelXSub != 0 (esta no chao ou deslizando)
     cmp FighterY,x                              ; E207  D5 0C
     beq End_E211                                ; E209  F0 06
@@ -380,15 +383,15 @@ End_E22B:
 
 ; <- tabela StateCondLo
 ; modos: luta
-CondPodeAgarrar:
+CondCanGrab:
     sec                                         ; E22E  38          |dx| < $18, os dois no chao, InputDir = frente/tras ($05/$06) e classe do oponente < $30 ou $50-$9F (estados de virar $A0-$A9 nao contam, nt)
     lda FighterX                                ; E22F  A5 08
     sbc FighterX+1                              ; E231  E5 09
-    bpl L3F_E239                                ; E233  10 04
+    bpl CondGrabAbsDiff                         ; E233  10 04
     eor #$FF                                    ; E235  49 FF
     adc #$01                                    ; E237  69 01
-L3F_E239:
-    cmp #$18                                    ; E239  C9 18
+CondGrabAbsDiff:
+    cmp #$18                                    ; E239  C9 18       CondGrabAbsDiff — em CondCanGrab: normaliza o sinal da diferenca de X
     bcs End_E26E                                ; E23B  B0 31
     lda FloorY                                  ; E23D  AD BA 03
     cmp FighterY                                ; E240  C5 0C
@@ -397,11 +400,11 @@ L3F_E239:
     bne End_E26E                                ; E246  D0 26
     lda InputDir,x                              ; E248  B5 86
     cmp #$05                                    ; E24A  C9 05
-    beq L3F_E252                                ; E24C  F0 04
+    beq CondGrabOpponentClass                   ; E24C  F0 04
     cmp #$06                                    ; E24E  C9 06
     bne End_E26E                                ; E250  D0 1C
-L3F_E252:
-    txa                                         ; E252  8A
+CondGrabOpponentClass:
+    txa                                         ; E252  8A          CondGrabOpponentClass — em CondCanGrab: classe do oponente ($30-$A8)
     eor #$01                                    ; E253  49 01
     tay                                         ; E255  A8
     lda a:FighterState,y                        ; E256  B9 26 00
@@ -427,7 +430,7 @@ End_E26E:
 
 ; <- tabela StateCondLo
 ; modos: intro do round, luta
-CondVitoria:
+CondVictory:
     cpx a:RoundResult                           ; E271  EC B9 00    verdadeiro se RoundResult = este lutador E o oponente esta caido (classe >= $F0) E nao ha projeteis no ar E o canal de voz esta livre
     bne End_E293                                ; E274  D0 1D
     txa                                         ; E276  8A
@@ -455,17 +458,18 @@ End_E293:
 
 ; <- tabela StateCondLo
 ; modos: intro do round, luta
-CondRoundPerdido:
+CondRoundLost:
     cpx a:RoundResult                           ; E296  EC B9 00    verdadeiro se RoundResult != este lutador E RoundResult != $FF (round encerrado; vale para empate)
-    beq L3F_E2A3                                ; E299  F0 08
+    beq CondRoundLostFalse                      ; E299  F0 08
     bit a:RoundResult                           ; E29B  2C B9 00
-    bmi L3F_E2A3                                ; E29E  30 03
+    bmi CondRoundLostFalse                      ; E29E  30 03
     lda #$01                                    ; E2A0  A9 01
     rts                                         ; E2A2  60
 
 
-L3F_E2A3:
-    lda #$00                                    ; E2A3  A9 00
+; modos: intro do round, luta
+CondRoundLostFalse:
+    lda #$00                                    ; E2A3  A9 00       CondRoundLostFalse — em CondRoundLost: caminho falso (RoundResult = este lutador ou $FF)
     rts                                         ; E2A5  60
 
 
@@ -485,17 +489,17 @@ L3F_E2A3:
 AnimAdvance:
     lda a:EffectType,x                          ; E2A6  BD 3C 00
     cmp #$0B                                    ; E2A9  C9 0B
-    bne L3F_E2B3                                ; E2AB  D0 06
+    bne AnimNextStateCheck                      ; E2AB  D0 06
     lda a:EffectParam,x                         ; E2AD  BD 3A 00
     jsr ProjLaunch                              ; E2B0  20 37 E8
-L3F_E2B3:
-    lda a:FighterNextPtrHi,x                    ; E2B3  BD 24 00
+AnimNextStateCheck:
+    lda a:FighterNextPtrHi,x                    ; E2B3  BD 24 00    AnimNextStateCheck — em AnimAdvance: ha proximo estado escolhido? (FighterNextPtrHi)
     beq FreezeRestore                           ; E2B6  F0 49
     ldy a:FighterState,x                        ; E2B8  BC 26 00
     cpy #$49                                    ; E2BB  C0 49
-    bne L3F_E2D8                                ; E2BD  D0 19
+    bne AnimStatePtrSet                         ; E2BD  D0 19
     ldy a:zp_62,x                               ; E2BF  BC 62 00
-    beq L3F_E2D8                                ; E2C2  F0 14
+    beq AnimStatePtrSet                         ; E2C2  F0 14
     lda a:FighterStatePtrHi,x                   ; E2C4  BD 20 00
     sta zp_D8                                   ; E2C7  85 D8
     lda a:FighterStatePtrLo,x                   ; E2C9  BD 1E 00
@@ -505,8 +509,8 @@ L3F_E2B3:
     sta a:FighterNextPtrLo,x                    ; E2D2  9D 22 00
     iny                                         ; E2D5  C8
     lda (zp_D7),y                               ; E2D6  B1 D7       [le bancos $01]
-L3F_E2D8:
-    sta zp_DA                                   ; E2D8  85 DA
+AnimStatePtrSet:
+    sta zp_DA                                   ; E2D8  85 DA       AnimStatePtrSet — em AnimAdvance: grava o ponteiro do novo estado e do novo quadro
     sta zp_D8                                   ; E2DA  85 D8
     sta a:FighterStatePtrHi,x                   ; E2DC  9D 20 00
     lda a:FighterNextPtrLo,x                    ; E2DF  BD 22 00
@@ -515,10 +519,10 @@ L3F_E2D8:
     clc                                         ; E2E7  18
     adc #$07                                    ; E2E8  69 07
     sta zp_D9                                   ; E2EA  85 D9
-    bcc L3F_E2F0                                ; E2EC  90 02
+    bcc AnimStateClassSet                       ; E2EC  90 02
     inc zp_DA                                   ; E2EE  E6 DA
-L3F_E2F0:
-    ldy #$05                                    ; E2F0  A0 05
+AnimStateClassSet:
+    ldy #$05                                    ; E2F0  A0 05       AnimStateClassSet — em AnimAdvance: aplica a classe do novo quadro (StateSetByte)
     lda (zp_D7),y                               ; E2F2  B1 D7       [le bancos $01]
     jsr StateSetByte                            ; E2F4  20 7F E4
     ldy #$06                                    ; E2F7  A0 06
@@ -930,7 +934,7 @@ RandomSeed:
     rts                                         ; E5B8  60
 
 
-; <- jsr L00_903D, jsr L00_90A5, jsr L00_90CA, jsr L00_90F5, jsr L00_9113, jsr AiStartScriptCheck ... (+1)
+; <- jsr RyuAiOpponentDistY, jsr RyuAiState58Random, jsr RyuAiState69Dist, jsr RyuAiState69DistDiv16, jsr RyuAiState69Random, jsr AiStartScriptCheck ... (+1)
 ; modos: luta
 Random:
     ldy RngState+1                              ; E5B9  A4 67
@@ -1237,7 +1241,7 @@ AiOpHi:
 AiCharRoutine:
     .word RyuAiThink-1                          ; E6E6  45 8F       uma entrada (endereco-1) por personagem; so o Ryu existe
 
-; <- jmp L00_8FB8, jmp L00_8FFC, jmp L00_9016, jmp L00_90A5, jmp L00_90C3, jmp L00_912B ... (+3)
+; <- jmp RyuAiProjDistDiv32, jmp RyuAiOpponentJumpUp, jmp RyuAiJumpScriptMid, jmp RyuAiState58Random, jmp RyuAiState58Script, jmp RyuAiState69RandomNow ... (+3)
 ; modos: luta
 AiStartScriptNow:
     sta AiScriptPtrLo,x                         ; E6E8  95 69       A/Y = ponteiro do roteiro; inicia sempre
@@ -1247,7 +1251,7 @@ AiStartScriptNow:
     jmp AiStartScriptCheck                      ; E6F0  4C 01 E7
 
 
-; <- jmp L00_8F7F, jmp L00_8F8F, jmp L00_8F96, jmp L00_8FC8, jmp L00_9028, jmp L00_903D ... (+10)
+; <- jmp RyuAiAirScriptPick, jmp RyuAiAirScriptDefault, jmp RyuAiProjCheck, jmp RyuAiProjScriptMid, jmp RyuAiOpponentDistX, jmp RyuAiOpponentDistY ... (+10)
 ; modos: luta
 AiStartScript:
     sta AiScriptPtrLo,x                         ; E6F3  95 69       A/Y = ponteiro do roteiro; so inicia se Random&7 < AiLevel (senao hesita)
@@ -1257,7 +1261,7 @@ AiStartScript:
     jmp AiStartScriptCheck                      ; E6FB  4C 01 E7
 
 
-; <- jmp RyuAiThink, jmp L00_8F5C, jmp L00_8F66, jmp L00_8F70, jmp L00_8FC2, jmp L00_8FE9 ... (+9)
+; <- jmp RyuAiThink, jmp RyuAiAirDistY, jmp RyuAiAirDistX, jmp RyuAiAirVelCheck, jmp RyuAiProjDistDiv64, jmp RyuAiOpponentWalkCheck ... (+9)
 ; modos: luta
 AiDoNothing:
     lda #$00                                    ; E6FE  A9 00
@@ -2777,7 +2781,7 @@ D3F_EF47:
     .byte $00,$00,$00,$FF,$FF,$FF,$FF,$FF,$FE,$FE,$FE,$FE,$FD; EF67
 
 ; Um quadro de logica da luta: atualiza os dois lutadores (alternando a ordem a cada quadro) e desenha.
-; <- farcall L3B_E455, farcall FadeIn, farcall FightFrame
+; <- farcall FadeOut_RoundEndPath, farcall FadeIn, farcall FightFrame
 ; modos: intro do round, luta, fim do round
 FightersUpdate:
     jsr LoadHitBoxesBoth                        ; EF74  20 A3 EB
@@ -4274,7 +4278,7 @@ PalRestore:
     rts                                         ; F8E6  60          PalRestore
 
 
-; <- farcall ScreenSupport, farcall L37_F616
+; <- farcall ScreenSupport, farcall TitleBlinkOn
 ; modos: aviso/QR, titulo
 JoyPollBoth:
     lda #$00                                    ; F8E7  A9 00
