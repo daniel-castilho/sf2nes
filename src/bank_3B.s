@@ -25,47 +25,47 @@ FighterLoadChar:
     sta a:FighterFrameBank,x                    ; E010  9D 18 00
     lda CharStateBankTbl,y                      ; E013  B9 C8 80    [bancos $3C idx $00..$00]
     sta a:FighterStateBank,x                    ; E016  9D 1A 00
-    lda D3C_80DC,y                              ; E019  B9 DC 80    [bancos $3C idx $00..$00]
+    lda CharHitBoxBankTbl,y                     ; E019  B9 DC 80    [bancos $3C idx $00..$00]
     sta a:zp_1C,x                               ; E01C  9D 1C 00
-    lda D3C_8000,y                              ; E01F  B9 00 80    [bancos $3C idx $00..$00]
+    lda CharDirTransLoTbl,y                     ; E01F  B9 00 80    [bancos $3C idx $00..$00]
     sta ram_031E,x                              ; E022  9D 1E 03
-    lda D3C_800A                                ; E025  AD 0A 80    [bancos $3C]
+    lda CharDirTransHiTbl                       ; E025  AD 0A 80    [bancos $3C]
     sta ram_0320,x                              ; E028  9D 20 03
-    lda D3C_8014,y                              ; E02B  B9 14 80    [bancos $3C idx $00..$00]
+    lda CharAttackTransLoTbl,y                  ; E02B  B9 14 80    [bancos $3C idx $00..$00]
     sta ram_0322,x                              ; E02E  9D 22 03
-    lda D3C_801E,y                              ; E031  B9 1E 80    [bancos $3C idx $00..$00]
+    lda CharAttackTransHiTbl,y                  ; E031  B9 1E 80    [bancos $3C idx $00..$00]
     sta ram_0324,x                              ; E034  9D 24 03
-    lda D3C_8028,y                              ; E037  B9 28 80    [bancos $3C idx $00..$00]
+    lda CharSpecialTransLoTbl,y                 ; E037  B9 28 80    [bancos $3C idx $00..$00]
     sta ram_0326,x                              ; E03A  9D 26 03
-    lda D3C_8032,y                              ; E03D  B9 32 80    [bancos $3C idx $00..$00]
+    lda CharSpecialTransHiTbl,y                 ; E03D  B9 32 80    [bancos $3C idx $00..$00]
     sta ram_0328,x                              ; E040  9D 28 03
-    lda D3C_803C,y                              ; E043  B9 3C 80    [bancos $3C idx $00..$00]
+    lda CharGuardReactLoTbl,y                   ; E043  B9 3C 80    [bancos $3C idx $00..$00]
     sta ram_032A,x                              ; E046  9D 2A 03
-    lda D3C_8046,y                              ; E049  B9 46 80    [bancos $3C idx $00..$00]
+    lda CharGuardReactHiTbl,y                   ; E049  B9 46 80    [bancos $3C idx $00..$00]
     sta ram_032C,x                              ; E04C  9D 2C 03
-    lda D3C_8050,y                              ; E04F  B9 50 80    [bancos $3C idx $00..$00]
+    lda CharHitReact1LoTbl,y                    ; E04F  B9 50 80    [bancos $3C idx $00..$00]
     sta ram_032E,x                              ; E052  9D 2E 03
-    lda D3C_805A,y                              ; E055  B9 5A 80    [bancos $3C idx $00..$00]
+    lda CharHitReact1HiTbl,y                    ; E055  B9 5A 80    [bancos $3C idx $00..$00]
     sta ram_0330,x                              ; E058  9D 30 03
-    lda D3C_8078,y                              ; E05B  B9 78 80    [bancos $3C idx $00..$00]
+    lda CharHitReact0LoTbl,y                    ; E05B  B9 78 80    [bancos $3C idx $00..$00]
     sta ram_0332,x                              ; E05E  9D 32 03
-    lda D3C_8082,y                              ; E061  B9 82 80    [bancos $3C idx $00..$00]
+    lda CharHitReact0HiTbl,y                    ; E061  B9 82 80    [bancos $3C idx $00..$00]
     sta ram_0334,x                              ; E064  9D 34 03
-    lda D3C_8064,y                              ; E067  B9 64 80    [bancos $3C idx $00..$00]
+    lda CharHitReact2LoTbl,y                    ; E067  B9 64 80    [bancos $3C idx $00..$00]
     sta ram_0336,x                              ; E06A  9D 36 03
-    lda D3C_806E,y                              ; E06D  B9 6E 80    [bancos $3C idx $00..$00]
+    lda CharHitReact2HiTbl,y                    ; E06D  B9 6E 80    [bancos $3C idx $00..$00]
     sta ram_0338,x                              ; E070  9D 38 03
-    lda D3C_808C,y                              ; E073  B9 8C 80    [bancos $3C idx $00..$00]
+    lda CharHitReact12LoTbl,y                   ; E073  B9 8C 80    [bancos $3C idx $00..$00]
     sta ram_033A,x                              ; E076  9D 3A 03
-    lda D3C_8096,y                              ; E079  B9 96 80    [bancos $3C idx $00..$00]
+    lda CharHitReact12HiTbl,y                   ; E079  B9 96 80    [bancos $3C idx $00..$00]
     sta ram_033C,x                              ; E07C  9D 3C 03
-    lda D3C_80A0,y                              ; E07F  B9 A0 80    [bancos $3C idx $00..$00]
+    lda CharCmdListLoTbl,y                      ; E07F  B9 A0 80    [bancos $3C idx $00..$00]
     sta ram_033E,x                              ; E082  9D 3E 03
-    lda D3C_80AA,y                              ; E085  B9 AA 80    [bancos $3C idx $00..$00]
+    lda CharCmdListHiTbl,y                      ; E085  B9 AA 80    [bancos $3C idx $00..$00]
     sta ram_0340,x                              ; E088  9D 40 03
-    lda D3C_80B4,y                              ; E08B  B9 B4 80    [bancos $3C idx $00..$00]
+    lda CharAiScriptLoTbl,y                     ; E08B  B9 B4 80    [bancos $3C idx $00..$00]
     sta ram_0342,x                              ; E08E  9D 42 03
-    lda D3C_80BE,y                              ; E091  B9 BE 80    [bancos $3C idx $00..$00]
+    lda CharAiScriptHiTbl,y                     ; E091  B9 BE 80    [bancos $3C idx $00..$00]
     sta ram_0344,x                              ; E094  9D 44 03
     rts                                         ; E097  60
 
@@ -151,17 +151,17 @@ FighterFlipSet:
     sta a:HitReactClass,x                       ; E141  9D 16 00
     lda #$58                                    ; E144  A9 58
     sta FighterHP,x                             ; E146  95 0E
-    lda #<D3C_80E6                              ; E148  A9 E6
+    lda #<CharPal0FightTbl                      ; E148  A9 E6
     sta zp_DB                                   ; E14A  85 DB
-    lda #>D3C_80E6                              ; E14C  A9 80
+    lda #>CharPal0FightTbl                      ; E14C  A9 80
     sta zp_DC                                   ; E14E  85 DC
-    lda #<D3C_815E                              ; E150  A9 5E
+    lda #<CharPal1FightTbl                      ; E150  A9 5E
     sta zp_DD                                   ; E152  85 DD
-    lda #>D3C_815E                              ; E154  A9 81
+    lda #>CharPal1FightTbl                      ; E154  A9 81
     sta zp_DE                                   ; E156  85 DE
-    lda #<D3C_83B6                              ; E158  A9 B6
+    lda #<CharPal2Tbl                           ; E158  A9 B6
     sta zp_DF                                   ; E15A  85 DF
-    lda #>D3C_83B6                              ; E15C  A9 83
+    lda #>CharPal2Tbl                           ; E15C  A9 83
     sta zp_E0                                   ; E15E  85 E0
     jsr PortraitLoadPalettes                    ; E160  20 81 E1
     ldx #$02                                    ; E163  A2 02
@@ -185,9 +185,9 @@ PortraitLoadPalettes:
     lda #$3C                                    ; E181  A9 3C       carrega as 3 paletas (9 cores) do lutador das tabelas do banco $3C
     ora #$80                                    ; E183  09 80
     sta MMC5_PRG_8000                           ; E185  8D 14 51
-    lda #<D3C_83B6                              ; E188  A9 B6
+    lda #<CharPal2Tbl                           ; E188  A9 B6
     sta zp_DF                                   ; E18A  85 DF
-    lda #>D3C_83B6                              ; E18C  A9 83
+    lda #>CharPal2Tbl                           ; E18C  A9 83
     sta zp_E0                                   ; E18E  85 E0
     lda FighterChar,x                           ; E190  B5 00
     asl a                                       ; E192  0A
@@ -833,7 +833,7 @@ RoundIntro_DrawNames:
     sta MMC5_PRG_8000                           ; E642  8D 14 51
     lda FighterChar                             ; E645  A5 00
     tax                                         ; E647  AA
-    ldy D3C_851E,x                              ; E648  BC 1E 85    [bancos $3C idx $00..$00]
+    ldy CharNameLenTbl,x                        ; E648  BC 1E 85    [bancos $3C idx $00..$00]
     asl a                                       ; E64B  0A
     asl a                                       ; E64C  0A
     asl a                                       ; E64D  0A
@@ -850,7 +850,7 @@ RoundIntro_NameP1:
     bne RoundIntro_NameP1                       ; E661  D0 F6
     lda FighterChar+1                           ; E663  A5 01
     tax                                         ; E665  AA
-    ldy D3C_851E,x                              ; E666  BC 1E 85    [bancos $3C idx $00..$00]
+    ldy CharNameLenTbl,x                        ; E666  BC 1E 85    [bancos $3C idx $00..$00]
     asl a                                       ; E669  0A
     asl a                                       ; E66A  0A
     asl a                                       ; E66B  0A
@@ -1747,26 +1747,26 @@ PortraitSetupP1:
 PortraitP1WinSet:
     cpx a:RoundResult                           ; EE43  EC B9 00    PortraitP1WinSet — retrato do P1: P1 venceu (RoundResult = 0) -> layout de vitoria
     bne PortraitP1LoseSet                       ; EE46  D0 13
-    lda #<D3C_81D6                              ; EE48  A9 D6
+    lda #<CharPal0WinTbl                        ; EE48  A9 D6
     sta zp_DB                                   ; EE4A  85 DB
-    lda #>D3C_81D6                              ; EE4C  A9 81
+    lda #>CharPal0WinTbl                        ; EE4C  A9 81
     sta zp_DC                                   ; EE4E  85 DC
-    lda #<D3C_824E                              ; EE50  A9 4E
+    lda #<CharPal1WinTbl                        ; EE50  A9 4E
     sta zp_DD                                   ; EE52  85 DD
-    lda #>D3C_824E                              ; EE54  A9 82
+    lda #>CharPal1WinTbl                        ; EE54  A9 82
     sta zp_DE                                   ; EE56  85 DE
     jmp PortraitLoadPalettesP1                  ; EE58  4C 6B EE
 
 
 ; modos: frase final
 PortraitP1LoseSet:
-    lda #<D3C_82C6                              ; EE5B  A9 C6       PortraitP1LoseSet — retrato do P1: P1 perdeu -> layout de derrota
+    lda #<CharPal0LoseTbl                       ; EE5B  A9 C6       PortraitP1LoseSet — retrato do P1: P1 perdeu -> layout de derrota
     sta zp_DB                                   ; EE5D  85 DB
-    lda #>D3C_82C6                              ; EE5F  A9 82
+    lda #>CharPal0LoseTbl                       ; EE5F  A9 82
     sta zp_DC                                   ; EE61  85 DC
-    lda #<D3C_833E                              ; EE63  A9 3E
+    lda #<CharPal1LoseTbl                       ; EE63  A9 3E
     sta zp_DD                                   ; EE65  85 DD
-    lda #>D3C_833E                              ; EE67  A9 83
+    lda #>CharPal1LoseTbl                       ; EE67  A9 83
     sta zp_DE                                   ; EE69  85 DE
 
 ; <- jmp PortraitSetupP1
@@ -1798,16 +1798,16 @@ PortraitPalCopyLoopP1End:
     tax                                         ; EE9D  AA
     lda a:RoundResult                           ; EE9E  AD B9 00
     bne PortraitP1LoseLayout                    ; EEA1  D0 0B
-    lda D3C_84A6,x                              ; EEA3  BD A6 84    [bancos $3C idx $00..$12]
-    ldy D3C_84A6+1,x                            ; EEA6  BC A7 84    [bancos $3C idx $00..$12]
+    lda PortraitWinLayoutTbl,x                  ; EEA3  BD A6 84    [bancos $3C idx $00..$12]
+    ldy PortraitWinLayoutTbl+1,x                ; EEA6  BC A7 84    [bancos $3C idx $00..$12]
     ldx #$02                                    ; EEA9  A2 02
     jmp PortraitBuildP1                         ; EEAB  4C B6 EE
 
 
 ; modos: frase final
 PortraitP1LoseLayout:
-    lda D3C_84BA,x                              ; EEAE  BD BA 84    [bancos $3C idx $00..$00] PortraitP1LoseLayout — layout (metasprites) do retrato de derrota do P1
-    ldy D3C_84BA+1,x                            ; EEB1  BC BB 84    [bancos $3C idx $00..$00]
+    lda PortraitLoseLayoutTbl,x                 ; EEAE  BD BA 84    [bancos $3C idx $00..$00] PortraitP1LoseLayout — layout (metasprites) do retrato de derrota do P1
+    ldy PortraitLoseLayoutTbl+1,x               ; EEB1  BC BB 84    [bancos $3C idx $00..$00]
     ldx #$03                                    ; EEB4  A2 03
 
 ; <- jmp PortraitP1LoseSet
@@ -1826,15 +1826,15 @@ PortraitBuildP1:
     sta MMC5_PRG_8000                           ; EECD  8D 14 51
     lda a:RoundResult                           ; EED0  AD B9 00
     bne PortraitP1LoseTiles                     ; EED3  D0 07
-    lda #<D3C_842E                              ; EED5  A9 2E
-    ldx #>D3C_842E                              ; EED7  A2 84
+    lda #<PortraitWinTilesTbl                   ; EED5  A9 2E
+    ldx #>PortraitWinTilesTbl                   ; EED7  A2 84
     jmp PortraitTilesP1                         ; EED9  4C E0 EE
 
 
 ; modos: frase final
 PortraitP1LoseTiles:
-    lda #<D3C_846A                              ; EEDC  A9 6A       PortraitP1LoseTiles — tiles do retrato de derrota do P1
-    ldx #>D3C_846A                              ; EEDE  A2 84
+    lda #<PortraitLoseTilesTbl                  ; EEDC  A9 6A       PortraitP1LoseTiles — tiles do retrato de derrota do P1
+    ldx #>PortraitLoseTilesTbl                  ; EEDE  A2 84
 
 ; <- jmp PortraitP1LoseLayout
 ; modos: selecao, VS, frase final
@@ -1888,26 +1888,26 @@ PortraitSetupP2:
 PortraitP2WinSet:
     cpx a:RoundResult                           ; EF2F  EC B9 00    PortraitP2WinSet — retrato do P2: P2 venceu (RoundResult = 1) -> layout de vitoria
     bne PortraitP2LoseSet                       ; EF32  D0 13
-    lda #<D3C_81D6                              ; EF34  A9 D6
+    lda #<CharPal0WinTbl                        ; EF34  A9 D6
     sta zp_DB                                   ; EF36  85 DB
-    lda #>D3C_81D6                              ; EF38  A9 81
+    lda #>CharPal0WinTbl                        ; EF38  A9 81
     sta zp_DC                                   ; EF3A  85 DC
-    lda #<D3C_824E                              ; EF3C  A9 4E
+    lda #<CharPal1WinTbl                        ; EF3C  A9 4E
     sta zp_DD                                   ; EF3E  85 DD
-    lda #>D3C_824E                              ; EF40  A9 82
+    lda #>CharPal1WinTbl                        ; EF40  A9 82
     sta zp_DE                                   ; EF42  85 DE
     jmp PortraitLoadPalettesP2                  ; EF44  4C 57 EF
 
 
 ; modos: frase final
 PortraitP2LoseSet:
-    lda #<D3C_82C6                              ; EF47  A9 C6       PortraitP2LoseSet — retrato do P2: P2 perdeu -> layout de derrota
+    lda #<CharPal0LoseTbl                       ; EF47  A9 C6       PortraitP2LoseSet — retrato do P2: P2 perdeu -> layout de derrota
     sta zp_DB                                   ; EF49  85 DB
-    lda #>D3C_82C6                              ; EF4B  A9 82
+    lda #>CharPal0LoseTbl                       ; EF4B  A9 82
     sta zp_DC                                   ; EF4D  85 DC
-    lda #<D3C_833E                              ; EF4F  A9 3E
+    lda #<CharPal1LoseTbl                       ; EF4F  A9 3E
     sta zp_DD                                   ; EF51  85 DD
-    lda #>D3C_833E                              ; EF53  A9 83
+    lda #>CharPal1LoseTbl                       ; EF53  A9 83
     sta zp_DE                                   ; EF55  85 DE
 
 ; <- jmp PortraitSetupP2
@@ -1933,15 +1933,15 @@ PortraitPalCopyP2:
     lda a:RoundResult                           ; EF7C  AD B9 00
     cmp #$01                                    ; EF7F  C9 01
     bne PortraitP2LoseLayout                    ; EF81  D0 09
-    lda D3C_84A6,x                              ; EF83  BD A6 84    [bancos $3C idx $00..$00]
-    ldy D3C_84A6+1,x                            ; EF86  BC A7 84    [bancos $3C idx $00..$00]
+    lda PortraitWinLayoutTbl,x                  ; EF83  BD A6 84    [bancos $3C idx $00..$00]
+    ldy PortraitWinLayoutTbl+1,x                ; EF86  BC A7 84    [bancos $3C idx $00..$00]
     jmp PortraitBuildP2                         ; EF89  4C 92 EF
 
 
 ; modos: frase final
 PortraitP2LoseLayout:
-    lda D3C_84BA,x                              ; EF8C  BD BA 84    [bancos $3C idx $00..$00] PortraitP2LoseLayout — layout (metasprites) do retrato de derrota do P2
-    ldy D3C_84BA+1,x                            ; EF8F  BC BB 84    [bancos $3C idx $00..$00]
+    lda PortraitLoseLayoutTbl,x                 ; EF8C  BD BA 84    [bancos $3C idx $00..$00] PortraitP2LoseLayout — layout (metasprites) do retrato de derrota do P2
+    ldy PortraitLoseLayoutTbl+1,x               ; EF8F  BC BB 84    [bancos $3C idx $00..$00]
 
 ; <- jmp PortraitP2LoseSet
 ; modos: VS, frase final
@@ -2012,7 +2012,7 @@ PortraitNameClearLoop:
     sta MMC5_PRG_8000                           ; F005  8D 14 51
     lda #$07                                    ; F008  A9 07
     sec                                         ; F00A  38
-    sbc D3C_851E,x                              ; F00B  FD 1E 85    [bancos $3C idx $00..$09]
+    sbc CharNameLenTbl,x                        ; F00B  FD 1E 85    [bancos $3C idx $00..$09]
     lsr a                                       ; F00E  4A
     tay                                         ; F00F  A8
     txa                                         ; F010  8A

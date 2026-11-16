@@ -5,6 +5,7 @@
 - **ROM de verificação:** `build/sf2ne.nes` — SHA-1 `3ad177a0a7867a821e6c1709b4e6dbdda3555aa1`.
 - **Linha de base (Fase 1):** 379 rótulos automáticos de código, 1.213 de dados, 549 semânticos.
 - **Estado atual:** 0 rótulos automáticos de código; 1.213 de dados; 928 semânticos únicos; 2.141 nomes únicos em 2.145 definições.
+  *Este é o retrato do fim da Fase 3. Depois dele, o lote de dados `$3C` renomeou 33 labels (`tasks/DATA_NAMING_3C.md`), levando a 1.180 automáticos de dados e 961 semânticos únicos — ver `docs/ESTADO_DO_PROJETO.md` §11.*
 - **Escopo:** somente rótulos e comentários; nenhum byte de código ou dado foi alterado.
 - **Data:** 2026-11-15
 
@@ -539,6 +540,6 @@ Método canônico: `grep -rhE '^[A-Za-z_][A-Za-z0-9_]*:$' src/bank_*.s`, com `L<
 ## 8. Pendências e próximo passo
 
 1. **Commit:** os lotes P2, PAD e FT2 e esta documentação aguardam aprovação explícita do usuário; nada foi commitado ou pushado nesta sessão. O relatório de execução está em `tasks/PHASE_3_EXECUTION_REPORT.md`.
-2. **Lote de dados (`D<bb>_<aaaa>`, 1.213):** ainda não priorizado; o maior valor está em tabelas de quadros, colisão, paletas e IA.
+2. **Lote de dados (`D<bb>_<aaaa>`, 1.213):** priorizado em `tasks/DATA_LABEL_INVENTORY.tsv`; o primeiro lote (`$3C`, 33 labels) foi aplicado em `tasks/DATA_NAMING_3C.md`. Restam 1.180.
 3. **Decisões D-01…D-07:** permanecem `PENDENTE` em `tasks/STABILIZATION_BACKLOG.md`.
 4. **Migração de estados/quadros para TOML:** não autorizada e não iniciada.

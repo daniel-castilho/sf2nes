@@ -11,88 +11,88 @@
 ; Ordem das colunas: 0 RYU, 1 KEN, 2 CHUN LI, 3 GUILE, 4 BLANKA, 5 EHONDA, 6 BALROG, 7 SAGAT, 8 M.BISON, 9 ZANGIEF.
 ; Colunas 0 (Ryu) e 1 (Ken) preenchidas nas tabelas de ponteiros. A coluna 1 aponta para o banco de
 ; estados $05 (janela $A000) e para os frames/colisoes do banco $04.
-D3C_8000:
+CharDirTransLoTbl:
     .byte <(D01_A000)                           ; 8000  00
     .byte $00,$00,$00,$00,$00,$00,$00,$00,$00   ; 8001
-D3C_800A:
+CharDirTransHiTbl:
     .byte >(D01_A000)                           ; 800A  A0
     .byte $A0,$00,$00,$00,$00,$00,$00,$00,$00   ; 800B              Ken: >D05_A000
-D3C_8014:
+CharAttackTransLoTbl:
     .byte <(D01_A012)                           ; 8014  12
     .byte $12,$00,$00,$00,$00,$00,$00,$00,$00   ; 8015              Ken: <D05_A012
-D3C_801E:
+CharAttackTransHiTbl:
     .byte >(D01_A012)                           ; 801E  A0
     .byte $A0,$00,$00,$00,$00,$00,$00,$00,$00   ; 801F              Ken: >D05_A012
-D3C_8028:
+CharSpecialTransLoTbl:
     .byte <(RyuSpcTrans)                        ; 8028  1A
     .byte $1A,$00,$00,$00,$00,$00,$00,$00,$00   ; 8029              Ken: <KenSpcTrans
-D3C_8032:
+CharSpecialTransHiTbl:
     .byte >(RyuSpcTrans)                        ; 8032  A0
     .byte $A0,$00,$00,$00,$00,$00,$00,$00,$00   ; 8033              Ken: >KenSpcTrans
-D3C_803C:
+CharGuardReactLoTbl:
     .byte <(D01_A026)                           ; 803C  26
     .byte $26,$00,$00,$00,$00,$00,$00,$00,$00   ; 803D              Ken: <D05_A026
-D3C_8046:
+CharGuardReactHiTbl:
     .byte >(D01_A026)                           ; 8046  A0
     .byte $A0,$00,$00,$00,$00,$00,$00,$00,$00   ; 8047              Ken: >D05_A026
-D3C_8050:
+CharHitReact1LoTbl:
     .byte <(D01_A03E)                           ; 8050  3E
     .byte $3E,$00,$00,$00,$00,$00,$00,$00,$00   ; 8051              Ken: <D05_A03E
-D3C_805A:
+CharHitReact1HiTbl:
     .byte >(D01_A03E)                           ; 805A  A0
     .byte $A0,$00,$00,$00,$00,$00,$00,$00,$00   ; 805B              Ken: >D05_A03E
-D3C_8064:
+CharHitReact2LoTbl:
     .byte <(D01_A056)                           ; 8064  56
     .byte $56,$00,$00,$00,$00,$00,$00,$00,$00   ; 8065              Ken: <D05_A056
-D3C_806E:
+CharHitReact2HiTbl:
     .byte >(D01_A056)                           ; 806E  A0
     .byte $A0,$00,$00,$00,$00,$00,$00,$00,$00   ; 806F              Ken: >D05_A056
-D3C_8078:
+CharHitReact0LoTbl:
     .byte <(D01_A06E)                           ; 8078  6E
     .byte $6E,$00,$00,$00,$00,$00,$00,$00,$00   ; 8079              Ken: <D05_A06E
-D3C_8082:
+CharHitReact0HiTbl:
     .byte >(D01_A06E)                           ; 8082  A0
     .byte $A0,$00,$00,$00,$00,$00,$00,$00,$00   ; 8083              Ken: >D05_A06E
-D3C_808C:
+CharHitReact12LoTbl:
     .byte <(D01_A086)                           ; 808C  86
     .byte $86,$00,$00,$00,$00,$00,$00,$00,$00   ; 808D              Ken: <D05_A086
-D3C_8096:
+CharHitReact12HiTbl:
     .byte >(D01_A086)                           ; 8096  A0
     .byte $A0,$00,$00,$00,$00,$00,$00,$00,$00   ; 8097              Ken: >D05_A086
-D3C_80A0:
+CharCmdListLoTbl:
     .byte <(CmdKeyListRyu)                      ; 80A0  C0
     .byte $C0,$00,$00,$00,$00,$00,$00,$00,$00   ; 80A1              Ken: <CmdKeyListRyu
-D3C_80AA:
+CharCmdListHiTbl:
     .byte >(CmdKeyListRyu)                      ; 80AA  E0
     .byte $E0,$00,$00,$00,$00,$00,$00,$00,$00   ; 80AB              Ken: >CmdKeyListRyu
-D3C_80B4:
+CharAiScriptLoTbl:
     .byte <(D00_8E72)                           ; 80B4  72
     .byte $E0,$00,$00,$00,$00,$00,$00,$00,$00   ; 80B5              Ken: <D04_90E0 (stub de IA)
-D3C_80BE:
+CharAiScriptHiTbl:
     .byte >(D00_8E72)                           ; 80BE  8E
     .byte $90,$00,$00,$00,$00,$00,$00,$00,$00   ; 80BF              Ken: >D04_90E0 (stub de IA)
 CharStateBankTbl:
     .byte $01,$05,$01,$01,$01,$01,$01,$01,$00,$01; 80C8              coluna 1 (Ken) = banco de estados $05
 CharFrameBankTbl:
     .byte $00,$04,$08,$0C,$10,$00,$00,$1C,$20,$24; 80D2
-D3C_80DC:
+CharHitBoxBankTbl:
     .byte $00,$04,$00,$00,$00,$00,$00,$00,$20,$00; 80DC
 
 ; Ken: tripla 0 = azul (B) e tripla 1 = vermelho (A). O motor grava em zp_12 o
 ; botao de confirmacao (A -> 1, B -> 0) e usa esse indice como paleta do P1.
-D3C_80E6:
+CharPal0FightTbl:
     .byte $0F,$36,$20,$0F,$36,$00,$0F,$36,$2D,$0F,$36,$31,$0F,$36,$02,$0F; 80E6
     .byte $36,$16,$0F,$36,$3D,$0F,$36,$12       ; 80F6
     .res 72, $FF                                ; 80FE
     .byte $16,$0F,$36,$19,$0F,$38,$11,$0F,$38,$10,$0F,$36,$FF,$FF,$FF,$FF; 8146
     .byte $FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF       ; 8156
-D3C_815E:
+CharPal1FightTbl:
     .byte $0F,$36,$16,$0F,$36,$11,$0F,$36,$27,$0F,$36,$20,$36,$0F,$27,$36; 815E
     .byte $0F,$27,$36,$0F,$27,$36,$0F,$27       ; 816E
     .res 72, $FF                                ; 8176
     .byte $16,$0F,$36,$19,$0F,$38,$11,$0F,$38,$10,$0F,$36,$FF,$FF,$FF,$FF; 81BE
     .byte $FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF       ; 81CE
-D3C_81D6:
+CharPal0WinTbl:
     .byte $26,$36,$20,$26,$36,$00,$26,$36,$2D,$26,$36,$31,$26,$01,$27,$26; 81D6
     .byte $16,$27,$26,$3D,$27,$26,$11,$27,$26,$21,$20,$26,$25,$20,$26,$22; 81E6
     .byte $32,$26,$10,$20,$26,$19,$37,$26,$17,$37,$26,$01,$37,$26,$11,$37; 81F6
@@ -101,7 +101,7 @@ D3C_81D6:
     .byte $07,$17,$27,$08,$18,$28,$17,$27,$37,$18,$28,$38,$16,$26,$36,$1A; 822A
     .byte $27,$37,$11,$27,$37,$10,$26,$36,$17,$26,$36,$17,$26,$36,$17,$26; 823A
     .byte $36,$17,$26,$36                       ; 824A
-D3C_824E:
+CharPal1WinTbl:
     .byte $26,$17,$16,$26,$17,$11,$26,$17,$27,$26,$17,$20,$26,$36,$27,$26; 824E
     .byte $36,$27,$26,$36,$27,$26,$36,$27,$26,$21,$36,$26,$25,$36,$26,$22; 825E
     .byte $36,$26,$10,$37,$26,$27,$37,$26,$27,$37,$26,$27,$37,$26,$27,$37; 826E
@@ -110,27 +110,27 @@ D3C_824E:
     .byte $16,$17,$27,$16,$18,$28,$16,$27,$37,$16,$28,$38,$16,$26,$06,$1A; 82A2
     .byte $27,$0A,$11,$27,$01,$10,$26,$00,$17,$16,$36,$17,$00,$36,$17,$06; 82B2
     .byte $36,$17,$10,$36                       ; 82C2
-D3C_82C6:
+CharPal0LoseTbl:
     .byte $26,$36,$20,$26,$36,$00,$26,$36,$2D,$26,$36,$31,$26,$01,$27,$26; 82C6
     .byte $16,$27,$26,$3D,$27,$26,$11,$27       ; 82D6
     .res 96, $FF                                ; 82DE
-D3C_833E:
+CharPal1LoseTbl:
     .byte $17,$26,$16,$17,$26,$11,$17,$26,$27,$17,$26,$20,$36,$26,$27,$36; 833E
     .byte $26,$27,$36,$26,$27,$36,$26,$27       ; 834E
     .res 96, $FF                                ; 8356
-D3C_83B6:
+CharPal2Tbl:
     .byte $26,$36,$16,$26,$36,$16,$26,$36,$16,$26,$36,$16,$26,$36,$16,$26; 83B6
     .byte $36,$16,$26,$36,$16,$26,$36,$16       ; 83C6
     .res 96, $FF                                ; 83CE
-D3C_842E:
+PortraitWinTilesTbl:
     .byte $00,$CC,$44,$DD,$F5,$FD,$00,$CC,$00,$DC,$F0,$FD,$55,$DD,$00,$CC; 842E
     .byte $F0,$FC,$40,$CC,$55,$DD,$F5,$FD,$00,$CC,$54,$DC,$F5,$FD,$FF,$FF; 843E
     .byte $FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$44,$DD,$45,$DD,$F4,$FD; 844E
     .byte $00,$CC,$55,$CC,$F5,$FC,$55,$DD,$55,$CD,$F5,$FC; 845E
-D3C_846A:
+PortraitLoseTilesTbl:
     .byte $00,$CC,$88,$DE,$F5,$FD,$00,$CC,$00,$DC,$F0,$FD; 846A
     .res 48, $FF                                ; 8476
-D3C_84A6:
+PortraitWinLayoutTbl:
     .word D00_8A9D                              ; 84A6  9D 8A
     .word D04_8A59                              ; 84A8  59 8A
     .word D08_8000                              ; 84AA  00 80
@@ -140,7 +140,7 @@ D3C_84A6:
     .word D1C_8000                              ; 84B4  00 80
     .word D20_8391                              ; 84B6  91 83
     .word D24_8000                              ; 84B8  00 80
-D3C_84BA:
+PortraitLoseLayoutTbl:
     .word D00_8144                              ; 84BA  44 81
     .byte $F1,$90,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00; 84BC              Ken: layout de derrota em $04:90F1
     .byte $00,$00                               ; 84CC
@@ -150,7 +150,7 @@ CharNameTbl:
     .byte $42,$4C,$41,$4E,$4B,$41,$20,$20,$45,$48,$4F,$4E,$44,$41,$20,$20; 84EE
     .byte $42,$41,$4C,$52,$4F,$47,$20,$20,$53,$41,$47,$41,$54,$20,$20,$20; 84FE
     .byte $4D,$2E,$42,$49,$53,$4F,$4E,$20,$5A,$41,$4E,$47,$49,$45,$46,$20; 850E
-D3C_851E:
+CharNameLenTbl:
     .byte $03,$03,$07,$05,$06,$06,$06,$05,$07,$07; 851E
 WinQuoteLine1:
     .byte $59,$4F,$55,$20,$4D,$55,$53,$54,$20,$44,$45,$46,$45,$41,$54,$20; 8528              frase do vencedor, 1a linha: 22 caracteres por personagem

@@ -1960,6 +1960,48 @@ comment 01:A01A 6 ponteiros de transicao dos especiais do Ryu (ram_0326 aponta p
 # ============================================================================================================
 label 3C:80C8 CharStateBankTbl
 label 3C:80D2 CharFrameBankTbl
+
+# --- ficha: 20 tabelas de ponteiros (1 byte por personagem; par Lo/Hi) ---
+label 3C:8000 CharDirTransLoTbl
+label 3C:800A CharDirTransHiTbl
+label 3C:8014 CharAttackTransLoTbl
+label 3C:801E CharAttackTransHiTbl
+label 3C:8028 CharSpecialTransLoTbl
+label 3C:8032 CharSpecialTransHiTbl
+label 3C:803C CharGuardReactLoTbl
+label 3C:8046 CharGuardReactHiTbl
+label 3C:8050 CharHitReact1LoTbl
+label 3C:805A CharHitReact1HiTbl
+label 3C:8064 CharHitReact2LoTbl
+label 3C:806E CharHitReact2HiTbl
+label 3C:8078 CharHitReact0LoTbl
+label 3C:8082 CharHitReact0HiTbl
+label 3C:808C CharHitReact12LoTbl
+label 3C:8096 CharHitReact12HiTbl
+label 3C:80A0 CharCmdListLoTbl
+label 3C:80AA CharCmdListHiTbl
+label 3C:80B4 CharAiScriptLoTbl
+label 3C:80BE CharAiScriptHiTbl
+
+# --- ficha: banco de colisao por personagem ---
+label 3C:80DC CharHitBoxBankTbl
+
+# --- paletas (12 bytes por personagem: 3 cores + 3 de passo) ---
+label 3C:80E6 CharPal0FightTbl
+label 3C:815E CharPal1FightTbl
+label 3C:83B6 CharPal2Tbl
+label 3C:81D6 CharPal0WinTbl
+label 3C:824E CharPal1WinTbl
+label 3C:82C6 CharPal0LoseTbl
+label 3C:833E CharPal1LoseTbl
+
+# --- retratos: tiles, layouts e nomes ---
+label 3C:842E PortraitWinTilesTbl
+label 3C:846A PortraitLoseTilesTbl
+label 3C:84A6 PortraitWinLayoutTbl
+label 3C:84BA PortraitLoseLayoutTbl
+label 3C:851E CharNameLenTbl
+
 block 3C:8000 ------------------------------------------------------------------------------------------------
 block 3C:8000 FICHAS DOS PERSONAGENS: 23 tabelas de 10 bytes (uma coluna por personagem), lidas por FighterLoadChar.
 block 3C:8000 Ordem das colunas: 0 RYU, 1 KEN, 2 CHUN LI, 3 GUILE, 4 BLANKA, 5 EHONDA, 6 BALROG, 7 SAGAT, 8 M.BISON, 9 ZANGIEF.

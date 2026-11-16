@@ -275,3 +275,27 @@ O banco `$00` é o único banco de código do Ryu alterado, e apenas nesses dois
   endereços de 16 bits; *split tables* (baixos/altos) indexadas pelo mesmo `X`.
 * NESdev Wiki — [6502 assembly optimisations](https://www.nesdev.org/wiki/6502_assembly_optimisations):
   seção "Use Jump tables with RTS instruction instead of JMP indirect".
+
+---
+
+## 10. Apêndice — o que o lote de naming de dados `$3C` ensinou
+
+O primeiro lote de nomes para labels automáticos de dados (33 labels de `$3C`, ver
+`tasks/DATA_NAMING_3C.md`) não mudou bytes, mas expôs três armadilhas de leitura:
+
+* **Não classifique um banco pelo endereço.** A triagem inicial tratou `$29`/`$2D` como "IA" porque
+  ficam perto do motor; os cabeçalhos gerados mostram que são **música FamiTone2** (173 labels). Ler o
+  cabeçalho e o consumidor antes de propor categoria custa menos que refazer o inventário.
+* **A métrica canônica de labels é cega para comentário na mesma linha.** O regex
+  `^[A-Za-z_][A-Za-z0-9_]*:$` não conta `EdgeARel`, `EdgeBRel` e `EdgeBBtn` (no `$3F`), que têm
+  comentário depois dos dois-pontos. Por isso a soma por banco (965 semânticos) difere do total único
+  publicado (961). Ao comparar métricas, use sempre o mesmo comando e registre a diferença.
+* **Tabelas "por personagem" têm passo fixo — confirme o passo no consumidor.** Em `$3C`, as fichas
+  usam 1 byte por personagem (10 bytes por tabela), enquanto as paletas usam 12 bytes por personagem
+  (`FighterChar*12`) e os tiles de retrato, 6. Um nome `*Tbl` só é seguro depois de achar a
+  multiplicação no código que lê a tabela; e pares `Lo`/`Hi` devem ser nomeados como par, porque um
+  deles pode ser lido sem `,y` (caso de `CharDirTransHiTbl` em `3B:E025`).
+
+**Regra prática:** para cada lote, (1) leia o consumidor, (2) proponha nome + confiança, (3) aplique só
+labels/comentários, (4) valide com `make gen`, `make` e SHA-1 idêntico, (5) confirme que nenhuma linha
+`.byte`/`.word` mudou. O SHA-1 é a prova de que o naming é cosmético.

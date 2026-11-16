@@ -5,6 +5,7 @@
 - **Fonte:** `src/bank_*.s` gerados a partir de `annotations/sf2ne.ann`; leitura somente.
 - **Objetivo:** classificar por banco/subsistema, referências e categoria para escolher o primeiro lote de naming de dados.
 - **Inventário completo:** `tasks/DATA_LABEL_INVENTORY.tsv` (1.213 linhas, tabulação).
+- **Nota:** snapshot anterior ao lote `$3C`. Após aplicar `tasks/DATA_NAMING_3C.md` (33 labels), restam **1.180** labels automáticos de dados.
 
 ## 1. Método
 
