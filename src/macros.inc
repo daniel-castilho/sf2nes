@@ -1,15 +1,15 @@
-; Macros do projeto.
+; Project macros.
 
-FarCall := $049E        ; trampolim de chamada distante (copiado do ROM para a RAM na inicializacao)
+FarCall := $049E        ; far call trampoline (copied from ROM to RAM at initialization)
 
 ; ---------------------------------------------------------------------------------------------------------
-; farcall <rotina>
-;   Chamada "distante": executa uma rotina que esta em OUTRO banco de codigo (todos rodam em $E000-$FFFF).
-;   Empilha o endereco de retorno e o banco atual e pula para o trampolim que fica na RAM (FarCall, $049E),
-;   que troca o banco em $5117, chama a rotina, restaura o banco e retorna.
-;   A, X e Y sao destruidos na ida (parametros vao por variaveis de pagina zero).
-;   O banco de destino e o banco atual sao resolvidos pelo linker (.bank), entao da para mover rotinas.
-;   Gera exatamente os mesmos 18 bytes do ROM original.
+; farcall <routine>
+;   "Far" call: executes a routine that is in ANOTHER code bank (all run at $E000-$FFFF).
+;   Pushes the return address and current bank and jumps to the trampoline in RAM (FarCall, $049E),
+;   which switches bank at $5117, calls the routine, restores the bank and returns.
+;   A, X and Y are destroyed on the way (parameters go via zero-page variables).
+;   The destination bank and current bank are resolved by the linker (.bank), so routines can be moved.
+;   Generates exactly the same 18 bytes of the original ROM.
 ; ---------------------------------------------------------------------------------------------------------
 .macro farcall target
     .local ret
@@ -27,10 +27,10 @@ ret:
 .endmacro
 
 ; ---------------------------------------------------------------------------------------------------------
-; farjmp <rotina>
-;   Salto distante (tail-call): igual ao farcall, mas sem empilhar endereco de retorno — quando a rotina
-;   de destino retornar, o trampolim restaura o banco atual e volta para QUEM CHAMOU a rotina atual.
-;   Gera exatamente os mesmos 12 bytes do ROM original.
+; farjmp <routine>
+;   Far jump (tail-call): same as farcall, but without pushing the return address — when the destination
+;   routine returns, the trampoline restores the current bank and goes back to WHO CALLED the current routine.
+;   Generates exactly the same 12 bytes of the original ROM.
 ; ---------------------------------------------------------------------------------------------------------
 .macro farjmp target
     .local here

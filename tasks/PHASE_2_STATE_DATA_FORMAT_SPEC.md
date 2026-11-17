@@ -1,231 +1,231 @@
-# Especificação técnica — Fase 2: formato de autoria de estados e quadros
+# Technical specification — Phase 2: state and frame authoring format
 
-**Status:** pronta para o Software Engineer executar como fase de desenho; não autoriza implementação do formato/conversor.  
-**Projeto:** Street Fighter II NE (`daniel-castilho/sf2nes`).  
-**Origem:** Fase 2 de `tasks/PROJECT_STABILIZATION_EXECUTION_PLAN.md`.  
-**Pré-requisitos:** Fase 0 aceita e Fase 1 concluída, com `docs/ESTADO_DO_PROJETO.md` disponível.  
-**Tipo de trabalho:** levantamento, comparação de alternativas, especificação e recomendação de decisão.  
-**Código, migração de dados, build, compilação, ROM, testes e emulador:** fora do escopo e não autorizados por esta especificação.
+**Status:** ready for the Software Engineer to execute as design phase; does not authorize format/converter implementation.  
+**Project:** Street Fighter II NE (`daniel-castilho/sf2nes`).  
+**Origin:** Phase 2 of `tasks/PROJECT_STABILIZATION_EXECUTION_PLAN.md`.  
+**Prerequisites:** Phase 0 accepted and Phase 1 completed, with `docs/PROJECT_STATUS.md` available.  
+**Type of work:** survey, alternative comparison, specification, and decision recommendation.  
+**Code, data migration, build, compilation, ROM, tests, and emulator:** out of scope and not authorized by this specification.
 
-## 1. Objetivo
+## 1. Objective
 
-Definir uma forma legível, segura e sustentável de **autorizar futuramente** a edição dos dados existentes de estados e quadros de animação, reduzindo a edição manual de bytes sem perda de controle sobre o formato original.
+Define a readable, safe, and sustainable way to **author in the future** the editing of existing state and animation frame data, reducing manual byte editing without losing control over the original format.
 
-A Fase 2 deve produzir uma decisão técnica e uma especificação suficientes para que uma fase posterior possa implementar a ferramenta. Ela **não** deve construir conversor, migrar dados, alterar `src/`, mudar annotations nem acrescentar estados ou conteúdo de personagem.
+Phase 2 must produce a technical decision and a specification sufficient for a later phase to implement the tool. It **must not** build a converter, migrate data, alter `src/`, change annotations, or add states or character content.
 
-Usar os dados atuais do Ryu somente para verificar se a proposta representa as estruturas existentes. Não criar dados de Ken nem afirmar que o formato já está validado por geração/build/runtime.
+Use current Ryu data only to verify the proposal represents existing structures. Do not create Ken data nor claim the format is already validated by generation/build/runtime.
 
-## 2. Gate de entrada
+## 2. Entry gate
 
-Antes de começar a execução desta fase, o Engineer deve confirmar:
+Before starting this phase, the Engineer must confirm:
 
-1. a Fase 0 foi concluída e aceita;
-2. a Fase 1 foi concluída e `docs/ESTADO_DO_PROJETO.md` contém o inventário das fontes de verdade e gerados;
-3. `docs/FORMATOS.md`, annotations, gerador e fontes `src/` continuam coerentes o bastante para comparar alternativas;
-4. a árvore local e as alterações preexistentes foram registradas e preservadas.
+1. Phase 0 was concluded and accepted;
+2. Phase 1 was concluded and `docs/PROJECT_STATUS.md` contains the sources of truth and generated inventory;
+3. `docs/FORMATS.md`, annotations, generator, and `src/` sources are coherent enough to compare alternatives;
+4. local tree and preexisting changes were registered and preserved.
 
-Se qualquer requisito falhar, parar e relatar o bloqueio. Não resolver divergências da Fase 1 por suposição nem iniciar o conversor para contornar dados faltantes.
+If any requirement fails, stop and report the block. Do not resolve Phase 1 divergences by assumption nor start the converter to circumvent missing data.
 
-## 3. Escopo de decisão
+## 3. Decision scope
 
-A decisão deve responder explicitamente:
+The decision must explicitly answer:
 
-- qual arquivo ou conjunto de arquivos será a **fonte canônica de autoria** dos estados/quadros;
-- qual ferramenta os transforma em assembly/dados consumidos pelo build;
-- como essa fonte se integra ao gerador atual sem ser sobrescrita por `make gen`;
-- qual parte permanece responsabilidade de `annotations/sf2ne.ann` (labels, comentários, correções/alternates, blocos de código, metadados de disassembly);
-- quais arquivos são gerados e nunca devem ser editados manualmente;
-- como preservar símbolos, referências, bancos, ordem e valores atuais sem introduzir mudança semântica.
+- which file or set of files will be the **canonical authoring source** for states/frames;
+- which tool transforms them into assembly/data consumed by the build;
+- how that source integrates with the current generator without being overwritten by `make gen`;
+- what part remains `annotations/sf2ne.ann` responsibility (labels, comments, corrections/alternates, code blocks, disassembly metadata);
+- which files are generated and must never be manually edited;
+- how to preserve symbols, references, banks, order, and current values without introducing semantic change.
 
-Comparar no mínimo:
+Compare at minimum:
 
-1. **Macros/DSL em ca65:** declarações de estados/quadros em assembly com macros e diretivas simbólicas.
-2. **Formato declarativo externo:** arquivo estruturado processado por ferramenta (ex.: TOML, YAML ou JSON), com geração de assembly compatível com o fluxo.
+1. **ca65 macros/DSL:** state/frame declarations in assembly with macros and symbolic directives.
+2. **External declarative format:** structured file processed by tool (e.g., TOML, YAML, or JSON), with assembly generation compatible with flow.
 
-O Engineer pode recomendar alternativa híbrida apenas se explicar a fronteira de responsabilidade e fonte canônica. A decisão final pertence ao Mantenedor. A proposta do Engineer deve ser marcada `PROPOSTA`, não `APROVADA`, até obter essa decisão explícita.
+The Engineer may recommend a hybrid alternative only if explaining responsibility boundary and canonical source. Final decision belongs to the Maintainer. The Engineer's proposal must be marked `PROPOSED`, not `APPROVED`, until explicit decision is obtained.
 
-## 4. Fontes técnicas obrigatórias
+## 4. Mandatory technical sources
 
-Usar como contrato inicial, sem copiar conteúdo de terceiros:
+Use as initial contract, without copying third-party content:
 
-- `docs/FORMATOS.md` — campos, tamanhos, tabelas, condições, estados, quadros, laços e ponteiros;
-- `docs/ARQUITETURA.md` — banco de estados, banco de frames, carregador e mapeamento;
-- `docs/RAM.md` — símbolos/variáveis que conectam dados ao motor;
-- `annotations/sf2ne.ann` — diretivas de anotação, marcação de bancos, condições, blocks e alternates;
-- `tools/disasm.py` — fluxo atual de geração e fronteira do que ele lê/escreve;
-- `src/` — forma assembly atualmente consumida pelo build;
-- `Makefile` e `sf2ne.cfg` — integração atual de geração/montagem/linkedição, apenas por leitura.
+- `docs/FORMATS.md` — fields, sizes, tables, conditions, states, frames, loops, pointers;
+- `docs/ARCHITECTURE.md` — state bank, frame bank, loader, mapping;
+- `docs/RAM.md` — symbols/variables connecting data to engine;
+- `annotations/sf2ne.ann` — annotation directives, bank marking, blocks, alternates;
+- `tools/disasm.py` — current generation flow and read/write boundary;
+- `src/` — assembly form currently consumed by build;
+- `Makefile` and `sf2ne.cfg` — current generation/assembly/linking integration, read-only only.
 
-O relatório da Fase 1 é a referência para conflitos ou dúvidas sobre as fontes canônicas. Se o código real contradizer uma afirmação documental, documentar a divergência; não alterar gerador, source ou build nesta fase.
+Phase 1 report is reference for conflicts or doubts about canonical sources. If real code contradicts a documented statement, document divergence; do not alter generator, source, or build in this phase.
 
-## 5. Cobertura estrutural que a proposta deve representar
+## 5. Structural coverage the proposal must represent
 
-A especificação do formato deve descrever todos os elementos necessários para serializar sem perda o conjunto atual de estados/quadros do Ryu, inclusive registros não alcançáveis ou apontados como órfãos nos documentos.
+The format specification must describe all elements necessary to serialize without loss the current Ryu state/frame set, including unreachable or orphan records pointed out in documents.
 
-Pelo menos:
+At minimum:
 
-### 5.1 Tabelas da ficha e referências
+### 5.1 Sheet tables and references
 
-- tabelas de ponteiros usadas para estados por direção, botões, especiais, guarda/defesa, reações a dano, agarrões e IA, conforme inventário atual;
-- tabela de bytes para banco de estados, banco de frames e fonte de colisões, se o formato da ficha fizer parte da proposta;
-- contagem/ordem das entradas, vazios, terminadores, aliases e referências fora do banco, quando aplicáveis;
-- endereços por label simbólico; valores literais só como escape explícito e documentado;
-- separação clara entre metadados da ficha e conteúdo do banco de estados.
+- pointer tables used for states by direction, buttons, specials, guard/defense, damage reactions, throws, and AI, per current inventory;
+- byte table for state bank, frame bank, and collision source, if sheet is part of proposal;
+- entry count/order, blanks, terminators, aliases, and out-of-bank references, when applicable;
+- addresses by symbolic label; literal values only as explicit documented escape;
+- clear separation between sheet metadata and bank content.
 
-A Fase 2 não deve preencher a ficha do Ken nem alterar as tabelas existentes.
+Phase 2 must not fill Ken's sheet nor alter existing tables.
 
-### 5.2 Cabeçalho de estado
+### 5.2 State header
 
-Representar os campos documentados em `docs/FORMATOS.md`, incluindo:
+Represent fields documented in `docs/FORMATS.md`, including:
 
-- condição/critério de entrada;
-- vínculo/ponteiro para a próxima alternativa;
-- vínculo/ponteiro da cadeia natural;
-- classe do estado;
-- contagem de acertos do estado.
+- entry condition/criterion;
+- link/pointer to next alternative;
+- link/pointer of natural chain;
+- state class;
+- state hit count.
 
-Condições e classes devem aceitar nomes simbólicos quando já houver uma definição confiável e, em todos os casos, permitir um valor numérico bruto para manter registros cujo significado permaneça incerto.
+Conditions and classes must accept symbolic names when a reliable definition exists, and in all cases allow a raw numeric value to keep records whose meaning remains uncertain.
 
-### 5.3 Quadros de animação
+### 5.3 Animation frames
 
-Representar, sem perda:
+Represent, without loss:
 
-- duração;
-- ponteiro de metasprite;
-- ponteiro de caixas de colisão ou ausência delas;
-- parâmetros/tipo de efeito;
+- duration;
+- metasprite pointer;
+- collision box pointer or absence;
+- effect parameter/type;
 - flags;
-- modo de movimento;
-- velocidades X/Y;
-- repetição e ponteiro de desvio do laço;
-- ponteiro para o quadro seguinte ou sentinela de fim.
+- movement mode;
+- X/Y velocities;
+- repetition and loop target pointer;
+- pointer to next frame or end sentinel.
 
-A representação deve tratar corretamente os registros de tamanho variável documentados — quadro normal e quadro com dados de laço — e garantir que o caso sem laço não emita nem interprete campos inexistentes.
+Representation must correctly handle documented variable-size records — normal frame and loop frame — and ensure the no-loop case does not emit or interpret nonexistent fields.
 
-### 5.4 Dados não totalmente compreendidos
+### 5.4 Not fully understood data
 
-- Preservar literalmente o valor bruto de campos cujo significado seja hipótese ou desconhecido.
-- Permitir comentários/anotações por registro e por campo para indicar evidência, hipótese ou referência documental.
-- Não forçar nomes semânticos para opcodes, condições, efeitos ou flags ainda não confirmados.
-- Distinguir “zero”, “ausente/null”, “terminador” e “campo omitido”; não tratá-los como equivalentes.
-- Representar dados não alcançáveis/órfãos quando fizerem parte da região auditada, evitando conversão baseada apenas na cadeia de estados alcançável.
+- Preserve literally the raw value of fields whose meaning is hypothesis or unknown.
+- Allow comments/annotations per record and per field to indicate evidence, hypothesis, or documentary reference.
+- Do not force semantic names for unconfirmed opcodes, conditions, effects, or flags.
+- Distinguish "zero", "absent/null", "terminator", and "omitted field"; do not treat them as equivalent.
+- Represent unreachable/orphan records when part of audited region, avoiding conversion based only on reachable state chain.
 
-### 5.5 Relocação e geração
+### 5.5 Relocation and generation
 
-A proposta deve especificar como conservar:
+The proposal must specify how to conserve:
 
-- rótulos e referências simbólicas entre estados e quadros;
-- associação de cada estado ao banco de estados e dos quadros/metasprites às fontes de frames;
-- alinhamento, ordem de emissão e sentinelas, caso afetem a estrutura;
-- relocação pelo assembler/linker sem endereços absolutos duplicados na fonte;
-- formato de assembly que se integra ao processo existente.
+- labels and symbolic references between states and frames;
+- association of each state to its state bank and of frames/metasprites to frame sources;
+- alignment, emission order, and sentinels, if they affect structure;
+- relocation by assembler/linker without duplicated absolute addresses in source;
+- assembly format integrating into existing process.
 
-Não fixar endereços ou assumir banco específico para personagens futuros nesta fase. O foco é modelar os registros atuais sem bloquear a relocação.
+Do not fix addresses or assume specific bank for future characters in this phase. Focus is modeling current records without blocking relocation.
 
-## 6. Matriz de comparação das alternativas
+## 6. Alternative comparison matrix
 
-A decisão deve comparar macros ca65 e formato declarativo externo nos critérios abaixo, com avaliação curta e evidência:
+The decision must compare ca65 macros and external declarative format across the criteria below, with brief evaluation and evidence:
 
-| Critério | Pergunta que deve ser respondida |
-|---|---|
-| Legibilidade de diff | É fácil revisar mudanças de um estado/quadro sem decodificar bytes? |
-| Tipagem/validação | Como detectar condição inválida, ponteiro faltante, duração fora da faixa ou laço malformado antes de gerar assembly? |
-| Cobertura | Todos os campos e exceções atuais têm representação sem perda? |
-| Símbolos | Como nomes de estados, frames, caixas e bancos são referenciados sem número mágico? |
-| Dados desconhecidos | É possível preservar valores brutos e comentários de incerteza? |
-| Fonte canônica | Existe um único local que o Engineer edita? O que acontece ao executar `make gen`? |
-| Integração | Qual seria o ponto de entrada no fluxo atual sem sobrescrever annotations ou `src/` manualmente? |
-| Erros | O diagnóstico aponta arquivo, registro, campo e referência inválida? |
-| Determinismo | A mesma entrada produz assembly ordenado e reprodutível? |
-| Dependências | Exige biblioteca ou runtime adicional? Qual o custo de manutenção? |
-| Migração | Como adotar gradualmente sem transformar toda a árvore de uma vez? |
-| Reversibilidade | Como desfazer adoção ou corrigir formato sem perder dados? |
+| Criterion | Question to answer |
+|-----------|-------------------|
+| Diff readability | Is it easy to review state/frame changes without decoding bytes? |
+| Typing/validation | How to detect invalid condition, missing pointer, out-of-range duration, or malformed loop before generating assembly? |
+| Coverage | Do all current fields and exceptions have lossless representation? |
+| Symbols | How are state, frame, box, and bank names referenced without magic numbers? |
+| Unknown data | Is it possible to preserve raw values and uncertainty comments? |
+| Canonical source | Is there a single place the Engineer edits? What happens when running `make gen`? |
+| Integration | What would be the entry point in current flow without overwriting annotations or `src/` manually? |
+| Errors | Does diagnosis point to file, record, field, and invalid reference? |
+| Determinism | Does same input produce ordered, reproducible assembly? |
+| Dependencies | Does it require additional library or runtime? What is maintenance cost? |
+| Migration | How to adopt gradually without transforming the whole tree at once? |
+| Reversibility | How to undo adoption or correct format without losing data? |
 
-Não escolher formato apenas por preferência de sintaxe. A proposta precisa demonstrar a interação com a geração atual e as limitações encontradas na auditoria da Fase 1.
+Do not choose format merely by syntax preference. The proposal must demonstrate interaction with current generation and limitations found in Phase 1 audit.
 
-## 7. Requisitos para a proposta de schema/gramática
+## 7. Schema/grammar proposal requirements
 
-A entrega deve incluir uma especificação legível do schema, independente da sintaxe escolhida, com:
+The delivery must include a readable schema specification, independent of chosen syntax, with:
 
-- unidades de medida e limites conhecidos;
-- nomes simbólicos permitidos e sua origem;
-- campos obrigatórios, opcionais, repetíveis e mutuamente exclusivos;
-- regra de referência e detecção de destino inexistente;
-- regra de ordenação e serialização;
-- valores brutos para campos desconhecidos;
-- representação de null/ausente/fim/terminador;
-- representação do quadro com/sem laço;
-- comentário de procedência e confiança sem afetar os bytes emitidos;
-- comportamento definido para valores duplicados, labels duplicados e endereços não resolvidos;
-- compatibilidade com os tamanhos/limites binários documentados, sem corrigir ou normalizar dados silenciosamente.
+- measurement units and known limits;
+- permitted symbolic names and their origin;
+- required, optional, repeatable, and mutually exclusive fields;
+- reference rule and nonexistent destination detection;
+- ordering and serialization rule;
+- raw values for unknown fields;
+- null/absent/end/terminator representation;
+- loop and no-loop frame representation;
+- provenance and confidence comment not affecting emitted bytes;
+- defined behavior for duplicate values, duplicate labels, and unresolved addresses;
+- compatibility with documented binary sizes/limits, without silently correcting or normalizing data.
 
-### Exemplo ilustrativo
+### Illustrative example
 
-A especificação pode incluir um exemplo mínimo **esquemático** para mostrar o desenho do schema, mas deve:
+The specification may include a minimal **schematic** example to show schema design, but it must:
 
-- usar valores fictícios/simbólicos que não reproduzam uma sequência real de dados do jogo;
-- não incluir dados completos ou bytecode extraídos da ROM arcade;
-- não apresentar o exemplo como dado válido pronto para montagem;
-- marcar campos cujo significado dependa de confirmação.
+- use fictitious/symbolic values that do not reproduce a real game data sequence;
+- not include complete data or arcade ROM bytecode;
+- not present the example as valid data ready for assembly;
+- mark fields whose meaning depends on confirmation.
 
-Não é obrigatório incluir exemplo se a gramática ficar clara sem ele.
+Including an example is not mandatory if the grammar is clear without it.
 
-## 8. Integração com o fluxo existente — decisão, não implementação
+## 8. Integration with existing flow — decision, not implementation
 
-O ADR deve desenhar um fluxo-alvo e demarcar explicitamente a responsabilidade de cada camada. Considerar, sem assumir a solução:
+The ADR must draw a target flow and explicitly demarcate each layer's responsibility. Consider, without assuming solution:
 
-- `annotations/sf2ne.ann` permanece fonte para anotações, símbolos e correções do disassembly;
-- dados textuais de estados podem precisar de arquivo/fonte próprio;
-- `src/` continua gerado, se esse for o resultado aprovado;
-- `make gen` não pode destruir nem ignorar silenciosamente dados de autoria novos;
-- o build deve consumir artefatos previstos pelo fluxo, sem depender de edição manual de arquivo gerado.
+- `annotations/sf2ne.ann` remains source for annotations, symbols, and disassembly corrections;
+- state text data may need a dedicated file/source;
+- `src/` continues generated, if that is the approved result;
+- `make gen` cannot destroy or silently ignore new authoring data;
+- build must consume artifacts foreseen by new flow, without depending on manual editing of generated file.
 
-A proposta deve indicar se a integração exige modificar `tools/disasm.py`, `Makefile`, layout de diretórios ou configuração do linker. Essas mudanças são apenas listadas como trabalho futuro. Não as realizar na Fase 2.
+The proposal must indicate whether integration requires modifying `tools/disasm.py`, `Makefile`, directory layout, or linker configuration. These changes are only listed as future work. Do not perform them in Phase 2.
 
-## 9. Saídas obrigatórias
+## 9. Mandatory outputs
 
-Criar os documentos de decisão/projeto abaixo:
+Create the decision/design documents below:
 
-1. `tasks/STATE_DATA_FORMAT_DECISION.md` — matriz de opções, recomendação do Engineer, fonte canônica proposta, trade-offs, riscos e estado de aprovação do Mantenedor.
-2. `tasks/STATE_DATA_FORMAT_SCHEMA.md` — schema/gramática conceitual, tipos, regras, referências, valores desconhecidos e serialização esperada.
-3. `tasks/STATE_DATA_FORMAT_MIGRATION_PLAN.md` — passos futuros de implementação/migração, arquivos que provavelmente seriam afetados, salvaguardas para `make gen`, rollback e critérios de verificação futura.
+1. `tasks/STATE_DATA_FORMAT_DECISION.md` — option matrix, Engineer recommendation, proposed canonical source, trade-offs, risks, and Maintainer approval state.
+2. `tasks/STATE_DATA_FORMAT_SCHEMA.md` — conceptual schema/grammar, types, rules, references, unknown values, expected serialization.
+3. `tasks/STATE_DATA_FORMAT_MIGRATION_PLAN.md` — future implementation/migration steps, files likely affected, `make gen` safeguards, rollback, and future verification criteria.
 
-Esses são documentos de desenho. Se um arquivo já existir ou houver convenção de ADR criada após esta especificação, não sobrescrever: preservar conteúdo, apontar o conflito e pedir decisão antes de criar duplicata.
+These are design documents. If a file already exists or an ADR convention is created after this specification, do not overwrite: preserve content, point out conflict, and request decision before creating duplicate.
 
-## 10. Fora do escopo
+## 10. Out of scope
 
-- Implementar parser, conversor, gerador, macros ou novos scripts permanentes.
-- Alterar `tools/disasm.py`, `Makefile`, `sf2ne.cfg`, annotations, `src/`, dados ou assets.
-- Converter Ryu ou Ken para o formato novo.
-- Acrescentar, editar ou normalizar registros reais do jogo.
-- Criar ficha/estados/frames de Ken ou de qualquer outro personagem.
-- Rodar gerador, assembler, linker, `make`, build, teste, Mesen, MAME ou validação manual.
-- Reestruturar o kernel, mudar bancos ou mexer em ROMs.
-- Resolver lacunas semânticas dos formatos que dependam de investigação adicional; listá-las como abertas.
+- Implementing parser, converter, generator, macros, or new permanent scripts.
+- Altering `tools/disasm.py`, `Makefile`, `sf2ne.cfg`, annotations, `src/`, data, or assets.
+- Converting Ryu or Ken to new format.
+- Adding, editing, or normalizing real game records.
+- Creating Ken or any other character's sheet/states/frames.
+- Running generator, assembler, linker, `make`, build, test, Mesen, MAME, or manual validation.
+- Restructuring kernel, changing banks, or touching ROMs.
+- Resolving format semantic gaps depending on further investigation; list them as open.
 
-## 11. Critérios de aceite
+## 11. Acceptance criteria
 
-- [ ] O gate de entrada (Fase 0 e Fase 1 concluídas) foi confirmado; sem isso, a execução foi interrompida.
-- [ ] Foram consultadas as versões atuais das fontes listadas na §4 e o resultado da Fase 1.
-- [ ] Macros ca65 e formato declarativo externo foram comparados pela matriz da §6; qualquer alternativa híbrida está justificada.
-- [ ] O Engineer recomenda uma opção e indica a fonte canônica proposta; a aprovação final permanece explícita do Mantenedor.
-- [ ] O schema cobre os elementos da §5 e explicita como preservar dados órfãos, valores desconhecidos, sentinelas, laços e referências simbólicas.
-- [ ] A proposta distingue zero/null/ausente/fim e não depende somente de estados alcançáveis.
-- [ ] A interação com annotations, gerador, `src/`, `make gen` e build está desenhada sem alteração do fluxo nesta fase.
-- [ ] Há plano gradual de migração, rollback e verificações futuras, sem alegar que foram executadas.
-- [ ] Os documentos de decisão, schema e migração estão entregues, sem código/fonte de dados novo.
-- [ ] Nenhum arquivo fora dos documentos permitidos da §9 foi modificado.
-- [ ] Nenhum código, ferramenta, annotation, asset ou ROM foi alterado; nenhum build, teste ou emulador foi executado.
-- [ ] Alterações locais preexistentes foram preservadas.
+- [ ] Entry gate (Phase 0 and Phase 1 completed) confirmed; without it, execution was interrupted.
+- [ ] Current versions of §4 sources and Phase 1 result were consulted.
+- [ ] ca65 macros and external declarative format compared per §6 matrix; any hybrid alternative justified.
+- [ ] Engineer recommends an option and indicates proposed canonical source; final approval remains explicit Maintainer decision.
+- [ ] Schema covers §5 elements and explicates how to preserve orphan records, unknown values, sentinels, loops, and symbolic references.
+- [ ] Proposal distinguishes zero/null/absent/end and does not depend only on reachable states.
+- [ ] Interaction with annotations, generator, `src/`, `make gen`, and build is designed without altering flow in this phase.
+- [ ] Gradual migration, rollback, and future verification plan exists, without claiming execution.
+- [ ] Decision, schema, and migration documents delivered, without new code/data source.
+- [ ] No file outside §9 permitted documents was modified.
+- [ ] No code, tool, annotation, asset, or ROM was altered; no build, test, or emulator executed.
+- [ ] Preexisting local changes preserved.
 
-## 12. Relatório de entrega do Engineer
+## 12. Engineer delivery report
 
-Ao concluir, informar:
+Upon concluding, inform:
 
-1. arquivos documentais criados ou atualizados;
-2. alternativas comparadas e evidência usada;
-3. formato/fonte canônica recomendados e estado `PROPOSTO` ou `APROVADO` (com decisão explícita do Mantenedor);
-4. casos de formato ainda desconhecidos e os dados que não puderam ser classificados;
-5. arquivos e ferramentas que uma futura implementação provavelmente precisará alterar;
-6. riscos, migração e rollback propostos;
-7. confirmação de que nenhum conversor/migração/build/teste/emulador foi executado e que o estado local foi preservado.
+1. documents created or updated;
+2. alternatives compared and evidence used;
+3. recommended format/canonical source and state `PROPOSED` or `APPROVED` (with explicit Maintainer decision);
+4. still-unknown format cases and data that could not be classified;
+5. files and tools a future implementation would likely need to alter;
+6. risks, migration, and rollback proposed;
+7. confirmation that no converter/migration/build/test/emulator was executed and local state was preserved.

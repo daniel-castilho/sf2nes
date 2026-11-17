@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
 """
-disasm.py — gera o projeto ca65 remontavel (src/) a partir de:
-    rom/sf2ne_demo.nes        ROM original
-    trace/*.txt               trace mesclado (instrucoes executadas, saltos indiretos, leituras de dados, RAM)
-    annotations/sf2ne.ann     nomes, comentarios e tipos de dados mantidos a mao (ou com ajuda de IA)
+disasm.py — generates the remontable ca65 project (src/) from:
+    rom/sf2ne_demo.nes        original ROM
+    trace/*.txt               merged trace (executed instructions, indirect jumps, data reads, RAM)
+    annotations/sf2ne.ann     names, comments and data types kept by hand (or with AI help)
 
-Regra de ouro: `make` precisa sempre reproduzir o ROM original byte a byte.
+Golden rule: `make` must always reproduce the original ROM byte by byte.
 
-Organizacao do ROM (MMC5, PRG modo 3): 64 bancos de 8K; o banco n fica SEMPRE na janela (n mod 4):
-    n mod 4 = 0 -> $8000   1 -> $A000   2 -> $C000 (amostras DPCM / tabelas)   3 -> $E000 (codigo)
-Os tres bancos de codigo ($37, $3B, $3F) terminam com uma copia identica do "kernel" (IRQ, NMI e apoio)
-em $FC7C-$FF9A, gerada uma unica vez em src/kernel.inc e incluida nos tres.
+ROM organization (MMC5, PRG mode 3): 64 banks of 8K; bank n is ALWAYS in window (n mod 4):
+    n mod 4 = 0 -> $8000   1 -> $A000   2 -> $C000 (DPCM samples / tables)   3 -> $E000 (code)
+The three code banks ($37, $3B, $3F) end with an identical copy of the "kernel" (IRQ, NMI and support)
+at $FC7C-$FF9A, generated once in src/kernel.inc and included in the three.
 """
 import sys, os, re, collections
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -24,11 +24,11 @@ TRACE = os.path.join(ROOT, 'trace')
 SRC = os.path.join(ROOT, 'src')
 
 CODE_BANKS = (0x37, 0x3B, 0x3F)
-KERNEL_LO, KERNEL_HI = 0xFC7C, 0xFF9B      # [lo, hi) identico nos tres bancos de codigo
-KERNEL_REF = 0x3F                          # copia usada para gerar kernel.inc
+KERNEL_LO, KERNEL_HI = 0xFC7C, 0xFF9B      # [lo, hi) identical in the three code banks
+KERNEL_REF = 0x3F                          # copy used to generate kernel.inc
 FARCALL = 0x049E
 
-UNK, OPC, OPR, DAT = 0, 1, 2, 3            # classificacao de cada byte de PRG
+UNK, OPC, OPR, DAT = 0, 1, 2, 3            # classification of each PRG byte
 
 HW = {
     0x2000: 'PPUCTRL', 0x2001: 'PPUMASK', 0x2002: 'PPUSTATUS', 0x2003: 'OAMADDR', 0x2004: 'OAMDATA',
@@ -63,21 +63,21 @@ class Project:
         self.prg = bytearray(rom[16:16 + 0x80000])
         self.chr = rom[16 + 0x80000:]
         self.kind = bytearray(0x80000)
-        self.traced = bytearray(0x80000)          # 1 = instrucao vista no trace
+        self.traced = bytearray(0x80000)          # 1 = instruction seen in trace
         self.ins = {}                             # off -> (n, mn, mode, v)
-        self.names = {}                           # off -> nome dado pelo usuario
-        self.ramnames = {}                        # addr -> nome
-        self.comments = collections.defaultdict(list)   # off -> comentarios de fim de linha
-        self.blocks = collections.defaultdict(list)     # off -> comentarios de bloco
+        self.names = {}                           # off -> name given by user
+        self.ramnames = {}                        # addr -> name
+        self.comments = collections.defaultdict(list)   # off -> end-of-line comments
+        self.blocks = collections.defaultdict(list)     # off -> block comments
         self.forced_code = []
-        self.forced_data = []                     # (off_ini, off_fim, tipo)
-        self.tables = []                          # tabelas tipadas: dict
+        self.forced_data = []                     # (off_ini, off_fim, type)
+        self.tables = []                          # typed tables: dict
         self.ramcode = []                         # (off, len, org)
-        self.labels = {}                          # off -> nome final (codigo e dados)
-        self.farcalls = {}                        # off do inicio da sequencia -> (alvo_off)
-        self.far_member = {}                      # off de instrucao dentro de uma sequencia farcall -> inicio
-        self.xedges = collections.defaultdict(set)      # off origem -> destinos (XJSR/XJMP/RTS/JMPI)
-        self.readers = collections.defaultdict(list)    # off leitor -> [(off_ini, off_fim)]
+        self.labels = {}                          # off -> final name (code and data)
+        self.farcalls = {}                        # off of sequence start -> (target_off)
+        self.far_member = {}                      # off of instruction within farcall sequence -> start
+        self.xedges = collections.defaultdict(set)      # off origin -> destinations (XJSR/XJMP/RTS/JMPI)
+        self.readers = collections.defaultdict(list)    # off reader -> [(off_ini, off_fim)]
         self.ramuse = {}                          # addr -> (r, w)
         self.review = []                          # blocos aceitos so por analise estatica
         self.rejected = []

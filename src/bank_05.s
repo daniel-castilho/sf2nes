@@ -1,15 +1,15 @@
-; Banco de estados do Ken (PRG $05, janela $A000-$BFFF).
+; Ken state bank (PRG $05, window $A000-$BFFF).
 ;
-; Copia estrutural do banco do Ryu ($01): os mesmos 71 estados e 274 quadros,
-; com os ponteiros de metasprite e de colisao remapeados para o banco de frames
-; do Ken ($04). Os ponteiros internos ($A000-$BFFF) continuam apontando para os
-; mesmos enderecos, porque este banco ocupa a mesma janela do banco $01.
+; Structural copy of Ryu's bank ($01): same 71 states and 274 frames,
+; with metasprite and collision pointers remapped to the frame bank
+; of Ken ($04). Internal pointers ($A000-$BFFF) still point to the
+; same addresses, because this bank occupies the same window as bank $01.
 ;
-; Mapeamento Ryu->Ken (por ordem de aparicao no banco):
-;   metasprites: 94 poses do Ryu -> 94 poses do Ken (a pose de selecao $8A59
-;               do Ken fica de fora, entre as poses 70 e 71)
-;   colisao:    todos os registros deslocados em -$0391
-; Ver docs/FORMATOS.md §2, §3, §6, §9, §10.
+; Ryu->Ken mapping (in order of appearance in bank):
+;   metasprites: 94 poses of Ryu -> 94 poses of Ken (Ken's selection pose $8A59
+;               is left out, between poses 70 and 71)
+;   collision:   all records shifted by -$0391
+; Ver docs/FORMATS.md §2, §3, §6, §9, §10.
 
 .include "defs.inc"
 .segment "BANK05"

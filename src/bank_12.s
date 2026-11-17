@@ -1,4 +1,4 @@
-; Banco de PRG $12 — amostras DPCM (vozes), mapeado em $C000-$DFFF via $5116.
-; Veja docs/AUDIO.md para a lista de amostras (endereco/tamanho) dentro do banco.
+; PRG bank $12 — DPCM samples (voices), mapped at $C000-$DFFF via $5116.
+; See docs/AUDIO.md for the sample list (address/size) within the bank.
 .segment "BANK12"
     .incbin "assets/dpcm/bank_12.dmc"

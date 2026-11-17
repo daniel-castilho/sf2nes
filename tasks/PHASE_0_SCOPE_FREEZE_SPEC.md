@@ -1,166 +1,166 @@
-# Especificação técnica — Fase 0: congelamento de escopo e preparação
+# Technical specification — Phase 0: scope freeze and preparation
 
-**Status:** pronta para o Software Engineer executar; documentação apenas.  
-**Projeto:** Street Fighter II NE (`daniel-castilho/sf2nes`).  
-**Origem:** Fase 0 de `tasks/PROJECT_STABILIZATION_EXECUTION_PLAN.md`.  
-**Data:** 2026-11-10.  
-**Tipo de mudança autorizada por esta especificação:** somente documentação e registro de backlog.  
-**Build, compilação, execução da ROM, testes e alterações em código:** fora do escopo e não autorizados.
+**Status:** ready for the Software Engineer to execute; documentation only.  
+**Project:** Street Fighter II NE (`daniel-castilho/sf2nes`).  
+**Origin:** Phase 0 of `tasks/PROJECT_STABILIZATION_EXECUTION_PLAN.md`.  
+**Date:** 2026-11-10.  
+**Type of change authorized by this specification:** documentation and backlog registration only.  
+**Build, compilation, ROM execution, testing, and code changes:** out of scope and not authorized.
 
-## 1. Objetivo
+## 1. Objective
 
-Registrar de forma inequívoca que o projeto inicia uma fase de estabilização e manutenibilidade, durante a qual novos personagens e funcionalidades do jogo ficam pausados. Separar o trabalho em trilhas distintas — manutenção, REA/documentação e conteúdo — e criar um registro pequeno de decisões pendentes, sem resolver antecipadamente decisões que pertencem às fases seguintes.
+Record unequivocally that the project begins a stabilization and maintainability phase, during which new characters and game features remain paused. Separate the work into distinct tracks — maintenance, REA/documentation, and content — and create a small record of pending decisions, without prematurely resolving decisions that belong to later phases.
 
-A pausa significa **adiamento, não cancelamento** de itens existentes no roteiro. O trabalho de conteúdo continua documentado, mas não é a próxima execução ativa.
+The pause means **postponement, not cancellation** of existing roadmap items. Content work continues to be documented, but it is not the next active execution.
 
-## 2. Fontes a consultar
+## 2. Sources to consult
 
-Antes de editar, o Engineer deve ler o estado atual destes arquivos e verificar se as referências continuam corretas:
+Before editing, the Engineer must read the current versions of these files and verify that references remain correct:
 
-- `README.md` — resumo do projeto e indicação do próximo trabalho;
-- `docs/ROTEIRO.md` — etapas, status e decisões de escopo;
-- `tasks/PROJECT_STABILIZATION_EXECUTION_PLAN.md` — plano global que origina esta fase;
-- `tasks/KEN_IMPLEMENTATION_SPEC.md` — escopo vigente de Ken, somente para manter coerência; não editar nesta Fase 0;
-- `tasks/GUILE_BEHAVIORAL_ENGINEERING_SPEC.md` e `tasks/ARCADE_AI_CLEAN_ROOM_REA.md` — referências a trabalhos independentes, somente quando necessário para evitar mistura de escopos; não editar nesta Fase 0.
+- `README.md` — project summary and indication of next work;
+- `docs/ROADMAP.md` — stages, status, and scope decisions;
+- `tasks/PROJECT_STABILIZATION_EXECUTION_PLAN.md` — global plan originating this phase;
+- `tasks/KEN_IMPLEMENTATION_SPEC.md` — current Ken scope, only to maintain consistency; do not edit in this Phase 0;
+- `tasks/GUILE_BEHAVIORAL_ENGINEERING_SPEC.md` and `tasks/ARCADE_AI_CLEAN_ROOM_REA.md` — references to independent work, only when necessary to avoid mixing scopes; do not edit in this Phase 0.
 
-Se a árvore local ou os arquivos diferirem desta especificação, registrar a divergência no relatório de entrega e pedir decisão; não sobrescrever silenciosamente conteúdo local.
+If the local tree or files differ from this specification, register the divergence in the delivery report and ask for a decision; do not silently overwrite local content.
 
-## 3. Arquivos permitidos
+## 3. Permitted files
 
-O Engineer pode alterar apenas os seguintes arquivos:
+The Engineer may alter only the following files:
 
-1. `docs/ROTEIRO.md` — declarar a fase atual, registrar a pausa e rotular as etapas de conteúdo futuras como pausadas, preservando o histórico e as instruções existentes.
-2. `README.md` — atualizar apenas a indicação de prioridade/próximo trabalho e apontar para o roteiro e este plano, sem reescrever as alegações históricas sobre resultados já obtidos.
-3. `tasks/STABILIZATION_BACKLOG.md` — criar o registro de trilhas de trabalho e decisões pendentes descrito na §5.
+1. `docs/ROADMAP.md` — declare the current phase, register the pause, and label future content stages as paused, preserving existing history and instructions.
+2. `README.md` — update only the priority/next-work indication and point to the roadmap and this plan, without rewriting historical claims about results already obtained.
+3. `tasks/STABILIZATION_BACKLOG.md` — create the work-track and pending-decision record described in §5.
 
-Nenhum outro arquivo deve ser modificado nesta fase. Em particular, não editar `src/`, `annotations/`, `tools/`, `assets/`, `rom/`, `prontos/`, configuração de build, especificações de implementação de personagem, nem o relatório de REA arcade.
+No other file may be modified in this phase. In particular, do not edit `src/`, `annotations/`, `tools/`, `assets/`, `rom/`, `prontos/`, build configuration, character implementation specifications, nor the arcade REA report.
 
-## 4. Mudanças requeridas
+## 4. Required changes
 
-### 4.1 `docs/ROTEIRO.md`
+### 4.1 `docs/ROADMAP.md`
 
-Adicionar no início do roteiro uma seção breve **“Fase atual — estabilização e manutenibilidade”**, contendo:
+Add at the beginning of the roadmap a brief section **"Current phase — stabilization and maintainability"** containing:
 
-- objetivo: facilitar entendimento, autoria e manutenção do que já existe;
-- declaração de pausa: novos personagens e funcionalidades de jogo não são trabalho ativo nesta fase;
-- links relativos para `tasks/PROJECT_STABILIZATION_EXECUTION_PLAN.md` e `tasks/PHASE_0_SCOPE_FREEZE_SPEC.md`;
-- indicação de que as próximas tarefas ativas serão escolhidas após a auditoria documental da Fase 1, não presumidas a partir da ordem antiga do roteiro.
+- objective: facilitate understanding, authorship, and maintenance of what already exists;
+- pause statement: new characters and game features are not active work in this phase;
+- relative links to `tasks/PROJECT_STABILIZATION_EXECUTION_PLAN.md` and `tasks/PHASE_0_SCOPE_FREEZE_SPEC.md`;
+- indication that the next active tasks will be chosen after the Phase 1 documentation audit, not presumed from the old roadmap order.
 
-Nas etapas futuras relacionadas a Ken, ferramentas de conteúdo, cenários/músicas/finais e outras funcionalidades:
+In future stages related to Ken, content tools, stages/music/endings, and other features:
 
-- adicionar rótulo visível `PAUSADO — fora da fase atual` (ou formulação equivalente);
-- preservar listas, notas técnicas e caixas de status já existentes;
-- não marcar itens incompletos como concluídos, cancelados ou aprovados;
-- não reordenar nem reescrever o histórico concluído da Etapa 0/1/2.
+- add a visible label `PAUSED — outside current phase` (or equivalent formulation);
+- preserve lists, technical notes, and status boxes already present;
+- do not mark incomplete items as completed, cancelled, or approved;
+- do not reorder or rewrite the completed history of Stage 0/1/2.
 
-Se houver uma recomendação textual antiga do tipo “próxima etapa é implementar Ken”, ajustá-la para refletir que Ken está pausado e que sua especificação vigente não foi cancelada.
+If there is an old textual recommendation of the type "next stage is implement Ken", adjust it to reflect that Ken is paused and that its current specification was not cancelled.
 
 ### 4.2 `README.md`
 
-Atualizar somente o bloco que orienta o leitor sobre “o que ainda falta” ou o próximo passo, para:
+Update only the block guiding the reader about "what is still missing" or the next step, to:
 
-- identificar a estabilização/manutenibilidade como foco atual;
-- dizer que a implementação de novos personagens e funcionalidades está pausada, não cancelada;
-- apontar para `docs/ROTEIRO.md` e para o plano/spec de estabilização;
-- manter as descrições de capacidade, experimentos históricos e estado de builds/testes como afirmações históricas, sem promovê-las a resultados recém-verificados.
+- identify stabilization/maintainability as the current focus;
+- say that implementation of new characters and features is paused, not cancelled;
+- point to `docs/ROADMAP.md` and to the stabilization plan/spec;
+- keep descriptions of capability, historical experiments, and build/test state as historical statements, without promoting them to newly-verified results.
 
-Não executar comandos citados no README para confirmar as afirmações; esta tarefa é somente documental.
+Do not execute commands cited in the README to confirm statements; this task is only documentary.
 
 ### 4.3 `tasks/STABILIZATION_BACKLOG.md`
 
-Criar o arquivo com três trilhas separadas, um estado inicial e o registro de decisões pendentes.
+Create the file with three separate tracks, an initial state, and the pending-decision record.
 
-#### Trilha A — estabilização/manutenibilidade (ativa como planejamento)
+#### Track A — stabilization/maintainability (active as planning)
 
-Registrar como candidatos, sem presumir aprovação de implementação:
+Register as candidates, without presuming implementation approval:
 
-- Fase 1 — auditoria reproduzível de métricas, fontes de verdade, documentação, bancos e validações existentes;
-- Fase 2 — especificação do formato textual de autoria de estados/quadros e decisão sobre fonte canônica;
-- Fase 3 — naming dirigido por criticidade e evidência;
-- Fase 4 — reconciliação documental e registro de decisões técnicas;
-- Fase 5 — proposta de validação futura, sem executar testes.
+- Phase 1 — reproducible audit of metrics, sources of truth, documentation, banks, and existing validations;
+- Phase 2 — specification of the text authoring format for states/frames and decision on canonical source;
+- Phase 3 — naming driven by criticality and evidence;
+- Phase 4 — documentary reconciliation and technical decision registration;
+- Phase 5 — future validation proposal, without executing tests.
 
-Referenciar o plano global em vez de duplicar os requisitos completos.
+Refer to the global plan instead of duplicating complete requirements.
 
-#### Trilha B — REA e documentação técnica (pesquisa/documentação, separada)
+#### Track B — REA and technical documentation (research/documentation, separate)
 
-Registrar separadamente:
+Register separately:
 
-- REA estática da IA arcade e respectiva especificação de sala limpa;
-- conclusão da análise das lacunas de Ken na revisão arcade identificada, quando esse trabalho for retomado;
-- documentação de formatos/hipóteses do motor NES, quando priorizada pela auditoria.
+- static REA of arcade AI and respective clean-room specification;
+- conclusion of Ken gap analysis in the identified arcade revision, when that work is resumed;
+- documentation of NES engine formats/hypotheses, when prioritized by the audit.
 
-Esta trilha não autoriza portar bytecode, dados ou código arcade para o projeto, nem executar a ROM arcade. Não apresentar a REA como implementação NES.
+This track does not authorize porting bytecode, data, or arcade code to the project, nor executing the arcade ROM. Do not present REA as NES implementation.
 
-#### Trilha C — conteúdo e funcionalidades (pausada)
+#### Track C — content and features (paused)
 
-Registrar como pausados, não cancelados:
+Register as paused, not cancelled:
 
-- implementação de Ken como personagem jogável, conforme sua especificação vigente;
-- qualquer IA própria de Ken no NES;
-- implementação de outros personagens;
-- novas telas, controles, modos, golpes, cenários, músicas, finais ou outras funções de jogo;
-- produção/conversão de assets e ferramentas ligadas diretamente à criação de conteúdo, até decisão posterior.
+- Ken implementation as playable character, per its current specification;
+- any Ken-specific AI on NES;
+- implementation of other characters;
+- new screens, controls, modes, moves, stages, music, endings, or other game functions;
+- asset production/conversion and tools directly tied to content creation, until a later decision.
 
-A trilha não deve reescrever nem alterar a especificação de Ken; deve referenciá-la.
+This track must not rewrite or alter Ken's specification; it must reference it.
 
-#### Decisões pendentes
+#### Pending decisions
 
-Incluir pelo menos os itens abaixo, cada um com **ID**, **pergunta**, **estado**, **responsável pela decisão** (Mantenedor), **evidência/entrada necessária** e **bloqueia**:
+Include at least the items below, each with **ID**, **question**, **state**, **decision owner** (Maintainer), **evidence/input needed** and **blocks**:
 
-| ID | Pergunta a resolver | Evidência/entrada necessária | Bloqueia |
+| ID | Question to resolve | Evidence/input needed | Blocks |
 |---|---|---|---|
-| `D-01` | Qual método reproduzível será usado para contar labels totais, labels de código/dados e labels semanticamente nomeados? | Auditoria de fontes e critério de classificação da Fase 1. | Métricas de naming e comparação futura. |
-| `D-02` | Qual será a fonte canônica para autoria de estados/quadros: annotations, macros ca65 ou formato declarativo externo? | Inventário dos formatos/exceções e comparação de manutenção da Fase 2. | Implementar conversor ou migrar dados. |
-| `D-03` | Quais rotinas/tabelas serão a primeira leva de naming e qual evidência mínima torna um nome aceitável? | Mapa de criticidade e evidência reunido nas Fases 1/3. | Campanha de renomeação. |
-| `D-04` | Quais critérios e decisão explícita reabrem a implementação de personagens/funcionalidades? | Prioridades do Mantenedor e conclusão da estabilização. | Retomar a trilha C. |
-| `D-05` | Que validações futuras serão autorizadas, por quem, e em qual escopo? | Proposta de validação da Fase 5 e autorização explícita. | Criar/rodar testes, builds ou validação em emulador no trabalho futuro. |
-| `D-06` | Ferramentas externas de assets serão avaliadas e em que momento? | Necessidade de conteúdo, disponibilidade e revisão de licença. | Integração de conversores externos. |
-| `D-07` | Há necessidade mensurável de mudar a organização do kernel/bancos? | Auditoria de espaço, requisitos de vetores e restrições de ciclos. | Qualquer refatoração do kernel. |
+| `D-01` | What reproducible method will be used to count total labels, code/data labels, and semantically named labels? | Phase 1 source inventory and classification criteria. | Naming metrics and future comparison. |
+| `D-02` | What will be the canonical source for state/frame authoring: annotations, ca65 macros, or external declarative format? | Phase 2 inventory of formats/exceptions and maintenance comparison. | Implementing converter or migrating data. |
+| `D-03` | Which routines/tables will be the first naming batch, and what minimum evidence makes a name acceptable? | Criticality and evidence map gathered in Phases 1/3. | Renaming campaign. |
+| `D-04` | What criteria and explicit decision reopen character/feature implementation? | Maintainer priorities and conclusion of stabilization. | Resuming Track C. |
+| `D-05` | What future validations will be authorized, by whom, and in what scope? | Phase 5 validation proposal and explicit authorization. | Creating/running tests, builds, or emulator validation in future work. |
+| `D-06` | Will external asset tools be evaluated and when? | Content need, availability, and license review. | Integrating external converters. |
+| `D-07` | Is there a measurable need to change kernel/bank organization? | Phase 1 space audit, vector requirements, and cycle constraints. | Any kernel refactoring. |
 
-Todos os itens começam como `PENDENTE`. O backlog não deve resolvê-los por conta própria nem tratar a ausência de decisão como aprovação. As entradas devem permanecer concisas; planos técnicos detalhados pertencem ao plano global ou a uma especificação própria.
+All items start as `PENDING`. The backlog does not resolve them on its own nor treat absence of decision as approval. Entries must remain concise; detailed technical plans belong to the global plan or a dedicated specification.
 
-## 5. Regras de estado e linguagem
+## 5. State and language rules
 
-- Usar **ATIVO** apenas para trabalho efetivamente autorizado e em execução; trabalho apenas listado fica como `PLANEJADO` ou `CANDIDATO`.
-- Usar **PAUSADO** para conteúdo que permanece desejado, mas não pode iniciar nesta fase.
-- Usar **PENDENTE** para decisões ainda sem resposta.
-- Não usar “pronto”, “validado”, “testado” ou “aprovado” para indicar apenas que a documentação foi escrita.
-- A aprovação desta Fase 0 não autoriza qualquer Gate A–E do plano global além da edição documental definida aqui.
+- Use **ACTIVE** only for work effectively authorized and in execution; work merely listed remains `PLANNED` or `CANDIDATE`.
+- Use **PAUSED** for content that remains desired but cannot start in this phase.
+- Use **PENDING** for decisions still without an answer.
+- Do not use "ready", "validated", "tested", or "approved" to indicate that documentation was merely written.
+- Approval of this Phase 0 does not authorize any Gate A–E of the global plan beyond the documentary editing defined here.
 
-## 6. Fora do escopo
+## 6. Out of scope
 
-- Resolver as decisões D-01 a D-07.
-- Executar a auditoria da Fase 1.
-- Projetar ou implementar o formato textual, conversores ou naming batch.
-- Fazer mudanças em código, annotations, ferramentas, assets, ROMs ou configurações.
-- Compilar, montar, executar ou testar ROM; executar Mesen/MAME ou scripts de regressão/realocação.
-- Editar a especificação de Ken, a especificação de Guile ou a REA arcade.
-- Retomar IA arcade ou transferir achados da arcade para o jogo NES.
+- Resolving decisions D-01 to D-07.
+- Executing the Phase 1 audit.
+- Designing or implementing the text format, converters, or naming batch.
+- Making changes to code, annotations, tools, assets, ROMs, or configuration.
+- Compiling, assembling, executing, or testing ROM; running Mesen/MAME or regression/relocation scripts or validation.
+- Editing Ken's specification, Guile's specification, or the arcade REA.
+- Resuming arcade AI or transferring arcade findings to the NES game.
 
-## 7. Preservação do estado de trabalho
+## 7. Working state preservation
 
-Antes de editar, verificar e registrar o estado do diretório de trabalho. A inspeção não deve descartar alterações. Preservar todos os arquivos modificados ou não rastreados já existentes; não executar `clean`, `reset`, `restore`, checkout destrutivo ou equivalente. Se um dos três arquivos permitidos já tiver alterações locais, editar apenas as seções necessárias e relatar o conflito/diff para revisão.
+Before editing, verify and record the working directory state. Inspection must not discard changes. Preserve all existing modified or untracked files; do not run `clean`, `reset`, `restore`, destructive checkout, or equivalent. If one of the three permitted files already has local changes, edit only the necessary sections and report the conflict/diff for review.
 
-## 8. Critérios de aceite
+## 8. Acceptance criteria
 
-- [ ] O roteiro declara a fase atual e a pausa de conteúdo de forma clara, sem cancelar o backlog antigo.
-- [ ] Etapas futuras de personagens e funcionalidades estão rotuladas como pausadas, sem mudar o status de etapas concluídas.
-- [ ] O README aponta para a prioridade atual e para os documentos de planejamento sem afirmar validações recém-executadas.
-- [ ] `tasks/STABILIZATION_BACKLOG.md` contém as três trilhas separadas e as decisões D-01 a D-07 como pendentes.
-- [ ] Cada tarefa futura está corretamente classificada como ativa, planejada/candidata, pausada ou pendente; nenhuma decisão foi implicitamente tomada.
-- [ ] Links internos são relativos e apontam para arquivos existentes.
-- [ ] Somente os arquivos permitidos na §3 foram alterados ou criados.
-- [ ] Nenhum código, dado, asset, configuração, ROM ou ferramenta foi alterado.
-- [ ] Nenhum build, teste, emulador ou validação de ROM foi executado.
-- [ ] A entrega informa arquivos alterados, resumo do texto incluído, divergências encontradas e confirmação dos limites respeitados.
+- [ ] The roadmap clearly declares the current phase and the content pause, without cancelling the old backlog.
+- [ ] Future character and feature stages are labeled as paused, without changing the status of completed stages.
+- [ ] The README points to the current priority and planning documents without claiming newly-executed validations.
+- [ ] `tasks/STABILIZATION_BACKLOG.md` contains the three separate tracks and decisions D-01 to D-07 as pending.
+- [ ] Each future task is correctly classified as active, planned/candidate, paused, or pending; no decision is implicitly taken.
+- [ ] Internal links are relative and point to existing files.
+- [ ] Only the files permitted in §3 were altered or created.
+- [ ] No code, data, asset, configuration, ROM, or tool was altered.
+- [ ] No build, test, emulator, or ROM validation was executed.
+- [ ] The delivery reports altered files, included text summary, divergences found, and confirmation of limits respected.
 
-## 9. Relatório de entrega exigido
+## 9. Required delivery report
 
-Ao concluir, o Engineer deve retornar:
+Upon completion, the Engineer must return:
 
-1. lista exata de arquivos criados/alterados;
-2. resumo das declarações de pausa e das três trilhas registradas;
-3. decisões deixadas pendentes (D-01–D-07);
-4. divergências encontradas entre README, roteiro e especificações; não resolvidas sem autorização;
-5. confirmação explícita de que não alterou código/ROM/tools, não compilou e não executou testes ou emulador.
+1. exact list of files created/altered;
+2. summary of pause statements and the three tracks registered;
+3. pending decisions (D-01–D-07);
+4. divergences found between README, roadmap, and specifications; not resolved without authorization;
+5. explicit confirmation that code/ROM/tools were not altered, nothing compiled, and no tests or emulator were executed.

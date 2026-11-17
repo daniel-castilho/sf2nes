@@ -1,63 +1,63 @@
-# Anotacoes do disassembly do "Street Fighter II NE (DEMO by Parisoft)".
-# Formato (uma diretiva por linha; banco:endereco em hex; K:endereco = kernel comum aos 3 bancos de codigo):
-#   label   BB:AAAA Nome                 nome de rotina ou de tabela
-#   ram     AAAA Nome [N]                nome de variavel de RAM (N = quantos bytes; padrao 1)
-#   comment BB:AAAA texto                comentario no fim da linha
-#   block   BB:AAAA texto                comentario de bloco antes do endereco (repita p/ varias linhas)
-#   code    BB:AAAA                      forca o disassembler a tratar como codigo
-#   data    BB:AAAA-BBBB                 forca a tratar como dados
-#   table   BB:AAAA split lo=AAAA hi=BBBB n=N delta=1    tabela de saltos dividida (guarda endereco-1, uso com RTS)
-#                                        (as tabelas no padrao lda/pha/lda/pha/rts sao detectadas sozinhas)
-#   table   BB:AAAA words n=N            tabela de ponteiros de 16 bits
-#   ramcode BB:AAAA TAM ORG              trecho copiado para a RAM e executado la
-#   statebank BB frames=BB from=AAAA to=AAAA   banco de estados de um lutador (cabecalho 7 bytes + quadros de 14 bytes)
-#   statecond BB:AAAA n=N             tabela de condicoes da maquina de estados (split lo/hi, truque do RTS,
-#                                        guarda endereco-1): os rotulos dos alvos viram os nomes impressos nos
-#                                        cabecalhos "; -- ESTADO" do banco de dados do lutador
-#   ptr     BB:AAAA lo|hi BB:TTTT        esta instrucao imediata (ou byte de dado) e' a metade baixa/alta de um ponteiro
-#                                        para BB:TTTT. So para os casos que o trace nao pegou (tools/ptr_candidates.py).
-#   imm     BB:AAAA EXPRESSAO            escreve a mao o operando de uma instrucao imediata (ex.: imm 3F:F8BF <FarCall)
-#                                        (ponteiros para o ROM vistos no trace ja saem simbolicos sozinhos)
-#   alt     SIMBOLO BB:AAAA TAM          codigo alternativo (linhas seguintes comecando com "|"), montado so com
-#                                        -D SIMBOLO; sem o simbolo sai o original. Usado para correcoes opcionais.
-#   patch   BB:AAAA XX XX ...            sobrescreve bytes da imagem de referencia antes da analise/emissao (dados
-#                                        novos ou correcoes que devem entrar no build canonico; nao cruza banco).
-#   keepbank BB                          banco mantido a mao (nao gerado): so garante o segmento no sf2ne.cfg.
-#   ram AAAA Nome N  nomeia N bytes seguidos: Nome, Nome+1, ... (vetores, pares P1/P2).
+# Disassembly annotations for "Street Fighter II NE (DEMO by Parisoft)".
+# Format (one directive per line; BB:AAAA in hex; K:address = kernel common to the 3 code banks):
+#   label   BB:AAAA Name                 routine or table name
+#   ram     AAAA Name [N]                RAM variable name (N = number of bytes; default 1)
+#   comment BB:AAAA text                 end-of-line comment
+#   block   BB:AAAA text                 block comment before the address (repeat for multiple lines)
+#   code    BB:AAAA                      force disassembler to treat as code
+#   data    BB:AAAA-BBBB                 force to treat as data
+#   table   BB:AAAA split lo=AAAA hi=BBBB n=N delta=1    split jump table (stores address-1, used with RTS)
+#                                        (tables in the lda/pha/lda/pha/rts pattern are detected on their own)
+#   table   BB:AAAA words n=N            16-bit pointer table
+#   ramcode BB:AAAA TAM ORG              chunk copied to RAM and executed there
+#   statebank BB frames=BB from=AAAA to=AAAA   fighter state bank (7-byte header + 14-byte frames)
+#   statecond BB:AAAA n=N             state machine condition table (split lo/hi, RTS trick,
+#                                        stores address-1): target labels become the names printed in
+#                                        "; -- STATE" headers of the fighter data bank
+#   ptr     BB:AAAA lo|hi BB:TTTT        this immediate instruction (or data byte) is the low/high half of a pointer
+#                                        to BB:TTTT. Only for cases the trace missed (tools/ptr_candidates.py).
+#   imm     BB:AAAA EXPRESSION           manually write the immediate operand (e.g. imm 3F:F8BF <FarCall)
+#                                        (pointers to ROM seen in the trace already come out symbolic on their own)
+#   alt     SYMBOL BB:AAAA TAM           alternative code (following lines starting with "|"), assembled only with
+#                                        -D SYMBOL; without the symbol the original is emitted. Used for optional fixes.
+#   patch   BB:AAAA XX XX ...            overwrites bytes of the reference image before analysis/emission (data
+#                                        new or fixes that must enter the canonical build; does not cross banks).
+#   keepbank BB                          bank kept by hand (not generated): only guarantees the segment in sf2ne.cfg.
+#   ram AAAA Name N   names N consecutive bytes: Name, Name+1, ... (vectors, P1/P2 pairs).
 
 ramcode 3F:F935 14 049E
 
 
 # ============================================================================================================
-# KERNEL (codigo repetido em $FC7C-$FF9A dos bancos $37, $3B e $3F)
+# KERNEL (code repeated at $FC7C-$FF9A in banks $37, $3B and $3F)
 # ============================================================================================================
 label K:FC7C IrqHandler
 block K:FC7C ------------------------------------------------------------------------------------------------
-block K:FC7C IRQ = contador de scanlines do MMC5 ($5203/$5204). Faz os efeitos de raster.
-block K:FC7C   IrqStage ($03FF) = 0      -> primeira divisao da luta: fim do HUD, comeca o cenario
-block K:FC7C   IrqStage > 0              -> divisoes seguintes da luta; a ultima faz o chao linha a linha (paralaxe)
-block K:FC7C   IrqStage < 0 (bit 7)      -> telas de menu (selecao / VS / frase): troca de CHR por faixa
-block K:FC7C ATENCAO: os lacos de espera (dex/bne, nop) sao contagem de ciclos. Mexer aqui desalinha a imagem.
+block K:FC7C IRQ = MMC5 scanline counter ($5203/$5204). Produces raster effects.
+block K:FC7C   IrqStage ($03FF) = 0      -> first fight split: end of HUD, stage begins
+block K:FC7C   IrqStage > 0              -> subsequent fight splits; the last does the floor line by line (parallax)
+block K:FC7C   IrqStage < 0 (bit 7)      -> menu screens (selection / VS / quote): swaps CHR by band
+block K:FC7C CAUTION: the wait loops (dex/bne, nop) are cycle-counted. Touching here misaligns the image.
 label K:FC8E Irq_FightNext
 label K:FCB6 Irq_FloorLine
-comment K:FCB6 uma volta por scanline do chao: rolagem horizontal propria (tabela FloorScrollX)
+comment K:FCB6 one pass per scanline of the floor: own horizontal scroll (FloorScrollX table)
 label K:FD04 Irq_FightArmNext
 label K:FD0E Irq_SetLine
 label K:FD16 Irq_Exit
 label K:FD1C Irq_FightFirst
 label K:FD62 Irq_Menu
 label K:FD8C Irq_MenuLast
-comment K:FD97 so para jogador humano (FighterIsCpu = 0)
-comment K:FDDF idem para o jogador 2 — nunca executado no demo (P2 e' sempre CPU)
+comment K:FD97 human player only (FighterIsCpu = 0)
+comment K:FDDF same for player 2 — never executed in the demo (P2 is always CPU)
 label K:FE14 MenuSplitLine
 label K:FE18 MenuSplitChrA
 label K:FE1B MenuSplitChrB
 label K:FE1E NmiHandler
 block K:FE1E ------------------------------------------------------------------------------------------------
-block K:FE1E NMI (vblank): envia a OAM, roda a tarefa do modo de tela atual (ScreenMode), acerta os bancos de CHR
-block K:FE1E dos sprites dos dois lutadores, a rolagem e os registradores do PPU, e sinaliza o laco principal.
-comment K:FE5A contador de frames
-comment K:FE5E avisa o laco principal que o vblank passou
+block K:FE1E NMI (vblank): sends OAM, runs the current screen mode task (ScreenMode), fixes the CHR banks
+block K:FE1E of the two fighters' sprites, scrolling and PPU registers, and signals the main loop.
+comment K:FE5A frame counter
+comment K:FE5E tells the main loop that vblank has passed
 label K:FE66 NmiDispatch
 label K:FE71 NmiTaskLo
 label K:FE79 NmiTaskHi
@@ -67,10 +67,10 @@ label K:FE9C NmiTask_Select
 label K:FEBA NmiTask_Fight
 label K:FEC5 NmiTask_VsQuote
 label K:FED8 PaletteUpload
-block K:FED8 Copia o buffer de paleta (PaletteBuf, 24 cores = 8 paletas x 3; a cor 0 de todas e' $0F) para o PPU.
+block K:FED8 Copies the palette buffer (PaletteBuf, 24 colors = 8 palettes x 3; color 0 of all is $0F) to the PPU.
 
 # ============================================================================================================
-# BANCO $3F — reset, laco principal, nucleo do motor de luta
+# BANK $3F — reset, main loop, fight engine core
 # ============================================================================================================
 label 3F:EF5 EffectEnd
 comment 3F:EF5 EffectEnd
@@ -115,11 +115,11 @@ comment 3F:E38D AnimRotate
 label 3F:E38F AnimEffect
 comment 3F:E38F AnimEffect
 label 3F:E0F2 StateCondDispatchLoop
-comment 3F:E0F2 StateCondDispatchLoop — loop de despacho das condições de transição de estado
+comment 3F:E0F2 StateCondDispatchLoop — state transition condition dispatch loop
 label 3F:E111 StateCondTableEntry
-comment 3F:E111 StateCondTableEntry — entrada da tabela de condições de transição
+comment 3F:E111 StateCondTableEntry — state transition condition table entry
 label 3F:E11D StateCondTableContinue
-comment 3F:E11D StateCondTableContinue — continuação da tabela de condições
+comment 3F:E11D StateCondTableContinue — continuation of condition table
 label 3F:E420 StateBlockStart
 comment 3F:E420 StateBlockStart
 label 3F:E429 StateBlockContinue
@@ -141,19 +141,19 @@ comment 3F:E4C1 BankSwitch
 label 3F:E517 TimerUpdate
 comment 3F:E517 TimerUpdate
 label 3F:EFF5 TimerUpdateFlip
-comment 3F:EFF5 TimerUpdateFlip — define FighterFlip no loop do temporizador (chamado por FightFrame)
+comment 3F:EFF5 TimerUpdateFlip — sets FighterFlip in timer loop (called by FightFrame)
 label 3F:EFF7 TimerUpdateContinue
-comment 3F:EFF7 TimerUpdateContinue — continuação do loop do temporizador
+comment 3F:EFF7 TimerUpdateContinue — continuation of timer loop
 label 3F:F927 JoyReadLoop
-comment 3F:F927 JoyReadLoop — loop de leitura de bits do controle dentro de JoyRead
+comment 3F:F927 JoyReadLoop — controller bit reading loop inside JoyRead
 label 3F:FFBE ResetVector37
-comment 3F:FFBE ResetVector37 — vetor de reset do banco $37
+comment 3F:FFBE ResetVector37 — bank $37 reset vector
 label 3F:FFC4 ResetVector3B
-comment 3F:FFC4 ResetVector3B — vetor de reset do banco $3B
+comment 3F:FFC4 ResetVector3B — bank $3B reset vector
 label 3F:FFDD ResetVector3F
-comment 3F:FFDD ResetVector3F — vetor de reset do banco $3F
+comment 3F:FFDD ResetVector3F — bank $3F reset vector
 label 3F:FFE6 NmiVector
-comment 3F:FFE6 NmiVector — vetor de NMI comum aos bancos de código
+comment 3F:FFE6 NmiVector — NMI vector common to code banks
 label 3F:E538 End_E538
 comment 3F:E538 End
 label 3F:E55A RoundCond
@@ -456,197 +456,196 @@ label 3F:F917 RoundCond_F917
 comment 3F:F917 RoundCond
 label 3F:FF9F Reset
 block 3F:FF9F ------------------------------------------------------------------------------------------------
-block 3F:FF9F RESET. Este codigo so existe no banco $3F (ver a correcao FIX_SOFT_RESET no fim de annotations/).
+block 3F:FF9F RESET. This code only exists in bank $3F (see FIX_SOFT_RESET fix at end of annotations/).
 label 3F:F7A2 Main
 block 3F:F7A2 ------------------------------------------------------------------------------------------------
-block 3F:F7A2 Inicializacao: configura o MMC5 (PRG modo 3 = 4 bancos de 8K; CHR modo 2 = paginas de 2K;
-block 3F:F7A2 ExRAM modo 3; nametables $44), zera rolagem/paleta, instala o trampolim FarCall na RAM e semeia o RNG.
+block 3F:F7A2 Initialization: configures MMC5 (PRG mode 3 = 4 banks of 8K; CHR mode 2 = 2K pages;
+block 3F:F7A2 ExRAM mode 3; nametables $44), zeroes scroll/palette, installs FarCall trampoline in RAM and seeds RNG.
 label 3F:F828 MainLoop
-block 3F:F828 Laco do jogo: aviso -> titulo -> selecao -> VS -> luta -> frase do vencedor -> volta ao comeco.
+block 3F:F828 Game loop: warning -> title -> selection -> VS -> fight -> winner quote -> back to start.
 comment 3F:F828 ScreenDisclaimer
 
 # ------------------------------------------------------------------------------------------------
-# LOTE P2 de naming (Fase 3): ultimos rotulos automaticos de codigo do banco $3F (nucleo do motor).
-# Nome pelo papel demonstrado pelo codigo; apenas rotulos, nenhuma mudanca de byte.
+# Phase 3 P2 naming batch: last automatic code labels of bank $3F (engine core).
+# Named by role demonstrated by code; labels only, no byte change.
 label 3F:E158 TransAnimTimerSet
-comment 3F:E158 TransAnimTimerSet — em TransApply: quadro de golpe/reacao -> FighterAnimTimer = 1
+comment 3F:E158 TransAnimTimerSet — in TransApply: hit/reaction frame -> FighterAnimTimer = 1
 label 3F:E15D TransNextPtrSet
-comment 3F:E15D TransNextPtrSet — em TransApply: grava o ponteiro do proximo estado (FighterNextPtrLo/Hi)
+comment 3F:E15D TransNextPtrSet — in TransApply: writes next state pointer (FighterNextPtrLo/Hi)
 label 3F:E191 CondOpponentAttackClass
-comment 3F:E191 CondOpponentAttackClass — em CondOpponentAttacks: classe do oponente (reacao/golpe/projetil)
+comment 3F:E191 CondOpponentAttackClass — in CondOpponentAttacks: opponent class (reaction/hit/projectile)
 label 3F:E1CA CondFarBackFacing
-comment 3F:E1CA CondFarBackFacing — em CondOpponentFarBack: devolve o bit de virada ($40)
+comment 3F:E1CA CondFarBackFacing — in CondOpponentFarBack: returns turn bit ($40)
 label 3F:E1E0 CondNearAbsDiff
-comment 3F:E1E0 CondNearAbsDiff — em CondOpponentNear: normaliza o sinal da diferenca de X
+comment 3F:E1E0 CondNearAbsDiff — in CondOpponentNear: normalizes X difference sign
 label 3F:E1E6 CondNearLimit
-comment 3F:E1E6 CondNearLimit — em CondOpponentNear: compara |dx| com $21
+comment 3F:E1E6 CondNearLimit — in CondOpponentNear: compares |dx| with $21
 label 3F:E239 CondGrabAbsDiff
-comment 3F:E239 CondGrabAbsDiff — em CondCanGrab: normaliza o sinal da diferenca de X
+comment 3F:E239 CondGrabAbsDiff — in CondCanGrab: normalizes X difference sign
 label 3F:E252 CondGrabOpponentClass
-comment 3F:E252 CondGrabOpponentClass — em CondCanGrab: classe do oponente ($30-$A8)
+comment 3F:E252 CondGrabOpponentClass — in CondCanGrab: opponent class ($30-$A8)
 label 3F:E2A3 CondRoundLostFalse
-comment 3F:E2A3 CondRoundLostFalse — em CondRoundLost: caminho falso (RoundResult = este lutador ou $FF)
+comment 3F:E2A3 CondRoundLostFalse — in CondRoundLost: false path (RoundResult = this fighter or $FF)
 label 3F:E2B3 AnimNextStateCheck
-comment 3F:E2B3 AnimNextStateCheck — em AnimAdvance: ha proximo estado escolhido? (FighterNextPtrHi)
+comment 3F:E2B3 AnimNextStateCheck — in AnimAdvance: is there a next state chosen? (FighterNextPtrHi)
 label 3F:E2D8 AnimStatePtrSet
-comment 3F:E2D8 AnimStatePtrSet — em AnimAdvance: grava o ponteiro do novo estado e do novo quadro
+comment 3F:E2D8 AnimStatePtrSet — in AnimAdvance: writes new state and new frame pointers
 label 3F:E2F0 AnimStateClassSet
-comment 3F:E2F0 AnimStateClassSet — em AnimAdvance: aplica a classe do novo quadro (StateSetByte)
+comment 3F:E2F0 AnimStateClassSet — in AnimAdvance: applies new frame class (StateSetByte)
 
-# TEMPORARIO (Ken): pula as telas de aviso/QR para agilizar o teste manual. Sao 18 NOPs no lugar do
-# farcall de 18 bytes, entao o kernel continua comecando em $FC7C. TODO: remover este patch para o
-# aviso/QR voltar a aparecer.
+# TEMPORARY (Ken): skips warning/QR screens to speed up manual test. 18 NOPs instead of
+# 18-byte farcall, so kernel still starts at $FC7C. TODO: remove this patch so warning/QR reappears.
 patch 3F:F828 EA EA EA EA EA EA EA EA EA EA EA EA EA EA EA EA EA EA
 comment 3F:F83A ScreenTitle
 comment 3F:F86C ScreenPlayerSelect
 comment 3F:F87E ScreenVersus
 comment 3F:F890 Match
 comment 3F:F8A2 ScreenWinQuote
-comment 3F:F85E nenhum personagem escolhido
-comment 3F:F866 P1 = humano
+comment 3F:F85E no character chosen
+comment 3F:F866 P1 = human
 comment 3F:F86A P2 = CPU
 label 3F:F8B7 InstallFarCall
 imm 3F:F8BF <FarCall
 imm 3F:F8C3 >FarCall
-comment 3F:F8B7 copia 20 bytes de FarCallRom para $049E
+comment 3F:F8B7 copies 20 bytes of FarCallRom to $049E
 label 3F:F8E7 JoyPollBoth
 label 3F:F8F1 JoyPollSafe
-block 3F:F8F1 Le o controle A (0/1) ate duas leituras baterem — protege contra a corrupcao causada pelo canal DMC.
-block 3F:F8F1 Resultado em JoyState,x ; JoyPrev,x recebe o estado anterior.  (mesma ideia do joy_poll_safe da familib)
+block 3F:F8F1 Reads controller A (0/1) until two reads match — protects against DMC channel corruption.
+block 3F:F8F1 Result in JoyState,x ; JoyPrev,x gets previous state.  (same idea as joy_poll_safe from familib)
 label 3F:F91C JoyRead
 label 3F:F935 FarCallRom
 label 3F:E5AC RandomSeed
 label 3F:E5B9 Random
 label 3F:E03D DistanceX
-comment 3F:E03D A = |x do P2 - x do P1|
+comment 3F:E03D A = |x of P2 - x of P1|
 label 3F:E049 DistanceY
 label 3F:E000 HitFreeze_E000
-comment 3F:E000 congela o lutador atingido: salva movimento/velocidades/timer em ram_0312-031C e para no quadro atual por $0E quadros
+comment 3F:E000 freezes the hit fighter: saves movement/velocities/timer in ram_0312-031C and stops at current frame for $0E frames
 label 3F:E0CE StateCheckTransitions
 block 3F:E0CE ------------------------------------------------------------------------------------------------
-block 3F:E0CE MAQUINA DE ESTADOS DO LUTADOR (dirigida por dados; os dados ficam no banco FighterStateBank, em $A000).
-block 3F:E0CE Percorre a lista de transicoes: cada no' E' um cabecalho de estado de 7 bytes — +0 numero da condicao
-block 3F:E0CE (Cond* abaixo; >= $80 = incondicional), +1/+2 proxima alternativa (a lista encadeada), +3/+4 proximo
-block 3F:E0CE estado na cadeia natural, +5 classe, +6 acertos do golpe. A primeira condicao verdadeira aplica O
-block 3F:E0CE PROPRIO NO' como proximo estado (FighterNextPtr = endereco do no'; AnimAdvance entra nele).
-block 3F:E0CE zp_DD marca a origem da busca: $04 = GuardRedirect, $02 = golpe por botao, $01 = golpe especial.
-block 3F:E0CE Com zp_DD = $04 e classe $28/$30: pula o 1o no' quando ele e' o proprio estado atual.
-block 3F:E0CE Com zp_DD = $02 e classe $70-$98 e no' != estado atual: pula o 1o no'. E com o bit 2 da classe zerado
-block 3F:E0CE e CondOpponentFarBack: pula o 1o no' tambem (nao reage de costas).
+block 3F:E0CE FIGHTER STATE MACHINE (data-driven; data is in FighterStateBank at $A000).
+block 3F:E0CE Walks the transition list: each node is a 7-byte state header — +0 condition number
+block 3F:E0CE (Cond* below; >= $80 = unconditional), +1/+2 next alternative (chained list), +3/+4 next
+block 3F:E0CE state in natural chain, +5 class, +6 hit count. The first true condition applies THIS
+block 3F:E0CE NODE as next state (FighterNextPtr = node address; AnimAdvance enters it).
+block 3F:E0CE zp_DD marks search origin: $04 = GuardRedirect, $02 = button move, $01 = special move.
+block 3F:E0CE With zp_DD = $04 and class $28/$30: skips first node when it is the current state.
+block 3F:E0CE With zp_DD = $02 and class $70-$98 and node != current state: skips first node. And with bit 2 of class cleared
+block 3F:E0CE and CondOpponentFarBack: skips first node too (does not react from behind).
 label 3F:E129 TransNextNode
-comment 3F:E129 condicao falsa: segue para o no' +1/+2 e repete a busca (ponteiro 0 = fim da lista, nada muda)
+comment 3F:E129 false condition: goes to node +1/+2 and repeats search (pointer 0 = end of list, nothing changes)
 label 3F:E13B TransApply
-comment 3F:E13B condicao verdadeira: o no' atual vira o proximo estado; AnimTimer=1 nas classes de golpe/reacao ($28-$40/$B0-$E0) a menos que o quadro tenha a flag bit 3
+comment 3F:E13B true condition: current node becomes next state; AnimTimer=1 in hit/reaction classes ($28-$40/$B0-$E0) unless frame has flag bit 3
 label 3F:E168 StateCondDispatch
 label 3F:E171 StateCondLo
 label 3F:E17D StateCondHi
 statecond 3F:E171 n=12
-comment 3F:E171 12 condicoes; cada entrada guarda endereco-1 (truque do RTS com pha/pha/rts)
+comment 3F:E171 12 conditions; each entry stores address-1 (RTS trick with pha/pha/rts)
 label 3F:E189 CondOpponentAttacks
-comment 3F:E189 verdadeiro se EU estou em pe/agachado (classe & 3) E o oponente esta em classe de reacao ($70-$98), de golpe ($B0-$E0) ou com projetil no ar (dele)
+comment 3F:E189 true if I am standing/crouching (class & 3) AND opponent is in reaction class ($70-$98), hit class ($B0-$E0) or has projectile in air (his)
 label 3F:E1B1 CondOpponentFarBack
-comment 3F:E1B1 verdadeiro se o oponente esta a |dx| >= $0F E eu de costas para ele: devolve $40 (e' o bit 6 de FighterFlip) para virar, 0 se esta encarando ou colado
+comment 3F:E1B1 true if opponent is at |dx| >= $0F and I have my back to him: returns $40 (bit 6 of FighterFlip) to turn, 0 if facing or close
 label 3F:E1D6 CondOpponentNear
-comment 3F:E1D6 verdadeiro se |dx| < $21
-label 3F:E1ED CondEmPe
-comment 3F:E1ED bit 0 da classe = postura em pe
-label 3F:E1F3 CondAgachado
-comment 3F:E1F3 bit 1 da classe = postura agachado
-label 3F:E1F9 CondNoAr
-comment 3F:E1F9 verdadeiro se FighterY < FloorY (acima do chao)
+comment 3F:E1D6 true if |dx| < $21
+label 3F:E1ED CondStanding
+comment 3F:E1ED bit 0 of class = standing posture
+label 3F:E1F3 CondCrouching
+comment 3F:E1F3 bit 1 of class = crouching posture
+label 3F:E1F9 CondInAir
+comment 3F:E1F9 true if FighterY < FloorY (above ground)
 label 3F:E204 CondOnGroundOrVelX
-comment 3F:E204 verdadeiro se FighterY = FloorY ou VelX/VelXSub != 0 (esta no chao ou deslizando)
-label 3F:E212 CondInputBaixo
-comment 3F:E212 verdadeiro se InputDir = $08/$0B/$0C (baixo reto ou diagonal-baixa); devolve o proprio InputDir
-label 3F:E224 CondProjetilLivre
-comment 3F:E224 verdadeiro se a vaga de projetil deste lutador esta livre (zp_7B dele = 0)
+comment 3F:E204 true if FighterY = FloorY or VelX/VelXSub != 0 (on ground or sliding)
+label 3F:E212 CondInputDown
+comment 3F:E212 true if InputDir = $08/$0B/$0C (straight down or diagonal-down); returns InputDir itself
+label 3F:E224 CondProjectileFree
+comment 3F:E224 true if this fighter's projectile slot is free (his zp_7B = 0)
 label 3F:E22E CondCanGrab
-comment 3F:E22E |dx| < $18, os dois no chao, InputDir = frente/tras ($05/$06) e classe do oponente < $30 ou $50-$9F (estados de virar $A0-$A9 nao contam, nt)
+comment 3F:E22E |dx| < $18, both on ground, InputDir = forward/back ($05/$06) and opponent class < $30 or $50-$9F (turn states $A0-$A9 don't count, nt)
 label 3F:E271 CondVictory
-comment 3F:E271 verdadeiro se RoundResult = este lutador E o oponente esta caido (classe >= $F0) E nao ha projeteis no ar E o canal de voz esta livre
+comment 3F:E271 true if RoundResult = this fighter AND opponent is down (class >= $F0) AND no projectiles in air AND voice channel is free
 label 3F:E296 CondRoundLost
-comment 3F:E296 verdadeiro se RoundResult != este lutador E RoundResult != $FF (round encerrado; vale para empate)
+comment 3F:E296 true if RoundResult != this fighter AND RoundResult != $FF (round ended; applies to draw)
 label 3F:E2A6 AnimAdvance
 block 3F:E2A6 ------------------------------------------------------------------------------------------------
-block 3F:E2A6 UM PASSO DA ANIMACAO (todo quadro, antes do teste de colisao):
-block 3F:E2A6  - efeito $0B do quadro atual -> dispara o projetil (ProjLaunch, parametro = quadro +5)
-block 3F:E2A6  - FighterNextPtr != 0 -> entra no novo estado escolhido por TransApply: grava classe (+5) e
-block 3F:E2A6    acertos (+6), primeiro quadro = no' + 7. Caso especial: estado $49 com zp_62 != 0 usa a
-block 3F:E2A6    alternativa +1/+2 do estado atual. Efeito $20 do quadro -> efeito sonoro (SfxPlay).
-block 3F:E2A6  - sem proximo estado e ram_031C != 0 -> restaura o movimento congelado pelo hit-freeze.
-block 3F:E2A6  - senao avanca os quadros: +11 (repeticoes do laco) > 0 -> decrementa e desvia para +14/+15;
-block 3F:E2A6    zera -> +12/+13 (proximo quadro); +12/+13 = 0 -> StateAdvance (cadeia natural +3/+4;
-block 3F:E2A6    classe $30 com HP <= dano pendente usa +1/+2, ou seja corta para o estado de dano).
-block 3F:E2A6  - KO no ar (HP <= dano pendente, acima do chao): HitStop = $78 e vozes de KO.
+block 3F:E2A6 ONE ANIMATION STEP (every frame, before collision test):
+block 3F:E2A6  - current frame effect $0B -> fires projectile (ProjLaunch, param = frame +5)
+block 3F:E2A6  - FighterNextPtr != 0 -> enters new state chosen by TransApply: writes class (+5) and
+block 3F:E2A6    hits (+6), first frame = node + 7. Special case: state $49 with zp_62 != 0 uses the
+block 3F:E2A6    alternative +1/+2 of current state. Frame effect $20 -> sound effect (SfxPlay).
+block 3F:E2A6  - no next state and ram_031C != 0 -> restores movement frozen by hit-freeze.
+block 3F:E2A6  - otherwise advances frames: +11 (loop repeats) > 0 -> decrements and branches to +14/+15;
+block 3F:E2A6    zero -> +12/+13 (next frame); +12/+13 = 0 -> StateAdvance (natural chain +3/+4;
+block 3F:E2A6    class $30 with HP <= pending damage uses +1/+2, i.e. cuts to damage state).
+block 3F:E2A6  - air KO (HP <= pending damage, above ground): HitStop = $78 and KO voices.
 label 3F:E301 FreezeRestore
-comment 3F:E301 devolve as velocidades/timer salvos pelo hit-freeze (ram_0312-031C)
+comment 3F:E301 returns velocities/timer saved by hit-freeze (ram_0312-031C)
 label 3F:E3B8 FrameEnter
-comment 3F:E3B8 entrada do 1o quadro do novo estado: carrega zp_44 com as repeticoes do laco (quadro +11)
+comment 3F:E3B8 first frame entry of new state: loads zp_44 with loop repeats (frame +11)
 label 3F:E3BF FrameEnterCommon
-comment 3F:E3BF entrada de qualquer quadro: movimento (+8), grava FramePtr, efeito (+5/+6), AnimTimer (+0), flags (+7)
+comment 3F:E3BF any frame entry: movement (+8), writes FramePtr, effect (+5/+6), AnimTimer (+0), flags (+7)
 label 3F:E371 StateAdvance
-comment 3F:E371 fim da animacao: passa para o estado +3/+4 do cabecalho (cadeia natural); classe $30 com HP <= dano pendente usa a alternativa +1/+2
+comment 3F:E371 end of animation: passes to state +3/+4 of header (natural chain); class $30 with HP <= pending damage uses alternative +1/+2
 label 3F:E47F StateSetByte
-block 3F:E47F Grava o byte de estado (cabecalho +5) em FighterState e dispara o som da classe do estado:
-block 3F:E47F classes $70-$98 -> efeito sonoro (banco $37), classes $A0-$E0 -> voz do lutador (VoicePlayFighter).
-comment 3F:E3B1 cabecalho +6 (acertos do golpe)
+block 3F:E47F Writes state byte (header +5) to FighterState and triggers state class sound:
+block 3F:E47F classes $70-$98 -> sound effect (bank $37), classes $A0-$E0 -> fighter voice (VoicePlayFighter).
+comment 3F:E3B1 header +6 (hit count)
 label 3F:E4C2 MoveVelSetup
-comment 3F:E4C2 despacha pelo modo de movimento do quadro (+8): 0/1 absoluta, 2/3 aceleracao, 4/5 subpixel
+comment 3F:E4C2 dispatches by frame movement mode (+8): 0/1 absolute, 2/3 acceleration, 4/5 subpixel
 label 3F:E4DA MoveVelAbs
-comment 3F:E4DA modos 0/1: VelX/VelY do quadro (+9/+10) sao a velocidade nova, direto
+comment 3F:E4DA modes 0/1: frame VelX/VelY (+9/+10) are the new velocity, directly
 label 3F:E4F1 MoveVelSubpixel
-comment 3F:E4F1 modos 4/5: velocidade do quadro dividida por 16 — inteiro em VelX e resto<<4 em VelXSub
+comment 3F:E4F1 modes 4/5: frame velocity divided by 16 — integer in VelX and remainder<<4 in VelXSub
 label 3F:E53C MoveVelAdd
-comment 3F:E53C soma com sinal vel/16 a velocidade atual (VelX, VelXSub e VelY)
+comment 3F:E53C adds signed vel/16 to current velocity (VelX, VelXSub and VelY)
 label 3F:E597 MoveVelAccel
-comment 3F:E597 modos 2/3: acelera com MoveVelAdd (o bit 0 do modo nao muda o efeito)
+comment 3F:E597 modes 2/3: accelerates with MoveVelAdd (mode bit 0 does not change effect)
 label 3F:E837 ProjLaunch
-comment 3F:E837 A = velocidade ($00/$01/$02, passo em ProjSpeedStepTbl): nasce em FighterX +/- $27, direcao = FighterFlip (bit 6 de ProjFlags)
+comment 3F:E837 A = speed ($00/$01/$02, step in ProjSpeedStepTbl): born at FighterX +/- $27, direction = FighterFlip (bit 6 of ProjFlags)
 label 3F:E854 ProjUpdate
-comment 3F:E854 anda 1/16 do passo por subquadro; Y = FloorY - $27; morre fora de $0C-$FB
+comment 3F:E854 moves 1/16 of step per subframe; Y = FloorY - $27; dies outside $0C-$FB
 label 3F:E8BB ProjClash
-comment 3F:E8BB dois projeteis a |dx| < $18: os dois ganham bit 7 de ProjFlags e morrem apos 16 passos
+comment 3F:E8BB two projectiles at |dx| < $18: both get bit 7 of ProjFlags and die after 16 steps
 label 3F:E8F1 ProjHitTest
-comment 3F:E8F1 AABB do projetil (ponto +/- $0C/$0B) contra as caixas de corpo do oponente
+comment 3F:E8F1 projectile AABB (point +/- $0C/$0B) against opponent's body boxes
 label 3F:E941 ProjHit
-comment 3F:E941 projetil acertou: morre, classe de reacao $CB, dano $6C e chama a rotina de dano
+comment 3F:E941 projectile hit: dies, reaction class $CB, damage $6C and calls damage routine
 label 3F:EBA3 LoadHitBoxesBoth
-comment 3F:EBA3 processa o lutador 1 e depois o 0 (chamado por FightersUpdate)
+comment 3F:EBA3 processes fighter 1 then 0 (called by FightersUpdate)
 label 3F:EBA5 LoadHitBoxes
-comment 3F:EBA5 mapeia o banco de colisao em $8000; registro do quadro +3/+4: caixas de corpo 1/2 e de ataque (h = 0 ausenta), espelhadas por FighterFlip, ataque clampado em $20/$E0
+comment 3F:EBA5 maps collision bank at $8000; frame record +3/+4: body boxes 1/2 and attack box (h = 0 absent), mirrored by FighterFlip, attack clamped at $20/$E0
 label 3F:ECF1 HitTest
-comment 3F:ECF1 caixa de ataque de X contra corpo 1/2 de Y: um acerto por quadro (zp_3E), esgota AttackHitsLeft
+comment 3F:ECF1 attack box of X vs body 1/2 of Y: one hit per frame (zp_3E), exhausts AttackHitsLeft
 label 3F:E974 InputClear
-comment 3F:E974 zera a entrada do lutador (direcao neutra, sem golpe/hold); roda todo quadro fora da luta ativa (ScreenMode != 5 ou round ja decidido)
-comment 3F:E984 zera o passo do comando 0 do reconhecedor (CmdMotionStep,x = entrada 0 da lista)
-comment 3F:E986 zera a janela do comando 0 (CmdMotionWin,x)
-comment 3F:E988 estouro: CmdMotionStep+1,x NAO e' a entrada 1 (arrays intercalados) — atinge 1 byte do vizinho
-comment 3F:E98A mesmo estouro na janela; entradas 1-5 nunca sao zeradas aqui, so expiram pela janela
+comment 3F:E974 zeroes fighter input (neutral direction, no attack/hold); runs every frame outside active fight (ScreenMode != 5 or round already decided)
+comment 3F:E984 zeroes recognizer command 0 step (CmdMotionStep,x = list entry 0)
+comment 3F:E986 zeroes command 0 window (CmdMotionWin,x)
+comment 3F:E988 overflow: CmdMotionStep+1,x is NOT entry 1 (interleaved arrays) — hits 1 byte of neighbor
+comment 3F:E98A same overflow in window; entries 1-5 are never zeroed here, only expire by window
 label 3F:E963 DirCodeTbl
-comment 3F:E963 bits do controle -> codigo de direcao (bit 0 frente, 1 tras, 2 baixo, 3 cima): $04 neutro, $05 frente, $06 tras, $07 cima, $08 baixo, $09-$0A diagonais de cima, $0B-$0C diagonais de baixo
+comment 3F:E963 controller bits -> direction code (bit 0 forward, 1 back, 2 down, 3 up): $04 neutral, $05 forward, $06 back, $07 up, $08 down, $09-$0A up diagonals, $0B-$0C down diagonals
 label 3F:F799 GuardClassTbl
-comment 3F:F799 byte de classe da guarda pela direcao (indice InputDir-$04): $29 em pe, $2A agachado
+comment 3F:F799 guard class byte by direction (index InputDir-$04): $29 standing, $2A crouching
 label 3F:F671 InputDispatch_F671
-comment 3F:F671 entrada do jogador: vira transicao de estado — direcao (flag de quadro bit 2), botao (bit 1) ou especial (bit 0); a classe do proximo estado ($58-$68 aceita direcao) decide o que passa
+comment 3F:F671 player input: triggers state transition — direction (frame flag bit 2), button (bit 1) or special (bit 0); next state class ($58-$68 accepts direction) decides what passes
 label 3F:F6F5 TransViaTbl
-comment 3F:F6F5 le o ponteiro da tabela de estados e chama o caminhador de transicoes
+comment 3F:F6F5 reads state table pointer and calls transition walker
 label 3F:F704 GuardRedirect
-comment 3F:F704 em guarda ($28-$2F): troca para a defesa da direcao atual (GuardClassTbl) e do golpe recebido (tabela ram_032A), preservando o quadro e o timer
+comment 3F:F704 in guard ($28-$2F): switches to defense of current direction (GuardClassTbl) and received hit (table ram_032A), preserving frame and timer
 label 3F:E7D2 AiUpdate
 block 3F:E7D2 ------------------------------------------------------------------------------------------------
-block 3F:E7D2 IA DA CPU. Dois niveis: (1) uma rotina "pensar" em codigo nativo, propria de cada personagem
-block 3F:E7D2 (AiCharRoutine -> banco do personagem, ex. RyuAiThink em $00:8F46), que escolhe um roteiro;
-block 3F:E7D2 (2) um interpretador de roteiros (bytecode, opcodes $80-$91 = AiOp00..AiOp11) que gera os comandos.
+block 3F:E7D2 CPU AI. Two levels: (1) a native "think" routine, specific to each character
+block 3F:E7D2 (AiCharRoutine -> character bank, ex. RyuAiThink at $00:8F46), which chooses a script;
+block 3F:E7D2 (2) a script interpreter (bytecode, opcodes $80-$91 = AiOp00..AiOp11) that generates commands.
 label 3F:E7A4 AiCallCharRoutine
 label 3F:E6E6 AiCharRoutine
-comment 3F:E6E6 uma entrada (endereco-1) por personagem; so o Ryu existe
+comment 3F:E6E6 one entry (address-1) per character; only Ryu exists
 label 3F:E6E8 AiStartScriptNow
-comment 3F:E6E8 A/Y = ponteiro do roteiro; inicia sempre
+comment 3F:E6E8 A/Y = script pointer; always starts
 label 3F:E6F3 AiStartScript
-comment 3F:E6F3 A/Y = ponteiro do roteiro; so inicia se Random&7 < AiLevel (senao hesita)
+comment 3F:E6F3 A/Y = script pointer; only starts if Random&7 < AiLevel (otherwise hesitates)
 label 3F:E6FE AiDoNothing
-comment 3F:E70A AiLevel = 7 (fixo em MainLoop): a CPU reage em 7 de cada 8 chances — por isso a IA parece "dificil demais"
-comment 3F:F84C nivel da IA (0..7). E' o unico lugar que define a dificuldade
+comment 3F:E70A AiLevel = 7 (fixed in MainLoop): CPU reacts 7 out of 8 chances — that's why AI seems "too hard"
+comment 3F:F84C AI level (0..7). It's the only place that sets difficulty
 label 3F:E82D AiOpDispatch
 label 3F:E6C2 AiOpLo
 label 3F:E6D4 AiOpHi
@@ -670,89 +669,89 @@ label 3F:E6B3 AiOp10
 label 3F:E6BE AiOp11
 label 3F:E98D InputUpdate
 block 3F:E98D ------------------------------------------------------------------------------------------------
-block 3F:E98D ENTRADA DO JOGADOR HUMANO: le JoyState e alimenta o reconhecedor de comandos (golpes especiais).
-block 3F:E98D E' aqui (e em CmdStep*) que mora o problema relatado de "hadouken dificil / comando atrasado".
+block 3F:E98D HUMAN PLAYER INPUT: reads JoyState and feeds command recognizer (special moves).
+block 3F:E98D This is where the reported "hard hadouken / delayed command" problem lives (and in CmdStep*).
 label 3F:E99A InputButtons
-block 3F:E99A Botoes A (soco) e B (chute) com dois niveis de forca num botao so:
-block 3F:E99A   toque curto (soltou antes de 7 quadros)  -> golpe FRACO, emitido so QUANDO SOLTA
-block 3F:E99A   segurou 7 quadros ou mais                -> golpe FORTE, emitido a CADA quadro do 7o ao 20o, e de novo ao soltar
-block 3F:E99A InputAttack,x recebe: 0 soco fraco, 1 soco forte, 2 chute fraco, 3 chute forte, $FF nada.
-block 3F:E99A Consequencia: todo golpe sai atrasado (no minimo ate soltar o botao) e o forte se repete — ver docs/BUGS.md.
-block 3F:E99A Ajuste FIX_EDGE_ATTACK (secao de ajustes no fim do arquivo): fraco na borda de subida + promocao para forte.
-comment 3F:E9A7 passou de 20 quadros segurando: ignora
-comment 3F:E9AB menos de 7 quadros: ainda nao decide (espera soltar)
-comment 3F:E9AD contador < 7: segue para o botao B sem emitir nada
-comment 3F:E9AF 7..20 quadros segurando: soco forte, todo quadro
+block 3F:E99A Buttons A (punch) and B (kick) with two strength levels on one button:
+block 3F:E99A   short press (released before 7 frames)  -> WEAK hit, emitted ONLY WHEN RELEASED
+block 3F:E99A   held 7 frames or more                -> STRONG hit, emitted EVERY frame from 7th to 20th, and again on release
+block 3F:E99A InputAttack,x receives: 0 weak punch, 1 strong punch, 2 weak kick, 3 strong kick, $FF nothing.
+block 3F:E99A Consequence: every hit comes out delayed (at least until button release) and strong repeats — see docs/BUGS.md.
+block 3F:E99A FIX_EDGE_ATTACK adjustment (adjustment section at end of file): weak on rising edge + promotion to strong.
+comment 3F:E9A7 passed 20 frames holding: ignores
+comment 3F:E9AB less than 7 frames: hasn't decided yet (waits for release)
+comment 3F:E9AD counter < 7: goes to button B without emitting anything
+comment 3F:E9AF 7..20 frames holding: strong punch, every frame
 label 3F:E9B4 BtnAReleased
-comment 3F:E9B4 A soltou: zera o contador do soco e emite fraco (se segurou <7) ou forte de novo
+comment 3F:E9B4 A released: zeroes punch counter and emits weak (if held <7) or strong again
 label 3F:E9C0 EmitWeakPunch
-comment 3F:E9C0 emissor do soco fraco (A=$00): saida da soltura rapida (<7 quadros)
-comment 3F:E9C2 soltou: <7 quadros = fraco (0), senao forte (1)
+comment 3F:E9C0 weak punch emitter (A=$00): output of quick release (<7 frames)
+comment 3F:E9C2 released: <7 frames = weak (0), else strong (1)
 label 3F:E9CB BtnBCheck
-comment 3F:E9CB processamento do botao B (chute); os casos "nada a fazer" do A caem aqui
+comment 3F:E9CB button B (kick) processing; A's "nothing to do" cases fall here
 label 3F:E9E5 BtnBReleased
-comment 3F:E9E5 B soltou: zera o contador do chute e emite fraco/forte
+comment 3F:E9E5 B released: zeroes kick counter and emits weak/strong
 label 3F:E9F1 EmitWeakKick
-comment 3F:E9F1 emissor do chute fraco (A=$02): saida da soltura rapida (<7 quadros)
+comment 3F:E9F1 weak kick emitter (A=$02): output of quick release (<7 frames)
 label 3F:E9FC BtnNone
-comment 3F:E9FC nenhum botao ativo: InputAttack = $FF
+comment 3F:E9FC no active button: InputAttack = $FF
 label 3F:E9FE InputSetAttack
 label 3F:EA01 InputDirection
-comment 3F:EA01 direcional -> codigo de direcao relativo ao lado que o lutador olha (tabela DirCodeTbl)
+comment 3F:EA01 d-pad -> direction code relative to side fighter faces (table DirCodeTbl)
 label 3F:EA24 InputCommands
-comment 3F:EA24 reconhecedor: zp_D7/D8 = lista de especiais do personagem (slot 8 da ficha, ram_033E/0340), zp_DA/zp_DB = JoyState/JoyPrev espelhados por FighterFlip, zp_DC = lutador, zp_D9 = posicao na lista
+comment 3F:EA24 recognizer: zp_D7/D8 = character special list (fiche slot 8, ram_033E/0340), zp_DA/zp_DB = JoyState/JoyPrev mirrored by FighterFlip, zp_DC = fighter, zp_D9 = list position
 label 3F:EA58 CmdWalkLoop
-comment 3F:EA58 chave = lista[zp_D9], bit 7 = fim da lista ($FF); despacha CmdStep[chave] com Y = chave
-comment 3F:EA60 x += 2 por entrada da lista: x = lutador + 2*posicao indexa os arrays intercalados CmdMotionStep/CmdMotionWin (par = P1, impar = P2)
+comment 3F:EA58 key = list[zp_D9], bit 7 = end of list ($FF); dispatches CmdStep[key] with Y = key
+comment 3F:EA60 x += 2 per list entry: x = fighter + 2*position indexes interleaved CmdMotionStep/CmdMotionWin arrays (even = P1, odd = P2)
 label 3F:EA6A CmdStepDispatch
-comment 3F:EA6A salta para CmdStep[chave] via CmdStepLo/CmdStepHi (endereco-1 + RTS), Y = chave $00-$12
+comment 3F:EA6A jumps to CmdStep[key] via CmdStepLo/CmdStepHi (address-1 + RTS), Y = key $00-$12
 label 3F:EA73 CmdWalkEnd
-comment 3F:EA73 fim da lista: recupera x = lutador (zp_DC) e retorna
+comment 3F:EA73 end of list: recovers x = fighter (zp_DC) and returns
 label 3F:EA76 CmdStepLo
 label 3F:EA89 CmdStepHi
-comment 3F:EA89 19 chaves: $00-$07 e $10 movimento (EB4B), $08-$0D carga (EA9C), $0E/$0F 3x botao (EAFD), $11 A+B juntos (EB32), $12 vazio (EB4A)
+comment 3F:EA89 19 keys: $00-$07 and $10 motion (EB4B), $08-$0D charge (EA9C), $0E/$0F 3x button (EAFD), $11 A+B together (EB32), $12 empty (EB4A)
 label 3F:EA9C CmdStepCharge
 block 3F:EA9C ------------------------------------------------------------------------------------------------
-block 3F:EA9C CARGA, 3 fases: segurar a direcao por $3C (60) quadros, soltar apertando a direcao de liberacao
-block 3F:EA9C (byte seguinte da sequencia) numa janela de 8 quadros, entao o botao exigido na mesma janela. (nt)
+block 3F:EA9C CHARGE, 3 phases: hold direction for $3C (60) frames, release pressing release direction
+block 3F:EA9C (next sequence byte) in an 8-frame window, then required button in same window. (nt)
 label 3F:EAAD CmdChargeHold
-comment 3F:EAAD fase 0: direcao de carga apertada -> conta quadros (satura em $3C); soltou antes de 60 -> zera
+comment 3F:EAAD phase 0: charge direction pressed -> counts frames (saturates at $3C); released before 60 -> zeroes
 label 3F:EAC4 CmdChargeReset
-comment 3F:EAC4 zera o passo e a janela do comando corrente
+comment 3F:EAC4 zeroes step and window of current command
 label 3F:EACB CmdChargeTick
-comment 3F:EACB segurando: contador de quadros, satura em $3C (60)
+comment 3F:EACB holding: frame counter, saturates at $3C (60)
 label 3F:EAD4 CmdChargeRelease
-comment 3F:EAD4 fase 1: direcao de liberacao apertada numa janela de 8 quadros (EAF8 desconta a cada erro)
+comment 3F:EAD4 phase 1: release direction pressed in 8-frame window (EAF8 decrements on each error)
 label 3F:EAE1 CmdChargeButton
-comment 3F:EAE1 fase 2: botao exigido (CmdKeyAttackTbl[chave] == InputAttack) -> CmdMoveIdx[lutador] = posicao na lista
+comment 3F:EAE1 phase 2: required button (CmdKeyAttackTbl[key] == InputAttack) -> CmdMoveIdx[fighter] = list position
 label 3F:EAF8 CmdChargeWinTick
-comment 3F:EAF8 janela expirou (< 0) -> zera o comando
+comment 3F:EAF8 window expired (< 0) -> zeroes command
 label 3F:EAFD CmdStepMash
-comment 3F:EAFD 3x o MESMO botao (CmdKeyAttackTbl[chave] == InputAttack), intervalos de ate 8 quadros. (nt)
+comment 3F:EAFD 3x the SAME button (CmdKeyAttackTbl[key] == InputAttack), intervals up to 8 frames. (nt)
 label 3F:EB0C CmdMashCount
-comment 3F:EB0C aperto certo: conta (1..2), zera o intervalo
+comment 3F:EB0C correct press: counts (1..2), zeroes interval
 label 3F:EB1A CmdMashDone
-comment 3F:EB1A 3o aperto -> CmdMoveIdx[lutador] = posicao na lista
+comment 3F:EB1A 3rd press -> CmdMoveIdx[fighter] = list position
 label 3F:EB21 CmdMashReset
 label 3F:EB28 CmdMashGap
-comment 3F:EB28 intervalo entre apertos passou de 8 -> zera
+comment 3F:EB28 interval between presses passed 8 -> zeroes
 label 3F:EB32 CmdStepBothBtn
-comment 3F:EB32 A+B apertados juntos na borda de subida (agora $C0, antes nao) -> CmdMoveIdx[lutador] = posicao na lista. (nt)
+comment 3F:EB32 A+B pressed together on rising edge (now $C0, before not) -> CmdMoveIdx[fighter] = list position. (nt)
 label 3F:EB4A CmdStepNone
-comment 3F:EB4A chave $12: lugar vago; seus 4 bytes de sequencia (E0AF-E0B2) sao a CmdKeyAttackTbl — inofensivo
+comment 3F:EB4A key $12: empty slot; its 4 sequence bytes (E0AF-E0B2) are CmdKeyAttackTbl — harmless
 label 3F:EB4B CmdStepMotion
 block 3F:EB4B ------------------------------------------------------------------------------------------------
-block 3F:EB4B SEQUENCIA DE DIRECOES: Y = chave*4 + passo. Um passo vale quando o bit exigido esta apertado E
-block 3F:EB4B alguma direcao e' NOVA (apertada agora, ausente no quadro anterior) — segurando parado nao avanca.
-block 3F:EB4B Janela de $0C (12) quadros entre passos; byte $00 encerra a sequencia -> fase do botao (outras 12).
+block 3F:EB4B DIRECTION SEQUENCE: Y = key*4 + step. A step counts when required bit is pressed AND
+block 3F:EB4B some direction is NEW (pressed now, absent in previous frame) — holding still does not advance.
+block 3F:EB4B $0C (12) frame window between steps; byte $00 ends sequence -> button phase (another 12).
 label 3F:EB69 CmdMotionWinTick
-comment 3F:EB69 nenhuma direcao nova / bit exigido solto: conta a janela; passou de 12 -> zera o comando
+comment 3F:EB69 no new direction / required bit released: counts window; passed 12 -> zeroes command
 label 3F:EB73 CmdMotionAdvance
-comment 3F:EB73 passo cumprido: zera a janela, avanca o passo; CmdMotionTblNext,y (MESMO y) le o byte SEGUINTE — $0 cai ja na fase do botao
+comment 3F:EB73 step done: zeroes window, advances step; CmdMotionTblNext,y (SAME y) reads NEXT byte — $0 falls into button phase already
 label 3F:EB7F CmdMotionBtnWin
-comment 3F:EB7F fase do botao: mesma janela de 12 quadros
+comment 3F:EB7F button phase: same 12-frame window
 label 3F:EB88 CmdMotionButton
-comment 3F:EB88 botao exigido (CmdKeyAttackTbl[chave] == InputAttack) -> CmdMoveIdx[lutador] = posicao na lista; zera o comando
+comment 3F:EB88 required button (CmdKeyAttackTbl[key] == InputAttack) -> CmdMoveIdx[fighter] = list position; zeroes command
 label 3F:EB9C CmdMotionReset
 label 3F:E067 CmdMotionTbl
 comment 3F:E067 sequencias dos golpes especiais, 4 bytes por chave $00-$11 (bits do controle: 04 baixo, 01 frente, 02 tras, 08 cima, 80 A, 40 B; $00 encerra)
@@ -766,155 +765,155 @@ comment 3F:E0C7 segunda lista (chaves de carga $08-$0D) para outro personagem �
 label 3F:EF74 FightersUpdate
 block 3F:EF74 Um quadro de logica da luta: atualiza os dois lutadores (alternando a ordem a cada quadro) e desenha.
 label 3F:EF99 FighterUpdate
-comment 3F:EFC1 CPU ou humano?
-comment 3F:EFC5 CPU -> IA
-comment 3F:EFCB humano -> controle
+comment 3F:EFC1 CPU or human?
+comment 3F:EFC5 CPU -> AI
+comment 3F:EFCB human -> control
 
 
 # --- rotinas e continuacoes nomeadas na revisao de documentacao (ordem de endereco) ---
 label 3F:E357 AnimAdvanceEnter
-comment 3F:E357 entra num quadro cujo ponteiro vem em A (lo) e no byte seguinte (hi), nos desvios do laco de AnimAdvance
+comment 3F:E357 enters a frame whose pointer comes in A (lo) and next byte (hi), in AnimAdvance loop branches
 label 3F:E701 AiStartScriptCheck
-comment 3F:E701 trecho comum de AiStartScript*: bit 6 de zp_DD inicia sempre; senao sorteia Random&7 contra AiLevel
+comment 3F:E701 common part of AiStartScript*: bit 6 of zp_DD always starts; otherwise draws Random&7 against AiLevel
 label 3F:E74C AiDefaultGuard
-comment 3F:E74C passo da IA: em estado neutro segura tras (guarda) e sai; senao decide ou continua o roteiro
+comment 3F:E74C AI step: in neutral state holds back (guard) and exits; otherwise decides or continues script
 label 3F:E7E7 AiScriptLoop
-comment 3F:E7E7 laco do roteiro: $FF encerra; senao decodifica o opcode e copia os operandos
+comment 3F:E7E7 script loop: $FF ends; otherwise decodes opcode and copies operands
 label 3F:E7FE AiScriptCopyArgs
-comment 3F:E7FE copia os operandos positivos para zp_6D.. ate o proximo opcode (negativo)
+comment 3F:E7FE copies positive operands to zp_6D.. until next opcode (negative)
 label 3F:E82B AiOpRun
-comment 3F:E82B Y = opcode lido; cai no despacho AiOpDispatch
+comment 3F:E82B Y = opcode read; falls into AiOpDispatch
 label 3F:E89F ProjUpdateStore
-comment 3F:E89F grava ProjX se dentro de $0C-$FB e conta o passo; fora disso mata o projetil
+comment 3F:E89F writes ProjX if inside $0C-$FB and counts step; otherwise kills projectile
 label 3F:EC45 LoadBoxBody2
-comment 3F:EC45 le a caixa de corpo 2 (altura 0 = ausente), espelhada por FighterFlip
+comment 3F:EC45 reads body box 2 (height 0 = absent), mirrored by FighterFlip
 label 3F:EC92 LoadBoxAttack
-comment 3F:EC92 le a caixa de ataque (altura 0 = ausente), travada em $20-$E0
+comment 3F:EC92 reads attack box (height 0 = absent), clamped at $20-$E0
 label 3F:ECE7 LoadBoxesNext
-comment 3F:ECE7 fim das caixas: recarrega para o lutador 0 ou arma o HitTest (x=1 ataca y=0)
+comment 3F:ECE7 end of boxes: reloads for fighter 0 or arms HitTest (x=1 attacks y=0)
 label 3F:ED6C HitTestApply
-comment 3F:ED6C acerto: passa EffectParam e o lutador atingido (Y) para a rotina de dano
+comment 3F:ED6C hit: passes EffectParam and hit fighter (Y) to damage routine
 label 3F:ED7A HitTestNext
-comment 3F:ED7A troca os papeis (0 ataca 1) e repete o HitTest; senao encerra
+comment 3F:ED7A swaps roles (0 attacks 1) and repeats HitTest; otherwise ends
 label 3F:ED83 HitDamageApply
-comment 3F:ED83 aplica o dano: se o alvo esta em guarda compativel, bloqueia; senao soma o dano pendente
+comment 3F:ED83 applies damage: if target is in compatible guard, blocks; otherwise adds pending damage
 label 3F:EE27 HitDamageHeavy
-comment 3F:EE27 dano >= $20: zera o estado, arma HitStop=$78 e escolhe a reacao pesada
+comment 3F:EE27 damage >= $20: zeroes state, arms HitStop=$78 and chooses heavy reaction
 label 3F:EE4E HitDamageReact
-comment 3F:EE4E escolhe a reacao de dano (HitReactClass) e o estado correspondente
+comment 3F:EE4E chooses damage reaction (HitReactClass) and corresponding state
 label 3F:EEC2 HitDamageSfx
-comment 3F:EEC2 toca o efeito sonoro do dano e indexa a tabela de reacao
+comment 3F:EEC2 plays damage sound effect and indexes reaction table
 label 3F:EEDF HitDamageTrans
-comment 3F:EEDF carrega o banco de estados e aplica a transicao de dano (zp_DD=4)
+comment 3F:EEDF loads state bank and applies damage transition (zp_DD=4)
 label 3F:EEF7 HitDamageKO
-comment 3F:EEF7 dano mata: converte a classe de reacao para o estado de KO
+comment 3F:EEF7 damage kills: converts reaction class to KO state
 label 3F:EFCE FighterUpdateExec
-comment 3F:EFCE executa a entrada e a animacao do lutador X (InputDispatch + AnimAdvance)
+comment 3F:EFCE executes fighter X entry and animation (InputDispatch + AnimAdvance)
 label 3F:EFF8 HitRecoverTick
-comment 3F:EFF8 conta o HitStop e, ao terminar, restaura o proximo estado do lutador
+comment 3F:EFF8 counts HitStop and, when done, restores fighter's next state
 label 3F:F033 GrabCheck
-comment 3F:F033 verifica agarrao: lutador X agarra Y se estiver no estado $A0-$A8 e alinhado
+comment 3F:F033 checks grab: fighter X grabs Y if in state $A0-$A8 and aligned
 label 3F:F037 GrabCheckOne
-comment 3F:F037 testa o agarrao de X em Y e aplica o deslocamento/estado
+comment 3F:F037 tests X's grab on Y and applies displacement/state
 label 3F:F09B JoyPollBothSel
-comment 3F:F09B le os dois controles na selecao (JoyPollSafe 0 e 1)
+comment 3F:F09B reads both controllers in selection (JoyPollSafe 0 and 1)
 label 3F:F0A5 MoveDispatch_F0A5
-comment 3F:F0A5 despacha a aplicacao do movimento pelo MoveMode (tabela MoveApplyDispatchLo/Hi)
+comment 3F:F0A5 dispatches movement application by MoveMode (table MoveApplyDispatchLo/Hi)
 label 3F:F0BD MoveOpponentRel
-comment 3F:F0BD modo $00: posiciona X relativo ao oponente (X = X do oponente +/- VelX)
+comment 3F:F0BD mode $00: positions X relative to opponent (X = opponent X +/- VelX)
 label 3F:F0F2 MoveAbsolute
-comment 3F:F0F2 modo $01: aplica VelY e VelX direto (movimento absoluto)
+comment 3F:F0F2 mode $01: applies VelY and VelX directly (absolute movement)
 label 3F:F156 MoveAbsLeft
-comment 3F:F156 modo absoluto: aplica o deslocamento para a esquerda
+comment 3F:F156 absolute mode: applies displacement to the left
 label 3F:F194 MoveAbsLeftFwd
-comment 3F:F194 modo absoluto para a esquerda com avanco/recuo de camera
+comment 3F:F194 absolute mode to the left with camera advance/retreat
 label 3F:F1C0 MoveScrollCamera
-comment 3F:F1C0 aplica o deslocamento de camera e o repassa aos outros objetos
+comment 3F:F1C0 applies camera displacement and passes it to other objects
 label 3F:F204 MoveScrollOthers
-comment 3F:F204 move o oponente e o projetil junto com a camera
+comment 3F:F204 moves opponent and projectile along with camera
 label 3F:F225 MoveApplyX
-comment 3F:F225 aplica o deslocamento em FighterX e zera VelX
+comment 3F:F225 applies displacement to FighterX and zeroes VelX
 label 3F:F236 MoveAir
-comment 3F:F236 modo $02/$03: integra VelY com gravidade e chao
+comment 3F:F236 mode $02/$03: integrates VelY with gravity and ground
 label 3F:F279 MoveAirScroll
-comment 3F:F279 integra o subpixel de VelY (deslocamento aereo)
+comment 3F:F279 integrates VelY subpixel (air displacement)
 label 3F:F2C0 MoveAirScrollApply
-comment 3F:F2C0 aplica o deslocamento aereo e ajusta o chao/oponente
+comment 3F:F2C0 applies air displacement and adjusts ground/opponent
 label 3F:F317 MoveAirGravity
-comment 3F:F317 aplica a gravidade ($30 por quadro) e testa o chao
+comment 3F:F317 applies gravity ($30 per frame) and tests ground
 label 3F:F332 MoveAirGround
-comment 3F:F332 no ar: move horizontalmente e aplica atrito ao pousar
+comment 3F:F332 in air: moves horizontally and applies friction on landing
 label 3F:F377 MoveHorizontal
-comment 3F:F377 modo $04/$05: aplica VelX com regras de canto
+comment 3F:F377 mode $04/$05: applies VelX with corner rules
 label 3F:F3FB MoveHorizLeft
-comment 3F:F3FB movimento horizontal para a esquerda (conforme FighterFlip)
+comment 3F:F3FB horizontal movement to the left (per FighterFlip)
 label 3F:F453 MoveHorizLeftFwd
-comment 3F:F453 movimento horizontal para a esquerda com avanco de camera
+comment 3F:F453 horizontal movement to the left with camera advance
 label 3F:F49A MoveScrollStage
-comment 3F:F49A aplica o deslocamento do cenario e move a camera
+comment 3F:F49A applies stage displacement and moves camera
 label 3F:F512 MoveScrollStageOthers
-comment 3F:F512 move o oponente e o projetil junto com o cenario
+comment 3F:F512 moves opponent and projectile along with stage
 label 3F:F533 MoveHorizApply
-comment 3F:F533 aplica o deslocamento horizontal em FighterXSub/FighterX
+comment 3F:F533 applies horizontal displacement to FighterXSub/FighterX
 label 3F:F543 MovePushApart
-comment 3F:F543 se os lutadores se sobrepoem, empurra cada um metade da invasao
+comment 3F:F543 if fighters overlap, pushes each half of invasion
 label 3F:F5B5 MovePushApply
-comment 3F:F5B5 aplica o empurrao em FighterX
+comment 3F:F5B5 applies push to FighterX
 label 3F:F5C5 MoveClampEdges
-comment 3F:F5C5 inicia o clamp de X nas bordas da tela
+comment 3F:F5C5 starts X clamp at screen edges
 label 3F:F5CD MoveClampX
-comment 3F:F5CD trava o X em $20-$E0 e guarda o transbordo
+comment 3F:F5CD locks X at $20-$E0 and saves overflow
 label 3F:F621 MoveClampNext
-comment 3F:F621 passa ao outro lutador para o clamp
+comment 3F:F621 passes to other fighter for clamp
 label 3F:F62C MoveClampPush
-comment 3F:F62C soma o transbordo do clamp ao X do oponente (empurrao atraves da vitima)
+comment 3F:F62C adds clamp overflow to opponent's X (push through victim)
 label 3F:F648 MoveGrabEscape
-comment 3F:F648 escapa do agarrao: hit-freeze, zera a classe de reacao e toca o som
+comment 3F:F648 escape grab: hit-freeze, zeroes reaction class and plays sound
 
 # --- tabelas do nucleo de luta (projetil, impacto, knockback e despachos de movimento) ---
 label 3F:E055 HitSfxTbl
-comment 3F:E055 sfx de impacto por classe do atacante (6 bytes; so 0..2 usados)
+comment 3F:E055 hit sfx by attacker class (6 bytes; only 0..2 used)
 label 3F:E05B ProjSpawnYOffsetTbl
-comment 3F:E05B Y de nascimento do projetil: FloorY - $27 (2 bytes usados)
+comment 3F:E05B projectile birth Y: FloorY - $27 (2 bytes used)
 label 3F:E05E ProjSpeedStepTbl
-comment 3F:E05E passo do projetil por velocidade ($17/$25 para velocidade 0/1)
+comment 3F:E05E projectile step by speed ($17/$25 for speed 0/1)
 label 3F:E064 ProjSpawnXOffsetTbl
-comment 3F:E064 delta X de nascimento do projetil: FighterX +/- $27 (2 bytes usados)
+comment 3F:E064 projectile birth delta X: FighterX +/- $27 (2 bytes used)
 label 3F:E4CE MoveVelDispatchLo
 label 3F:E4D4 MoveVelDispatchHi
-comment 3F:E4CE despacho do modo de movimento em MoveVelSetup: endereco-1 por MoveMode (absoluta/aceleracao/subpixel)
+comment 3F:E4CE movement mode dispatch in MoveVelSetup: address-1 by MoveMode (absolute/acceleration/subpixel)
 label 3F:EF06 KnockbackXGroundTbl
-comment 3F:EF06 knockback X por classe de reacao, vitima em pe/agachada (PostProc)
+comment 3F:EF06 knockback X by reaction class, victim standing/crouching (PostProc)
 label 3F:EF13 KnockbackXAirTbl
-comment 3F:EF13 knockback X por classe de reacao, vitima neutra/no ar (RoundStart2)
+comment 3F:EF13 knockback X by reaction class, victim neutral/in air (RoundStart2)
 label 3F:EF20 KnockbackYGroundTbl
-comment 3F:EF20 knockback Y por classe de reacao, vitima em pe/agachada (PostProc)
+comment 3F:EF20 knockback Y by reaction class, victim standing/crouching (PostProc)
 label 3F:EF2D KnockbackYAirTbl
-comment 3F:EF2D knockback Y por classe de reacao, vitima neutra/no ar (RoundStart2)
+comment 3F:EF2D knockback Y by reaction class, victim neutral/in air (RoundStart2)
 label 3F:EF3A KnockdownReactTbl
-comment 3F:EF3A nova classe de reacao quando o knockback acumulado derruba a vitima
+comment 3F:EF3A new reaction class when accumulated knockback knocks victim down
 label 3F:EF47 KOReactTbl
-comment 3F:EF47 nova classe de reacao no KO (indexada por classe & $1F)
+comment 3F:EF47 new reaction class on KO (indexed by class & $1F)
 label 3F:F0B1 MoveApplyDispatchLo
 label 3F:F0B7 MoveApplyDispatchHi
-comment 3F:F0B1 despacho da aplicacao do movimento: endereco-1 por MoveMode (relativo/absoluto/ar/horizontal)
+comment 3F:F0B1 movement application dispatch: address-1 by MoveMode (relative/absolute/air/horizontal)
 
 # ============================================================================================================
-# BANCO $3B — luta (rounds, HUD, desenho), telas VS e frase final, utilitarios de video
+# BANK $3B — fight (rounds, HUD, drawing), VS screens and final quote, video utilities
 # ============================================================================================================
 label 3B:E000 FighterLoadChar
 block 3B:E000 ------------------------------------------------------------------------------------------------
-block 3B:E000 Carrega a "ficha" do personagem FighterChar,x a partir das tabelas do banco $3C (10 personagens por tabela):
-block 3B:E000 bancos de dados (frames em $8000, estados em $A000) e ponteiros para os estados basicos.
-block 3B:E000 Hoje so a coluna 0 (Ryu) esta preenchida. Para um personagem novo, este e' o ponto de partida.
-block 3B:E000 Na RAM os ponteiros ficam separados por metade: lo em ram_031E+x, hi em ram_0320+x — P1 = (031E,0320), P2 = (031F,0321).
-block 3B:E000 Detalhe: so o hi do slot 0 e' lido SEM ,y (lda D3C_800A, E025) — personagem != 0 herdaria o hi do Ryu.
+block 3B:E000 Loads the fighter "fiche" FighterChar,x from bank $3C tables (10 characters per table):
+block 3B:E000 data banks (frames at $8000, states at $A000) and pointers to basic states.
+block 3B:E000 Today only column 0 (Ryu) is filled. For a new character, this is the starting point.
+block 3B:E000 In RAM pointers are split in half: lo at ram_031E+x, hi at ram_0320+x — P1 = (031E,0320), P2 = (031F,0321).
+block 3B:E000 Detail: only slot 0 hi is read WITHOUT ,y (lda D3C_800A, E025) — character != 0 would inherit Ryu's hi.
 label 3B:E098 FighterRoundInit
-comment 3B:E098 posicao inicial: P1 x=$5A, P2 x=$A6, y=$CD (chao)
+comment 3B:E098 initial position: P1 x=$5A, P2 x=$A6, y=$CD (ground)
 label 3B:E1F6 PortraitBuild
 label 3B:E3BE PpuUnRle
-block 3B:E3BE Descompacta RLE (formato do NESlib/Shiru: 1o byte = marcador; marcador,n = repete o ultimo byte n vezes;
-block 3B:E3BE marcador,0 = fim) direto em PPUDATA. Entrada: A = byte baixo, X = byte alto do endereco dos dados.
+block 3B:E3BE Decompresses RLE (NESlib/Shiru format: 1st byte = marker; marker,n = repeats last byte n times;
+block 3B:E3BE marker,0 = end) directly to PPUDATA. Input: A = low byte, X = high byte of data address.
 label 3B:E426 FadeOut_Bank3B
 label 3B:E4D6 FadeIn
 label 3B:E844 NmiFightVram
@@ -923,31 +922,31 @@ label 3B:EC1B ScreenWinQuote
 label 3B:ED81 DrawFighters
 label 3B:EDD9 DrawFighter
 label 3B:F2DF OamHideRest
-comment 3B:F2DF esconde os sprites nao usados neste quadro (Y = $FE do indice OamIndex ate o fim)
+comment 3B:F2DF hides unused sprites this frame (Y = $FE from OamIndex to end)
 label 3B:F2EA DrawMetasprite
-block 3B:F2EA Desenha um metasprite (lista de sprites 8x16) na OAM. Dados em (zp_D9): atributo, depois grupos
-block 3B:F2EA "quantidade, dx, dy, tiles..." ate um byte negativo. zp_DB/zp_DC = posicao base, zp_DD = espelhado.
+block 3B:F2EA Draws a metasprite (list of 8x16 sprites) in OAM. Data at (zp_D9): attribute, then groups
+block 3B:F2EA "quantity, dx, dy, tiles..." until a negative byte. zp_DB/zp_DC = base position, zp_DD = mirrored.
 label 3B:F551 Match
 block 3B:F551 ------------------------------------------------------------------------------------------------
-block 3B:F551 A LUTA INTEIRA: rounds ate alguem fechar a partida.
+block 3B:F551 THE ENTIRE FIGHT: rounds until someone closes the match.
 label 3B:F556 RoundStart
 label 3B:F58E FightFrame
-block 3B:F58E Laco de um quadro da luta: espera o vblank, som, regras do round, divisao de tela, logica dos lutadores.
-comment 3B:F5B2 "hit stop": enquanto HitStop nao zera, a logica roda quadro sim, quadro nao
+block 3B:F58E One-frame fight loop: waits vblank, sound, round rules, split screen, fighter logic.
+comment 3B:F5B2 "hit stop": while HitStop not zero, logic runs every other frame
 label 3B:F60F RoundInit
 label 3B:F64F RoundLogic
 label 3B:F68B RoundTimerTick
-comment 3B:F68B o relogio desce 1 a cada 32 quadros
-comment 3B:F6A0 tempo esgotado: compara a energia dos dois
+comment 3B:F68B clock decreases 1 every 32 frames
+comment 3B:F6A0 time out: compares both energies
 label 3B:F6D0 RoundIntroStep
-comment 3B:F6FD voz 0 = "ROUND"
-comment 3B:F82E voz 6 = "YOU"
-comment 3B:F841 voz 7 = "WIN"
-comment 3B:F853 voz 9 = "PERFECT" (vencedor humano com energia cheia, $58)
-comment 3B:F86F voz 8 = "LOSE" (o vencedor e' a CPU)
-comment 3B:F823 RoundResult: 0 = P1 venceu, 1 = P2 venceu, 2 = empate, $FF = luta em andamento
-comment 3B:F709 vozes 1..3 = numero do round
-comment 3B:F717 voz 5 = "FIGHT"
+comment 3B:F6FD voice 0 = "ROUND"
+comment 3B:F82E voice 6 = "YOU"
+comment 3B:F841 voice 7 = "WIN"
+comment 3B:F853 voice 9 = "PERFECT" (human winner with full energy, $58)
+comment 3B:F86F voice 8 = "LOSE" (winner is CPU)
+comment 3B:F823 RoundResult: 0 = P1 won, 1 = P2 won, 2 = draw, $FF = fight in progress
+comment 3B:F709 voices 1..3 = round number
+comment 3B:F717 voice 5 = "FIGHT"
 label 3B:F7E1 RoundEndStep
 label 3B:F908 StageSplitSetup
 label 3B:F940 StageParallaxCalc
@@ -959,121 +958,121 @@ label 3B:FAED RleTitleScreen
 
 # --- rotinas e continuacoes nomeadas na revisao de documentacao (ordem de endereco) ---
 label 3B:E181 PortraitLoadPalettes
-comment 3B:E181 carrega as 3 paletas (9 cores) do lutador das tabelas do banco $3C
+comment 3B:E181 loads fighter's 3 palettes (9 colors) from bank $3C tables
 label 3B:E20F PortraitDecodeChunk
-comment 3B:E20F laco do PortraitBuild: decodifica um bloco de pixels e grava em ram_034E
+comment 3B:E20F PortraitBuild loop: decodes a pixel block and writes to ram_034E
 label 3B:E28A VersusLoadStage
-comment 3B:E28A carrega o cenario da tela VS: RLE, atributos e dados do chao
+comment 3B:E28A loads VS screen stage: RLE, attributes and ground data
 label 3B:E377 RoundInitLoadStage
-comment 3B:E377 carrega a paleta do cenario e zera camera/chao no inicio do round
+comment 3B:E377 loads stage palette and zeros camera/ground at round start
 label 3B:E3F5 PpuWrite64
-comment 3B:E3F5 copia 64 bytes crus (duas linhas de nametable) para o PPUDATA
+comment 3B:E3F5 copies 64 raw bytes (two nametable lines) to PPUDATA
 label 3B:E428 FadeOutStep
-comment 3B:E428 passo do fade-out: espera o vblank, marca a paleta e trata a troca de CHR do titulo
+comment 3B:E428 fade-out step: waits vblank, marks palette and handles title CHR swap
 label 3B:E47E FadeOutDarken
-comment 3B:E47E prepara o escurecimento das 24 cores (Y=$17) e cai no laco
+comment 3B:E47E prepares darkening of 24 colors (Y=$17) and falls into loop
 label 3B:E480 FadeOutDarkenLoop
-comment 3B:E480 escurece uma cor da paleta em um degrau conforme o passo do fade
+comment 3B:E480 darkens one palette color by a step according to fade step
 label 3B:E0A0 PortraitLoadPalettesLoop
-comment 3B:E0A0 laco de copia de paletas dentro de PortraitLoadPalettes
+comment 3B:E0A0 palette copy loop inside PortraitLoadPalettes
 label 3B:E131 FighterFlipSet
-comment 3B:E131 define o bit de espelhamento (FighterFlip) do lutador
+comment 3B:E131 sets mirror bit (FighterFlip) of fighter
 label 3B:E165 PortraitPaletteCopyLoop
-comment 3B:E165 laco de copia de 3 bytes de paleta para ram_0300/0303/0306
+comment 3B:E165 copy loop of 3 palette bytes to ram_0300/0303/0306
 label 3B:F27F DrawProjectile
-comment 3B:F27F desenha o projetil (hadouken) do lutador
+comment 3B:F27F draws fighter's projectile (hadouken)
 label 3B:F2B5 DrawProjectileSprite
-comment 3B:F2B5 desenha o sprite do projetil na OAM
+comment 3B:F2B5 draws projectile sprite in OAM
 label 3B:F315 DrawMetaspritePosition
-comment 3B:F315 posiciona um grupo de metasprite na tela
+comment 3B:F315 positions a metasprite group on screen
 label 3B:F324 DrawMetaspriteGroupLoop
-comment 3B:F324 laco de grupos de metasprite
+comment 3B:F324 metasprite group loop
 label 3B:F331 DrawMetaspriteWriteOAM
-comment 3B:F331 escreve um sprite na OAM
+comment 3B:F331 writes a sprite to OAM
 label 3B:F356 DrawMetaspriteEnd
-comment 3B:F356 termino do desenho de metasprite
+comment 3B:F356 end of metasprite drawing
 label 3B:F364 SelectDrawBlinkDraw
-comment 3B:F364 desenha o lutador piscando na tela de selecao
+comment 3B:F364 draws blinking fighter on selection screen
 label 3B:F37D SelectScreenBuildPaletteLoop
-comment 3B:F37D laco de copia de paletas na construcao da tela de selecao
+comment 3B:F37D palette copy loop in selection screen build
 label 3B:E4D8 FadeInPrepare
-comment 3B:E4D8 salva a paleta original em FadePalette e apaga as cores para o fade-in
+comment 3B:E4D8 saves original palette to FadePalette and clears colors for fade-in
 label 3B:E59D RoundIntro_HudRowP1
-comment 3B:E59D rotulo do P1: 'P1' fixo se humano, senao inicia o texto rolando
+comment 3B:E59D P1 label: 'P1' fixed if human, otherwise starts scrolling text
 label 3B:E5C3 RoundIntro_HudRowP2
-comment 3B:E5C3 rotulo do P2: 'P2' fixo se humano, senao inicia o texto rolando
+comment 3B:E5C3 P2 label: 'P2' fixed if human, otherwise starts scrolling text
 label 3B:E5E9 RoundIntro_HudBars
-comment 3B:E5E9 inicializa as barras de energia e os digitos do relogio
+comment 3B:E5E9 initializes energy bars and clock digits
 label 3B:E63E RoundIntro_DrawNames
-comment 3B:E63E escreve os nomes dos lutadores no nametable (2 linhas)
+comment 3B:E63E writes fighter names to nametable (2 lines)
 label 3B:E689 HudUpdate
-comment 3B:E689 atualiza o HUD: energia, relogio e avisos (a cada 32 quadros)
+comment 3B:E689 updates HUD: energy, clock and warnings (every 32 frames)
 label 3B:E7A5 HudWarnLowHp
-comment 3B:E7A5 pisca o aviso de energia baixa (HP < $2C) a cada 8 quadros
+comment 3B:E7A5 flashes low HP warning (HP < $2C) every 8 frames
 label 3B:E7C6 HudWarnLowHpDraw
-comment 3B:E7C6 desenha o aviso de energia baixa para o lutador X
+comment 3B:E7C6 draws low HP warning for fighter X
 label 3B:E98C NmiFightVram_Health
-comment 3B:E98C envia ao PPU as barras de energia e o relogio no NMI
+comment 3B:E98C sends energy bars and clock to PPU in NMI
 label 3B:EAF2 VersusDraw
-comment 3B:EAF2 monta a tela VS: RLE do fundo, retratos e nomes
+comment 3B:EAF2 builds VS screen: RLE background, portraits and names
 label 3B:EBF2 VersusDrawFighters
-comment 3B:EBF2 desenha os dois lutadores e os nomes na tela VS
+comment 3B:EBF2 draws both fighters and names on VS screen
 label 3B:ECE1 WinQuoteWait
-comment 3B:ECE1 espera (2 ou 3) x 64 quadros conforme RoundResult e faz o fade
+comment 3B:ECE1 waits (2 or 3) x 64 frames per RoundResult and fades
 label 3B:ED24 WinQuoteLineStart
-comment 3B:ED24 inicio da frase do vencedor: Y=0
+comment 3B:ED24 start of winner's quote: Y=0
 label 3B:ED26 WinQuoteLineLoop
-comment 3B:ED26 copia as duas linhas de 22 caracteres da frase para ram_03AF..
+comment 3B:ED26 copies the two 22-character quote lines to ram_03AF..
 label 3B:EE38 PortraitSetupP1
-comment 3B:EE38 prepara o retrato do P1 (paleta, tiles e nome)
+comment 3B:EE38 prepares P1 portrait (palette, tiles and name)
 label 3B:EE6B PortraitLoadPalettesP1
-comment 3B:EE6B carrega as paletas do P1 e marca PaletteDirty
+comment 3B:EE6B loads P1 palettes and marks PaletteDirty
 label 3B:EEB6 PortraitBuildP1
-comment 3B:EEB6 monta o retrato do P1: decodifica, salva o ponteiro e carrega os tiles
+comment 3B:EEB6 builds P1 portrait: decodes, saves pointer and loads tiles
 label 3B:EEE0 PortraitTilesP1
-comment 3B:EEE0 envia os tiles do retrato do P1 para a CHR
+comment 3B:EEE0 sends P1 portrait tiles to CHR
 label 3B:EF24 PortraitSetupP2
-comment 3B:EF24 prepara o retrato do P2 (paleta, tiles e nome)
+comment 3B:EF24 prepares P2 portrait (palette, tiles and name)
 label 3B:EF57 PortraitLoadPalettesP2
-comment 3B:EF57 carrega as paletas do P2 e marca PaletteDirty
+comment 3B:EF57 loads P2 palettes and marks PaletteDirty
 label 3B:EF5C PortraitPalCopyP2
-comment 3B:EF5C copia as 3 paletas do P2 (ram_0309/030C/030F) para PaletteBuf
+comment 3B:EF5C copies P2's 3 palettes (ram_0309/030C/030F) to PaletteBuf
 label 3B:EF92 PortraitBuildP2
-comment 3B:EF92 monta o retrato do P2 e o desenha
+comment 3B:EF92 builds P2 portrait and draws it
 label 3B:EFD3 PortraitDrawName
-comment 3B:EFD3 desenha o nome do lutador no retrato (P1/P2 conforme zp_D5)
+comment 3B:EFD3 draws fighter name on portrait (P1/P2 per zp_D5)
 label 3B:F02E NmiVsPortraitUpload
-comment 3B:F02E NMI: envia os tiles do retrato do buffer ram_034E (passo 6)
+comment 3B:F02E NMI: sends portrait tiles from buffer ram_034E (step 6)
 label 3B:F225 NmiVsQuoteUpload
-comment 3B:F225 NMI: envia o caractere atual da frase do vencedor
+comment 3B:F225 NMI: sends current character of winner's quote
 label 3B:F24A AiScriptInit
-comment 3B:F24A inicia o roteiro de IA do lutador: le o ponteiro da ficha e zera o estado
+comment 3B:F24A starts fighter AI script: reads fiche pointer and zeroes state
 label 3B:F2E3 OamHideRestFill
-comment 3B:F2E3 preenche OamBuf com $FE a partir de X (continuacao de OamHideRest)
+comment 3B:F2E3 fills OamBuf with $FE starting from X (continuation of OamHideRest)
 label 3B:F2FB DrawMetasprite_Group
-comment 3B:F2FB laco do metasprite: le quantidade, dx, dy e tiles de cada grupo
+comment 3B:F2FB metasprite loop: reads quantity, dx, dy and tiles of each group
 label 3B:F317 DrawMetasprite_Position
-comment 3B:F317 posiciona o grupo: dx/dy somados a base, espelhando se zp_DD
+comment 3B:F317 positions group: dx/dy added to base, mirroring if zp_DD
 label 3B:F359 SelectDrawBlink
-comment 3B:F359 pisca o lutador da selecao em quadros alternados (FrameCounter bit 0)
+comment 3B:F359 blinks selection fighter in alternate frames (FrameCounter bit 0)
 label 3B:F36C SelectDrawFighter
-comment 3B:F36C desenha o lutador da selecao e esconde o resto da OAM
+comment 3B:F36C draws selection fighter and hides rest of OAM
 label 3B:F376 SelectScreenBuild
-comment 3B:F376 monta a tela de selecao: paletas e fundo
+comment 3B:F376 builds selection screen: palettes and background
 label 3B:F71C RoundIntroDraw
-comment 3B:F71C desenha o lutador da intro do round (RoundNumber/RoundStep) e o 'FIGHT'
+comment 3B:F71C draws round intro fighter (RoundNumber/RoundStep) and 'FIGHT'
 label 3B:F85C RoundEndDrawCenter
-comment 3B:F85C posiciona e desenha o lutador no centro do fim do round
+comment 3B:F85C positions and draws fighter at center of round end
 label 3B:F8B5 RoundEndDraw
-comment 3B:F8B5 desenha o lutador do fim do round a partir do ponteiro em zp_D9
+comment 3B:F8B5 draws round end fighter from pointer in zp_D9
 label 3B:F8D3 PaletteFlashStart
-comment 3B:F8D3 acende a paleta do cenario (cores 15-17) para o flash do round
+comment 3B:F8D3 lights stage palette (colors 15-17) for round flash
 label 3B:F8E6 PaletteFlashRestore
-comment 3B:F8E6 restaura a paleta do cenario depois do flash
+comment 3B:F8E6 restores stage palette after flash
 
 # ------------------------------------------------------------------------------------------------
 # LOTE P2 de naming (Fase 3): rotulos automaticos das paletas e do retrato (banco $3B).
-# Nome pelo papel demonstrado pelo codigo; apenas rotulos, nenhuma mudanca de byte.
+# Named by role demonstrated by code; labels only, no byte change.
 label 3B:E1A6 PortraitPalPtr2Add
 comment 3B:E1A6 PortraitPalPtr2Add — em PortraitLoadPalettes: soma o offset do lutador no 2o ponteiro de paleta
 label 3B:E1B1 PortraitPalPtr3Add
@@ -1359,351 +1358,351 @@ comment 3B:F93F StageSplit_HitStopTick — StageSplitSetup: -1 no HitStop e devo
 label 3B:F967 StageParallaxLoop
 comment 3B:F967 StageParallaxLoop — calcula o deslocamento do parallax do cenario
 # ============================================================================================================
-# BANCO $37 — som (FamiTone2 + vozes DPCM), telas de aviso / titulo / selecao
+# BANK $37 — sound (FamiTone2 + DPCM voices), warning / title / selection screens
 # ============================================================================================================
 # ------------------------------------------------------------------------------------------------
-# LOTE P2 de naming (Fase 3): rotulos automaticos das telas de selecao, aviso e titulo (banco $37).
-# Nome pelo papel demonstrado pelo codigo; apenas rotulos, nenhuma mudanca de byte.
+# Phase 3 P2 naming batch: automatic labels for selection, warning and title screens (bank $37).
+# Named by role demonstrated by code; labels only, no byte change.
 
 # ------------------------------------------------------------------------------------------------
-# LOTE FamiTone2 de naming (Fase 3): 109 rotulos internos do motor de som (banco $37).
-# Referencia estrutural: FamiTone2 v1.15 (Shiru). Apenas rotulos e comentarios; nenhum byte muda.
+# Phase 3 FamiTone2 naming batch: 109 internal sound engine labels (bank $37).
+# Structural reference: FamiTone2 v1.15 (Shiru). Labels and comments only; no byte changes.
 # ------------------------------------------------------------------------------------------------
 label 37:E45E VoicePlayFighterEnd
-comment 37:E45E VoicePlayFighterEnd — FamiTone2/vozes: termina a voz do lutador apos encadear a continuacao
+comment 37:E45E VoicePlayFighterEnd — FamiTone2/voices: ends fighter voice after chaining continuation
 label 37:E46E SoundUpdateMusic
-comment 37:E46E SoundUpdateMusic — som: mapeia o banco da musica e atualiza o FamiTone2
+comment 37:E46E SoundUpdateMusic — sound: maps music bank and updates FamiTone2
 label 37:E4E5 _FT2MusicStopChannels
-comment 37:E4E5 _FT2MusicStopChannels — FamiTone2: zera os campos das canais ao parar a musica
+comment 37:E4E5 _FT2MusicStopChannels — FamiTone2: zeroes channel fields when stopping music
 label 37:E4FF _FT2MusicStopEnvelopes
-comment 37:E4FF _FT2MusicStopEnvelopes — FamiTone2: aponta todos os envelopes para o envelope mudo
+comment 37:E4FF _FT2MusicStopEnvelopes — FamiTone2: points all envelopes to mute envelope
 label 37:E56D _FT2MusicPlayChannels
-comment 37:E56D _FT2MusicPlayChannels — FamiTone2: inicializa os ponteiros e os campos das canais da musica
+comment 37:E56D _FT2MusicPlayChannels — FamiTone2: initializes pointers and channel fields of music
 label 37:E5AB _FT2MusicPlayDone
-comment 37:E5AB _FT2MusicPlayDone — FamiTone2: musica invalida ou musica iniciada; fim do carregamento
+comment 37:E5AB _FT2MusicPlayDone — FamiTone2: invalid music or music started; end of loading
 label 37:E5C7 _FT2MusicPauseUnpause
-comment 37:E5C7 _FT2MusicPauseUnpause — FamiTone2: remove a marca de pausa da musica
+comment 37:E5C7 _FT2MusicPauseUnpause — FamiTone2: removes music pause mark
 label 37:E5CC _FT2MusicPauseDone
-comment 37:E5CC _FT2MusicPauseDone — FamiTone2: grava o novo estado de pausa da musica
+comment 37:E5CC _FT2MusicPauseDone — FamiTone2: writes new music pause state
 label 37:E5D7 _FT2UpdateSoundPaused
-comment 37:E5D7 _FT2UpdateSoundPaused — FamiTone2: atualiza os sons mesmo com a musica pausada
+comment 37:E5D7 _FT2UpdateSoundPaused — FamiTone2: updates sounds even with music paused
 label 37:E5DA _FT2UpdateTempo
-comment 37:E5DA _FT2UpdateTempo — FamiTone2: soma o passo de tempo e decide se atualiza uma linha
+comment 37:E5DA _FT2UpdateTempo — FamiTone2: adds time step and decides whether to update a line
 label 37:E5F5 _FT2UpdateRow
-comment 37:E5F5 _FT2UpdateRow — FamiTone2: aplica uma nova linha da musica as cinco canais
+comment 37:E5F5 _FT2UpdateRow — FamiTone2: applies a new music line to five channels
 label 37:E613 _FT2Channel1NewNote
-comment 37:E613 _FT2Channel1NewNote — FamiTone2: a canal 1 recebeu uma nota nova
+comment 37:E613 _FT2Channel1NewNote — FamiTone2: channel 1 received a new note
 label 37:E630 _FT2Channel1Instrument
-comment 37:E630 _FT2Channel1Instrument — FamiTone2: instala o instrumento da canal 1
+comment 37:E630 _FT2Channel1Instrument — FamiTone2: installs channel 1 instrument
 label 37:E638 _FT2Channel2Update
-comment 37:E638 _FT2Channel2Update — FamiTone2: processa a canal 2
+comment 37:E638 _FT2Channel2Update — FamiTone2: processes channel 2
 label 37:E64F _FT2Channel2NewNote
-comment 37:E64F _FT2Channel2NewNote — FamiTone2: a canal 2 recebeu uma nota nova
+comment 37:E64F _FT2Channel2NewNote — FamiTone2: channel 2 received a new note
 label 37:E66C _FT2Channel2Instrument
-comment 37:E66C _FT2Channel2Instrument — FamiTone2: instala o instrumento da canal 2
+comment 37:E66C _FT2Channel2Instrument — FamiTone2: installs channel 2 instrument
 label 37:E674 _FT2Channel3Update
-comment 37:E674 _FT2Channel3Update — FamiTone2: processa a canal 3
+comment 37:E674 _FT2Channel3Update — FamiTone2: processes channel 3
 label 37:E69B _FT2Channel3Instrument
-comment 37:E69B _FT2Channel3Instrument — FamiTone2: instala o instrumento da canal 3
+comment 37:E69B _FT2Channel3Instrument — FamiTone2: installs channel 3 instrument
 label 37:E6A3 _FT2Channel4Update
-comment 37:E6A3 _FT2Channel4Update — FamiTone2: processa a canal 4
+comment 37:E6A3 _FT2Channel4Update — FamiTone2: processes channel 4
 label 37:E6BA _FT2Channel4Instrument
-comment 37:E6BA _FT2Channel4Instrument — FamiTone2: instala o instrumento da canal 4
+comment 37:E6BA _FT2Channel4Instrument — FamiTone2: installs channel 4 instrument
 label 37:E6C4 _FT2Channel5Update
-comment 37:E6C4 _FT2Channel5Update — FamiTone2: processa a canal 5 de amostras
+comment 37:E6C4 _FT2Channel5Update — FamiTone2: processes channel 5 samples
 label 37:E6DA _FT2Channel5PlaySample
-comment 37:E6DA _FT2Channel5PlaySample — FamiTone2: inicia ou para a amostra da canal 5
+comment 37:E6DA _FT2Channel5PlaySample — FamiTone2: starts or stops channel 5 sample
 label 37:E6E9 _FT2EnvRead
-comment 37:E6E9 _FT2EnvRead — FamiTone2: le o ponteiro e o proximo valor do envelope
+comment 37:E6E9 _FT2EnvRead — FamiTone2: reads envelope pointer and next value
 label 37:E703 _FT2EnvSpecial
-comment 37:E703 _FT2EnvSpecial — FamiTone2: trata um codigo especial do envelope
+comment 37:E703 _FT2EnvSpecial — FamiTone2: handles envelope special code
 label 37:E70C _FT2EnvSetRepeat
-comment 37:E70C _FT2EnvSetRepeat — FamiTone2: grava o contador de repeticao do envelope
+comment 37:E70C _FT2EnvSetRepeat — FamiTone2: writes envelope repeat counter
 label 37:E710 _FT2EnvStorePtr
-comment 37:E710 _FT2EnvStorePtr — FamiTone2: salva o ponteiro corrente do envelope
+comment 37:E710 _FT2EnvStorePtr — FamiTone2: saves current envelope pointer
 label 37:E714 _FT2EnvNext
-comment 37:E714 _FT2EnvNext — FamiTone2: passa para o proximo envelope
+comment 37:E714 _FT2EnvNext — FamiTone2: moves to next envelope
 label 37:E728 _FT2UpdateSoundCh1Note
-comment 37:E728 _FT2UpdateSoundCh1Note — FamiTone2: calcula o periodo da nota da canal 1
+comment 37:E728 _FT2UpdateSoundCh1Note — FamiTone2: calculates channel 1 note period
 label 37:E74F _FT2UpdateSoundCh1Sign
-comment 37:E74F _FT2UpdateSoundCh1Sign — FamiTone2: prolonga o sinal do periodo da canal 1
+comment 37:E74F _FT2UpdateSoundCh1Sign — FamiTone2: extends channel 1 period sign
 label 37:E76E _FT2UpdateSoundCh1ScaleLimit
-comment 37:E76E _FT2UpdateSoundCh1ScaleLimit — FamiTone2: limita a atenuacao de volume da canal 1
+comment 37:E76E _FT2UpdateSoundCh1ScaleLimit — FamiTone2: limits channel 1 volume attenuation
 label 37:E776 _FT2UpdateSoundCh1ApplyScale
-comment 37:E776 _FT2UpdateSoundCh1ApplyScale — FamiTone2: aplica a atenuacao de volume da canal 1
+comment 37:E776 _FT2UpdateSoundCh1ApplyScale — FamiTone2: applies channel 1 volume attenuation
 label 37:E779 _FT2UpdateSoundCh1Volume
-comment 37:E779 _FT2UpdateSoundCh1Volume — FamiTone2: grava o volume final da canal 1
+comment 37:E779 _FT2UpdateSoundCh1Volume — FamiTone2: writes channel 1 final volume
 label 37:E7A6 _FT2UpdateSoundCh2Sign
-comment 37:E7A6 _FT2UpdateSoundCh2Sign — FamiTone2: prolonga o sinal do periodo da canal 2
+comment 37:E7A6 _FT2UpdateSoundCh2Sign — FamiTone2: extends channel 2 period sign
 label 37:E7C5 _FT2UpdateSoundCh2ScaleLimit
-comment 37:E7C5 _FT2UpdateSoundCh2ScaleLimit — FamiTone2: limita a atenuacao de volume da canal 2
+comment 37:E7C5 _FT2UpdateSoundCh2ScaleLimit — FamiTone2: limits channel 2 volume attenuation
 label 37:E7CD _FT2UpdateSoundCh2ApplyScale
-comment 37:E7CD _FT2UpdateSoundCh2ApplyScale — FamiTone2: aplica a atenuacao de volume da canal 2
+comment 37:E7CD _FT2UpdateSoundCh2ApplyScale — FamiTone2: applies channel 2 volume attenuation
 label 37:E7D0 _FT2UpdateSoundCh2Volume
-comment 37:E7D0 _FT2UpdateSoundCh2Volume — FamiTone2: grava o volume final da canal 2
+comment 37:E7D0 _FT2UpdateSoundCh2Volume — FamiTone2: writes channel 2 final volume
 label 37:E7F1 _FT2UpdateSoundCh3Sign
-comment 37:E7F1 _FT2UpdateSoundCh3Sign — FamiTone2: prolonga o sinal do periodo da canal 3
+comment 37:E7F1 _FT2UpdateSoundCh3Sign — FamiTone2: extends channel 3 period sign
 label 37:E80E _FT2UpdateSoundCh3Control
-comment 37:E80E _FT2UpdateSoundCh3Control — FamiTone2: prepara o controle linear do triangulo da canal 3
+comment 37:E80E _FT2UpdateSoundCh3Control — FamiTone2: prepares channel 3 triangle linear control
 label 37:E840 _FT2UpdateSoundCh4ScaleLimit
-comment 37:E840 _FT2UpdateSoundCh4ScaleLimit — FamiTone2: limita a atenuacao de volume da canal 4
+comment 37:E840 _FT2UpdateSoundCh4ScaleLimit — FamiTone2: limits channel 4 volume attenuation
 label 37:E848 _FT2UpdateSoundCh4ApplyScale
-comment 37:E848 _FT2UpdateSoundCh4ApplyScale — FamiTone2: aplica a atenuacao de volume da canal 4
+comment 37:E848 _FT2UpdateSoundCh4ApplyScale — FamiTone2: applies channel 4 volume attenuation
 label 37:E84B _FT2UpdateSoundCh4Volume
-comment 37:E84B _FT2UpdateSoundCh4Volume — FamiTone2: grava o volume final do ruido da canal 4
+comment 37:E84B _FT2UpdateSoundCh4Volume — FamiTone2: writes channel 4 noise final volume
 label 37:E874 _FT2UpdateSoundPulse2
-comment 37:E874 _FT2UpdateSoundPulse2 — FamiTone2: envia volume e periodo da canal 2 aos registradores da APU
+comment 37:E874 _FT2UpdateSoundPulse2 — FamiTone2: sends channel 2 volume and period to APU registers
 label 37:E88E _FT2UpdateSoundTriangle
-comment 37:E88E _FT2UpdateSoundTriangle — FamiTone2: envia volume e periodo do triangulo aos registradores da APU
+comment 37:E88E _FT2UpdateSoundTriangle — FamiTone2: sends triangle volume and period to APU registers
 label 37:E8C2 _FT2ChannelPitchVibrato
-comment 37:E8C2 _FT2ChannelPitchVibrato — FamiTone2: recompoe o tom antes de aplicar o vibrato
+comment 37:E8C2 _FT2ChannelPitchVibrato — FamiTone2: recomposes pitch before applying vibrato
 label 37:E8D6 _FT2ChannelPitchSlideMode
-comment 37:E8D6 _FT2ChannelPitchSlideMode — FamiTone2: le o modo de slide da canal
+comment 37:E8D6 _FT2ChannelPitchSlideMode — FamiTone2: reads channel slide mode
 label 37:E8DE _FT2ChannelPitchSlideType
-comment 37:E8DE _FT2ChannelPitchSlideType — FamiTone2: distingue slide para cima, para baixo e portamento
+comment 37:E8DE _FT2ChannelPitchSlideType — FamiTone2: distinguishes slide up, slide down and portamento
 label 37:E8E9 _FT2ChannelPitchSlideUp
-comment 37:E8E9 _FT2ChannelPitchSlideUp — FamiTone2: soma o deslocamento de slide para cima
+comment 37:E8E9 _FT2ChannelPitchSlideUp — FamiTone2: adds slide up displacement
 label 37:E8F6 _FT2ChannelPitchSlideUpStore
-comment 37:E8F6 _FT2ChannelPitchSlideUpStore — FamiTone2: grava a parte baixa do tom apos o slide para cima
+comment 37:E8F6 _FT2ChannelPitchSlideUpStore — FamiTone2: writes low part of pitch after slide up
 label 37:E905 _FT2ChannelPitchSlideUpLimit
-comment 37:E905 _FT2ChannelPitchSlideUpLimit — FamiTone2: limita a parte alta do tom apos o slide para cima
+comment 37:E905 _FT2ChannelPitchSlideUpLimit — FamiTone2: limits high part of pitch after slide up
 label 37:E914 _FT2ChannelPitchSlideDown
-comment 37:E914 _FT2ChannelPitchSlideDown — FamiTone2: subtrai o deslocamento de slide para baixo
+comment 37:E914 _FT2ChannelPitchSlideDown — FamiTone2: subtracts slide down displacement
 label 37:E923 _FT2ChannelPitchSlideDownStore
-comment 37:E923 _FT2ChannelPitchSlideDownStore — FamiTone2: grava o tom apos o slide para baixo
+comment 37:E923 _FT2ChannelPitchSlideDownStore — FamiTone2: writes pitch after slide down
 label 37:E933 _FT2ChannelPitchSlideEnd
-comment 37:E933 _FT2ChannelPitchSlideEnd — FamiTone2: encerra o slide quando o tom ultrapassa o limite
+comment 37:E933 _FT2ChannelPitchSlideEnd — FamiTone2: ends slide when pitch exceeds limit
 label 37:E957 _FT2SlideToNoteLoad
-comment 37:E957 _FT2SlideToNoteLoad — FamiTone2: compara o tom corrente com o tom alvo
+comment 37:E957 _FT2SlideToNoteLoad — FamiTone2: compares current pitch with target pitch
 label 37:E965 _FT2SlideToNoteDown
-comment 37:E965 _FT2SlideToNoteDown — FamiTone2: reduz o tom enquanto ele esta acima do alvo
+comment 37:E965 _FT2SlideToNoteDown — FamiTone2: reduces pitch while it is above target
 label 37:E974 _FT2SlideToNoteDownStore
-comment 37:E974 _FT2SlideToNoteDownStore — FamiTone2: grava o tom reduzido durante o slide
+comment 37:E974 _FT2SlideToNoteDownStore — FamiTone2: writes reduced pitch during slide
 label 37:E982 _FT2SlideToNoteApply
-comment 37:E982 _FT2SlideToNoteApply — FamiTone2: aplica o tom corrente ao registrador da voz
+comment 37:E982 _FT2SlideToNoteApply — FamiTone2: applies current pitch to voice register
 label 37:E991 _FT2SlideToNoteReached
-comment 37:E991 _FT2SlideToNoteReached — FamiTone2: alcancou o tom alvo e substitui o tom corrente
+comment 37:E991 _FT2SlideToNoteReached — FamiTone2: reached target pitch and replaces current pitch
 label 37:E9AC _FT2SlideToNoteDone
-comment 37:E9AC _FT2SlideToNoteDone — FamiTone2: termina o slide e segue para o vibrato
+comment 37:E9AC _FT2SlideToNoteDone — FamiTone2: ends slide and proceeds to vibrato
 label 37:E9AF _FT2SlideToNoteUp
-comment 37:E9AF _FT2SlideToNoteUp — FamiTone2: aumenta o tom enquanto ele esta abaixo do alvo
+comment 37:E9AF _FT2SlideToNoteUp — FamiTone2: increases pitch while it is below target
 label 37:E9BC _FT2SlideToNoteUpStore
-comment 37:E9BC _FT2SlideToNoteUpStore — FamiTone2: grava o tom aumentado durante o slide
+comment 37:E9BC _FT2SlideToNoteUpStore — FamiTone2: writes increased pitch during slide
 label 37:E9E2 _FT2PitchCompareAbove
-comment 37:E9E2 _FT2PitchCompareAbove — FamiTone2: indica que o tom corrente esta acima do alvo
+comment 37:E9E2 _FT2PitchCompareAbove — FamiTone2: indicates current pitch is above target
 label 37:E9E5 _FT2PitchCompareBelow
-comment 37:E9E5 _FT2PitchCompareBelow — FamiTone2: indica que o tom corrente esta abaixo do alvo
+comment 37:E9E5 _FT2PitchCompareBelow — FamiTone2: indicates current pitch is below target
 label 37:EA15 _FT2VibratoClampLow
-comment 37:EA15 _FT2VibratoClampLow — FamiTone2: limita o tom ao minimo quando o vibrato e negativo
+comment 37:EA15 _FT2VibratoClampLow — FamiTone2: limits pitch to minimum when vibrato is negative
 label 37:EA1D _FT2VibratoStore
-comment 37:EA1D _FT2VibratoStore — FamiTone2: grava o tom corrigido pelo vibrato
+comment 37:EA1D _FT2VibratoStore — FamiTone2: writes vibrato-corrected pitch
 label 37:EA20 _FT2VibratoReturn
-comment 37:EA20 _FT2VibratoReturn — FamiTone2: devolve o tom final da voz
+comment 37:EA20 _FT2VibratoReturn — FamiTone2: returns final voice pitch
 label 37:EAE7 _FT2SetInstrumentNoThirdEnv
-comment 37:EAE7 _FT2SetInstrumentNoThirdEnv — FamiTone2: encerra a parte opcional do instrumento sem terceiro envelope
+comment 37:EAE7 _FT2SetInstrumentNoThirdEnv — FamiTone2: ends optional instrument part without third envelope
 label 37:EAFD _FT2SetInstrumentSkipExtra
-comment 37:EAFD _FT2SetInstrumentSkipExtra — FamiTone2: avanca os dados extras do instrumento
+comment 37:EAFD _FT2SetInstrumentSkipExtra — FamiTone2: advances instrument extra data
 label 37:EAFF _FT2SetInstrumentLoadEnvelopes
-comment 37:EAFF _FT2SetInstrumentLoadEnvelopes — FamiTone2: carrega os ponteiros de envelope restantes do instrumento
+comment 37:EAFF _FT2SetInstrumentLoadEnvelopes — FamiTone2: loads remaining instrument envelope pointers
 label 37:EB1A _FT2ChannelNoRepeat
-comment 37:EB1A _FT2ChannelNoRepeat — FamiTone2: o contador de repeticao terminou; le a proxima nota
+comment 37:EB1A _FT2ChannelNoRepeat — FamiTone2: repeat counter finished; reads next note
 label 37:EB2E _FT2ReadByteAdvance
-comment 37:EB2E _FT2ReadByteAdvance — FamiTone2: terminou de avancar o ponteiro do canal
+comment 37:EB2E _FT2ReadByteAdvance — FamiTone2: finished advancing channel pointer
 label 37:EB35 _FT2ReadVolumeCommand
-comment 37:EB35 _FT2ReadVolumeCommand — FamiTone2: le um comando de volume
+comment 37:EB35 _FT2ReadVolumeCommand — FamiTone2: reads a volume command
 label 37:EB43 _FT2ReadVolumeClamp
-comment 37:EB43 _FT2ReadVolumeClamp — FamiTone2: limita e grava o volume solicitado
+comment 37:EB43 _FT2ReadVolumeClamp — FamiTone2: limits and writes requested volume
 label 37:EB49 _FT2ReadCommand
-comment 37:EB49 _FT2ReadCommand — FamiTone2: distingue nota comum de comando do canal
+comment 37:EB49 _FT2ReadCommand — FamiTone2: distinguishes normal note from channel command
 label 37:EB50 _FT2ReadStopSlide
-comment 37:EB50 _FT2ReadStopSlide — FamiTone2: comando $5F encerra o slide
+comment 37:EB50 _FT2ReadStopSlide — FamiTone2: command $5F ends slide
 label 37:EB59 _FT2ReadShiftDown
-comment 37:EB59 _FT2ReadShiftDown — FamiTone2: comando $6F desloca a nota para baixo
+comment 37:EB59 _FT2ReadShiftDown — FamiTone2: command $6F shifts note down
 label 37:EB60 _FT2ReadSlideCommand
-comment 37:EB60 _FT2ReadSlideCommand — FamiTone2: seleciona os modos de slide ou a profundidade do vibrato
+comment 37:EB60 _FT2ReadSlideCommand — FamiTone2: selects slide modes or vibrato depth
 label 37:EB79 _FT2ReadSlideStop
-comment 37:EB79 _FT2ReadSlideStop — FamiTone2: zera o deslocamento e habilita o tom fixo
+comment 37:EB79 _FT2ReadSlideStop — FamiTone2: zeroes displacement and enables fixed pitch
 label 37:EB91 _FT2ReadSlideDownMode
-comment 37:EB91 _FT2ReadSlideDownMode — FamiTone2: comando $6B habilita o slide para baixo
+comment 37:EB91 _FT2ReadSlideDownMode — FamiTone2: command $6B enables slide down
 label 37:EBA4 _FT2ReadSlideUpMode
-comment 37:EBA4 _FT2ReadSlideUpMode — FamiTone2: comando $6C habilita o slide para cima
+comment 37:EBA4 _FT2ReadSlideUpMode — FamiTone2: command $6C enables slide up
 label 37:EBB7 _FT2ReadPortamentoMode
-comment 37:EBB7 _FT2ReadPortamentoMode — FamiTone2: comando $6D habilita o portamento ate a nota
+comment 37:EBB7 _FT2ReadPortamentoMode — FamiTone2: command $6D enables portamento to note
 label 37:EBDF _FT2ShiftUpNote
-comment 37:EBDF _FT2ShiftUpNote — FamiTone2: soma o deslocamento a uma nota da sequencia
+comment 37:EBDF _FT2ShiftUpNote — FamiTone2: adds displacement to a sequence note
 label 37:EC11 _FT2ShiftCurrentUp
-comment 37:EC11 _FT2ShiftCurrentUp — FamiTone2: soma o deslocamento a nota corrente
+comment 37:EC11 _FT2ShiftCurrentUp — FamiTone2: adds displacement to current note
 label 37:EC35 _FT2ShiftDownNote
-comment 37:EC35 _FT2ShiftDownNote — FamiTone2: subtrai o deslocamento de uma nota da sequencia
+comment 37:EC35 _FT2ShiftDownNote — FamiTone2: subtracts displacement from a sequence note
 label 37:EC3D _FT2ShiftCurrentDown
-comment 37:EC3D _FT2ShiftCurrentDown — FamiTone2: subtrai o deslocamento da nota corrente
+comment 37:EC3D _FT2ShiftCurrentDown — FamiTone2: subtracts displacement from current note
 label 37:EC83 _FT2PlainNoteClearPitch
-comment 37:EC83 _FT2PlainNoteClearPitch — FamiTone2: nota comum e desativacao do tom fixo
+comment 37:EC83 _FT2PlainNoteClearPitch — FamiTone2: normal note and fixed pitch deactivation
 label 37:EC8B _FT2PlainNoteStoreOnly
-comment 37:EC8B _FT2PlainNoteStoreOnly — FamiTone2: grava a nota sem alterar o estado de tom fixo
+comment 37:EC8B _FT2PlainNoteStoreOnly — FamiTone2: writes note without changing fixed pitch state
 label 37:EC9E _FT2SpecialEmptyRows
-comment 37:EC9E _FT2SpecialEmptyRows — FamiTone2: tratta linhas vazias e comandos de referencia do canal
+comment 37:EC9E _FT2SpecialEmptyRows — FamiTone2: handles empty rows and channel reference commands
 label 37:ECCF _FT2SpecialSpeed
-comment 37:ECCF _FT2SpecialSpeed — FamiTone2: le e grava a velocidade da musica
+comment 37:ECCF _FT2SpecialSpeed — FamiTone2: reads and writes music speed
 label 37:ECDB _FT2SpecialSpeedAdvance
-comment 37:ECDB _FT2SpecialSpeedAdvance — FamiTone2: avanca o ponteiro apos ler a velocidade
+comment 37:ECDB _FT2SpecialSpeedAdvance — FamiTone2: advances pointer after reading speed
 label 37:ECE2 _FT2SpecialLoop
-comment 37:ECE2 _FT2SpecialLoop — FamiTone2: troca o ponteiro do canal pelo destino do loop
+comment 37:ECE2 _FT2SpecialLoop — FamiTone2: swaps channel pointer with loop destination
 label 37:ECF3 _FT2SpecialRepeat
-comment 37:ECF3 _FT2SpecialRepeat — FamiTone2: grava o contador de repeticao do canal
+comment 37:ECF3 _FT2SpecialRepeat — FamiTone2: writes channel repeat counter
 label 37:ECF6 _FT2SpecialDone
-comment 37:ECF6 _FT2SpecialDone — FamiTone2: finaliza o comando e trata a referencia ativa
+comment 37:ECF6 _FT2SpecialDone — FamiTone2: finalizes command and handles active reference
 label 37:ED0D _FT2SpecialContinue
-comment 37:ED0D _FT2SpecialContinue — FamiTone2: mantem o ponteiro corrente do canal
+comment 37:ED0D _FT2SpecialContinue — FamiTone2: keeps current channel pointer
 label 37:ED20 _FT2ReadParamDone
-comment 37:ED20 _FT2ReadParamDone — FamiTone2: devolve o parametro apos avancar o ponteiro
+comment 37:ED20 _FT2ReadParamDone — FamiTone2: returns parameter after advancing pointer
 label 37:ED35 _FT2SamplePlayMNotBusy
-comment 37:ED35 _FT2SamplePlayMNotBusy — FamiTone2: o canal DMC esta livre; inicia a amostra de musica
+comment 37:ED35 _FT2SamplePlayMNotBusy — FamiTone2: DMC channel is free; starts music sample
 label 37:ED89 _FT2SfxInitChannels
-comment 37:ED89 _FT2SfxInitChannels — FamiTone2: inicializa todos os canais de efeito sonoro
+comment 37:ED89 _FT2SfxInitChannels — FamiTone2: initializes all sound effect channels
 label 37:EDD5 _FT2SfxUpdateNoRepeat
-comment 37:EDD5 _FT2SfxUpdateNoRepeat — FamiTone2: o contador de repeticao do efeito terminou
+comment 37:EDD5 _FT2SfxUpdateNoRepeat — FamiTone2: effect repeat counter finished
 label 37:EDDB _FT2SfxUpdateActive
-comment 37:EDDB _FT2SfxUpdateActive — FamiTone2: carrega o roteiro do efeito ativo
+comment 37:EDDB _FT2SfxUpdateActive — FamiTone2: loads active effect script
 label 37:EDF9 _FT2SfxReadData
-comment 37:EDF9 _FT2SfxReadData — FamiTone2: le um comando de escrita de registrador do efeito
+comment 37:EDF9 _FT2SfxReadData — FamiTone2: reads an effect register write command
 label 37:EE16 _FT2SfxAdvanceDone
-comment 37:EE16 _FT2SfxAdvanceDone — FamiTone2: terminou de avancar o ponteiro do efeito
+comment 37:EE16 _FT2SfxAdvanceDone — FamiTone2: finished advancing effect pointer
 label 37:EE17 _FT2SfxEnd
-comment 37:EE17 _FT2SfxEnd — FamiTone2: marca o canal de efeito como inativo
+comment 37:EE17 _FT2SfxEnd — FamiTone2: marks effect channel as inactive
 label 37:EE33 _FT2SfxUpdatePulse1
-comment 37:EE33 _FT2SfxUpdatePulse1 — FamiTone2: mistura o volume e o periodo da canal 1 do efeito
+comment 37:EE33 _FT2SfxUpdatePulse1 — FamiTone2: mixes channel 1 effect volume and period
 label 37:EE4C _FT2SfxUpdatePulse2
-comment 37:EE4C _FT2SfxUpdatePulse2 — FamiTone2: mistura o volume e o periodo da canal 2 do efeito
+comment 37:EE4C _FT2SfxUpdatePulse2 — FamiTone2: mixes channel 2 effect volume and period
 label 37:EE60 _FT2SfxUpdateTriangle
-comment 37:EE60 _FT2SfxUpdateTriangle — FamiTone2: mistura o controle e o periodo do triangulo do efeito
+comment 37:EE60 _FT2SfxUpdateTriangle — FamiTone2: mixes effect triangle control and period
 label 37:EE73 _FT2SfxUpdateNoise
-comment 37:EE73 _FT2SfxUpdateNoise — FamiTone2: mistura o volume e o periodo do ruido do efeito
+comment 37:EE73 _FT2SfxUpdateNoise — FamiTone2: mixes effect noise volume and period
 label 37:EF35 _FT2ScaleVolumeLoop
-comment 37:EF35 _FT2ScaleVolumeLoop — FamiTone2: laco de escala do volume pela atenuacao
+comment 37:EF35 _FT2ScaleVolumeLoop — FamiTone2: volume scaling loop by attenuation
 label 37:EF3F _FT2ScaleVolumeNext
-comment 37:EF3F _FT2ScaleVolumeNext — FamiTone2: proximo passo da escala de volume
+comment 37:EF3F _FT2ScaleVolumeNext — FamiTone2: next volume scale step
 label 37:EF48 _FT2ScaleVolumeReturn
-comment 37:EF48 _FT2ScaleVolumeReturn — FamiTone2: devolve o volume ja escalado
+comment 37:EF48 _FT2ScaleVolumeReturn — FamiTone2: returns already scaled volume
 label 37:EF49 _FT2ScaleVolumeMinimum
-comment 37:EF49 _FT2ScaleVolumeMinimum — FamiTone2: devolve volume minimo 1 quando o resultado seria zero
+comment 37:EF49 _FT2ScaleVolumeMinimum — FamiTone2: returns minimum volume 1 when result would be zero
 label 37:EFBF SelectInitP2Char
-comment 37:EFBF SelectInitP2Char — selecao: carrega o lutador do P2 (zp_D8) e a paleta (zp_13)
+comment 37:EFBF SelectInitP2Char — selection: loads P2 fighter (zp_D8) and palette (zp_13)
 label 37:EFD0 SelectWaitFlagClear
-comment 37:EFD0 SelectWaitFlagClear — selecao: inicia a espera do proximo vblank
+comment 37:EFD0 SelectWaitFlagClear — selection: starts waiting for next vblank
 label 37:EFD4 SelectWaitVBlank
-comment 37:EFD4 SelectWaitVBlank — selecao: espera o vblank do laco
+comment 37:EFD4 SelectWaitVBlank — selection: waits loop vblank
 label 37:EFFA SelectDrawCursor
-comment 37:EFFA SelectDrawCursor — selecao: desenha o cursor e a bandeira do pais na posicao atual
+comment 37:EFFA SelectDrawCursor — selection: draws cursor and country flag at current position
 label 37:F052 SelectDrawFighterSprite
-comment 37:F052 SelectDrawFighterSprite — selecao: desenha o lutador sob o cursor
+comment 37:F052 SelectDrawFighterSprite — selection: draws fighter under cursor
 label 37:F076 SelectConfirmVoice
-comment 37:F076 SelectConfirmVoice — selecao: P1 confirmou -> toca a voz do pais escolhido
+comment 37:F076 SelectConfirmVoice — selection: P1 confirmed -> plays chosen country voice
 label 37:F10E SelectIntroDrawFighter
-comment 37:F10E SelectIntroDrawFighter — entrada do lutador escolhido: desenha o lutador
+comment 37:F10E SelectIntroDrawFighter — chosen fighter entry: draws fighter
 label 37:F124 SelectIntroFlagClear
-comment 37:F124 SelectIntroFlagClear — entrada do lutador: inicia a espera do proximo vblank
+comment 37:F124 SelectIntroFlagClear — fighter entry: starts waiting for next vblank
 label 37:F128 SelectIntroWaitVBlank
-comment 37:F128 SelectIntroWaitVBlank — entrada do lutador: espera o vblank
+comment 37:F128 SelectIntroWaitVBlank — fighter entry: waits vblank
 label 37:F155 SelectIntroFlagClear2
-comment 37:F155 SelectIntroFlagClear2 — entrada do lutador: 2o inicio de espera do vblank
+comment 37:F155 SelectIntroFlagClear2 — fighter entry: 2nd wait start for vblank
 label 37:F159 SelectIntroWaitVBlank2
-comment 37:F159 SelectIntroWaitVBlank2 — entrada do lutador: 2o vblank da animacao
+comment 37:F159 SelectIntroWaitVBlank2 — fighter entry: 2nd vblank of animation
 label 37:F18C SelectIntroHideOam
-comment 37:F18C SelectIntroHideOam — entrada do lutador: esconde os sprites restantes da OAM
+comment 37:F18C SelectIntroHideOam — fighter entry: hides remaining OAM sprites
 label 37:F1E7 SelectInputRead
-comment 37:F1E7 SelectInputRead — selecao: o jogador ainda nao confirmou -> le o controle
+comment 37:F1E7 SelectInputRead — selection: player hasn't confirmed -> reads controller
 label 37:F1EE SelectInputUp
-comment 37:F1EE SelectInputUp — selecao: botao CIMA (novo flanco) -> cursor 4 casas para tras
+comment 37:F1EE SelectInputUp — selection: UP button (new edge) -> cursor 4 positions back
 label 37:F20C SelectInputDown
-comment 37:F20C SelectInputDown — selecao: botao BAIXO (novo flanco) -> cursor 4 casas para frente
+comment 37:F20C SelectInputDown — selection: DOWN button (new edge) -> cursor 4 positions forward
 label 37:F246 SelectInputRight
-comment 37:F246 SelectInputRight — selecao: botao DIREITA (novo flanco) -> cursor 1 casa para frente
+comment 37:F246 SelectInputRight — selection: RIGHT button (new edge) -> cursor 1 position forward
 label 37:F271 SelectInputButtonB
-comment 37:F271 SelectInputButtonB — selecao: botao B -> zera a flag de confirmacao (zp_D7,x)
+comment 37:F271 SelectInputButtonB — selection: button B -> zeroes confirmation flag (zp_D7,x)
 label 37:F281 SelectEndVoice
-comment 37:F281 SelectEndVoice — selecao: toca a voz enfileirada
+comment 37:F281 SelectEndVoice — selection: plays queued voice
 label 37:F292 SelectEnd
-comment 37:F292 SelectEnd — fim da tela de selecao
+comment 37:F292 SelectEnd — end of selection screen
 label 37:F2DD DisclaimerClearRows
-comment 37:F2DD DisclaimerClearRows — aviso/QR: limpa 4 linhas de 256 tiles da nametable
+comment 37:F2DD DisclaimerClearRows — warning/QR: clears 4 lines of 256 tiles from nametable
 label 37:F2DF DisclaimerClearCols
-comment 37:F2DF DisclaimerClearCols — aviso/QR: limpa as colunas da linha
+comment 37:F2DF DisclaimerClearCols — warning/QR: clears line columns
 label 37:F324 DisclaimerTextFlagClear
-comment 37:F324 DisclaimerTextFlagClear — aviso/QR: inicia a espera do vblank do texto
+comment 37:F324 DisclaimerTextFlagClear — warning/QR: starts waiting for text vblank
 label 37:F328 DisclaimerTextWaitVBlank
-comment 37:F328 DisclaimerTextWaitVBlank — aviso/QR: espera o vblank do texto
+comment 37:F328 DisclaimerTextWaitVBlank — warning/QR: waits text vblank
 label 37:F33C DisclaimerTextAddr
-comment 37:F33C DisclaimerTextAddr — aviso/QR: calcula o endereco da nametable do proximo caractere
+comment 37:F33C DisclaimerTextAddr — warning/QR: calculates nametable address of next character
 label 37:F356 DisclaimerTextLineReset
-comment 37:F356 DisclaimerTextLineReset — aviso/QR: fim de linha -> volta para a primeira coluna
+comment 37:F356 DisclaimerTextLineReset — warning/QR: end of line -> back to first column
 label 37:F35A DisclaimerTextWrite
-comment 37:F35A DisclaimerTextWrite — aviso/QR: escreve o caractere na nametable
+comment 37:F35A DisclaimerTextWrite — warning/QR: writes character to nametable
 label 37:F370 DisclaimerEndFlagClear
-comment 37:F370 DisclaimerEndFlagClear — aviso/QR: espera o fim do texto
+comment 37:F370 DisclaimerEndFlagClear — warning/QR: waits end of text
 label 37:F374 DisclaimerEndWaitVBlank
-comment 37:F374 DisclaimerEndWaitVBlank — aviso/QR: espera o vblank do fim do texto
+comment 37:F374 DisclaimerEndWaitVBlank — warning/QR: waits end-of-text vblank
 label 37:F4A9 SupportWaitFlagClear
-comment 37:F4A9 SupportWaitFlagClear — tela de apoio: inicia a espera do vblank
+comment 37:F4A9 SupportWaitFlagClear — support screen: starts waiting for vblank
 label 37:F4AD SupportWaitVBlank
-comment 37:F4AD SupportWaitVBlank — tela de apoio: espera o vblank
+comment 37:F4AD SupportWaitVBlank — support screen: waits vblank
 label 37:F4B5 SupportInputFlagClear
-comment 37:F4B5 SupportInputFlagClear — tela de apoio: inicia a espera do vblank da leitura do controle
+comment 37:F4B5 SupportInputFlagClear — support screen: starts waiting for vblank of controller read
 label 37:F4B9 SupportInputWaitVBlank
-comment 37:F4B9 SupportInputWaitVBlank — tela de apoio: espera o vblank antes de ler o controle
+comment 37:F4B9 SupportInputWaitVBlank — support screen: waits vblank before reading controller
 label 37:F4D9 SupportExit
-comment 37:F4D9 SupportExit — tela de apoio: sai com o fade
+comment 37:F4D9 SupportExit — support screen: exits with fade
 label 37:F524 TitlePaletteCopyLoop
-comment 37:F524 TitlePaletteCopyLoop — titulo: copia 12 bytes de paleta
+comment 37:F524 TitlePaletteCopyLoop — title: copies 12 palette bytes
 label 37:F557 TitleClearRows
-comment 37:F557 TitleClearRows — titulo: limpa as linhas da nametable
+comment 37:F557 TitleClearRows — title: clears nametable lines
 label 37:F558 TitleClearCols
-comment 37:F558 TitleClearCols — titulo: limpa as colunas da linha
+comment 37:F558 TitleClearCols — title: clears line columns
 label 37:F592 TitleWaitVBlank
-comment 37:F592 TitleWaitVBlank — titulo: espera o vblank do laco
+comment 37:F592 TitleWaitVBlank — title: waits loop vblank
 label 37:F5BB TitleWaitOverflowClear
-comment 37:F5BB TitleWaitOverflowClear — titulo: espera o flag de overflow de sprites do PPU
+comment 37:F5BB TitleWaitOverflowClear — title: waits PPU sprite overflow flag
 label 37:F5C0 TitleWaitVBlankStart
-comment 37:F5C0 TitleWaitVBlankStart — titulo: espera o inicio do vblank
+comment 37:F5C0 TitleWaitVBlankStart — title: waits vblank start
 label 37:F5C7 TitleDelayLoop
-comment 37:F5C7 TitleDelayLoop — titulo: espera de sincronizacao (256 voltas)
+comment 37:F5C7 TitleDelayLoop — title: sync wait (256 loops)
 label 37:F5E6 TitleScrollStep
-comment 37:F5E6 TitleScrollStep — titulo: avanca a rolagem horizontal do titulo
+comment 37:F5E6 TitleScrollStep — title: advances title horizontal scroll
 label 37:F601 TitleCheckStart
-comment 37:F601 TitleCheckStart — titulo: o START ja foi apertado?
+comment 37:F601 TitleCheckStart — title: has START been pressed?
 label 37:F616 TitleBlinkOn
-comment 37:F616 TitleBlinkOn — titulo: acende o "PRESS START" e le os controles
+comment 37:F616 TitleBlinkOn — title: lights 'PRESS START' and reads controllers
 label 37:F62F TitleCheckButtons
-comment 37:F62F TitleCheckButtons — titulo: procura START/A/B nos dois controles
+comment 37:F62F TitleCheckButtons — title: searches START/A/B on both controllers
 label 37:F63B TitleStartPressed
-comment 37:F63B TitleStartPressed — titulo: botao apertado -> guarda e toca a voz
+comment 37:F63B TitleStartPressed — title: button pressed -> saves and plays voice
 label 37:F645 TitleCheckPalette
-comment 37:F645 TitleCheckPalette — titulo: apaga o "PRESS START" ou sai da tela
+comment 37:F645 TitleCheckPalette — title: erases 'PRESS START' or exits screen
 label 37:F652 TitleExit
-comment 37:F652 TitleExit — titulo: para a musica e sai com o fade
+comment 37:F652 TitleExit — title: stops music and exits with fade
 label 37:F67B TitleBlinkOffLoop
-comment 37:F67B TitleBlinkOffLoop — titulo: apaga as 10 cores do "PRESS START"
+comment 37:F67B TitleBlinkOffLoop — title: erases the 10 'PRESS START' colors
 label 37:F682 TitleBlinkOnLoop
-comment 37:F682 TitleBlinkOnLoop — titulo: escreve as 10 cores do "PRESS START"
+comment 37:F682 TitleBlinkOnLoop — title: writes the 10 'PRESS START' colors
 label 37:E000 VoiceBankTbl
 block 37:E000 ------------------------------------------------------------------------------------------------
-block 37:E000 DIRETORIO DE VOZES (DPCM): 32 amostras. VoiceBankTbl[i] = banco de PRG mapeado em $C000;
-block 37:E000 VoiceSampleTbl+3+3*i = endereco/64, (tamanho-1)/16, taxa  (tabela de amostras no formato FamiTone2).
+block 37:E000 VOICE DIRECTORY (DPCM): 32 samples. VoiceBankTbl[i] = PRG bank mapped at $C000;
+block 37:E000 VoiceSampleTbl+3+3*i = address/64, (size-1)/16, rate  (sample table in FamiTone2 format).
 label 37:E01D VoiceSampleTbl
 label 37:E0EF CountryVoiceTbl
-comment 37:E0EF voz (nome do pais) de cada um dos 10 personagens na tela de selecao
+comment 37:E0EF voice (country name) of each of the 10 characters on selection screen
 label 37:E0F9 FighterVoiceTbl
-comment 37:E0F9 16 bytes por personagem: pares (amostra, continuacao) para cada voz; $FF = nenhuma
+comment 37:E0F9 16 bytes per character: (sample, continuation) pairs for each voice; $FF = none
 label 37:E19F SfxChannelOfs
 label 37:E1A3 SfxData
-comment 37:E1A3 efeitos sonoros no formato FamiTone2 (lista de ponteiros + fluxos de escrita na APU)
+comment 37:E1A3 sound effects in FamiTone2 format (pointer list + APU write streams)
 label 37:E3E0 SoundLoadSong
-block 37:E3E0 Carrega musica: MusicBank = banco (mapeado em $A000), zp_D5/zp_D6 = ponteiro dos dados (FamiTone2).
+block 37:E3E0 Loads music: MusicBank = bank (mapped at $A000), zp_D5/zp_D6 = data pointer (FamiTone2).
 label 37:E3FA SoundInitSfx
 label 37:E401 SfxPlay_Select
 label 37:E41B SoundInitVoices
 label 37:E427 VoicePlay
-comment 37:E427 troca o banco em $C000 para o da amostra e dispara o canal DMC
+comment 37:E427 switches bank at $C000 to sample's and triggers DMC channel
 label 37:E43C VoicePlayFighter
 label 37:E45F SoundUpdate
 block 37:E45F Chamado uma vez por quadro em todas as telas: encadeia a 2a metade de uma voz, mapeia a musica e roda o FamiTone2.
@@ -1711,12 +1710,12 @@ label 37:E479 SoundStopMusic
 label 37:E47F FtSetSampleTable
 label 37:E486 FamiToneInit
 block 37:E486 ------------------------------------------------------------------------------------------------
-block 37:E486 FamiTone2 (Shiru), versao do autor (familib/src/ft2) com extensoes (slides de afinacao).
-block 37:E486 Variaveis em $0100-$018B (FT_BASE_ADR = $0100) + $046B-$047E.
+block 37:E486 FamiTone2 (Shiru), author's version (familib/src/ft2) with extensions (pitch slides).
+block 37:E486 Variables at $0100-$018B (FT_BASE_ADR = $0100) + $046B-$047E.
 label 37:E4DB FamiToneMusicStop
 label 37:E519 FamiToneMusicPlay
 label 37:E5AC FamiToneMusicPause
-comment 37:E5AC nunca chamada no demo
+comment 37:E5AC never called in the demo
 label 37:E5D0 FamiToneUpdate
 label 37:EAA1 _FT2SetInstrument
 label 37:EB0B _FT2ChannelUpdate
@@ -1742,55 +1741,55 @@ label 37:F68F TextPushStart
 label 37:E394 TitleDrawPushStart
 comment 37:E394 restaura as 11 cores do PRESS START no PPU ($2ACB) durante o fade do titulo
 label 37:E40B SfxPlayByState
-comment 37:E40B efeito sonoro por classe de estado: canal em D37_E199[x], sfx em SfxChannelOfs[estado]
+comment 37:E40B sound effect by state class: channel at D37_E199[x], sfx at SfxChannelOfs[state]
 label 37:E6DD _FT2UpdateEnvelopes
-comment 37:E6DD laco das 5 vozes: atualiza os envelopes de volume (X=0)
+comment 37:E6DD loop of 5 voices: updates volume envelopes (X=0)
 label 37:E6DF _FT2EnvProcess
-comment 37:E6DF processa o envelope da voz X: contador ram_010E e ponteiro
+comment 37:E6DF processes voice X envelope: counter ram_010E and pointer
 label 37:E6F6 _FT2EnvReadValue
-comment 37:E6F6 le o valor do envelope; $80-$FF vira $40-$7F (offset no volume)
+comment 37:E6F6 reads envelope value; $80-$FF becomes $40-$7F (volume offset)
 label 37:E719 _FT2UpdateSound
-comment 37:E719 avanca a fase do vibrato global (ram_046A, 0..10)
+comment 37:E719 advances global vibrato phase (ram_046A, 0..10)
 label 37:E8B5 _FT2ChannelPitch
-comment 37:E8B5 calcula o tom da voz: se nao ha slide, carrega a nota atual de _FT2NoteTable
+comment 37:E8B5 calculates voice pitch: if no slide, loads current note from _FT2NoteTable
 label 37:E940 _FT2SlideToNote
-comment 37:E940 slide/portamento: carrega o tom alvo quando o deslocamento zera
+comment 37:E940 slide/portamento: loads target pitch when displacement zeroes
 label 37:E9CA _FT2PitchCompare
-comment 37:E9CA compara o tom atual com o alvo: devolve 2 se igual, 0/1 se abaixo/acima
+comment 37:E9CA compares current pitch with target: returns 2 if equal, 0/1 if below/above
 label 37:E9E8 _FT2LoadNotePitch
-comment 37:E9E8 carrega o tom alvo da nota atual em ram_0477/0478
+comment 37:E9E8 loads current note target pitch into ram_0477/0478
 label 37:E9F9 _FT2Vibrato
-comment 37:E9F9 aplica o vibrato: profundidade ram_0467 e fase ram_046A somam ao tom
+comment 37:E9F9 applies vibrato: depth ram_0467 and phase ram_046A add to pitch
 label 37:EB26 _FT2ReadByte
-comment 37:EB26 le um byte do ponteiro do canal e avanca o ponteiro de 16 bits
+comment 37:EB26 reads a byte from channel pointer and advances 16-bit pointer
 label 37:EBCA _FT2NoteShiftUp
-comment 37:EBCA comando $6E: sobe a nota em N semitons (le o deslocamento)
+comment 37:EBCA command $6E: raises note by N semitons (reads displacement)
 label 37:EBCD _FT2ShiftUpReadNote
-comment 37:EBCD le o proximo byte nao-comando da sequencia (nota)
+comment 37:EBCD reads next non-command byte of sequence (note)
 label 37:EBCF _FT2ShiftUpNext
-comment 37:EBCF decodifica o byte: $00 encerra, >= $58 e comando, senao nota
+comment 37:EBCF decodes byte: $00 ends, >= $58 is command, otherwise note
 label 37:EBE4 _FT2NoteShiftApply
-comment 37:EBE4 aplica o deslocamento de nota: grava a nova nota e o modo de slide 4
+comment 37:EBE4 applies note displacement: writes new note and slide mode 4
 label 37:EC20 _FT2NoteShiftDown
-comment 37:EC20 comando $6F: desce a nota em N semitons
+comment 37:EC20 command $6F: lowers note by N semitons
 label 37:EC23 _FT2ShiftDownReadNote
-comment 37:EC23 le o proximo byte nao-comando da sequencia (nota)
+comment 37:EC23 reads next non-command byte of sequence (note)
 label 37:EC4C _FT2ReadShift
-comment 37:EC4C le o deslocamento de nota ($6E/$6F): parte baixa = passos, alta = modo
+comment 37:EC4C reads note displacement ($6E/$6F): low = steps, high = mode
 label 37:EC65 _FT2PlainNote
-comment 37:EC65 nota simples: grava o indice em ram_010A e desliga o modo de afinacao fixa
+comment 37:EC65 simple note: writes index to ram_010A and turns off fixed tuning mode
 label 37:EC91 _FT2SpecialCode
-comment 37:EC91 comandos $70-$7F: instrumento/volume (bit 0 = volume, senao instrumento)
+comment 37:EC91 commands $70-$7F: instrument/volume (bit 0 = volume, otherwise instrument)
 label 37:ED18 _FT2ReadParam
-comment 37:ED18 le um byte do ponteiro e avanca (parametro de comando)
+comment 37:ED18 reads a byte from pointer and advances (command parameter)
 label 37:EDE6 _FT2SfxReadByte
-comment 37:EDE6 le o byte do roteiro de sfx: $80+ = comando, $00 = fim
+comment 37:EDE6 reads sfx script byte: $80+ = command, $00 = end
 label 37:EE0E _FT2SfxAdvance
-comment 37:EE0E avanca o ponteiro do sfx (Y e o offset corrente)
+comment 37:EE0E advances sfx pointer (Y and current offset)
 label 37:EE1A _FT2SfxUpdateBuf
-comment 37:EE1A copia os parametros do sfx para as variaveis do canal (volume, etc.)
+comment 37:EE1A copies sfx parameters to channel variables (volume, etc.)
 label 37:EF27 _FT2ScaleVolume
-comment 37:EF27 escala o volume (A) pela atenuacao da voz e devolve no minimo 1 (0 = mudo)
+comment 37:EF27 scales volume (A) by voice attenuation and returns minimum 1 (0 = mute)
 label 37:EF92 SelectInit
 comment 37:EF92 inicia a tela de selecao: carrega a musica $29 e zera a escolha
 label 37:EFC9 SelectCheckDone
@@ -1829,116 +1828,116 @@ comment 37:F5F8 grava X nas duas portas de rolagem e volta ao laco do titulo
 label 37:F670 TitleBlinkPushStart
 comment 37:F670 pisca o PRESS START alternando a cor 10 da paleta
 # ============================================================================================================
-# BANCO $00 — dados do Ryu (frames) + IA do Ryu
+# BANK $00 — Ryu data (frames) + Ryu AI
 # ============================================================================================================
 # ------------------------------------------------------------------------------------------------
-# LOTE P2 de naming (Fase 3): rotulos automaticos da arvore de decisao da IA do Ryu.
-# Nome pelo papel demonstrado pelo codigo; apenas rotulos, nenhuma mudanca de byte.
+# Phase 3 P2 naming batch: automatic labels of Ryu AI decision tree.
+# Named by role demonstrated by code; labels only, no byte change.
 label 00:8F5C RyuAiAirDistY
-comment 00:8F5C RyuAiAirDistY — IA do Ryu: no ar, exige distancia vertical < $38
+comment 00:8F5C RyuAiAirDistY — Ryu AI: in air, requires vertical distance < $38
 label 00:8F66 RyuAiAirDistX
-comment 00:8F66 RyuAiAirDistX — IA do Ryu: no ar, exige distancia horizontal < $38
+comment 00:8F66 RyuAiAirDistX — Ryu AI: in air, requires horizontal distance < $38
 label 00:8F70 RyuAiAirVelCheck
-comment 00:8F70 RyuAiAirVelCheck — IA do Ryu: no ar, so age se o proprio pulo termina ou o oponente esta no ar
+comment 00:8F70 RyuAiAirVelCheck — Ryu AI: in air, only acts if own jump ends or opponent is in air
 label 00:8F7F RyuAiAirScriptPick
-comment 00:8F7F RyuAiAirScriptPick — IA do Ryu: no ar, escolhe o roteiro pela classe de estado
+comment 00:8F7F RyuAiAirScriptPick — Ryu AI: in air, chooses script by state class
 label 00:8F8F RyuAiAirScriptDefault
-comment 00:8F8F RyuAiAirScriptDefault — IA do Ryu: no ar, roteiro padrao ($00:8EFB)
+comment 00:8F8F RyuAiAirScriptDefault — Ryu AI: in air, default script ($00:8EFB)
 label 00:8F96 RyuAiProjCheck
-comment 00:8F96 RyuAiProjCheck — IA do Ryu: o oponente tem projetil no ar?
+comment 00:8F96 RyuAiProjCheck — Ryu AI: does opponent have projectile in air?
 label 00:8FA5 RyuAiProjAbsDist
-comment 00:8FA5 RyuAiProjAbsDist — IA do Ryu: distancia horizontal ate o projetil
+comment 00:8FA5 RyuAiProjAbsDist — Ryu AI: horizontal distance to projectile
 label 00:8FAB RyuAiProjDistDiv16
-comment 00:8FAB RyuAiProjDistDiv16 — IA do Ryu: distancia do projetil / 16
+comment 00:8FAB RyuAiProjDistDiv16 — Ryu AI: projectile distance / 16
 label 00:8FB8 RyuAiProjDistDiv32
-comment 00:8FB8 RyuAiProjDistDiv32 — IA do Ryu: distancia do projetil / 32
+comment 00:8FB8 RyuAiProjDistDiv32 — Ryu AI: projectile distance / 32
 label 00:8FC2 RyuAiProjDistDiv64
-comment 00:8FC2 RyuAiProjDistDiv64 — IA do Ryu: distancia do projetil / 64 (longe demais: nao faz nada)
+comment 00:8FC2 RyuAiProjDistDiv64 — Ryu AI: projectile distance / 64 (too far: does nothing)
 label 00:8FC8 RyuAiProjScriptMid
-comment 00:8FC8 RyuAiProjScriptMid — IA do Ryu: projetil a 32-64 px -> roteiro $00:8E82
+comment 00:8FC8 RyuAiProjScriptMid — Ryu AI: projectile at 32-64 px -> script $00:8E82
 label 00:8FCF RyuAiOpponentHitState
-comment 00:8FCF RyuAiOpponentHitState — IA do Ryu: sem projetil; o oponente esta em reacao de golpe?
+comment 00:8FCF RyuAiOpponentHitState — Ryu AI: no projectile; is opponent in hit reaction?
 label 00:8FE9 RyuAiOpponentWalkCheck
-comment 00:8FE9 RyuAiOpponentWalkCheck — IA do Ryu: o oponente esta andando (classe >= $54)?
+comment 00:8FE9 RyuAiOpponentWalkCheck — Ryu AI: is opponent walking (class >= $54)?
 label 00:8FFC RyuAiOpponentJumpUp
-comment 00:8FFC RyuAiOpponentJumpUp — IA do Ryu: o oponente esta subindo
+comment 00:8FFC RyuAiOpponentJumpUp — Ryu AI: opponent is jumping up
 label 00:900F RyuAiJumpDistCheck
-comment 00:900F RyuAiJumpDistCheck — IA do Ryu: distancia horizontal do oponente que esta subindo
+comment 00:900F RyuAiJumpDistCheck — Ryu AI: horizontal distance of jumping up opponent
 label 00:9016 RyuAiJumpScriptMid
-comment 00:9016 RyuAiJumpScriptMid — IA do Ryu: oponente subindo a 40-96 px -> roteiro $00:8F0A
+comment 00:9016 RyuAiJumpScriptMid — Ryu AI: opponent jumping up at 40-96 px -> script $00:8F0A
 label 00:901D RyuAiOpponentGrounded
-comment 00:901D RyuAiOpponentGrounded — IA do Ryu: o oponente esta no chao
+comment 00:901D RyuAiOpponentGrounded — Ryu AI: opponent is on ground
 label 00:9028 RyuAiOpponentDistX
-comment 00:9028 RyuAiOpponentDistX — IA do Ryu: distancia horizontal ate o oponente que anda
+comment 00:9028 RyuAiOpponentDistX — Ryu AI: horizontal distance to walking opponent
 label 00:903D RyuAiOpponentDistY
-comment 00:903D RyuAiOpponentDistY — IA do Ryu: sorteia entre dois roteiros conforme a distancia vertical
+comment 00:903D RyuAiOpponentDistY — Ryu AI: draws between two scripts based on vertical distance
 label 00:9055 RyuAiOpponentTooFar
-comment 00:9055 RyuAiOpponentTooFar — IA do Ryu: oponente longe demais -> nao faz nada
+comment 00:9055 RyuAiOpponentTooFar — Ryu AI: opponent too far -> does nothing
 label 00:905C RyuAiOpponentScript
-comment 00:905C RyuAiOpponentScript — IA do Ryu: oponente perto -> roteiro $00:8F1B
+comment 00:905C RyuAiOpponentScript — Ryu AI: opponent near -> script $00:8F1B
 label 00:9063 RyuAiOpponentSpecial
-comment 00:9063 RyuAiOpponentSpecial — IA do Ryu: oponente com estado especial (zp_62) -> roteiro $00:8ECA
+comment 00:9063 RyuAiOpponentSpecial — Ryu AI: opponent with special state (zp_62) -> script $00:8ECA
 label 00:906F RyuAiOpponentStateHigh
-comment 00:906F RyuAiOpponentStateHigh — IA do Ryu: classe de estado do oponente >= $58?
+comment 00:906F RyuAiOpponentStateHigh — Ryu AI: opponent state class >= $58?
 label 00:907B RyuAiState58Check
-comment 00:907B RyuAiState58Check — IA do Ryu: classe >= $69 tem outro tratamento
+comment 00:907B RyuAiState58Check — Ryu AI: class >= $69 has other handling
 label 00:9089 RyuAiState58DistDiv8
-comment 00:9089 RyuAiState58DistDiv8 — IA do Ryu: distancia horizontal / 8
+comment 00:9089 RyuAiState58DistDiv8 — Ryu AI: horizontal distance / 8
 label 00:9095 RyuAiState58DistDiv16
-comment 00:9095 RyuAiState58DistDiv16 — IA do Ryu: distancia horizontal / 16
+comment 00:9095 RyuAiState58DistDiv16 — Ryu AI: horizontal distance / 16
 label 00:9098 RyuAiState58Script32
-comment 00:9098 RyuAiState58Script32 — IA do Ryu: roteiro $00:8F32
+comment 00:9098 RyuAiState58Script32 — Ryu AI: script $00:8F32
 label 00:909F RyuAiState58DistDiv32
-comment 00:909F RyuAiState58DistDiv32 — IA do Ryu: distancia horizontal / 32 (longe: nao faz nada)
+comment 00:909F RyuAiState58DistDiv32 — Ryu AI: horizontal distance / 32 (far: does nothing)
 label 00:90A5 RyuAiState58Random
-comment 00:90A5 RyuAiState58Random — IA do Ryu: sorteia o roteiro conforme a postura do oponente
+comment 00:90A5 RyuAiState58Random — Ryu AI: draws script based on opponent posture
 label 00:90C3 RyuAiState58Script
-comment 00:90C3 RyuAiState58Script — IA do Ryu: roteiro $00:8EAD
+comment 00:90C3 RyuAiState58Script — Ryu AI: script $00:8EAD
 label 00:90CA RyuAiState69Dist
-comment 00:90CA RyuAiState69Dist — IA do Ryu: classe >= $69, calcula a distancia horizontal
+comment 00:90CA RyuAiState69Dist — Ryu AI: class >= $69, calculates horizontal distance
 label 00:90D4 RyuAiState69DistDiv8
-comment 00:90D4 RyuAiState69DistDiv8 — IA do Ryu: distancia horizontal / 8
+comment 00:90D4 RyuAiState69DistDiv8 — Ryu AI: horizontal distance / 8
 label 00:90F5 RyuAiState69DistDiv16
-comment 00:90F5 RyuAiState69DistDiv16 — IA do Ryu: distancia horizontal / 16
+comment 00:90F5 RyuAiState69DistDiv16 — Ryu AI: horizontal distance / 16
 label 00:910C RyuAiState69DistDiv32
-comment 00:910C RyuAiState69DistDiv32 — IA do Ryu: distancia horizontal / 32 (longe: nao faz nada)
+comment 00:910C RyuAiState69DistDiv32 — Ryu AI: horizontal distance / 32 (far: does nothing)
 label 00:9113 RyuAiState69Random
-comment 00:9113 RyuAiState69Random — IA do Ryu: sorteia entre 4 roteiros
+comment 00:9113 RyuAiState69Random — Ryu AI: draws between 4 scripts
 label 00:912B RyuAiState69RandomNow
-comment 00:912B RyuAiState69RandomNow — IA do Ryu: sorteia entre 2 roteiros (execucao imediata)
+comment 00:912B RyuAiState69RandomNow — Ryu AI: draws between 2 scripts (immediate execution)
 label 00:9159 RyuAiAntiAirDist
-comment 00:9159 RyuAiAntiAirDist — IA anti-aereo: distancia horizontal ate o oponente no ar
+comment 00:9159 RyuAiAntiAirDist — anti-air AI: horizontal distance to opponent in air
 label 00:9163 RyuAiAntiAirRange
-comment 00:9163 RyuAiAntiAirRange — IA anti-aereo: distancia < $28?
+comment 00:9163 RyuAiAntiAirRange — anti-air AI: distance < $28?
 label 00:916F RyuAiAntiAirVelCheck
-comment 00:916F RyuAiAntiAirVelCheck — IA anti-aereo: o oponente esta descendo?
+comment 00:916F RyuAiAntiAirVelCheck — anti-air AI: is opponent descending?
 label 00:9174 RyuAiAntiAirScript8E9F
-comment 00:9174 RyuAiAntiAirScript8E9F — IA anti-aereo: roteiro $00:8E9F
+comment 00:9174 RyuAiAntiAirScript8E9F — anti-air AI: script $00:8E9F
 label 00:917B RyuAiAntiAirVelCheck2
-comment 00:917B RyuAiAntiAirVelCheck2 — IA anti-aereo (perto): o oponente esta descendo?
+comment 00:917B RyuAiAntiAirVelCheck2 — anti-air AI (near): is opponent descending?
 label 00:9183 RyuAiAntiAirVelCheck3
-comment 00:9183 RyuAiAntiAirVelCheck3 — IA anti-aereo (perto): o oponente esta parado?
+comment 00:9183 RyuAiAntiAirVelCheck3 — anti-air AI (near): is opponent stopped?
 label 00:9188 RyuAiAntiAirScript8F11
-comment 00:9188 RyuAiAntiAirScript8F11 — IA anti-aereo: roteiro $00:8F11
+comment 00:9188 RyuAiAntiAirScript8F11 — anti-air AI: script $00:8F11
 label 00:918F RyuAiAntiAirStateCheck
-comment 00:918F RyuAiAntiAirStateCheck — IA anti-aereo: classes $D0/$D8 do oponente
+comment 00:918F RyuAiAntiAirStateCheck — anti-air AI: opponent classes $D0/$D8
 label 00:9197 RyuAiAntiAirDist2
-comment 00:9197 RyuAiAntiAirDist2 — IA anti-aereo ($D0/$D8): distancia horizontal
+comment 00:9197 RyuAiAntiAirDist2 — anti-air AI ($D0/$D8): horizontal distance
 label 00:91A5 RyuAiAntiAirDist3
-comment 00:91A5 RyuAiAntiAirDist3 — IA anti-aereo ($D0/$D8): distancia < $10?
+comment 00:91A5 RyuAiAntiAirDist3 — anti-air AI ($D0/$D8): distance < $10?
 label 00:91B0 RyuAiAntiAirScript8F29
-comment 00:91B0 RyuAiAntiAirScript8F29 — IA anti-aereo ($D0/$D8): roteiro $00:8F29
+comment 00:91B0 RyuAiAntiAirScript8F29 — anti-air AI ($D0/$D8): script $00:8F29
 label 00:91B7 RyuAiAntiAirEnd
-comment 00:91B7 RyuAiAntiAirEnd — IA anti-aereo: nenhuma acao
-# Ken jogavel: o despacho anti-aereo em $8FDC-$8FE8 usa o truque do RTS sobre D00_9148, indexado por
-# FighterChar,y. A tabela tem UMA entrada (2 bytes) e o indice avanca de 1 em 1, entao so' o Ryu (0)
-# funciona; para Ken (1) os bytes lidos sao $91/$A4 -> alvo $A491 -> o RTS cai em $A492 ($02 = JAM) e a
-# CPU trava (halt infinito). Como a IA desta entrega e' sempre a do Ryu, fixamos o indice em 0
-# (LDA abs,Y -> LDA abs): qualquer oponente usa RyuAiAntiAir, exatamente como no Ryu-vs-Ryu.
+comment 00:91B7 RyuAiAntiAirEnd — anti-air AI: no action
+# Ken playable: the anti-air dispatch at $8FDC-$8FE8 uses the RTS trick on D00_9148, indexed by
+# FighterChar,y. The table has ONE entry (2 bytes) and index advances 1 at a time, so only Ryu (0)
+# works; for Ken (1) the bytes read are $91/$A4 -> target $A491 -> the RTS falls on $A492 ($02 = JAM) and
+# CPU halts (infinite halt). Since this delivery's AI is always Ryu's, we fix index at 0
+# (LDA abs,Y -> LDA abs): any opponent uses RyuAiAntiAir, exactly as in Ryu-vs-Ryu.
 patch 00:8FE0 AD
 patch 00:8FE4 AD
-comment 00:8FE0 todos os oponentes usam RyuAiAntiAir (D00_9148 tem uma entrada so')
-comment 00:8FE4 idem: sem indexar por personagem, o RTS-trick nao cai em $A492 (JAM)
+comment 00:8FE0 all opponents use RyuAiAntiAir (D00_9148 has a single entry)
+comment 00:8FE4 same: without indexing by character, RTS-trick doesn't fall on $A492 (JAM)
 label 00:8F46 RyuAiThink
 block 00:8F46 ------------------------------------------------------------------------------------------------
 block 00:8F46 IA do Ryu (codigo nativo dentro do banco de dados do personagem). Decide pelo estado e distancia do
@@ -1947,51 +1946,51 @@ block 00:8F46 oponente e sorteia (Random) qual roteiro de IA disparar.
 
 # --- rotinas e continuacoes nomeadas na revisao de documentacao (ordem de endereco) ---
 label 00:914A RyuAiAntiAir
-comment 00:914A IA do Ryu contra oponente no ar ($C0/$C8): dispara o roteiro de anti-aereo (tabela D00_9148)
+comment 00:914A Ryu AI against opponent in air ($C0/$C8): fires anti-air script (table D00_9148)
 label 00:91BA RyuAiAirAttack
-comment 00:91BA IA do Ryu: inicia o roteiro D00_8F24 (ataque aereo) sempre
+comment 00:91BA Ryu AI: starts script D00_8F24 (air attack) always
 # ============================================================================================================
-# BANCO $04 — frames/metasprites/colisao do Ken (dados originais) + stub de IA
+# BANK $04 — Ken frames/metasprites/collision (original data) + AI stub
 # ============================================================================================================
-# Stub de IA do Ken (a CPU desta entrega continua sendo o Ryu). A ficha do Ken aponta para $90E0.
-# Sao 8 roteiros, como a tabela do Ryu em $00:8E72, e todos levam ao terminador $FF, para que
-# nenhum ponteiro caia em dados de colisao.
+# Ken AI stub (this delivery's CPU remains Ryu). Ken's fiche points to $90E0.
+# There are 8 scripts, like Ryu's table at $00:8E72, and all lead to the $FF terminator, so that
+# no pointer falls into collision data.
 patch 04:90E0 F0 90 F0 90 F0 90 F0 90 F0 90 F0 90 F0 90 F0 90
 table 04:90E0 words n=8
-block 04:90E0 Stub de IA do Ken (a CPU desta entrega continua sendo o Ryu).
-block 04:90E0 A ficha do Ken aponta para ca ($90E0). Sao 8 roteiros, como a tabela do Ryu em $00:8E72,
-block 04:90E0 e todos levam ao terminador $FF, para que nenhum ponteiro caia em dados de colisao.
-# Layout do retrato de derrota do Ken. Na derrota, PortraitBuildP1 usa DE=3, mas o layout normal do
-# Ken ($8A59) so' tem 2 grupos; ler o byte seguinte ($8A92, atributo do metasprite $8A91) como
-# contagem $00 dispara 255 iteracoes e transborda o buffer do retrato (a "foto quebrada").
-# Solucao: copiar o layout normal para o espaco livre e acrescentar um terceiro grupo vazio.
-# O byte $90F0 continua $FF (terminador do stub de IA acima); o layout comeca em $90F1.
+block 04:90E0 Ken AI stub (this delivery's CPU remains Ryu).
+block 04:90E0 Ken's fiche points here ($90E0). There are 8 scripts, like Ryu's table at $00:8E72,
+block 04:90E0 and all lead to the $FF terminator, so that no pointer falls into collision data.
+# Layout of Ken's defeat portrait. On defeat, PortraitBuildP1 uses DE=3, but Ken's normal layout
+# Ken ($8A59) has only 2 groups; reading the next byte ($8A92, metasprite $8A91 attribute) as
+# count $00 triggers 255 iterations and overflows portrait buffer (the "broken photo").
+# Solution: copy normal layout to free space and add a third empty group.
+# Byte $90F0 remains $FF (terminator of AI stub above); layout starts at $90F1.
 patch 04:90F1 10 00 06 00 AF 08 0A 0C 0E 10 12 06 00 BF 14 16
 patch 04:9101 18 1A 1C 1E 06 00 CF 20 22 24 26 28 2A 04 00 DF
 patch 04:9111 2C 2E 30 32 04 00 EF 34 36 38 3A 80 00 02 20 DF
 patch 04:9121 00 02 02 20 EF 04 06 80 00 80
-comment 04:90F1 layout do retrato de derrota do Ken: copia do normal + grupo 3 vazio (DE=3)
+comment 04:90F1 Ken defeat portrait layout: copy of normal + empty group 3 (DE=3)
 
 # ============================================================================================================
-# BANCO $05 — banco de estados do Ken (fonte mantida a mao em src/bank_05.s)
+# BANK $05 — Ken state bank (source kept by hand in src/bank_05.s)
 # ============================================================================================================
-# O banco $05 original e' todo $FF. A fonte do Ken e' escrita a mao (nao ha dados a regenerar), mas o
-# segmento precisa continuar no sf2ne.cfg para o linker.
+# Original bank $05 is all $FF. Ken's source is hand-written (no data to regenerate), but the
+# segment must remain in sf2ne.cfg for the linker.
 keepbank 05
 
 # ============================================================================================================
-# BANCO $01 — dados do Ryu: banco de estados do lutador (statebank no fim) + tabelas de transicao
+# BANK $01 — Ryu data: fighter state bank (statebank at end) + transition tables
 # ============================================================================================================
 label 01:A01A RyuSpcTrans
-comment 01:A01A 6 ponteiros de transicao dos especiais do Ryu (ram_0326 aponta para ca): indexados por CmdMoveIdx*2, consumidos pelo InputDispatch
+comment 01:A01A 6 transition pointers of Ryu's specials (ram_0326 points here): indexed by CmdMoveIdx*2, consumed by InputDispatch
 
 # ============================================================================================================
-# BANCO $3C — fichas dos personagens, nomes e frases
+# BANK $3C — character fiches, names and quotes
 # ============================================================================================================
 label 3C:80C8 CharStateBankTbl
 label 3C:80D2 CharFrameBankTbl
 
-# --- ficha: 20 tabelas de ponteiros (1 byte por personagem; par Lo/Hi) ---
+# --- fiche: 20 pointer tables (1 byte per character; Lo/Hi pair) ---
 label 3C:8000 CharDirTransLoTbl
 label 3C:800A CharDirTransHiTbl
 label 3C:8014 CharAttackTransLoTbl
@@ -2013,10 +2012,10 @@ label 3C:80AA CharCmdListHiTbl
 label 3C:80B4 CharAiScriptLoTbl
 label 3C:80BE CharAiScriptHiTbl
 
-# --- ficha: banco de colisao por personagem ---
+# --- fiche: collision bank per character ---
 label 3C:80DC CharHitBoxBankTbl
 
-# --- paletas (12 bytes por personagem: 3 cores + 3 de passo) ---
+# --- palettes (12 bytes per character: 3 colors + 3 step) ---
 label 3C:80E6 CharPal0FightTbl
 label 3C:815E CharPal1FightTbl
 label 3C:83B6 CharPal2Tbl
@@ -2025,7 +2024,7 @@ label 3C:824E CharPal1WinTbl
 label 3C:82C6 CharPal0LoseTbl
 label 3C:833E CharPal1LoseTbl
 
-# --- retratos: tiles, layouts e nomes ---
+# --- portraits: tiles, layouts and names ---
 label 3C:842E PortraitWinTilesTbl
 label 3C:846A PortraitLoseTilesTbl
 label 3C:84A6 PortraitWinLayoutTbl
@@ -2033,11 +2032,11 @@ label 3C:84BA PortraitLoseLayoutTbl
 label 3C:851E CharNameLenTbl
 
 block 3C:8000 ------------------------------------------------------------------------------------------------
-block 3C:8000 FICHAS DOS PERSONAGENS: 23 tabelas de 10 bytes (uma coluna por personagem), lidas por FighterLoadChar.
-block 3C:8000 Ordem das colunas: 0 RYU, 1 KEN, 2 CHUN LI, 3 GUILE, 4 BLANKA, 5 EHONDA, 6 BALROG, 7 SAGAT, 8 M.BISON, 9 ZANGIEF.
-block 3C:8000 Colunas 0 (Ryu) e 1 (Ken) preenchidas nas tabelas de ponteiros. A coluna 1 aponta para o banco de
-block 3C:8000 estados $05 (janela $A000) e para os frames/colisoes do banco $04.
-# Ken: coluna 1 da ficha. Os patches caem sempre no offset +1 da tabela (a coluna 0 do Ryu nao muda).
+block 3C:8000 CHARACTER FICHES: 23 tables of 10 bytes (one column per character), read by FighterLoadChar.
+block 3C:8000 Column order: 0 RYU, 1 KEN, 2 CHUN LI, 3 GUILE, 4 BLANKA, 5 EHONDA, 6 BALROG, 7 SAGAT, 8 M.BISON, 9 ZANGIEF.
+block 3C:8000 Columns 0 (Ryu) and 1 (Ken) filled in pointer tables. Column 1 points to state bank
+block 3C:8000 states $05 (window $A000) and to frames/collisions of bank $04.
+# Ken: fiche column 1. Patches always fall at table offset +1 (Ryu column 0 does not change).
 patch 3C:800B A0
 comment 3C:800B Ken: >D05_A000
 patch 3C:8015 12
@@ -2073,107 +2072,155 @@ comment 3C:80A1 Ken: <CmdKeyListRyu
 patch 3C:80AB E0
 comment 3C:80AB Ken: >CmdKeyListRyu
 patch 3C:80B5 E0
-comment 3C:80B5 Ken: <D04_90E0 (stub de IA)
+comment 3C:80B5 Ken: <D04_90E0 (AI stub)
 patch 3C:80BF 90
-comment 3C:80BF Ken: >D04_90E0 (stub de IA)
+comment 3C:80BF Ken: >D04_90E0 (AI stub)
 patch 3C:80C9 05
-comment 3C:80C8 coluna 1 (Ken) = banco de estados $05
-# Ken: tripla 0 = azul (B) e tripla 1 = vermelho (A). O motor grava em zp_12 o botao de
-# confirmacao (A -> 1, B -> 0) e usa esse indice como paleta do P1; a linha do Ken e' $80F2-$80FD.
-block 3C:80E6 Ken: tripla 0 = azul (B) e tripla 1 = vermelho (A). O motor grava em zp_12 o
-block 3C:80E6 botao de confirmacao (A -> 1, B -> 0) e usa esse indice como paleta do P1.
+comment 3C:80C8 column 1 (Ken) = state bank $05
+# Ken: triple 0 = blue (B) and triple 1 = red (A). Engine writes confirmation button to zp_12
+# (A -> 1, B -> 0) and uses that index as P1 palette; Ken's row is $80F2-$80FD.
+block 3C:80E6 Ken: triple 0 = blue (B) and triple 1 = red (A). Engine writes confirmation button
+block 3C:80E6 to zp_12 (A -> 1, B -> 0) and uses that index as P1 palette.
 patch 3C:80F4 02
 patch 3C:80F7 16
-# Retrato (selecao/VS): a mesma logica de botao da paleta de luta. Em D3C_81D6 (BG1 do retrato),
-# o indice 2 e' a faixa/gi; a tripla 0 vira azul (B) e a tripla 1 vira vermelho (A).
+# Portrait (selection/VS): same button logic as fight palette. In D3C_81D6 (portrait BG1),
+# index 2 is the stripe/gi; triple 0 becomes blue (B) and triple 1 becomes red (A).
 patch 3C:81E3 01
-comment 3C:81E3 Ken retrato: tripla 0 (B) = azul
+comment 3C:81E3 Ken portrait: triple 0 (B) = blue
 patch 3C:81E6 16
-comment 3C:81E6 Ken retrato: tripla 1 (A) = vermelho
-# Retrato de derrota do Ken (RoundResult != 0). Nao ha arte "machucada" propria do Ken; reutilizamos
-# o layout normal ($04:8A59) com as paletas de derrota, como o Ryu faz na coluna 0:
-#   82C6 (BG1) = paleta normal (no Ryu, 82C6 == 81D6) -> mantem a cor do gi consistente com a luta;
-#   833E (BG0) = paleta normal com as cores 1/2 trocadas (pele mais clara, efeito de derrota);
-#   83B6 (BG2) = paleta 2 de derrota (mesma do Ryu), pronta para o mapa de atributos;
-#   846A (atributos) = mapa normal: as regioes de paleta 1 do Ken sao o gi (indice 2), entao troca-las
-#   por paleta 2 apagaria a cor do gi. O efeito de derrota fica por conta da troca de pele em 833E.
+comment 3C:81E6 Ken portrait: triple 1 (A) = red
+# Ken's defeat portrait (RoundResult != 0). Ken has no own "hurt" art; we reuse
+# normal layout ($04:8A59) with defeat palettes, as Ryu does in column 0:
+#   82C6 (BG1) = normal palette (in Ryu, 82C6 == 81D6) -> keeps gi color consistent with fight;
+#   833E (BG0) = normal palette with colors 1/2 swapped (lighter skin, defeat effect);
+#   83B6 (BG2) = defeat palette 2 (same as Ryu), ready for attribute map;
+#   846A (attributes) = normal map: Ken's palette 1 regions are the gi (index 2), so swapping them
+#   to palette 2 would erase gi color. Defeat effect comes from skin swap in 833E.
 patch 3C:82D2 26 01 27 26 16 27 26 3D 27 26 11 27
 patch 3C:834A 36 26 27 36 26 27 36 26 27 36 26 27
 patch 3C:83C2 26 36 16 26 36 16 26 36 16 26 36 16
 patch 3C:8470 00 CC 00 DC F0 FD
-# Ponteiro do layout de derrota do Ken -> $04:90F1 (copia do layout normal + grupo 3 vazio).
+# Ken defeat portrait layout pointer -> $04:90F1 (copy of normal layout + empty group 3).
 patch 3C:84BC F1 90
-comment 3C:84BC Ken: layout de derrota em $04:90F1
+comment 3C:84BC Ken: defeat layout at $04:90F1
 label 3C:84CE CharNameTbl
-comment 3C:84CE nomes dos 10 personagens, 8 caracteres cada
+comment 3C:84CE names of 10 characters, 8 characters each
 label 3C:8528 WinQuoteLine1
-comment 3C:8528 frase do vencedor, 1a linha: 22 caracteres por personagem
+comment 3C:8528 winner quote, 1st line: 22 characters per character
 label 3C:8604 WinQuoteLine2
-comment 3C:8604 frase do vencedor, 2a linha
+comment 3C:8604 winner quote, 2nd line
 
 # ============================================================================================================
-# BANCO $20 — HUD/efeitos de texto, bandeiras da selecao e retrato do M.Bison
+# BANK $20 — HUD/text effects, selection flags and M.Bison portrait
 # ============================================================================================================
 # --- retrato ---
 label 20:8391 PortraitWinMBison
-comment 20:8391 retrato de vitoria do M.Bison (indice 8 de PortraitWinLayoutTbl)
+comment 20:8391 M.Bison victory portrait (index 8 of PortraitWinLayoutTbl)
 
-# --- intro do round: "BATTLE", "ROUND n" e "FIGHT!" ---
+# --- round intro: "BATTLE", "ROUND n" and "FIGHT!" ---
 label 20:8469 RoundIntroBattleText
-comment 20:8469 texto "BATTLE" desenhado por RoundIntroDraw
+comment 20:8469 "BATTLE" text drawn by RoundIntroDraw
 label 20:84AC FightTextZoomSmall
 label 20:84B9 FightTextZoomMedium
 label 20:84C6 FightTextZoomLarge
-comment 20:84AC "FIGHT!" em 3 tamanhos crescentes (D3B_F799)
+comment 20:84AC "FIGHT!" in 3 increasing sizes (D3B_F799)
 label 20:8574 FightText
-comment 20:8574 texto "FIGHT"
+comment 20:8574 text "FIGHT"
 label 20:8580 RoundTextFlash
-comment 20:8580 variante de flash do texto de round (passos 6 e 4)
+comment 20:8580 flash variant of round text (steps 6 and 4)
 label 20:858E RoundText1
 label 20:859E RoundText2
 label 20:85AE RoundText3
 label 20:85BE RoundText4
-comment 20:858E "ROUND 1".."ROUND 4"; 85BE desenha o digito antes de "ROUND"
+comment 20:858E "ROUND 1".."ROUND 4"; 85BE draws digit before "ROUND"
 
 # --- selecao: cursor e bandeiras ---
 label 20:8476 SelectCursorMetasprite
-comment 20:8476 cursor da selecao (SelectDrawCursor/SelectDrawBlink)
+comment 20:8476 selection cursor (SelectDrawCursor/SelectDrawBlink)
 label 20:84D3 FlagBrazil
 label 20:84DC FlagChina
 label 20:84E5 FlagJapan
 label 20:84EE FlagThailand
 label 20:84F7 FlagUsa
 label 20:8500 FlagUssr
-comment 20:84D3 bandeiras da selecao (D37_F29B); 84EE tambem usada por M.Bison
+comment 20:84D3 selection flags (D37_F29B); 84EE also used by M.Bison
 
-# --- fim do round ---
+# --- end of round ---
 label 20:848B RoundEndDrawTieAltMetasprite
-comment 20:848B variante do sprite de empate (relogio ainda no ar)
+comment 20:848B draw tie variant sprite (clock still in air)
 label 20:84A1 DrawGameText
-comment 20:84A1 texto "DRAW GAME" (empate com o relogio zerado)
+comment 20:84A1 text "DRAW GAME" (draw with clock zeroed)
 label 20:852B PerfectText
-comment 20:852B texto "PERFECT!"
+comment 20:852B text "PERFECT!"
 label 20:85CE TimeOverText
-comment 20:85CE texto "TIME OVER"
+comment 20:85CE text "TIME OVER"
 label 20:85D9 YouLoseText
-comment 20:85D9 texto "YOU LOSE"
+comment 20:85D9 text "YOU LOSE"
 label 20:85EA YouWinText
-comment 20:85EA texto "YOU WIN" (metasprite de 16 bytes; cauda ate 8630 sem consumidor)
+comment 20:85EA text "YOU WIN" (16-byte metasprite; tail to 8630 without consumer)
 
 # --- projeteis ---
 label 20:8509 ProjectileFrame0
 label 20:851A ProjectileFrame1
-comment 20:8509 quadros de voo do projetil (D3B_E57D)
+comment 20:8509 projectile flight frames (D3B_E57D)
 label 20:853A ProjectileClashFrame0
 label 20:8549 ProjectileClashFrame1
 label 20:8556 ProjectileClashFrame2
 label 20:8565 ProjectileClashFrame3
-comment 20:853A quadros do choque de projeteis (D3B_E595, ProjFlags bit 7)
+comment 20:853A projectile clash frames (D3B_E595, ProjFlags bit 7)
+
+# ============================================================================================================
+# BANK $36 — stages: RLE nametables, attributes, palette and screen-split IRQ parameters
+# ============================================================================================================
+# C005/C00A/C00F remain automatic: written to ram_03BC-BE but have no static
+# consumer (see tasks/DATA_NAMING_36.md).
+
+# --- stage parameters (index = layout; only layout 0 has data in this ROM) ---
+label 36:C000 StageFloorLinesTbl
+comment 36:C000 parallax floor lines (VersusLoadStage, 3B:E2A5)
+label 36:C014 StageBg1ChrTopTbl
+label 36:C019 StageBg1ChrMidTbl
+label 36:C01E StageBg1ChrFloorTbl
+label 36:C023 StageBg3ChrTopTbl
+label 36:C028 StageBg3ChrMidTbl
+label 36:C02D StageBg3ChrFloorTbl
+comment 36:C014 CHR BG1/BG3 pages of three bands (ram_0406/0409, 0407/040A, 0408/040B)
+label 36:C032 StageSplitMidTbl
+label 36:C037 StageSplitFloorTbl
+comment 36:C032 line where middle band starts (ram_0404)
+comment 36:C037 line where floor starts (ram_0405; also initial scroll)
+
+# --- ponteiros das nametables e da paleta ---
+label 36:C03C StageBgLeftTopRleTbl
+label 36:C046 StageBgRightTopRleTbl
+label 36:C050 StageBgLeftMidRleTbl
+label 36:C05A StageBgRightMidRleTbl
+label 36:C064 StageBgLeftFloorRleTbl
+label 36:C06E StageBgRightFloorRleTbl
+comment 36:C03C RLE pointers to $2800 (left) and $2C00 (right): lines 0-19, 20-25 and 26-29
+label 36:C078 StageBgLeftAttrTbl
+label 36:C082 StageBgRightAttrTbl
+comment 36:C078 64 attribute bytes for $2BC0 (left) and $2FC0 (right)
+label 36:C08C StagePaletteTbl
+comment 36:C08C pointer to 12-byte palette copied by RoundInitLoadStage
+
+# --- dados ---
+label 36:C0DF StageBgLeftTopRle
+label 36:C1B6 StageBgRightTopRle
+label 36:C2A8 StageBgLeftMidRle
+label 36:C327 StageBgRightMidRle
+label 36:C387 StageBgLeftFloorRle
+label 36:C3F5 StageBgRightFloorRle
+comment 36:C0DF RLE background (640/192/128 bytes per band; see tasks/DATA_NAMING_36.md)
+label 36:C460 StageBgLeftAttr
+label 36:C4A0 StageBgRightAttr
+label 36:C4E0 StagePalette
+comment 36:C4E0 12 bytes: 4 stage palettes of 3 colors
 
 # ============================================================================================================
 # RAM
 # ============================================================================================================
-# --- lutadores: vetores de 2 posicoes, indice X = 0 (P1) ou 1 (P2)
+# --- fighters: 2-position vectors, index X = 0 (P1) or 1 (P2)
 ram 0000 FighterChar 2
 ram 0002 FighterIsCpu 2
 ram 0004 FighterFlip 2
@@ -2207,7 +2254,7 @@ ram 003E HitThisFrame 2
 ram 0040 FighterChrPage 2
 ram 0042 FighterAnimTimer 2
 ram 0044 LoopRepeat 2
-# --- caixas de colisao (L/T/R/B), calculadas por LoadHitBoxes
+# --- collision boxes (L/T/R/B), calculated by LoadHitBoxes
 ram 0046 Body1L 2
 ram 0048 Body1T 2
 ram 004A Body1R 2
@@ -2220,7 +2267,7 @@ ram 0056 AtkL 2
 ram 0058 AtkT 2
 ram 005A AtkR 2
 ram 005C AtkB 2
-# --- projetil (uma vaga por lutador; ProjX = 0 significa vaga livre)
+# --- projectile (one slot per fighter; ProjX = 0 means free slot)
 ram 0077 ProjSpeed 2
 ram 0079 ProjXSub 2
 ram 007B ProjX 2
@@ -2232,8 +2279,8 @@ ram 0088 InputAttack 2
 ram 008A BtnAHold 2
 ram 008C BtnBHold 2
 ram 008E CmdMoveIdx 2
-# estado do reconhecedor (3F:EA24): 6 entradas x 2 lutadores INTERCALADAS — offset = lutador + 2*posicao na lista
-# (par = P1, impar = P2); $9C/$9D sao mortos. So o reconhecedor, o InputClear e o init do sistema tocam aqui.
+# Recognizer state (3F:EA24): 6 entries x 2 fighters INTERLEAVED — offset = fighter + 2*list position
+# (even = P1, odd = P2); $9C/$9D are dead. Only recognizer, InputClear and system init touch here.
 ram 0090 CmdMotionStep 12
 ram 009E CmdMotionWin 12
 ram 0069 AiScriptPtrLo 2
@@ -2241,7 +2288,7 @@ ram 006B AiScriptPtrHi 2
 ram 0064 CurFighter
 ram 0065 OtherFighter
 ram 0066 RngState 3
-# --- sistema
+# --- system
 ram 00AC VBlankFlag
 ram 00AD OamIndex
 ram 00B0 ScreenMode
@@ -2289,42 +2336,42 @@ ram 018A FT_SFX_ADR_L
 ram 018B FT_SFX_ADR_H
 
 # ============================================================================================================
-# BANCOS DE ESTADOS DOS LUTADORES (formato em docs/ARQUITETURA.md, secao 4.2)
-# statebank <banco> frames=<banco dos frames> from=<inicio> to=<fim>
-# Completa, pela estrutura dos registros, os ponteiros dos estados que nenhum trace visitou.
+# FIGHTER STATE BANKS (format in docs/ARCHITECTURE.md, section 4.2)
+# statebank <bank> frames=<frame bank> from=<start> to=<end>
+# Completes, by record structure, state pointers that no trace visited.
 # ============================================================================================================
 statebank 01 frames=00 from=A0B0 to=B1C6
 
 # ============================================================================================================
-# PONTEIROS CONFIRMADOS A MAO (o trace nao passou por estes trechos; achados com tools/ptr_candidates.py)
+# MANUALLY CONFIRMED POINTERS (trace didn't pass through these parts; found with tools/ptr_candidates.py)
 # ============================================================================================================
-# Candidatos do ptr_candidates.py ja revisados e que NAO sao ponteiros (sao coordenadas, rolagem ou enderecos do PPU):
+# ptr_candidates.py candidates already reviewed and that ARE NOT pointers (coordinates, scroll or PPU addresses):
 #   37:EF58/EF5D ($E0F8 -> ScrollX/ScrollY)   37:F576/F57A ($FF10)          3B:E3AE/E3A9 ($8000 -> camera)
 #   3B:E5D7/E5DC ($FF32)                      3B:E622/E61D ($C6C5 -> HUD)   3B:EC10/EC14 ($90E0 -> posicao x,y)
 #   3B:ECAB/ECB0 e 3B:ECCF/ECD4 (endereco de nametable)   3B:F784/F788 ($805C -> posicao x,y)   3F:F85C/F860 ($FFFF)
-# roteiro de IA do Ryu passado em A/Y para AiStartScript
+# Ryu AI script passed in A/Y to AiStartScript
 ptr 00:9036 lo 00:8F16
 ptr 00:9038 hi 00:8F16
-# mesmo ponteiro de 3B:E188, noutro caminho
+# same pointer as 3B:E188, another path
 ptr 3B:E158 lo 3C:83B6
 ptr 3B:E15C hi 3C:83B6
-# metasprite de texto de fim de round (ramo nunca executado nos traces), irmao de 3B:F88F -> 20:84A1
+# round end text metasprite (branch never executed in traces), sibling of 3B:F88F -> 20:84A1
 ptr 3B:F8A2 lo 20:848B
 ptr 3B:F8A6 hi 20:848B
 
 # ============================================================================================================
-# CORRECAO OPCIONAL: travamento no soft reset  (make fixed)   — detalhes em docs/BUGS.md
-# O codigo de RESET so existe no banco $3F, mas o MMC5 nao e' reiniciado pelo botao RESET do console: se o reset
-# acontece com o banco $37 ou $3B em $E000, o vetor aponta para $FF9F cheio de $FF e o jogo trava.
-# A correcao poe o MESMO trecho de 13 bytes no espaco livre $FC6D dos tres bancos e aponta o vetor de RESET
-# para ele: ele mapeia o banco $3F e pula para o reset original.
+# OPTIONAL FIX: soft reset freeze  (make fixed)   — details in docs/BUGS.md
+# RESET code exists only in bank $3F, but MMC5 is not reset by console RESET button: if reset
+# happens with bank $37 or $3B at $E000, vector points to $FF9F full of $FF and game freezes.
+# The fix puts the SAME 13-byte chunk in free space $FC6D of all three banks and points RESET vector
+# to it: it maps bank $3F and jumps to original reset.
 alt FIX_SOFT_RESET 37:FC6D F
 |ResetStub:
 |    lda #$00
-|    sta MMC5_IRQ_STATUS                         ; desliga o IRQ de scanline que pode ter ficado armado
+|    sta MMC5_IRQ_STATUS                         ; turns off scanline IRQ that may have been left armed
 |    lda #$BF
-|    sta MMC5_PRG_E000                           ; banco $3F em $E000 (a proxima instrucao ja vem dele)
-|    jmp $FF9F                                   ; Reset original (so existe no banco $3F)
+|    sta MMC5_PRG_E000                           ; bank $3F at $E000 (next instruction already comes from it)
+|    jmp $FF9F                                   ; original Reset (exists only in bank $3F)
 alt FIX_SOFT_RESET 3B:FC6D F
 |ResetStub:
 |    lda #$00
@@ -2347,107 +2394,107 @@ alt FIX_SOFT_RESET 3F:FFFC 2
 |    .word ResetStub
 
 # ============================================================================================================
-# AJUSTE EXPERIMENTAL: golpe forte dispara UMA vez   (make fixed FIXDEFS="-D FIX_SOFT_RESET -D FIX_HEAVY_ONCE")
-# No original, segurar A/B emite o golpe forte a cada quadro do 7o ao 20o e outra vez ao soltar (ver docs/BUGS.md).
-# Aqui ele e' emitido so no quadro em que o contador chega a 7, e soltar depois disso nao emite nada.
-# Muda a jogabilidade: teste antes de adotar.
-# NOTA: os 4 ancoras abaixo caem dentro do bloco reescrito pelo FIX_EDGE_ATTACK (E99A-E9FB): sao emitidos
-# aninhados no ramo .else dele, entao continuam funcionando sozinhos como antes. Com FIX_EDGE_ATTACK ligado
-# sao subsumidos: a nao-repeticao do forte passa a vir do marcador $FF do EdgeMarkHold. Combinar os dois e' inofensivo.
+# EXPERIMENTAL ADJUSTMENT: strong hit fires ONCE   (make fixed FIXDEFS="-D FIX_SOFT_RESET -D FIX_HEAVY_ONCE")
+# In original, holding A/B emits strong hit every frame from 7th to 20th and again on release (see docs/BUGS.md).
+# Here it is emitted only on the frame counter reaches 7, and releasing after that emits nothing.
+# Changes gameplay: test before adopting.
+# NOTE: the 4 anchors below fall inside the block rewritten by FIX_EDGE_ATTACK (E99A-E9FB): they are emitted
+# nested in its .else branch, so they keep working alone as before. With FIX_EDGE_ATTACK on
+# they are subsumed: non-repetition of strong now comes from EdgeMarkHold's $FF marker. Combining both is harmless.
 alt FIX_HEAVY_ONCE 3F:E9AD 2
-|    bne BtnBCheck                               ; era bcc: so quando o contador e' exatamente 7
+|    bne BtnBCheck                               ; was bcc: only when counter is exactly 7
 alt FIX_HEAVY_ONCE 3F:E9C6 2
-|    lda #$FF                                    ; era lda #$01: soltar depois de 7 quadros nao repete o golpe
+|    lda #$FF                                    ; was lda #$01: releasing after 7 frames does not repeat hit
 alt FIX_HEAVY_ONCE 3F:E9DE 2
 |    bne BtnNone
 alt FIX_HEAVY_ONCE 3F:E9F7 2
 |    lda #$FF
 
 # ============================================================================================================
-# AJUSTE: golpe na borda de subida + promocao fraco->forte   (make fixed FIXDEFS="-D FIX_SOFT_RESET -D FIX_EDGE_ATTACK")
-# Problema original (docs/BUGS.md item 2): o golpe so sai quando o botao e' SOLTO (fraco) ou se repete
-# do 7o ao 20o quadro (forte) — todo golpe sai atrasado e o forte "metralha".
-# Aqui: o FRACO sai no quadro em que o botao e' apertado (borda de subida: contador==1); segurando,
-# o contador segue contando e no 7o quadro o FORTE assume (promocao — o motor ja' decide se o estado
-# do lutador aceita cancelar a animacao do fraco). Soltar antes de 7 quadros nao emite nada (o fraco
-# ja' saiu no aperto); soltar entre 7 e 20 emite o forte uma ultima vez, como no original.
+# ADJUSTMENT: hit on rising edge + weak->strong promotion   (make fixed FIXDEFS="-D FIX_SOFT_RESET -D FIX_EDGE_ATTACK")
+# Original problem (docs/BUGS.md item 2): hit only comes out when button is RELEASED (weak) or repeats
+# from 7th to 20th frame (strong) — every hit comes out delayed and strong "machine-guns".
+# Here: WEAK comes out on the frame button is pressed (rising edge: counter==1); holding,
+# the counter keeps counting and on the 7th frame STRONG takes over (promotion — engine already decides
+# whether fighter state allows canceling weak animation). Releasing before 7 frames emits nothing (weak
+# already came out on press); releasing between 7 and 20 emits strong one last time, as in original.
 #
-# Anti-repeticao (o coracao do ajuste): o marcador do InputDispatch (F6C9) era cego — gravava $15 nos
-# DOIS contadores em qualquer despacho de botao, inclusive fraco, o que mataria a promocao. Passa a
-# ser seletivo (EdgeMarkHold, no espaco livre): forte despachado -> $FF nos dois contadores (no caminho
-# segurado o iny faz wrap a 0 e desarma; na soltura o cpy #$15 ignora); fraco despachado -> $01 no
-# contador do proprio botao so' (conta dali em diante; o outro botao nao e' afetado).
+# Anti-repetition (heart of adjustment): InputDispatch marker (F6C9) was blind — wrote $15 to BOTH
+# counters on any button dispatch, including weak, which would kill promotion. Now it is
+# selective (EdgeMarkHold, in free space): strong dispatched -> $FF in both counters (on held path
+# iny wraps to 0 and disarms; on release cpy #$15 ignores); weak dispatched -> $01 in its own counter
+# only (counts from there; other button not affected).
 #
-# A secao A+B do InputButtons (E99A-E9FB, $62 = 98 bytes) e' reescrita por inteiro num bloco so'; os 4 ancoras
-# do FIX_HEAVY_ONCE caem dentro dele (ver nota ali em cima). O emitidor fraco/forte tail-calla
-# InputSetAttack (sta InputAttack,x; rts) igual ao original, pulando o processamento do outro botao.
-# Diferencas conscientes vs original: segurando alem de 20 quadros o forte continua armado (o original
-# desistia — aqui ele sai quando o estado permitir, o que e' o comportamento pedido); apos ~256 quadros
-# segurando o contador da wrap e o botao volta a edgear (fraco) — caso extreme, original tambem tinha
-# um wrap ali (o beq de $FF->0).
+# The A+B section of InputButtons (E99A-E9FB, $62 = 98 bytes) is rewritten entirely in one block; the 4
+# FIX_HEAVY_ONCE anchors fall inside it (see note above). The weak/strong emitter tail-calls
+# InputSetAttack (sta InputAttack,x; rts) same as original, skipping other button processing.
+# Conscious differences vs original: holding beyond 20 frames strong stays armed (original
+# gave up — here it comes out when state allows, which is requested behavior); after ~256 frames
+# holding counter wraps and button re-edges (weak) — extreme case, original also had
+# a wrap there (beq of $FF->0).
 alt FIX_EDGE_ATTACK 3F:E99A 62
 |InputButtons:
-|    lda JoyState,x                              ; botao A (bit 7): segurado?
-|    bpl EdgeARel                                ; soltou -> logica de soltura
+|    lda JoyState,x                              ; button A (bit 7): held?
+|    bpl EdgeARel                                ; released -> release logic
 |    ldy BtnAHold,x
 |    iny
-|    beq EdgeBBtn                                ; wrap $FF->0 (marcador de forte): ignora
+|    beq EdgeBBtn                                ; wrap $FF->0 (strong marker): ignores
 |    sty BtnAHold,x
-|    cpy #$02                                     ; borda de subida: contador==1
-|    bcc EdgeAWeak                                ; -> soco fraco AGORA
-|    cpy #$07                                     ; 2..6: zona morta (fraco ja' saiu no aperto)
-|    bcc EdgeBBtn                                 ; 7..20: forte segue armado enquanto segurar
+|    cpy #$02                                     ; rising edge: counter==1
+|    bcc EdgeAWeak                                ; -> weak punch NOW
+|    cpy #$07                                     ; 2..6: dead zone (weak already came out on press)
+|    bcc EdgeBBtn                                 ; 7..20: strong stays armed while holding
 |EdgeAStrong:
-|    lda #$01                                     ; soco forte
+|    lda #$01                                     ; strong punch
 |    jmp InputSetAttack
 |EdgeAWeak:
-|    lda #$00                                     ; soco fraco na borda de subida
+|    lda #$00                                     ; weak punch on rising edge
 |    jmp InputSetAttack
-|EdgeARel:                                        ; A soltou
+|EdgeARel:                                        ; A released
 |    ldy BtnAHold,x
 |    lda #$00
-|    sta BtnAHold,x                               ; zera o contador do soco
-|    cpy #$15                                     ; >=21 (marcador $FF ou segurou demais): nada
+|    sta BtnAHold,x                               ; zeroes punch counter
+|    cpy #$15                                     ; >=21 ($FF marker or held too long): nothing
 |    bcs EdgeBBtn
 |    cpy #$07
-|    bcc EdgeBBtn                                ; <7: nada (o fraco ja' saiu no aperto)
-|    bcs EdgeAStrong                              ; 7..20: forte uma ultima vez
-|EdgeBBtn:                                        ; botao B (bit 6)
+|    bcc EdgeBBtn                                ; <7: nothing (weak already came out on press)
+|    bcs EdgeAStrong                              ; 7..20: strong one last time
+|EdgeBBtn:                                        ; button B (bit 6)
 |    lda JoyState,x
 |    and #$40
-|    beq EdgeBRel                                 ; soltou
+|    beq EdgeBRel                                 ; released
 |    ldy BtnBHold,x
 |    iny
-|    beq BtnNone                                  ; wrap $FF->0 (marcador de forte): nenhum golpe
+|    beq BtnNone                                  ; wrap $FF->0 (strong marker): no hit
 |    sty BtnBHold,x
-|    cpy #$02                                     ; borda de subida
-|    bcc EdgeBWeak                                ; -> chute fraco AGORA
-|    cpy #$07                                     ; 2..6: zona morta
-|    bcc BtnNone                                  ; 7..20: forte segue armado
+|    cpy #$02                                     ; rising edge
+|    bcc EdgeBWeak                                ; -> weak kick NOW
+|    cpy #$07                                     ; 2..6: dead zone
+|    bcc BtnNone                                  ; 7..20: strong stays armed
 |EdgeBStrong:
-|    lda #$03                                     ; chute forte
+|    lda #$03                                     ; strong kick
 |    jmp InputSetAttack
 |EdgeBWeak:
-|    lda #$02                                     ; chute fraco na borda de subida
+|    lda #$02                                     ; weak kick on rising edge
 |    jmp InputSetAttack
-|EdgeBRel:                                        ; B soltou
+|EdgeBRel:                                        ; B released
 |    ldy BtnBHold,x
 |    lda #$00
-|    sta BtnBHold,x                               ; zera o contador do chute
+|    sta BtnBHold,x                               ; zeroes kick counter
 |    cpy #$15
 |    bcs BtnNone
 |    cpy #$07
-|    bcc BtnNone                                  ; <7: nada
-|    bcs EdgeBStrong                              ; 7..20: forte uma ultima vez
+|    bcc BtnNone                                  ; <7: nothing
+|    bcs EdgeBStrong                              ; 7..20: strong one last time
 
-# marcador seletivo do despacho de botao (substitui ldy #$15 / sty BtnAHold,x / sty BtnBHold,x)
+# button dispatch selective marker (replaces ldy #$15 / sty BtnAHold,x / sty BtnBHold,x)
 alt FIX_EDGE_ATTACK 3F:F6C9 6
 |    jsr EdgeMarkHold
 
-# rotina do marcador seletivo, no espaco livre do banco (F949)
+# selective marker routine, in bank free space (F949)
 alt FIX_EDGE_ATTACK 3F:F949 36
 |EdgeMarkHold:
-|    lda InputAttack,x                           ; 0/1 soco, 2/3 chute ($FF nao chega: bmi em F6BD)
+|    lda InputAttack,x                           ; 0/1 punch, 2/3 kick ($FF doesn't arrive: bmi at F6BD)
 |    cmp #$01
 |    beq EdgeMarkStrong
 |    cmp #$03
@@ -2458,12 +2505,12 @@ alt FIX_EDGE_ATTACK 3F:F949 36
 |    beq EdgeMarkB
 |    rts
 |EdgeMarkStrong:
-|    ldy #$FF                                     ; forte despachado: desarma os dois contadores
-|    sty BtnAHold,x                               ; (segurando: wrap do iny; soltando: cpy #$15)
+|    ldy #$FF                                     ; strong dispatched: disarms both counters
+|    sty BtnAHold,x                               ; (holding: iny wrap; releasing: cpy #$15)
 |    sty BtnBHold,x
 |    rts
 |EdgeMarkA:
-|    ldy #$01                                     ; fraco despachado: segue contando (promocao aos 7)
+|    ldy #$01                                     ; weak dispatched: keeps counting (promotion at 7)
 |    sty BtnAHold,x
 |    rts
 |EdgeMarkB:
@@ -2472,26 +2519,26 @@ alt FIX_EDGE_ATTACK 3F:F949 36
 |    rts
 
 # ============================================================================================================
-# MODO VERSUS (experimental): jogador 2 humano   (make fixed FIXDEFS="-D FIX_SOFT_RESET -D MODE_VERSUS")
-# O motor ja suporta dois humanos: basta FighterIsCpu+1 = 0. No demo nada faz isso (MainLoop fixa 1).
-# Com este bloco o P2 e' sempre o controle 2 (nao ha mais adversario CPU) — serve para testar o modo versus.
+# VERSUS MODE (experimental): player 2 human   (make fixed FIXDEFS="-D FIX_SOFT_RESET -D MODE_VERSUS")
+# Engine already supports two humans: just FighterIsCpu+1 = 0. In demo nothing does this (MainLoop fixes 1).
+# With this block P2 is always controller 2 (no more CPU opponent) — serves to test versus mode.
 alt MODE_VERSUS 3F:F868 2
 # ============================================================================================================
-# DIFICULDADE/VERSUS (FIX_SELECT_VERSUS): START na selecao entra vs mode
-# bit $10 de JoyState, banco $37 (SelectInit/EF92)
-# Quando START pressionado: P2 humano, bloqueado em Ryu, HUD $P2$
+# DIFFICULTY/VERSUS (FIX_SELECT_VERSUS): START on selection enters vs mode
+# bit $10 of JoyState, bank $37 (SelectInit/EF92)
+# When START pressed: P2 human, locked to Ryu, HUD $P2$
 
 alt FIX_SELECT_VERSUS 37:EF92 3
-|    ; verifica START (bit $10) para entrar no modo versus
+|    ; checks START (bit $10) to enter versus mode
 |    lda JoyState,x
 |    and #$10
 |    beq START_CHECK_END
-|    ; START pressionado: entra modo versus
+|    ; START pressed: enters versus mode
 |    lda #$00
-|   sta FighterIsCpu+1  ; P2 = humano (usa MODE_VERSUS alt)
-|   sta FighterChar+1   ; P2 bloqueado em Ryu (indice 0)
+|   sta FighterIsCpu+1  ; P2 = human (uses MODE_VERSUS alt)
+|   sta FighterChar+1   ; P2 locked to Ryu (index 0)
 |   lda #$05
-|   sta ScreenMode      ; modo versus
+|   sta ScreenMode      ; versus mode
 |   jmp ScreenVersus
 |;;
 # ============================================================================================================
@@ -2500,18 +2547,18 @@ alt FIX_SELECT_VERSUS 37:EF92 3
 
 
 # ============================================================================================================
-# DIFICULDADE (FIX_SELECT_DIFFICULTY): SELECT na tela de seleção alterna Fácil/Normal/Difícil
-# bit $20 de JoyState, banco $37 (SelectInit/EF92, SelectReadInput/F1CC)
-# AiLevel: 2=Fácil, 4=Normal, 7=Difícil, padrão 4
-# Lê SELECT em SelectInit/EF92 ao invés de MainLoop/F7A2
-# usa ram_0412/0413 (livre) em vez de $B6=RoundStep
+# DIFFICULTY (FIX_SELECT_DIFFICULTY): SELECT on selection screen toggles Easy/Normal/Hard
+# bit $20 of JoyState, bank $37 (SelectInit/EF92, SelectReadInput/F1CC)
+# AiLevel: 2=Easy, 4=Normal, 7=Hard, default 4
+# Reads SELECT in SelectInit/EF92 instead of MainLoop/F7A2
+# uses ram_0412/0413 (free) instead of $B6=RoundStep
 
 alt FIX_SELECT_DIFFICULTY 37:EF92 2
-|    ; le bit $20 (SELECT) do JoyState do jogador corrente
+|    ; reads bit $20 (SELECT) of current player's JoyState
 |    lda JoyState,x
 |    and #$20
 |    beq +
-|    ; SELECT apertado: alterna AiLevel
+|    ; SELECT pressed: toggles AiLevel
 |    lda AiLevel,x
 |    clc
 |    adc #$02
@@ -2526,44 +2573,44 @@ alt FIX_SELECT_DIFFICULTY 37:EF92 2
 
 
 # ============================================================================================================
-# BANDEIRA DO PAIS DE DESTINO visivel (DEST_FLAG_BLINK) — build canonico
+# DESTINATION COUNTRY FLAG visible (DEST_FLAG_BLINK) — canonical build
 #
-# REGRA DE OURO: apos a confirmacao (ram_03B5 = destino), a bandeira do PAIS DO OPONENTE
-# (destino da batalha) e' a que deve ficar visível no mapa, nao a do pais sob o cursor.
-# Hoje o oponente e' sempre Ryu (Japao), entao ram_03B5 = 0 e a bandeira do Japao e' a que
-# aparece. Quando houver oponentes de outros paises, o narrador anuncia o pais
-# (CountryVoiceTbl) e a bandeira desse pais fica visível.
+# GOLDEN RULE: after confirmation (ram_03B5 = destination), the OPPONENT COUNTRY's flag
+# (battle destination) is the one that should be visible on the map, not the country under cursor.
+# Today opponent is always Ryu (Japan), so ram_03B5 = 0 and Japan flag is the one
+# that appears. When there are opponents from other countries, narrator announces country
+# (CountryVoiceTbl) and that country's flag becomes visible.
 #
-# Durante a selecao livre (antes da confirmacao) a bandeira do pais sob o cursor continua
-# visível (original). Apos a confirmacao, o Japao e' desenhado como sprite extra na paleta 3
-# (PaletteBuf+21..23, em $3F1D..$3F1F), na mesma posicao do mapa, e a bandeira do cursor e'
-# escondida se o cursor nao estiver no Japão. O NMI da selecao reenvia a paleta ao PPU quando
-# suja. Ao fim da selecao (37:EF8F) deixa a bandeira do cursor acesa e remove a copia extra
-# do destino antes do fade para a tela VS.
+# During free selection (before confirmation) flag of country under cursor remains
+# visible (original). After confirmation, Japan is drawn as extra sprite on palette 3
+# (PaletteBuf+21..23, at $3F1D..$3F1F), at same map position, and cursor flag is
+# hidden if cursor is not on Japan. Selection NMI re-sends palette to PPU when dirty.
+# At end of selection (37:EF8F) leaves cursor flag lit and removes extra destination
+# copy before fade to VS screen.
 
-# chama o desenho do destino no lugar da leitura do controle (1 chamada por quadro do laco de selecao)
+# calls destination drawing instead of controller read (1 call per selection loop frame)
 alt DEST_FLAG_BLINK 37:EFF0 3
 |    jsr DestFlagBlink
 
-# depois de desenhar a bandeira do cursor, acrescenta a bandeira do destino. O hook substitui
-# "lda D37_F293,x"; a rotina devolve A com o mesmo índice de lutador para o "sta FighterChar" original.
+# after drawing cursor flag, adds destination flag. Hook replaces
+# "lda D37_F293,x"; routine returns A with same fighter index for original "sta FighterChar".
 alt DEST_FLAG_BLINK 37:F066 3
 |    jsr DestFlagOam
 
-# ao fim da selecao (37:EF8F = jmp SelectFighterIntro) deixa a bandeira do cursor acesa e remove
-# a copia extra do destino antes do fade para a tela VS
+# at end of selection (37:EF8F = jmp SelectFighterIntro) leaves cursor flag lit and removes
+# extra destination copy before fade to VS screen
 alt DEST_FLAG_BLINK 37:EF8F 3
 |    jmp DestFlagRestore
 
-# rotina da bandeira do destino, no espaco livre do banco $37 (F6A5)
+# destination flag routine, in bank $37 free space (F6A5)
 alt DEST_FLAG_BLINK 37:F6A5 C0
 |DestFlagBlink:
-|    lda zp_D7                   ; P1 confirmou o lutador? (setado em SelectConfirm)
-|    beq DestFlagFwd             ; nao confirmou ainda: comportamento normal (bandeira do cursor)
-|    lda ram_03B5                ; pais de destino: 0 = Japao (Ryu)
+|    lda zp_D7                   ; P1 confirmed fighter? (set in SelectConfirm)
+|    beq DestFlagFwd             ; not confirmed yet: normal behavior (cursor flag)
+|    lda ram_03B5                ; destination country: 0 = Japan (Ryu)
 |    cmp #$00
-|    bne DestFlagFwd             ; so' o Japao esta' implementado por enquanto
-|    ; prepara a paleta 3 com as cores do Japão (sol $16, campo $20)
+|    bne DestFlagFwd             ; only Japan is implemented for now
+|    ; prepares palette 3 with Japan colors (sun $16, field $20)
 |    lda #$11
 |    sta a:PaletteBuf+21
 |    lda #$16
@@ -2572,44 +2619,44 @@ alt DEST_FLAG_BLINK 37:F6A5 C0
 |    sta a:PaletteBuf+23
 |    lda #$01
 |    sta a:PaletteDirty
-|    ; desenha a bandeira do Japão na paleta 3 (visível, sem pisca-pisca)
-|    lda #$4E                    ; OAM 6/7 Y do Japao (tiles $8C/$8E)
+|    ; draws Japan flag on palette 3 (visible, no blinking)
+|    lda #$4E                    ; OAM 6/7 Y of Japan (tiles $8C/$8E)
 |    sta OamBuf+24               ; sprite 6 Y
 |    sta OamBuf+28               ; sprite 7 Y
 |    lda #$8C                    ; tile $8C
 |    sta OamBuf+25
 |    lda #$8E                    ; tile $8E
 |    sta OamBuf+29
-|    lda #$03                    ; paleta 3, exclusiva da bandeira do destino
+|    lda #$03                    ; palette 3, exclusive to destination flag
 |    sta OamBuf+26
 |    sta OamBuf+30
-|    lda #$80                    ; posicao X do Japao no mapa
+|    lda #$80                    ; Japan X position on map
 |    sta OamBuf+27
-|    lda #$88                    ; posicao X+8 do Japao no mapa
+|    lda #$88                    ; Japan X+8 position on map
 |    sta OamBuf+31
 |DestFlagFwd:
 |    jmp SelectReadInput
 |
 |DestFlagOam:
 |    ldx zp_E9
-|    cpx #$00                    ; no Japao, nao esconde a copia normal (paleta 2)
+|    cpx #$00                    ; in Japan, does not hide normal copy (palette 2)
 |    bne DestFlagDraw
 |    lda #$FE
-|    sta OamBuf+16               ; sprite 4 do pais do cursor
-|    sta OamBuf+20               ; sprite 5 do pais do cursor
+|    sta OamBuf+16               ; sprite 4 of cursor country
+|    sta OamBuf+20               ; sprite 5 of cursor country
 |DestFlagDraw:
 |    ldx zp_E9
-|    lda D37_F293,x              ; devolve o índice original para "sta FighterChar"
+|    lda D37_F293,x              ; returns original index for "sta FighterChar"
 |    rts
 |
 |DestFlagRestore:
-|    lda #$1A                    ; restaura a paleta 3 original da tela
+|    lda #$1A                    ; restores original screen palette 3
 |    sta a:PaletteBuf+21
 |    lda #$27
 |    sta a:PaletteBuf+22
 |    lda #$21
 |    sta a:PaletteBuf+23
-|    lda #$FE                    ; remove a copia extra do destino
+|    lda #$FE                    ; removes extra destination copy
 |    sta OamBuf+24
 |    sta OamBuf+28
 |    lda #$01

@@ -1,4 +1,4 @@
-; Registradores de hardware: PPU, APU/controles e MMC5.
+; Hardware registers: PPU, APU/controllers and MMC5.
 
 PPUCTRL            := $2000
 PPUMASK            := $2001

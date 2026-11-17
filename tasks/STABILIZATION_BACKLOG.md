@@ -1,95 +1,95 @@
-# Backlog de estabilização — Fase 0
+# Stabilization backlog — Phase 0
 
-**Origem:** `tasks/PHASE_0_SCOPE_FREEZE_SPEC.md` e `tasks/PROJECT_STABILIZATION_EXECUTION_PLAN.md` (Fase 0).  
-**Tipo:** documento de planejamento e registro de decisões pendentes.  
-**Nenhuma implementação, build, teste ou execução de emulador está autorizada por este arquivo.**
+**Origin:** `tasks/PHASE_0_SCOPE_FREEZE_SPEC.md` and `tasks/PROJECT_STABILIZATION_EXECUTION_PLAN.md` (Phase 0).  
+**Type:** planning document and pending-decision record.  
+**No implementation, build, test, or emulator execution is authorized by this file.**
 
-Este backlog separa o trabalho em três trilhas distintas. **D-01 e D-03 foram resolvidas no fechamento da Fase 3 (2026-11-16); D-02 permanece `PROPOSTO`; D-04 a D-07 seguem `PENDENTE`.**
-
----
-
-## Trilha A — estabilização/manutenibilidade (candidatos, sem aprovação de implementação)
-
-- **Fase 1** — auditoria reproduzível de métricas, fontes de verdade, documentação, bancos e validações existentes → **AUDITORIA CONCLUÍDA — DOCUMENTO ENTREGUE** (`docs/ESTADO_DO_PROJETO.md`, commit `ada6c6f`). Sem indicação de testes aprovados.
-- **Fase 2** — especificação do formato textual de autoria de estados/quadros e decisão sobre fonte canônica → **PROPOSTA ENTREGUE — DECISÃO PENDENTE** (`tasks/STATE_DATA_FORMAT_DECISION.md`, estado `PROPOSTO`). Não bloqueou o naming de símbolos.
-- **Fase 3** — naming dirigido por criticidade e evidência → **CONCLUÍDA — RELATÓRIO ENTREGUE** (`tasks/PHASE_3_EXECUTION_REPORT.md` §10; commits `e2e18f3`, `64a29f8`, `92fbde1` e `2df963c`). 466 rótulos renomeados; 1.135 labels de dados permanecem automáticos por decisão de escopo.
-- **Fase 4** — reconciliação documental e registro de decisões técnicas.
-- **Fase 5** — proposta de validação futura, sem executar testes.
-
-Referenciar `tasks/PROJECT_STABILIZATION_EXECUTION_PLAN.md` e `docs/ESTADO_DO_PROJETO.md` em vez de duplicar os requisitos completos.
+This backlog separates work into three distinct tracks. **D-01 and D-03 were resolved at Phase 3 closing (2026-11-16); D-02 remains `PROPOSED`; D-04 to D-07 remain `PENDING`.**
 
 ---
 
-## Trilha B — REA e documentação técnica (pesquisa/documentação, separada)
+## Track A — stabilization/maintainability (candidates, without implementation approval)
 
-Registrar separadamente:
+- **Phase 1** — reproducible audit of metrics, sources of truth, documentation, banks, and existing validations → **AUDIT COMPLETED — DOCUMENT DELIVERED** (`docs/PROJECT_STATUS.md`, commit `ada6c6f`). No indication of approved tests.
+- **Phase 2** — specification of text authoring format for states/frames and decision on canonical source → **PROPOSAL DELIVERED — DECISION PENDING** (`tasks/STATE_DATA_FORMAT_DECISION.md`, state `PROPOSED`). Did not block symbol naming.
+- **Phase 3** — naming driven by criticality and evidence → **COMPLETED — REPORT DELIVERED** (`tasks/PHASE_3_EXECUTION_REPORT.md` §10; commits `e2e18f3`, `64a29f8`, `92fbde1` and `2df963c`). 466 labels renamed; 1,135 data labels remain automatic by scope decision.
+- **Phase 4** — documentary reconciliation and technical decision registration.
+- **Phase 5** — future validation proposal, without executing tests.
 
-- REA estática da IA arcade e respectiva especificação de sala limpa.
-- Conclusão da análise das lacunas de Ken na revisão arcade identificada, quando esse trabalho for retomado.
-- Documentação de formatos/hipóteses do motor NES, quando priorizada pela auditoria.
-
-Esta trilha não autoriza portar bytecode, dados ou código arcade para o projeto, nem executar a ROM arcade. Não apresentar a REA como implementação NES.
-
----
-
-## Trilha C — conteúdo e funcionalidades (pausada)
-
-Registrar como pausados, não cancelados:
-
-- implementação de Ken como personagem jogável, conforme sua especificação vigente (`tasks/KEN_IMPLEMENTATION_SPEC.md`);
-- qualquer IA própria de Ken no NES;
-- implementação de outros personagens;
-- novas telas, controles, modos, golpes, cenários, músicas, finais ou outras funções de jogo;
-- produção/conversão de assets e ferramentas ligadas diretamente à criação de conteúdo, até decisão posterior.
-
-A trilha não deve reescrever nem alterar a especificação de Ken; deve referenciá-la.
+Refer to `tasks/PROJECT_STABILIZATION_EXECUTION_PLAN.md` and `docs/PROJECT_STATUS.md` instead of duplicating complete requirements.
 
 ---
 
-## Decisões pendentes
+## Track B — REA and technical documentation (research/documentation, separate)
 
-Todos os itens começam como `PENDENTE`. O backlog não os resolve por conta própria nem trata a ausência de decisão como aprovação; as resoluções abaixo foram registradas por instrução explícita do Mantenedor.
+Register separately:
 
-| ID | Pergunta a resolver | Estado | Responsável | Evidência/entrada necessária | Bloqueia |
-|----|---------------------|--------|-------------|------------------------------|----------|
-| D-01 | Qual método reproduzível será usado para contar labels totais, labels de código/dados e labels semanticamente nomeados? | RESOLVIDO | Mantenedor | `docs/ESTADO_DO_PROJETO.md` §4/§11 e `tasks/PHASE_3_EXECUTION_REPORT.md` §10.2. | Métricas de naming e comparação futura. |
-| D-02 | Qual será a fonte canônica para autoria de estados/quadros: annotations, macros ca65 ou formato declarativo externo? | PROPOSTO | Mantenedor | `tasks/STATE_DATA_FORMAT_DECISION.md`; decisão sobre estados/quadros segue na Fase 2/4. | Implementar conversor ou migrar dados. |
-| D-03 | Quais rotinas/tabelas serão a primeira leva de naming e qual evidência mínima torna um nome aceitável? | RESOLVIDO | Mantenedor | Lotes P0/P1, P2, PAD, FamiTone2 e dados `$3C`/`$3F`/`$20`; critérios em `tasks/NAMING_CANDIDATES.md` e relatórios de lote. | Campanha de renomeação. |
-| D-04 | Quais critérios e decisão explícita reabrem a implementação de personagens/funcionalidades? | PENDENTE | Mantenedor | Prioridades do Mantenedor e conclusão da estabilização. | Retomar a trilha C. |
-| D-05 | Que validações futuras serão autorizadas, por quem, e em qual escopo? | PENDENTE | Mantenedor | Proposta de validação da Fase 5 e autorização explícita. | Criar/rodar testes, builds ou validação em emulador no trabalho futuro. |
-| D-06 | Ferramentas externas de assets serão avaliadas e em que momento? | PENDENTE | Mantenedor | Necessidade de conteúdo, disponibilidade e revisão de licença. | Integração de conversores externos. |
-| D-07 | Há necessidade mensurável de mudar a organização do kernel/bancos? | PENDENTE | Mantenedor | Auditoria de espaço, requisitos de vetores e restrições de ciclos. | Qualquer refatoração do kernel. |
+- static REA of arcade AI and respective clean-room specification;
+- conclusion of Ken gap analysis in the identified arcade revision, when that work is resumed;
+- documentation of NES engine formats/hypotheses, when prioritized by the audit.
 
-### Registro de resolução (2026-11-16)
-
-- **D-01 — RESOLVIDO.** Método canônico: `grep -rhE '^[A-Za-z_][A-Za-z0-9_]*:$' src/bank_*.s`, separando definições de nomes únicos e categorias (código/dados/semânticos). A ressalva dos três rótulos com comentário na mesma linha (`EdgeARel`, `EdgeBRel`, `EdgeBBtn`) fica registrada em `docs/ESTADO_DO_PROJETO.md` §11.
-- **D-03 — RESOLVIDO.** Primeira leva: P0/P1 (núcleo do motor), seguida de P2/PAD/FamiTone2 e dos dados `$3C`, `$3F` e `$20`. Evidência mínima: consumidor demonstrável, estrutura de tabela ou documentação existente; confiança `ALTA`/`MÉDIA`; `BAIXA` permanece automático.
-- **D-02 — PROPOSTO, não bloqueante para a Fase 3.** A Fase 3 atuou apenas em símbolos, cuja fonte canônica é `annotations/sf2ne.ann`; a decisão sobre estados/quadros não foi usada nem antecipada.
+This track does not authorize porting bytecode, data, or arcade code to the project, nor executing the arcade ROM. Do not present REA as NES implementation.
 
 ---
 
-## Regras de estado e linguagem
+## Track C — content and features (paused)
 
-- **ATIVO:** trabalho efetivamente autorizado e em execução.
-- **PLANEJADO / CANDIDATO:** trabalho apenas listado, ainda não autorizado.
-- **PAUSADO:** conteúdo que permanece desejado, mas não pode iniciar nesta fase.
-- **PENDENTE:** decisão ainda sem resposta.
-- **PROPOSTO:** recomendação do Engineer aguardando aceite explícito do Mantenedor.
-- **RESOLVIDO:** decisão tomada e registrada com evidência.
-- Não usar "pronto", "validado", "testado" ou "aprovado" para indicar apenas que a documentação foi escrita.
+Register as paused, not cancelled:
+
+- Ken implementation as playable character, per its current specification (`tasks/KEN_IMPLEMENTATION_SPEC.md`);
+- any Ken-specific AI on NES;
+- implementation of other characters;
+- new screens, controls, modes, moves, stages, music, endings, or other game functions;
+- asset production/conversion and tools directly tied to content creation, until a later decision.
+
+This track must not rewrite or alter Ken's specification; it must reference it.
 
 ---
 
-## Critérios de aceite (Fase 0)
+## Pending decisions
 
-- [ ] O roteiro declara a fase atual e a pausa de conteúdo de forma clara, sem cancelar o backlog antigo.
-- [ ] Etapas futuras de personagens e funcionalidades estão rotuladas como pausadas, sem mudar o status de etapas concluídas.
-- [ ] O README aponta para a prioridade atual e para os documentos de planejamento sem afirmar validações recém-executadas.
-- [ ] Este arquivo contém as três trilhas separadas e as decisões D-01 a D-07 como pendentes.
-- [ ] Cada tarefa futura está corretamente classificada como ativa, planejada/candidata, pausada ou pendente; nenhuma decisão foi implicitamente tomada.
-- [ ] Links internos são relativos e apontam para arquivos existentes.
-- [ ] Somente os arquivos permitidos na §3 da especificação da Fase 0 foram alterados ou criados.
-- [ ] Nenhum código, dado, asset, configuração, ROM ou ferramenta foi alterado.
-- [ ] Nenhum build, teste, emulador ou validação de ROM foi executado.
+All items start as `PENDING`. The backlog does not resolve them on its own nor treats absence of decision as approval; resolutions below were recorded by explicit Maintainer instruction.
 
-> Checklist histórico da Fase 0. Para o estado atual das decisões, ver a tabela e o registro de resolução acima.
+| ID | Question to resolve | State | Owner | Evidence/input needed | Blocks |
+|----|---------------------|-------|-------|----------------------|--------|
+| D-01 | What reproducible method will be used to count total labels, code/data labels, and semantically named labels? | RESOLVED | Maintainer | `docs/PROJECT_STATUS.md` §4/§11 and `tasks/PHASE_3_EXECUTION_REPORT.md` §10.2. | Naming metrics and future comparison. |
+| D-02 | What will be the canonical source for state/frame authoring: annotations, ca65 macros, or external declarative format? | PROPOSED | Maintainer | `tasks/STATE_DATA_FORMAT_DECISION.md`; state/frame decision follows in Phase 2/4. | Implementing converter or migrating data. |
+| D-03 | Which routines/tables will be the first naming batch, and what minimum evidence makes a name acceptable? | RESOLVED | Maintainer | P0/P1, P2, PAD, FamiTone2 and `$3C`/`$3F`/`$20` data batches; criteria in `tasks/NAMING_CANDIDATES.md` and batch reports. | Renaming campaign. |
+| D-04 | What criteria and explicit decision reopen character/feature implementation? | PENDING | Maintainer | Maintainer priorities and stabilization conclusion. | Resuming Track C. |
+| D-05 | What future validations will be authorized, by whom, and in what scope? | PENDING | Maintainer | Phase 5 validation proposal and explicit authorization. | Creating/running tests, builds, or emulator validation in future work. |
+| D-06 | Will external asset tools be evaluated and when? | PENDING | Maintainer | Content need, availability, and license review. | Integrating external converters. |
+| D-07 | Is there a measurable need to change kernel/bank organization? | PENDING | Maintainer | Space audit, vector requirements, and cycle constraints. | Any kernel refactoring. |
+
+### Resolution record (2026-11-16)
+
+- **D-01 — RESOLVED.** Canonical method: `grep -rhE '^[A-Za-z_][A-Za-z0-9_]*:$' src/bank_*.s`, separating definitions from unique names and categories (code/data/semantic). The caveat of three labels with comment on the same line (`EdgeARel`, `EdgeBRel`, `EdgeBBtn`) is registered in `docs/PROJECT_STATUS.md` §11.
+- **D-03 — RESOLVED.** First batch: P0/P1 (engine core), followed by P2/PAD/FamiTone2 and `$3C`/`$3F`/`$20` data. Minimum evidence: demonstrable consumer, table structure, or existing documentation; confidence HIGH/MEDIUM; LOW remains automatic.
+- **D-02 — PROPOSED, not blocking Phase 3.** Phase 3 acted only on symbols, whose canonical source is `annotations/sf2ne.ann`; the state/frame decision was neither used nor anticipated.
+
+---
+
+## State and language rules
+
+- **ACTIVE:** work effectively authorized and in execution.
+- **PLANNED / CANDIDATE:** work merely listed, not yet authorized.
+- **PAUSED:** content that remains desired but cannot start in this phase.
+- **PENDING:** decision still without answer.
+- **PROPOSED:** Engineer recommendation awaiting explicit Maintainer acceptance.
+- **RESOLVED:** decision taken and recorded with evidence.
+- Do not use "ready", "validated", "tested", or "approved" to indicate that documentation was merely written.
+
+---
+
+## Acceptance criteria (Phase 0)
+
+- [ ] The roadmap clearly declares the current phase and the content pause, without cancelling the old backlog.
+- [ ] Future character and feature stages are labeled as paused, without changing the status of completed stages.
+- [ ] The README points to the current priority and planning documents without claiming newly-executed validations.
+- [ ] This file contains the three separate tracks and decisions D-01 to D-07 as pending.
+- [ ] Each future task is correctly classified as active, planned/candidate, paused, or pending; no decision is implicitly taken.
+- [ ] Internal links are relative and point to existing files.
+- [ ] Only the files permitted in §3 of the Phase 0 specification were altered or created.
+- [ ] No code, data, asset, configuration, ROM, or tool was altered.
+- [ ] No build, test, emulator, or ROM validation was executed.
+
+> Historical Phase 0 checklist. For current decision state, see the table and resolution record above.

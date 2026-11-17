@@ -1,132 +1,132 @@
-# Decisão de formato — autoria de estados e quadros (Fase 2)
+# Format decision — state and frame authoring (Phase 2)
 
-**Status:** PROPOSTO (recomendação do Engineer; aguarda decisão explícita do Mantenedor)  
-**Atualização 2026-11-16:** a decisão permanece `PROPOSTO`; o fechamento da Fase 3 não a utilizou como pré-requisito, pois o naming atuou apenas em símbolos (`annotations/sf2ne.ann`). Ver `tasks/PHASE_3_EXECUTION_REPORT.md` §10.4.  
-**Origem:** `tasks/PHASE_2_STATE_DATA_FORMAT_SPEC.md` (Fase 2 do plano de estabilização)  
-**Tipo:** documento de decisão/design — não autoriza implementação, build, teste ou migração  
-**Pré-requisitos confirmados:** Fase 0 aceita, Fase 1 concluída com `docs/ESTADO_DO_PROJETO.md` disponível
-
----
-
-## 1. Decisão recomendada
-
-O Engineer recomenda **formato declarativo externo** (arquivo estruturado processado por ferramenta própria) como fonte canônica de autoria de estados e quadros de animação, em vez de macros/DSL em ca65.
-
-**Estado:** `PROPOSTO` — a aprovação final pertence ao Mantenedor. Nenhuma implementação, conversor, migração ou alteração de build é autorizada por este documento.
+**Status:** PROPOSED (Engineer recommendation; awaits explicit Maintainer decision)  
+**Update 2026-11-16:** decision remains `PROPOSED`; Phase 3 closing did not use it as prerequisite, since naming acted only on symbols (`annotations/sf2ne.ann`). See `tasks/PHASE_3_EXECUTION_REPORT.md` §10.4.  
+**Origin:** `tasks/PHASE_2_STATE_DATA_FORMAT_SPEC.md` (Phase 2 of stabilization plan)  
+**Type:** decision/design document — does not authorize implementation, build, test, or migration  
+**Prerequisites confirmed:** Phase 0 accepted, Phase 1 completed with `docs/PROJECT_STATUS.md` available
 
 ---
 
-## 2. Matriz de comparação das alternativas
+## 1. Recommended decision
 
-| Critério | Macros/DSL em ca65 | Formato declarativo externo (TOML/YAML/JSON) |
-|---|---|---|
-| Legibilidade de diff | Baixa. Estados e quadros ficam em assembly com bytes diretos; mudar um parâmetro exige decodificar valores hexadecimais no diff. | Alta. Campos nomeados (duracao, ponteiro_metasprite, etc.) tornam o diff revisável sem decodificação manual. |
-| Tipagem/validação | Fraca. O assembler só valida sintaxe de assembly; condições inválidas, ponteiros faltantes, duração fora de faixa ou laço malformado só aparecem no build/runtime (se aparecerem). | Forte. Uma ferramenta própria pode validar antes de gerar assembly: condições conhecidas, duração na faixa 1–100, ponteiros resolvidos, laço bem formado. |
-| Cobertura | Total (é assembly nativo), mas sem distinção entre "valor conhecido" e "valor incerto". | Total se o schema cobrir todos os campos documentados em `docs/FORMATOS.md`; permite campos brutos e comentários de incerteza. |
-| Símbolos | Nomes de labels do assembly; números mágicos para endereços e ponteiros. | Nomes simbólicos próprios (estado, quadro, metasprite, caixa, banco), sem número mágico. |
-| Dados desconhecidos | Difícil. Valor bruto em `.byte` sem campo para comentário de procedência. | Fácil. Campo `raw` ou comentário por registro/campo; distinção entre zero, ausente, terminador e omitido. |
-| Fonte canônica | Ambígua: mistura dados de autoria com código gerado pelo disassembly. | Clara: um arquivo/fonte próprio que o Engineer edita; o gerador lê esse fonte sem destruí-lo. |
-| Integração com `make gen` | Direta (é assembly), mas `make gen` regenera `src/` e pode sobrescrever edições manuais. | Precisa de um estágio entre `disasm.py` e `ca65`; `make gen` não deve destruir nem ignorar dados de autoria novos. |
-| Erros de diagnóstico | Linha e arquivo do assembly gerado; difícil rastrear até a intenção do autor. | Arquivo, registro, campo e referência inválida apontados pela ferramenta própria. |
-| Determinismo | Determinista (assembly). | Determinista se a serialização for ordenada. |
-| Dependências | Nenhuma (ca65 já existe). | Exige parser + gerador de assembly; custo de manutenção da nova ferramenta. |
-| Migração | Gradual por banco, mas com risco de sobrescrita pelo gerador. | Gradual por personagem/banco; rollback simples (voltar ao assembly gerado). |
-| Reversibilidade | Difícil (edição manual de `src/` não sobrevive a `make gen`). | Fácil (desligar a ferramenta e continuar com o assembly gerado existente). |
+The Engineer recommends **external declarative format** (structured file processed by dedicated tool) as canonical source for state and animation frame authoring, instead of ca65 macros/DSL.
+
+**Status:** `PROPOSED` — final approval belongs to the Maintainer. No implementation, converter, migration, or build change is authorized by this document.
 
 ---
 
-## 3. Fonte canônica proposta
+## 2. Comparison matrix of alternatives
 
-- **Fonte canônica de autoria:** arquivo declarativo externo (formato a definir: TOML, YAML ou JSON — veja seção 4), separado de `annotations/sf2ne.ann` e de `src/`.
-- **Responsabilidades da fonte canônica:** estados, quadros de animação, durações, ponteiros de metasprite/colisão/efeito, flags, movimento, laços, sentinelas, comentários de procedência e confiança.
-- **Responsabilidades de `annotations/sf2ne.ann`:** labels, comentários, blocos `alt` (correções/alternates), `patch`, `keepbank`, metadados de disassembly — permanece inalterada como fonte de anotação do gerador.
-- **Arquivos gerados (nunca editar manualmente):** `src/*.s` (produzido por `make gen`), `sf2ne.cfg`, `build/*.nes`.
-- **Integração:** um novo estágio de leitura da fonte declarativa deve ser inserido entre o gerador e o assembler, de forma que `make gen` não destrua nem ignore os dados de autoria. Detalhes de implementação são trabalho futuro (Fase 3/Gate C).
-
----
-
-## 4. Comparação TOML vs YAML vs JSON (evidência da auditoria da Fase 1)
-
-A auditoria da Fase 1 (`docs/ESTADO_DO_PROJETO.md`) registrou 549 labels semânticos vs 1.592 automáticos (379 código + 1.213 dados), e 322 símbolos `.global`. Isso indica que nomes simbólicos são valiosos e que o formato deve privilegiar legibilidade e validação prévia.
-
-| Critério | TOML | YAML | JSON |
-|---|---|---|---|
-| Legibilidade de diff | Boa (seções explícitas, chave=valor) | Boa, mas sensível a indentação | Regular (colchetes/aspas verbosos) |
-| Tipagem nativa | Boa (strings, inteiros, booleanos, arrays, tabelas) | Boa, mas implícita em alguns casos | Boa, mas sem comentários |
-| Comentários | Sim | Sim | Não |
-| Ferramentas maduras em Python | Sim (`tomllib` stdlib 3.11+, `tomli` antes) | Sim (`PyYAML`) | Sim (`json` stdlib) |
-| Risco de ambiguidades | Baixo | Médio (indentação, tipos implícitos) | Baixo |
-| Adequação para schema rígido | Alta | Média | Alta |
-
-**Recomendação de sintaxe (ainda PROPOSTA):** TOML, por ter comentários, tipagem explícita e parser padrão em Python moderno, com baixo risco de ambiguidades de indentação. A decisão final entre TOML/YAML/JSON cabe ao Mantenedor.
+| Criterion | ca65 macros/DSL | External declarative format (TOML/YAML/JSON) |
+|-----------|-----------------|----------------------------------------------|
+| Diff readability | Low. States and frames are in assembly with direct bytes; changing a parameter requires decoding hexadecimal values in the diff. | High. Named fields (duration, metasprite pointer, etc.) make the diff reviewable without manual decoding. |
+| Typing/validation | Weak. The assembler only validates assembly syntax; invalid conditions, missing pointers, out-of-range duration, or malformed loops only appear at build/runtime (if at all). | Strong. A dedicated tool can validate before generating assembly: known conditions, duration in 1–100 range, resolved pointers, well-formed loop. |
+| Coverage | Total (it is native assembly), but without distinction between "known value" and "uncertain value". | Total if schema covers all fields documented in `docs/FORMATS.md`; allows raw fields and uncertainty comments. |
+| Symbols | Assembly labels; magic numbers for addresses and pointers. | Own symbolic names (state, frame, metasprite, box, bank), without magic numbers. |
+| Unknown data | Difficult. Raw value in `.byte` without field for provenance comment. | Easy. `raw` field or comment per record/field; distinction between zero, absent, terminator, and omitted. |
+| Canonical source | Ambiguous: mixes authoring data with disassembly-generated code. | Clear: a dedicated file/source that the Engineer edits; the generator reads that source without destroying it. |
+| Integration with `make gen` | Direct (it is assembly), but `make gen` regenerates `src/` and can overwrite manual edits. | Needs a stage between `disasm.py` and `ca65`; `make gen` must not destroy or ignore new authoring data. |
+| Error diagnosis | Line and file of generated assembly; hard to trace back to author intent. | File, record, field, and invalid reference pointed out by dedicated tool. |
+| Determinism | Deterministic (assembly). | Deterministic if serialization is ordered. |
+| Dependencies | None (ca65 already exists). | Requires parser + assembly generator; maintenance cost of new tool. |
+| Migration | Gradual by bank, but with risk of overwrite by generator. | Gradual by character/bank; simple rollback (return to generated assembly). |
+| Reversibility | Difficult (manual `src/` editing does not survive `make gen`). | Easy (turn off tool and continue with existing generated assembly). |
 
 ---
 
-## 5. Regras para preservar campos incertos, referências e registros órfãos
+## 3. Proposed canonical source
 
-### 5.1 Campos incertos / desconhecidos
-- Valor bruto preservado literalmente (não normalizado, não interpretado).
-- Campo de comentário por registro e por campo para indicar evidência, hipótese ou referência documental.
-- Não forçar nomes semânticos para opcodes, condições, efeitos ou flags ainda não confirmados.
-- Permitir valor numérico bruto como escape explícito e documentado.
-
-### 5.2 Distinção de sentinelas
-- **zero:** valor numérico `0` com significado próprio (ex.: duração zero se permitido pelo schema).
-- **ausente/null:** campo omitido ou explicitamente nulo; não tratado como zero.
-- **fim/terminador:** sentinela explícita (ex.: ponteiro nulo, byte `$FF`), distinta de "ausente".
-- **campo omitido:** campo não presente no registro; schema deve definir se é válido e qual o padrão.
-
-### 5.3 Registros órfãos / não alcançáveis
-- Registros não alcançáveis pela cadeia de estados, mas presentes na região auditada, devem ser representados sem perda.
-- A conversão não pode se basear apenas na cadeia de estados alcançável a partir do estado inicial.
-
-### 5.4 Referências simbólicas
-- Rótulos e referências entre estados e quadros usam nomes simbólicos; valores numéricos brutos só como escape documentado.
-- Associação de cada estado ao banco de estados e dos quadros/metasprites às fontes de frames deve ser preservada.
+- **Canonical authoring source:** external declarative file (format to define: TOML, YAML, or JSON — see section 4), separate from `annotations/sf2ne.ann` and `src/`.
+- **Canonical source responsibilities:** states, animation frames, durations, metasprite/collision/effect pointers, flags, movement, loops, sentinels, provenance and confidence comments.
+- **`annotations/sf2ne.ann` responsibilities:** labels, comments, `alt` blocks (corrections/alternates), `patch`, `keepbank`, disassembly metadata — remains unchanged as generator annotation source.
+- **Generated files (never edit manually):** `src/*.s` (produced by `make gen`), `sf2ne.cfg`, `build/*.nes`.
+- **Integration:** a new stage reading the declarative source must be inserted between generator and assembler, so `make gen` does not destroy or ignore authoring data. Implementation details are future work (Phase 3/Gate C).
 
 ---
 
-## 6. Riscos e limitações da proposta
+## 4. TOML vs YAML vs JSON comparison (Phase 1 audit evidence)
 
-| Risco | Descrição | Mitigação proposta |
-|---|---|---|
-| Nova ferramenta de parser/gerador | Custo de manutenção; dependência adicional. | Manter a ferramenta mínima e documentada; rollback para assembly gerado existente. |
-| Integração com `make gen` | Risco de sobrescrever ou ignorar dados de autoria. | Desenhar estágio de leitura entre `disasm.py` e `ca65`; salvaguardas no plano de migração. |
-| Dados órfãos não mapeados | Pode haver registros no binário que o schema não representa. | Listar como dados não classificados na Fase 1; tratar como exceção documentada. |
-| Símbolos duplicados entre bancos | `InputButtons`, `ResetStub`, `RoundStart` aparecem em múltiplos bancos. | Escopo de símbolo por banco; não achatar namespaces. |
-| Relocação | Endereços absolutos não podem ficar fixos na fonte. | Usar rótulos e referências simbólicas; deixar alinhamento/ordem para o assembler/linker. |
+Phase 1 audit (`docs/PROJECT_STATUS.md`) recorded 549 semantic labels vs 1,592 automatic (379 code + 1,213 data), and 322 `.global` symbols. This indicates symbolic names are valuable and the format should privilege readability and upfront validation.
+
+| Criterion | TOML | YAML | JSON |
+|-----------|------|------|------|
+| Diff readability | Good (explicit sections, key=value) | Good, but indentation-sensitive | Regular (verbose brackets/quotes) |
+| Native typing | Good (strings, integers, booleans, arrays, tables) | Good, but implicit in some cases | Good, but no comments |
+| Comments | Yes | Yes | No |
+| Mature Python tools | Yes (`tomllib` stdlib 3.11+, `tomli` before) | Yes (`PyYAML`) | Yes (`json` stdlib) |
+| Ambiguity risk | Low | Medium (indentation, implicit types) | Low |
+| Suitability for rigid schema | High | Medium | High |
+
+**Recommended syntax (still PROPOSED):** TOML, for having comments, explicit typing, and standard parser in modern Python, with low indentation-ambiguity risk. Final decision between TOML/YAML/JSON belongs to the Maintainer.
 
 ---
 
-## 7. Estado de aprovação
+## 5. Rules for preserving uncertain fields, references, and orphan records
 
-| Item | Estado |
+### 5.1 Uncertain / unknown fields
+- Raw value preserved literally (not normalized, not interpreted).
+- Comment field per record and per field to indicate evidence, hypothesis, or documentary reference.
+- Do not force semantic names for opcodes, conditions, effects, or flags not yet confirmed.
+- Allow raw numeric value as explicit documented escape.
+
+### 5.2 Sentinel distinction
+- **zero:** numeric value `0` with its own meaning (e.g., zero duration if allowed by schema).
+- **absent/null:** field omitted or explicitly null; not treated as zero.
+- **end/terminator:** explicit sentinel (e.g., null pointer, byte `$FF`), distinct from "absent".
+- **field omitted:** field not present in record; schema must define whether valid and what default applies.
+
+### 5.3 Orphan / unreachable records
+- Records not reachable via state chain but present in audited region must be represented without loss.
+- Conversion cannot be based only on the state chain reachable from the initial state.
+
+### 5.4 Symbolic references
+- Labels and references between states and frames use symbolic names; raw numeric values only as documented escape.
+- Association of each state to its state bank and of frames/metasprites to frame sources must be preserved.
+
+---
+
+## 6. Risks and proposal limitations
+
+| Risk | Description | Proposed mitigation |
+|------|-------------|---------------------|
+| New parser/generator tool | Maintenance cost; additional dependency. | Keep tool minimal and documented; rollback to existing generated assembly. |
+| Integration with `make gen` | Risk of overwriting or ignoring authoring data. | Design reading stage between `disasm.py` and `ca65`; safeguards in migration plan. |
+| Unmapped orphan records | There may be binary records the schema doesn't represent. | List as unclassified data in Phase 1; treat as documented exception. |
+| Duplicate symbols across banks | `InputButtons`, `ResetStub`, `RoundStart` appear in multiple banks. | Per-bank symbol scope; do not flatten namespaces. |
+| Relocation | Absolute addresses cannot be fixed in source. | Use labels and symbolic references; leave alignment/order to assembler/linker. |
+
+---
+
+## 7. Approval status
+
+| Item | Status |
 |------|--------|
-| Formato declarativo externo como direção preferida | PROPOSTO |
-| TOML como sintaxe preferida | PROPOSTO |
-| Separação fonte canônica vs. gerado | PROPOSTO |
-| Aprovação final (Mantenedor) | PENDENTE |
+| External declarative format as preferred direction | PROPOSED |
+| TOML as preferred syntax | PROPOSED |
+| Canonical source vs. generated separation | PROPOSED |
+| Final approval (Maintainer) | PENDING |
 
-A decisão final cabe ao Mantenedor. Até aprovação explícita, nada de conversor, migração, alteração de `make gen`, build ou teste é autorizado.
-
----
-
-## 8. Arquivos relacionados
-
-- `tasks/PHASE_2_STATE_DATA_FORMAT_SPEC.md` — especificação desta fase (entrada)
-- `docs/ESTADO_DO_PROJETO.md` — linha de base da Fase 1 (métricas, fontes de verdade)
-- `docs/FORMATOS.md` — contrato inicial de campos, tamanhos, tabelas
-- `docs/ARQUITETURA.md` — banco de estados, banco de frames, carregador, mapeamento
-- `docs/RAM.md` — símbolos/variáveis que conectam dados ao motor
-- `annotations/sf2ne.ann` — diretivas de anotação, símbolos, correções
-- `tools/disasm.py` — fluxo atual de geração
-- `src/*.s`, `src/*.inc`, `Makefile`, `sf2ne.cfg` — forma assembly e integração atual (leitura apenas)
+Final decision belongs to the Maintainer. Until explicit approval, no converter, migration, `make gen` change, build, or test is authorized.
 
 ---
 
-## 9. Próximos passos (após aprovação)
+## 8. Related files
 
-1. Gate C: autorizar implementação da ferramenta (parser + gerador de assembly).
-2. Implementar conversor e validar contra dados atuais do Ryu (sem Ken, sem novo conteúdo).
-3. Migração gradual por banco/personagem, com rollback documentado.
-4. Verificação futura: build, comparação de ROM e regressão de funcionalidades existentes.
+- `tasks/PHASE_2_STATE_DATA_FORMAT_SPEC.md` — this phase's specification (input)
+- `docs/PROJECT_STATUS.md` — Phase 1 baseline (metrics, sources of truth)
+- `docs/FORMATS.md` — initial contract of fields, sizes, tables
+- `docs/ARCHITECTURE.md` — state bank, frame bank, loader, mapping
+- `docs/RAM.md` — symbols/variables connecting data to engine
+- `annotations/sf2ne.ann` — annotation directives, symbols, corrections
+- `tools/disasm.py` — current generation flow
+- `src/*.s`, `src/*.inc`, `Makefile`, `sf2ne.cfg` — assembly form and current integration (read-only)
+
+---
+
+## 9. Next steps (after approval)
+
+1. Gate C: authorize tool implementation (parser + assembly generator).
+2. Implement converter and validate against current Ryu data (no Ken, no new content).
+3. Gradual migration by bank/character, with documented rollback.
+4. Future verification: build, ROM comparison, and regression of existing features.

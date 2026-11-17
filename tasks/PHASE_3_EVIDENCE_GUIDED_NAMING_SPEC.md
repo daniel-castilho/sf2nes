@@ -1,220 +1,220 @@
-# Especificação técnica — Fase 3: naming guiado por risco e evidência
+# Technical specification — Phase 3: evidence-guided naming
 
-**Status:** pronta para detalhamento/execução futura após os gates de entrada; não autoriza mudanças nesta conversa.  
-**Status de execução:** CONCLUÍDA em 2026-11-16; aceite e ressalvas registrados em `tasks/PHASE_3_EXECUTION_REPORT.md` §10.4.  
-**Projeto:** Street Fighter II NE (`daniel-castilho/sf2nes`).  
-**Origem:** Fase 3 de `tasks/PROJECT_STABILIZATION_EXECUTION_PLAN.md`.  
-**Pré-requisitos:** Fase 0 aceita; Fase 1 concluída com métrica reproduzível em `docs/ESTADO_DO_PROJETO.md`; Fase 2 concluída com fonte canônica e fluxo de geração decididos/aprovados.  
-**Tipo de trabalho futuro:** triagem e renomeação documentada de símbolos no fluxo canônico.  
-**Implementação de gameplay, build, ROM, testes e emulador:** fora do escopo e não autorizados por esta especificação.
+**Status:** ready for detailing/future execution after entry gates; does not authorize changes in this conversation.  
+**Execution status:** CONCLUDED on 2026-11-16; acceptance and reservations recorded in `tasks/PHASE_3_EXECUTION_REPORT.md` §10.4.  
+**Project:** Street Fighter II NE (`daniel-castilho/sf2nes`).  
+**Origin:** Phase 3 of `tasks/PROJECT_STABILIZATION_EXECUTION_PLAN.md`.  
+**Prerequisites:** Phase 0 accepted; Phase 1 completed with reproducible metric in `docs/PROJECT_STATUS.md`; Phase 2 completed with canonical source and generation flow decided/approved.  
+**Type of future work:** documented triage and renaming of symbols in canonical flow.  
+**Gameplay implementation, build, ROM, tests, and emulator:** out of scope and not authorized by this specification.
 
-## 1. Objetivo
+## 1. Objective
 
-Melhorar a navegabilidade e a compreensão do código/dados existentes por meio de nomes semânticos sustentados por evidência. A prioridade é reduzir o custo de manutenção nas rotinas e tabelas centrais; não atingir uma porcentagem arbitrária de labels nomeados.
+Improve navigability and understanding of existing code/data through semantic names sustained by evidence. Priority is reducing maintenance cost in central routines and tables; not reaching an arbitrary percentage of named labels.
 
-A renomeação é documental/simbólica: não deve alterar instruções, bytes de dados, ponteiros, ordenação, endereço, fluxo de execução, timing ou comportamento do jogo. Cada nome novo precisa ter evidência suficiente para que outro mantenedor entenda por que ele foi escolhido.
+Renaming is documentary/symbolic: it must not alter instructions, data bytes, pointers, ordering, address, execution flow, timing, or game behavior. Each new name must have sufficient evidence for another maintainer to understand why it was chosen.
 
-## 2. Gates de entrada
+## 2. Entry gates
 
-A execução futura deve parar e ser reportada como bloqueada se qualquer condição abaixo não estiver satisfeita:
+Future execution must stop and be reported as blocked if any condition below is not satisfied:
 
-1. **Fase 0 aceita:** a pausa de personagens/funcionalidades e as trilhas de trabalho estão registradas.
-2. **Fase 1 aceita:** `docs/ESTADO_DO_PROJETO.md` fornece a métrica-base, seu método, categorias, escopo e limitações. Não usar números informados informalmente como substituto.
-3. **Métrica reconciliada:** ocorrências versus nomes únicos, labels globais versus locais e labels de código versus dados estão definidos sem discrepância não resolvida. Em particular, valores que não somam ao total declarado não podem ser usados para medir progresso até a metodologia esclarecer a diferença.
-4. **Fase 2 aceita:** a fonte canônica e o fluxo gerado estão definidos. Naming deve ocorrer no arquivo autoral correto, e não por edição manual de `src/` gerado.
-5. **Árvore de trabalho inspecionada:** alterações locais preexistentes estão registradas e serão preservadas.
-6. **Autorização de execução específica:** este documento é uma especificação, não autorização para editar annotations/fontes, regenerar `src/`, compilar, fazer build ou rodar validações.
+1. **Phase 0 accepted:** character/feature pause and work tracks are registered.
+2. **Phase 1 accepted:** `docs/PROJECT_STATUS.md` provides baseline metric, its method, categories, scope, and limitations. Do not use informally reported numbers as substitute.
+3. **Reconciled metric:** occurrences vs unique names, global vs local labels and code vs data labels are defined without unresolved discrepancy. In particular, values that do not add up to declared total cannot be used to measure progress until methodology clarifies the difference.
+4. **Phase 2 accepted:** canonical source and generated flow are defined. Naming must occur in the correct authoring file, not by manual editing of generated `src/`.
+5. **Working tree inspected:** preexisting local changes are registered and will be preserved.
+6. **Specific execution authorization:** this document is a specification, not authorization to edit annotations/sources, regenerate `src/`, compile, build, or run validations.
 
-## 3. Fontes e arquivos do fluxo
+## 3. Sources and flow files
 
-Na preparação, consultar versões atuais de:
+In preparation, consult current versions of:
 
-- `docs/ESTADO_DO_PROJETO.md` — linha de base/método de contagem;
-- `docs/ARQUITETURA.md`, `docs/FORMATOS.md`, `docs/RAM.md` e `docs/ROTEIRO.md` — contratos semânticos e estrutura;
-- `docs/FERRAMENTAS.md` — sintaxe e fluxo das annotations;
-- `annotations/sf2ne.ann` — fonte de símbolos, comentários e classificações conforme o fluxo atual;
-- `tools/disasm.py` — regras de geração e nomenclatura automática;
-- `src/` — artefatos gerados, somente para leitura/consulta durante a triagem;
-- `tasks/PROJECT_STABILIZATION_EXECUTION_PLAN.md` e o ADR/formato aprovado na Fase 2.
+- `docs/PROJECT_STATUS.md` — baseline/counting method;
+- `docs/ARCHITECTURE.md`, `docs/FORMATS.md`, `docs/RAM.md`, and `docs/ROADMAP.md` — semantic contracts and structure;
+- `docs/TOOLS.md` — annotation syntax and flow;
+- `annotations/sf2ne.ann` — symbol, comment, and classification source per current flow;
+- `tools/disasm.py` — generation rules and automatic naming;
+- `src/` — generated artifacts, read-only for consultation during triage;
+- `tasks/PROJECT_STABILIZATION_EXECUTION_PLAN.md` and Phase 2 ADR/approved format.
 
-A lista acima não presume que annotations permaneçam a fonte canônica de todos os dados depois da Fase 2. Labels devem ser alterados na fonte canônica aprovada para cada classe de informação.
+The above list does not presume annotations remain canonical source for all data after Phase 2. Labels must be changed in the approved canonical source for each information class.
 
-## 4. Escopo
+## 4. Scope
 
-### Incluído
+### Included
 
-- Labels globais automáticos derivados de banco/endereço, somente nos casos em que a função ou identidade estrutural esteja suficientemente determinada.
-- Símbolos de RAM se sua identidade for demonstrável e a Fase 1 registrar a fonte de verdade correspondente.
-- Nomes de rotinas, tabelas, dispatchers, estruturas e pontos de entrada relacionados a subsistemas centrais.
-- Comentários de evidência/confiança estritamente necessários para explicar um nome ou impedir que hipótese vire fato.
-- Atualização da contagem pós-lote, usando exatamente o método aprovado na Fase 1.
+- global automatic labels derived from bank/address, only in cases where function or structural identity is sufficiently determined;
+- RAM symbols if their identity is demonstrable and Phase 1 registers corresponding source of truth;
+- routine, table, dispatcher, structure, and entry point names related to central subsystems;
+- evidence/confidence comments strictly necessary to explain a name or prevent hypothesis becoming fact;
+- post-batch count update, using exactly the Phase 1 approved method.
 
-### Excluído
+### Excluded
 
-- Alterar qualquer byte de opcode, operando, tabela, ponteiro, estado, quadro, condição, opcode de IA, valor de RAM ou dado de asset.
-- Alterar fluxo, semântica, endereços, bankswitching, timing, IRQ/NMI, chamadas, macros executáveis ou código de jogo.
-- Criar funcionalidades, personagens, IA de Ken ou conteúdo jogável.
-- Renomear conteúdo arcade, bytecode, ROMs ou ativos externos; a REA arcade permanece separada.
-- Renomear dados gráficos opacos por suposição (por exemplo, dar nomes de golpe a metasprites sem mapeamento demonstrado).
-- Mudar a sintaxe ou fonte canônica de autoria decidida na Fase 2.
+- altering any opcode, operand, table, pointer, state, frame, condition, AI opcode, RAM value, or asset data byte;
+- altering flow, semantics, addresses, bankswitching, timing, IRQ/NMI, calls, executable macros, or game code;
+- creating features, characters, Ken AI, or playable content;
+- renaming arcade content, bytecode, ROMs, or external assets; arcade REA remains separate;
+- renaming opaque graphical data by assumption (e.g., giving move names to metasprites without demonstrated mapping);
+- changing Phase 2 decided authoring syntax or canonical source.
 
-## 5. Método de priorização
+## 5. Prioritization method
 
-O Engineer deve elaborar uma lista de candidatos antes de editar. Usar níveis de prioridade, não uma meta percentual:
+The Engineer must prepare a candidate list before editing. Use priority levels, not a percentage target:
 
-| Nível | Critério | Tratamento |
-|---|---|---|
-| `P0 — central e confirmado` | Rotina compartilhada, dispatcher, carregador, transição ou tabela central sem nome útil; uso/callers demonstráveis e confiança alta. | Primeiro lote sugerido. |
-| `P1 — alto impacto e confirmado` | Rotina/dado frequentemente usado por luta, personagem, input, colisão, dano, desenho ou fluxo de telas; evidência clara. | Próximos lotes por subsistema. |
-| `P2 — localizado` | Auxiliar com uso limitado, porém compreendido e relevante à manutenção. | Só após P0/P1 ou se bloqueia outra tarefa autorizada. |
-| `P3 — opaco/hipótese` | Semântica não determinada, evidence contraditória, código não executado ou estrutura possivelmente morta. | Manter label atual; documentar pergunta/evidência faltante, sem renomear como fato. |
+| Level | Criterion | Treatment |
+|-------|-----------|-----------|
+| `P0 — central and confirmed` | Shared routine, dispatcher, loader, transition, or central table without useful name; demonstrable callers/use and high confidence. | First suggested batch. |
+| `P1 — high impact and confirmed` | Routine/data frequently used by fight, character, input, collision, damage, drawing, or screen flow; clear evidence. | Next batches per subsystem. |
+| `P2 — localized` | Auxiliary with limited use, but understood and relevant to maintenance. | Only after P0/P1 or if blocking another authorized task. |
+| `P3 — opaque/hypothesis` | Undetermined semantics, contradictory evidence, non-executed code, or possibly dead structure. | Keep current label; document missing question/evidence, without renaming as fact. |
 
-A priorização deve considerar, no mínimo:
+Prioritization must consider at minimum:
 
-- número e criticidade de callers/referências cruzadas conhecidos;
-- alcance do efeito (compartilhado, personagem, tela ou rotina rara);
-- papel em caminhos essenciais documentados;
-- nível de confiança da interpretação;
-- risco de um nome errado induzir futuras mudanças incorretas;
-- dependência de uma investigação ainda não autorizada ou não executada.
+- number and criticality of known callers/cross-references;
+- effect scope (shared, character, screen, or rare routine);
+- role in documented essential paths;
+- confidence level of interpretation;
+- risk of a wrong name inducing future incorrect changes;
+- dependency on an investigation not yet authorized or executed.
 
-Não usar o número de callers sozinho como prova de função; não inferir semântica a partir de endereço ou vizinhança apenas.
+Do not use number of callers alone as proof of function; do not infer semantics from address or neighborhood alone.
 
-## 6. Requisitos de evidência para um nome
+## 6. Evidence requirements for a name
 
-Cada candidato no inventário precisa registrar:
+Each candidate in inventory must register:
 
-| Campo | Requisito |
-|---|---|
-| ID / endereço | Banco e endereço atuais; preservar o identificador anterior para rastreabilidade. |
-| Símbolo atual | Label automático ou nome atual. |
-| Símbolo proposto | Nome curto, consistente com convenções documentadas. |
-| Categoria | Código, dados estruturados, ponteiro, RAM, tabela, asset ou não classificado. |
-| Evidência | Callers/xrefs, leitura estática, anotação/trace já existente, estrutura de tabela ou referência documental. |
-| Confiança | `ALTA`, `MÉDIA` ou `BAIXA`, com justificativa. |
-| Impacto/prioridade | P0–P3 conforme §5. |
-| Risco/observação | Ambiguidade, variante, dado não alcançável ou dependência. |
-| Decisão | `ACEITO`, `ADIADO` ou `REJEITADO`, com responsável/revisor. |
+| Field | Requirement |
+|-------|-------------|
+| ID / address | Current bank and address; preserve previous identifier for traceability. |
+| Current symbol | Automatic label or current name. |
+| Proposed symbol | Short name, consistent with documented conventions. |
+| Category | Code, structured data, pointer, RAM, table, asset, or unclassified. |
+| Evidence | Callers/xrefs, static reading, existing annotation/trace, table structure, or documentary reference. |
+| Confidence | `HIGH`, `MEDIUM`, or `LOW`, with justification. |
+| Impact/priority | P0–P3 per §5. |
+| Risk/observation | Ambiguity, variant, unreachable data, or dependency. |
+| Decision | `ACCEPTED`, `DEFERRED`, or `REJECTED`, with responsible/reviewer. |
 
-Evidências permitidas:
+Permitted evidence:
 
-- fluxo e referências cruzadas demonstráveis por leitura estática;
-- documentos existentes que descrevam a função e correspondam ao símbolo/endereço;
-- traces históricos já versionados, com origem e cenário identificados;
-- relação estrutural consistente com outras tabelas/rotinas.
+- demonstrable flow and cross-references by static reading;
+- existing documents describing function and matching symbol/address;
+- versioned historical traces, with origin and scenario identified;
+- structural relationship consistent with other tables/routines.
 
-Não produzir trace novo nem executar emulador. Se o nome depender de observação dinâmica inexistente, deixar P3/pendente e propor evidência necessária para outra fase.
+Do not produce new trace nor execute emulator. If name depends on nonexistent dynamic observation, leave P3/pending and propose necessary evidence for another phase.
 
-### Convenção de confiança
+### Confidence convention
 
-- **ALTA:** função confirmada por múltiplas evidências convergentes ou pelo fluxo/dados de uso inequívoco.
-- **MÉDIA:** hipótese fortemente sustentada, mas com um aspecto semântico importante não resolvido. Usar comentário explícito de hipótese; avaliar manter label antigo.
-- **BAIXA:** semântica principal não comprovada. Não substituir label por nome definitivo.
+- **HIGH:** function confirmed by multiple converging evidences or by unequivocal flow/data use.
+- **MEDIUM:** hypothesis strongly sustained, but with an important unresolved semantic aspect. Use explicit hypothesis comment; evaluate keeping old label.
+- **LOW:** main semantics not proven. Do not replace label with definitive name.
 
-## 7. Convenções para os nomes
+## 7. Naming conventions
 
-O ADR/convenções existentes do projeto prevalecem. Se ainda não houver padrão suficiente, a proposta deve cobrir antes do primeiro lote:
+Existing project ADR/conventions prevail. If no sufficient standard exists, proposal must cover it before first batch:
 
-- idioma predominante dos nomes e termos técnicos;
-- `PascalCase`/`camelCase`/sufixos e prefixos de subsystema;
-- nomes de funções versus tabelas, dados, ponteiros e campos de RAM;
-- distinção de jogador/slot, se pertinente;
-- indicação de índice, família ou unidade quando confirmada;
-- nomes de condições/opcodes já definidos em `docs/FORMATOS.md`;
-- como representar labels parcialmente conhecidos sem inventar significado.
+- predominant language of names and technical terms;
+- `PascalCase`/`camelCase`/subsystem suffixes and prefixes;
+- function vs table, data, pointer, and RAM field names;
+- player/slot distinction, if pertinent;
+- index, family, or unit indication when confirmed;
+- condition/opcode names already defined in `docs/FORMATS.md`;
+- how to represent partially known labels without inventing meaning.
 
-Princípios:
+Principles:
 
-- nomear pelo papel demonstrado, não pelo valor ou pela aparência do dado;
-- evitar nomes que afirmem uma característica não provada (por exemplo, `Random`, `Timer`, `Hitbox` ou nome de golpe sem confirmação);
-- manter nomes existentes coerentes, sem renomeação cosmética em massa;
-- não usar comentário como substituto para um nome quando a função já está confirmada;
-- preservar o nome antigo no inventário do lote para mapear referências em revisão futura.
+- name by demonstrated role, not by value or data appearance;
+- avoid names asserting unproven characteristic (e.g., `Random`, `Timer`, `Hitbox`, or move name without confirmation);
+- keep existing names consistent, without mass cosmetic renaming;
+- do not use comment as substitute for a name when function is already confirmed;
+- preserve old name in batch inventory to map references in future review.
 
-## 8. Execução em lotes
+## 8. Batch execution
 
-Cada lote deve corresponder a um subsistema limitado e revisável.
+Each batch must correspond to a limited, reviewable subsystem.
 
-### Preparação do lote
+### Batch preparation
 
-1. Identificar candidato na linha de base e registrar no inventário.
-2. Confirmar localização na fonte canônica aprovada.
-3. Juntar evidência existente e atribuir confiança/prioridade.
-4. Separar nomes confirmados de hipóteses e candidatos que exigem trace/execução.
-5. Solicitar decisão do revisor quando houver ambiguidade P0/P1.
+1. Identify candidate in baseline and register in inventory.
+2. Confirm location in approved canonical source.
+3. Gather existing evidence and assign confidence/priority.
+4. Separate confirmed names from hypotheses and candidates requiring trace/execution.
+5. Request reviewer decision when P0/P1 ambiguity exists.
 
-### Mudança futura autorizada
+### Future authorized change
 
-Quando houver autorização explícita para executar a fase:
+When explicit authorization to execute phase exists:
 
-- editar exclusivamente a fonte canônica de símbolos indicada pela Fase 2;
-- nunca corrigir manualmente um arquivo `src/` gerado;
-- alterar apenas label/comment/RAM-symbol de forma semântica, sem tocar em diretivas ou dados que alterem bytes;
-- se o gerador reescrever `src/`, preservar e relatar alterações preexistentes e rever os diffs produzidos;
-- não misturar naming com correção de bug, refatoração ou formatação não relacionada;
-- parar e abrir decisão se o rename exigir mudar uma referência externa, contrato de ferramenta ou dado.
+- edit exclusively the symbol canonical source indicated by Phase 2;
+- never manually correct a generated `src/` file;
+- change only label/comment/RAM symbol semantically, without touching directives or data that alter bytes;
+- if generator rewrites `src/`, preserve and report preexisting changes and review produced diffs;
+- do not mix naming with bug fix, refactoring, or unrelated formatting;
+- stop and open decision if rename requires changing external reference, tool contract, or data.
 
-A geração de `src/` é uma ação de execução e requer autorização específica. Não rodar automaticamente por constar no fluxo habitual.
+`src/` generation is an execution action requiring specific authorization. Do not run automatically just because it is in habitual flow.
 
-## 9. Entregáveis futuros
+## 9. Future deliverables
 
-Criar, após autorização de execução:
+Create, after execution authorization:
 
-1. `tasks/NAMING_CANDIDATES.md` — inventário priorizado com evidência, confiança, estado e destino de cada candidato;
-2. batches de alterações na fonte canônica de symbols, limitados por subsistema;
-3. `docs/ESTADO_DO_PROJETO.md` atualizado com a mesma métrica da linha de base, sem somar categorias diferentes;
-4. relatório de lote contendo diff de labels, ambiguidades não resolvidas e impacto sobre referências de ferramentas.
+1. `tasks/NAMING_CANDIDATES.md` — prioritized inventory with evidence, confidence, state, and destination of each candidate;
+2. canonical symbol source change batches, limited by subsystem;
+3. `docs/PROJECT_STATUS.md` updated with same baseline metric, without summing different categories;
+4. batch report containing label diff, unresolved ambiguities, and impact on tool references.
 
-A especificação não define que todos os labels genéricos devam ser renomeados. Labels automáticos podem permanecer adequados para dados opacos ou de baixo valor de manutenção.
+This specification does not define that all generic labels must be renamed. Automatic labels may remain adequate for opaque or low-maintenance-value data.
 
-## 10. Verificação futura e não autorização
+## 10. Future verification and non-authorization
 
-A renomeação tem como invariante esperado não alterar o conteúdo binário, mas esse fato só pode ser declarado como **verificado** após uma verificação autorizada. Não alegar equivalência byte a byte apenas porque a mudança foi planejada como simbólica.
+Renaming has expected invariant of not altering binary content, but this fact can only be declared **verified** after authorized verification. Do not claim byte-for-byte equivalence merely because change was planned as symbolic.
 
-Uma fase posterior, sob gate explícito, deve decidir como verificar:
+A later phase, under explicit gate, must decide how to verify:
 
-- ausência de alterações de dados/opcodes/endereços;
-- integridade das referências entre symbols e ferramentas;
-- regeneração consistente dos fontes;
-- equivalência do artefato, se isso for permitido e relevante.
+- absence of data/opcode/address changes;
+- symbol/tool reference integrity;
+- consistent source regeneration;
+- artifact equivalence, if permitted and relevant.
 
-Esta especificação, o plano global ou a presença de scripts existentes não autorizam executar gerador, assembler/linker, build, Mesen, MAME, testes de regressão/realocação ou validação manual.
+This specification, global plan, or presence of existing scripts does not authorize executing generator, assembler/linker, build, Mesen, MAME, regression/relocation tests, or manual validation.
 
-## 11. Arquivos e preservação
+## 11. Files and preservation
 
-Para a execução futura, arquivos potencialmente alteráveis ficam limitados a:
+For future execution, potentially alterable files are limited to:
 
-- fonte canônica de símbolos aprovada pela Fase 2 (atualmente `annotations/sf2ne.ann`, se a decisão mantiver esse fluxo);
-- `src/` apenas como saída gerada por ferramenta autorizada, nunca edição manual;
+- Phase 2-approved symbol canonical source (currently `annotations/sf2ne.ann`, if decision keeps this flow);
+- `src/` only as output generated by authorized tool, never manual editing;
 - `tasks/NAMING_CANDIDATES.md`;
-- `docs/ESTADO_DO_PROJETO.md` para a métrica de resultado.
+- `docs/PROJECT_STATUS.md` for resulting metric.
 
-Não alterar código de `tools/`, assets, configuração de build, ROM ou documentos de escopo do personagem. Registrar e preservar qualquer modificação local preexistente; não usar operações destrutivas (`clean`, `reset`, `restore` ou equivalentes).
+Do not alter `tools/` code, assets, build configuration, ROM, or character scope documents. Register and preserve any preexisting local modification; do not use destructive operations (`clean`, `reset`, `restore`, or equivalents).
 
-## 12. Critérios de aceite da Fase 3
+## 12. Phase 3 acceptance criteria
 
-- [ ] Gates de Fases 0, 1 e 2 concluídos e decisões de fonte canônica disponíveis.
-- [ ] A métrica inicial foi reconciliada e seu método congelado para comparação antes/depois.
-- [ ] Há inventário de candidatos com endereço, label atual, nome proposto, categoria, evidência, confiança e prioridade.
-- [ ] Lotes P0/P1 são limitados, revisáveis e baseados em evidência; P3 permanece sem renomeação definitiva.
-- [ ] Convenções de nomes estão registradas e não contradizem a fonte canônica aprovada.
-- [ ] A fonte de symbols foi alterada apenas após autorização expressa e `src/` não foi editado à mão.
-- [ ] Nenhum byte de dados/código, endereço, fluxo de jogo ou conteúdo de personagem foi intencionalmente alterado.
-- [ ] Não há alegação de equivalência binária/teste aprovado sem verificação autorizada e evidência reportada.
-- [ ] O resultado usa a mesma definição de métrica da Fase 1 e reporta categorias separadamente.
-- [ ] Nenhum personagem, funcionalidade, IA de Ken, conversor ou refatoração de kernel foi iniciado.
-- [ ] Nenhum build, teste, emulador ou alteração de ROM foi executado sem autorização própria.
-- [ ] Alterações locais preexistentes foram preservadas.
+- [ ] Gates of Phases 0, 1, and 2 completed and canonical source decisions available.
+- [ ] Initial metric reconciled and method frozen for before/after comparison.
+- [ ] Candidate inventory with address, current label, proposed name, category, evidence, confidence, and priority exists.
+- [ ] P0/P1 batches limited, reviewable, and evidence-based; P3 without definitive rename.
+- [ ] Naming conventions registered and not contradicting approved canonical source.
+- [ ] Symbol source changed only after explicit authorization and `src/` not hand-edited.
+- [ ] No data/code byte, address, game flow, or character content intentionally altered.
+- [ ] No binary equivalence/test approval claim without authorized verification and reported evidence.
+- [ ] Result uses same Phase 1 metric definition and reports categories separately.
+- [ ] No character, feature, Ken AI, converter, or kernel refactoring started.
+- [ ] No build/test/emulator or ROM change executed without own authorization.
+- [ ] Preexisting local changes preserved.
 
-## 13. Relatório futuro do Engineer
+## 13. Future Engineer report
 
-Ao concluir um lote autorizado, relatar:
+Upon concluding an authorized batch, report:
 
-1. arquivos alterados e fonte canônica usada;
-2. símbolos renomeados por banco/endereço e função proposta;
-3. evidência/confiança de cada nome ou referência ao inventário;
-4. métricas anteriores e posteriores obtidas pelo mesmo método;
-5. ambiguidades adiadas e evidência que faltou;
-6. efeitos em símbolos consumidos por ferramentas/documentos;
-7. comandos/validações executados somente se autorizados, incluindo resultados e artefatos;
-8. declaração explícita de preservação das alterações locais e de que nenhum escopo de gameplay foi ampliado.
+1. altered files and canonical source used;
+2. symbols renamed by bank/address and proposed function;
+3. evidence/confidence for each name or reference to inventory;
+4. before/after metrics obtained by same method;
+5. deferred ambiguities and missing evidence;
+6. effects on symbols consumed by tools/documents;
+7. commands/validations executed only if authorized, including results and artifacts;
+8. explicit statement of local change preservation and that no gameplay scope was expanded.

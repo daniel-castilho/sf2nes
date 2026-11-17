@@ -1,86 +1,80 @@
-# Mapa de RAM (o que já é conhecido)
+# RAM map (what is known so far)
 
-A lista completa de endereços usados, com contagem de leituras/escritas, está em `src/ram.inc` (gerado) e, com
-**quais instruções** tocam cada endereço, em `trace/ram.txt`. Aqui ficam só as variáveis identificadas.
+The full list of used addresses, with read/write counts, is in `src/ram.inc` (generated) and, with **which instructions** touch each address, in `trace/ram.txt`. Here only identified variables are listed.
 
-Como foram achadas: despejo da RAM a cada quadro durante partidas inteiras (`SF2_RAMDUMP=1`), cruzado com os
-screenshots, mais leitura do código que as usa. Para confirmar uma hipótese, force o valor no emulador
-(`SF2_HOLD="endereço:valor:de:até"`) e veja o que muda.
+How they were found: RAM dump every frame during full matches (`SF2_RAMDUMP=1`), cross-referenced with screenshots, plus reading code that uses them. To confirm a hypothesis, force the value in the emulator (`SF2_HOLD="address:value:from:to"`) and see what changes.
 
-## Lutadores — vetores de 2 posições (`,x` com X = 0 para P1, 1 para P2)
+## Fighters — 2-position vectors (`,x` with X = 0 for P1, 1 for P2)
 
-| Endereço | Nome | Significado |
-|---|---|---|
-| `$00` | `FighterChar` | personagem (0 = Ryu; `$FF` = nenhum) |
-| `$02` | `FighterIsCpu` | 0 = humano, 1 = CPU. `MainLoop` fixa P1 = 0, P2 = 1 |
-| `$04` | `FighterFlip` | `$40` = espelhado (olhando para a esquerda) |
-| `$06` / `$08` | `FighterXSub` / `FighterX` | posição X (fração / pixel). Início do round: `$5A` e `$A6` |
-| `$0A` / `$0C` | `FighterYSub` / `FighterY` | posição Y. Chão = `$CD` |
-| `$0E` | `FighterHP` | energia. Cheia = `$58` (88); negativa = nocauteado |
-| `$10` | `FighterWins` | rounds vencidos |
-| `$14` | `FighterDmgPending` | dano ainda não descontado (a barra desce aos poucos) |
-| `$18` | `FighterFrameBank` | banco dos frames (janela `$8000`) |
-| `$1A` | `FighterStateBank` | banco dos estados (janela `$A000`) |
-| `$1E` / `$20` | `FighterStatePtrLo/Hi` | estado atual (cabeçalho no banco de estados) |
-| `$22` / `$24` | `FighterNextPtrLo/Hi` | próximo estado escolhido por `StateCheckTransitions` |
-| `$26` | `FighterState` | byte do estado: 5 bits altos = classe, 3 baixos = flags |
-| `$2A` / `$2C` | `FighterFramePtrLo/Hi` | quadro de animação atual |
-| `$30` / `$32` | `FighterVelXSub` / `FighterVelX` | velocidade X (com sinal) |
-| `$34` / `$36` | `FighterVelYSub` / `FighterVelY` | velocidade Y |
-| `$40` | `FighterChrPage` | página de CHR dos sprites do lutador (vai para `$5121` / `$5123`) |
-| `$42` | `FighterAnimTimer` | quadros restantes do quadro de animação atual |
-| `$69` / `$6B` | `AiScriptPtrLo/Hi` | roteiro de IA em execução |
+| Address | Name | Meaning |
+|---------|------|---------|
+| `$00` | `FighterChar` | character (0 = Ryu; `$FF` = none) |
+| `$02` | `FighterIsCpu` | 0 = human, 1 = CPU. `MainLoop` fixes P1 = 0, P2 = 1 |
+| `$04` | `FighterFlip` | `$40` = mirrored (facing left) |
+| `$06` / `$08` | `FighterXSub` / `FighterX` | X position (fraction / pixel). Round start: `$5A` and `$A6` |
+| `$0A` / `$0C` | `FighterYSub` / `FighterY` | Y position. Ground = `$CD` |
+| `$0E` | `FighterHP` | energy. Full = `$58` (88); negative = knocked out |
+| `$10` | `FighterWins` | rounds won |
+| `$14` | `FighterDmgPending` | damage not yet deducted (bar goes down gradually) |
+| `$18` | `FighterFrameBank` | frame bank (window `$8000`) |
+| `$1A` | `FighterStateBank` | state bank (window `$A000`) |
+| `$1E` / `$20` | `FighterStatePtrLo/Hi` | current state (header in state bank) |
+| `$22` / `$24` | `FighterNextPtrLo/Hi` | next state chosen by `StateCheckTransitions` |
+| `$26` | `FighterState` | state byte: 5 high bits = class, 3 low bits = flags |
+| `$2A` / `$2C` | `FighterFramePtrLo/Hi` | current animation frame |
+| `$30` / `$32` | `FighterVelXSub` / `FighterVelX` | X velocity (signed) |
+| `$34` / `$36` | `FighterVelYSub` / `FighterVelY` | Y velocity |
+| `$40` | `FighterChrPage` | CHR page of fighter sprites (goes to `$5121` / `$5123`) |
+| `$42` | `FighterAnimTimer` | frames remaining in current animation frame |
+| `$69` / `$6B` | `AiScriptPtrLo/Hi` | AI script being executed |
 
-Ainda sem nome, mas claramente por lutador (pares): `$12`, `$16`, `$1C`, `$28`, `$2E`, `$38`, `$3A`–`$3F`, `$44`–`$63`,
-`$6D`–`$A9` (inclui o estado do reconhecedor de comandos: `CmdMotionStep` `$90`–`$9B` e `CmdMotionWin`
-`$9E`–`$A9`, 6 entradas × 2 lutadores intercaladas — §13 do `docs/FORMATOS.md`), e `$0300`–`$0345`
-(ficha carregada do banco `$3C`).
+Still unnamed, but clearly per fighter (pairs): `$12`, `$16`, `$1C`, `$28`, `$2E`, `$38`, `$3A`–`$3F`, `$44`–`$63`, `$6D`–`$A9` (includes command recognizer state: `CmdMotionStep` `$90`–`$9B` and `CmdMotionWin` `$9E`–`$A9`, 6 entries × 2 fighters interleaved — §13 of `docs/FORMATS.md`), and `$0300`–`$0345` (fiche loaded from bank `$3C`).
 
-## Sistema
+## System
 
-| Endereço | Nome | Significado |
-|---|---|---|
-| `$64` / `$65` | `CurFighter` / `OtherFighter` | índices do lutador sendo processado e do oponente |
-| `$66`–`$68` | `RngState` | gerador pseudo-aleatório (`RandomSeed` põe `"2FS"`) |
-| `$AC` | `VBlankFlag` | o NMI põe 1; os laços de tela esperam por ela |
-| `$AD` | `OamIndex` | próximo byte livre da OAM neste quadro |
-| `$B0` | `ScreenMode` | 0 aviso, 1 título, 2 seleção, 3 VS, 4 intro do round, 5 luta, 6 fim do round, 7 frase |
-| `$B1` | `FrameCounter` | incrementado no NMI |
-| `$B4` | `AiLevel` | nível da IA (0–7). `MainLoop` fixa 7 |
-| `$B5` | `TimerOff` | ≠ 0 desliga o relógio (**hipótese**; sempre 0 no demo) |
-| `$B6` / `$B7` | `RoundStep` / `RoundStepTimer` | passo e contador das sequências de intro e fim de round |
-| `$B8` | `RoundNumber` | 0 = primeiro round |
-| `$B9` | `RoundResult` | `$FF` em andamento, 0 = P1 venceu, 1 = P2 venceu, 2 = empate |
-| `$BA` / `$BB` | `TimerOnes` / `TimerTens` | dígitos do relógio |
-| `$BC`–`$D3` | `PaletteBuf` | 24 cores (8 paletas × 3) |
-| `$D4` | `PaletteDirty` | ≠ 0: o NMI envia a paleta |
-| `$D5`–`$E4` | — | temporários de uso geral (ponteiros, coordenadas, argumentos) |
-| `$ED` / `$EE` | `PpuCtrlShadow` / `PpuMaskShadow` | cópias de `$2000` / `$2001` |
-| `$EF` / `$F0` | `ScrollX` / `ScrollY` | rolagem |
-| `$F2` | `JoyState` (×2) | botões apertados agora |
-| `$F6` | `JoyPrev` (×2) | botões do quadro anterior |
-| `$FA`–`$FD` | `RlePtr`, `RleTag`, `RleLast` | descompactador RLE |
+| Address | Name | Meaning |
+|---------|------|---------|
+| `$64` / `$65` | `CurFighter` / `OtherFighter` | indexes of fighter being processed and opponent |
+| `$66`–`$68` | `RngState` | pseudo-random generator (`RandomSeed` sets `"2FS"`) |
+| `$AC` | `VBlankFlag` | NMI sets 1; screen loops wait for it |
+| `$AD` | `OamIndex` | next free OAM byte this frame |
+| `$B0` | `ScreenMode` | 0 warning, 1 title, 2 selection, 3 VS, 4 round intro, 5 fight, 6 end of round, 7 quote |
+| `$B1` | `FrameCounter` | incremented in NMI |
+| `$B4` | `AiLevel` | AI level (0–7). `MainLoop` fixes 7 |
+| `$B5` | `TimerOff` | ≠ 0 disables clock (**hypothesis**; always 0 in demo) |
+| `$B6` / `$B7` | `RoundStep` / `RoundStepTimer` | step and counter of intro and end-of-round sequences |
+| `$B8` | `RoundNumber` | 0 = first round |
+| `$B9` | `RoundResult` | `$FF` in progress, 0 = P1 won, 1 = P2 won, 2 = draw |
+| `$BA` / `$BB` | `TimerOnes` / `TimerTens` | clock digits |
+| `$BC`–`$D3` | `PaletteBuf` | 24 colors (8 palettes × 3) |
+| `$D4` | `PaletteDirty` | ≠ 0: NMI sends palette |
+| `$D5`–`$E4` | — | general-purpose temporaries (pointers, coordinates, arguments) |
+| `$ED` / `$EE` | `PpuCtrlShadow` / `PpuMaskShadow` | copies of `$2000` / `$2001` |
+| `$EF` / `$F0` | `ScrollX` / `ScrollY` | scrolling |
+| `$F2` | `JoyState` (×2) | buttons pressed now |
+| `$F6` | `JoyPrev` (×2) | buttons from previous frame |
+| `$FA`–`$FD` | `RlePtr`, `RleTag`, `RleLast` | RLE decompressor |
 
-Bits do controle: A `$80`, B `$40`, Select `$20`, Start `$10`, Cima `$08`, Baixo `$04`, Esquerda `$02`, Direita `$01`.
+Controller bits: A `$80`, B `$40`, Select `$20`, Start `$10`, Up `$08`, Down `$04`, Left `$02`, Right `$01`.
 
-## Páginas `$01`–`$07`
+## Pages `$01`–`$07`
 
-| Faixa | Uso |
-|---|---|
-| `$0100`–`$018B` | variáveis do FamiTone2 (`FT_BASE_ADR = $0100`); a pilha usa o topo da página |
-| `$0200`–`$02FF` | `OamBuf` — cópia da OAM |
-| `$0300`–`$0345` | ficha dos lutadores (ponteiros de estados básicos), pares P1/P2 |
-| `$034E`–`$0389` | buffer de retrato |
-| `$0392`–`$03AD` | textos do HUD escritos pelo IRQ de menu |
-| `$03B6` / `$03B7` | `CameraX` (fração / pixel) |
-| `$03BB` | `FloorLines` — linhas do chão em paralaxe |
-| `$03BF`… / `$03DF`… | `FloorScrollX` — rolagem de cada linha do chão |
-| `$03FF` | `IrqStage` — etapa atual do IRQ |
-| `$0400`–`$040B` | parâmetros da divisão de tela |
-| `$040C` | `HitStop` — congelamento após um golpe |
-| `$0426`–`$043A` | tiles das barras de energia |
-| `$045E` | `VoiceQueued` — voz a tocar / continuação (`$FF` = nenhuma) |
+| Range | Use |
+|-------|-----|
+| `$0100`–`$018B` | FamiTone2 variables (`FT_BASE_ADR = $0100`); stack uses page top |
+| `$0200`–`$02FF` | `OamBuf` — OAM copy |
+| `$0300`–`$0345` | fighter fiche (basic state pointers), P1/P2 pairs |
+| `$034E`–`$0389` | portrait buffer |
+| `$0392`–`$03AD` | HUD texts written by menu IRQ |
+| `$03B6` / `$03B7` | `CameraX` (fraction / pixel) |
+| `$03BB` | `FloorLines` — parallax ground lines |
+| `$03BF`… / `$03DF`… | `FloorScrollX` — scroll of each ground line |
+| `$03FF` | `IrqStage` — current IRQ step |
+| `$0400`–`$040B` | split-screen parameters |
+| `$040C` | `HitStop` — freeze after a hit |
+| `$0426`–`$043A` | energy bar tiles |
+| `$045E` | `VoiceQueued` — voice to play / continuation (`$FF` = none) |
 | `$045F` | `MusicBank` |
-| `$046B`–`$047E` | extensões do FamiTone2 (slides) |
-| `$0485`–`$049C` | `FadePalette` — paleta de destino do fade |
-| `$049E`–`$04B1` | `FarCall` — trampolim das chamadas entre bancos (código na RAM) |
+| `$046B`–`$047E` | FamiTone2 extensions (slides) |
+| `$0485`–`$049C` | `FadePalette` — fade target palette |
+| `$049E`–`$04B1` | `FarCall` — inter-bank call trampoline (code in RAM) |

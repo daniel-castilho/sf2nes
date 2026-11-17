@@ -1,249 +1,249 @@
-# Especificação técnica — Fase 1: auditoria reproduzível do estado atual
+# Technical specification — Phase 1: reproducible audit of current state
 
-**Status:** pronta para o Software Engineer executar após o gate de entrada.  
-**Projeto:** Street Fighter II NE (`daniel-castilho/sf2nes`).  
-**Origem:** Fase 1 de `tasks/PROJECT_STABILIZATION_EXECUTION_PLAN.md`.  
-**Pré-requisito:** Fase 0 concluída e aceita conforme `tasks/PHASE_0_SCOPE_FREEZE_SPEC.md`.  
-**Tipo de trabalho:** inspeção estática e documentação da linha de base.  
-**Build, compilação, execução da ROM, testes, emulador e alterações de código:** fora do escopo e não autorizados por esta especificação.
+**Status:** ready for the Software Engineer to execute after entry gate.  
+**Project:** Street Fighter II NE (`daniel-castilho/sf2nes`).  
+**Origin:** Phase 1 of `tasks/PROJECT_STABILIZATION_EXECUTION_PLAN.md`.  
+**Prerequisite:** Phase 0 completed and accepted per `tasks/PHASE_0_SCOPE_FREEZE_SPEC.md`.  
+**Type of work:** static inspection and baseline documentation.  
+**Build, compilation, ROM execution, tests, emulator, and code changes:** out of scope and not authorized by this specification.
 
-## 1. Objetivo
+## 1. Objective
 
-Produzir um retrato verificável e datado do estado do repositório, das fontes de verdade, dos indicadores de nomenclatura, da ocupação de bancos tal como documentada, dos utilitários de validação existentes e das divergências entre documentos.
+Produce a verifiable, dated portrait of repository state, sources of truth, naming indicators, bank occupancy as documented, existing validation utilities, and document divergences.
 
-A auditoria deve permitir que as próximas fases tomem decisões com base em dados reproduzíveis, sem confundir:
+The audit must allow later phases to make decisions based on reproducible data, without confusing:
 
-- contagens atuais com números históricos publicados;
-- código com dados;
-- labels gerados por endereço com nomes semânticos;
-- scripts existentes com testes aprovados;
-- documentação de validação com validação executada;
-- trabalho planejado com trabalho autorizado ou concluído.
+- current counts with historical published numbers;
+- code with data;
+- address-generated labels with semantic names;
+- existing scripts with approved tests;
+- validation documentation with executed validation;
+- planned work with authorized or completed work.
 
-## 2. Resultado exigido
+## 2. Required output
 
-Criar um documento principal:
+Create a main document:
 
-- `docs/ESTADO_DO_PROJETO.md`
+- `docs/PROJECT_STATUS.md`
 
-O documento deve ser suficiente para alguém repetir as contagens puramente textuais usando o critério descrito nesta especificação e entender o que ficou sem confirmação por exigir build, execução ou inspeção fora do escopo.
+The document must be sufficient for someone to repeat purely textual counts using the criterion described in this specification and understand what remains unconfirmed because it requires build, execution, or out-of-scope inspection.
 
-Opcionalmente, atualizar somente os estados/links correspondentes em:
+Optionally, update only corresponding states/links in:
 
-- `tasks/STABILIZATION_BACKLOG.md`, se o arquivo já existir por conclusão da Fase 0.
+- `tasks/STABILIZATION_BACKLOG.md`, if the file already exists by Phase 0 conclusion.
 
-Não corrigir divergências em outros documentos nesta fase. Registrá-las no relatório para priorização pela fase documental posterior.
+Do not correct divergences in other documents in this phase. Register them in the report for prioritization by the later documentary phase.
 
-## 3. Gate de entrada e preservação da árvore
+## 3. Entry gate and tree preservation
 
-Antes de iniciar, o Engineer deve:
+Before starting, the Engineer must:
 
-1. confirmar que a Fase 0 foi aceita; se não foi, parar e reportar o bloqueio, sem executar a auditoria;
-2. registrar data/hora local, hash do commit (`HEAD`) e estado resumido da árvore de trabalho;
-3. separar arquivos modificados/não rastreados preexistentes dos arquivos produzidos pela tarefa;
-4. preservar todas as alterações existentes. É proibido usar `clean`, `reset`, `restore`, checkout destrutivo ou ação equivalente;
-5. ler as versões atuais dos documentos de entrada listados na §4, não confiar em transcrições antigas da conversa.
+1. confirm Phase 0 was accepted; if not, stop and report the block, without executing the audit;
+2. record local date/time, commit hash (`HEAD`) and working tree summary state;
+3. separate preexisting modified/untracked files from files produced by the task;
+4. preserve all existing changes. It is forbidden to use `clean`, `reset`, `restore`, destructive checkout, or equivalent;
+5. read current versions of input documents listed in §4, not trusting old conversation transcriptions.
 
-Se um arquivo de saída já existir, não substituí-lo integralmente: comparar, manter conteúdo local e acrescentar/atualizar apenas a seção pertinente, registrando a divergência.
+If an output file already exists, do not replace it entirely: compare, keep local content, and add/update only the relevant section, registering the divergence.
 
-## 4. Fontes a inspecionar
+## 4. Sources to inspect
 
-### 4.1 Núcleo do projeto
+### 4.1 Project core
 
 - `README.md`
 - `Makefile`
 - `sf2ne.cfg`
 - `annotations/sf2ne.ann`
-- `src/bank_*.s` e `src/*.inc`
-- `docs/ARQUITETURA.md`
-- `docs/FORMATOS.md`
+- `src/bank_*.s` and `src/*.inc`
+- `docs/ARCHITECTURE.md`
+- `docs/FORMATS.md`
 - `docs/RAM.md`
-- `docs/ROTEIRO.md`
+- `docs/ROADMAP.md`
 - `docs/BUGS.md`
-- `docs/FERRAMENTAS.md`
+- `docs/TOOLS.md`
 
-### 4.2 Ferramentas e documentos de trabalho
+### 4.2 Tools and working documents
 
-- `tools/` e `tools/mesen/` — leitura de nomes, argumentos, entradas/saídas e comentários; **não executar**;
+- `tools/` and `tools/mesen/` — reading names, arguments, inputs/outputs, and comments; **do not execute**;
 - `tasks/PROJECT_STABILIZATION_EXECUTION_PLAN.md`;
 - `tasks/PHASE_0_SCOPE_FREEZE_SPEC.md`;
-- `tasks/STABILIZATION_BACKLOG.md`, se existente;
-- especificações de Ken, Guile e REA arcade, apenas para detectar restrições/duplicações de escopo; não alterar conteúdo destas especificações.
+- `tasks/STABILIZATION_BACKLOG.md`, if existing;
+- Ken, Guile, and arcade REA specifications, only to detect scope restrictions/duplications; do not alter content of these specifications.
 
-Não inspecionar ou executar a ROM arcade nesta fase. A REA arcade é uma trilha separada.
+Do not inspect or execute the arcade ROM in this phase. Arcade REA is a separate track.
 
-## 5. Procedimento da auditoria
+## 5. Audit procedure
 
-### 5.1 Proveniência e estado da árvore
+### 5.1 Provenance and tree state
 
-No cabeçalho de `docs/ESTADO_DO_PROJETO.md`, registrar:
+In `docs/PROJECT_STATUS.md` header, register:
 
-- data da auditoria;
-- commit `HEAD` examinado;
-- se a árvore estava limpa ou modificada;
-- quais áreas/arquivos tinham alterações locais relevantes, sem atribuí-las à auditoria;
-- limitações de escopo: nenhuma montagem, execução, emulação ou teste realizado nesta auditoria.
+- audit date;
+- `HEAD` commit examined;
+- whether tree was clean or modified;
+- which areas/files had relevant local changes, without attributing them to the audit;
+- scope limitations: no assembly, execution, emulation, or testing performed in this audit.
 
-Não incluir credenciais, conteúdo de configuração sensível, caminhos privados de usuário ou valores de segredos.
+Do not include credentials, sensitive configuration content, private user paths, or secret values.
 
-### 5.2 Inventário de fontes de verdade e artefatos gerados
+### 5.2 Inventory of sources of truth and generated artifacts
 
-Montar tabela com colunas:
+Build a table with columns:
 
-| Área | Fonte canônica declarada | Arquivo/artefato gerado ou derivado | Método atual de atualização | Observação/risco |
+| Area | Declared canonical source | Generated/derived file/artifact | Current update method | Observation/risk |
 
-Cobrir, no mínimo:
+Cover at minimum:
 
-- labels/comentários/correções e `annotations/sf2ne.ann`;
-- gerador e arquivos `src/`;
-- configuração e fluxo de build;
-- dados/estruturas de estados e quadros;
-- assets fonte versus `extracted/`;
-- ROM de referência e ROMs de saída/versionadas;
-- scripts de trace/validação e seus artefatos de evidência.
+- labels/comments/corrections and `annotations/sf2ne.ann`;
+- generator and `src/` files;
+- build configuration and flow;
+- state/frame data and structures;
+- source assets vs `extracted/`;
+- reference ROM and output/versioned ROMs;
+- trace/validation scripts and their evidence artifacts.
 
-Quando os documentos discordarem sobre a fonte canônica, registrar a divergência; não escolher uma nova fonte por inferência.
+When documents disagree about canonical source, register divergence; do not choose a new source by inference.
 
-### 5.3 Métricas de labels
+### 5.3 Label metrics
 
-Calcular as métricas a partir dos arquivos-fonte gerados atualmente em `src/`, sem executar o gerador nem o assembler. Registrar o método exato (glob, parser/regex, exclusões e versão do comando/script utilizado) para possibilitar repetição.
+Calculate metrics from currently generated source files in `src/`, without executing generator or assembler. Register exact method (glob, parser/regex, exclusions, command/script version used) to allow repetition.
 
-Relatar separadamente:
+Report separately:
 
-1. **definições de labels globais** encontradas em `src/bank_*.s`;
-2. **ocorrências totais** e **nomes únicos** — não assumir que são iguais;
-3. labels gerados a partir de endereços, no padrão exato definido pelo gerador (por exemplo, famílias de código `L<bank>_<address>` e dados `D<bank>_<address>`); confirmar o padrão no gerador antes de contar;
-4. labels semânticos, definidos para esta auditoria como labels globais que não correspondem ao padrão automático de banco/endereço confirmado na etapa anterior;
-5. contagem por banco e por categoria, distinguindo código/dado apenas quando a classificação puder ser sustentada pelas annotations/gerador; caso contrário, registrar categoria `não classificada`;
-6. labels locais/temporários, labels anônimos, constantes e símbolos de RAM como categorias separadas ou explicitamente fora da métrica principal.
+1. **global label definitions** found in `src/bank_*.s`;
+2. **total occurrences** and **unique names** — do not assume they are equal;
+3. labels generated from addresses, in exact generator-defined pattern (e.g., code families `L<bank>_<address>` and data `D<bank>_<address>`); confirm pattern in generator before counting;
+4. semantic labels, defined for this audit as global labels not matching the confirmed automatic bank/address pattern;
+5. count by bank and category, distinguishing code/data only when classification can be sustained by annotations/generator; otherwise register category `unclassified`;
+6. local/temporary labels, anonymous labels, constants, and RAM symbols as separate categories or explicitly out of main metric.
 
-Regras:
+Rules:
 
-- Não usar o número publicado no README como resultado atual sem recalcular.
-- Não somar categorias sobrepostas nem usar o total de labels como medida única de qualidade.
-- Se houver label duplicado entre bancos, informar ocorrências e símbolos únicos separadamente.
-- Não criar uma ferramenta permanente nem modificar `tools/` nesta fase. Se não for possível obter uma métrica reproduzível por inspeção textual simples, descrever o bloqueio e propor uma ferramenta numa decisão futura; não improvisar um parser que altere ou gere fontes.
-- Não renomear nenhum label.
+- Do not use README's published number as current result without recalculating.
+- Do not sum overlapping categories nor use total labels as single quality measure.
+- If a label is duplicated across banks, report occurrences and unique symbols separately.
+- Do not create a permanent tool nor modify `tools/` in this phase. If a reproducible metric cannot be obtained by simple textual inspection, describe the block and propose a tool in a future decision; do not improvise a parser that alters or generates sources.
+- Do not rename any label.
 
-### 5.4 Ocupação de bancos e espaço
+### 5.4 Bank occupancy and space
 
-Registrar o mapa publicado em `docs/ARQUITETURA.md` e `docs/ROTEIRO.md`, incluindo:
+Register published map in `docs/ARCHITECTURE.md` and `docs/ROADMAP.md`, including:
 
-- bancos descritos como código, dados, assets, música ou vazios;
-- valores publicados de bytes livres/ocupados, quando existirem;
-- o método e a evidência histórica que sustentam cada número, se documentados;
-- divergências entre os documentos.
+- banks described as code, data, assets, music, or empty;
+- published free/occupied byte values, when existing;
+- method and historical evidence sustaining each number, if documented;
+- divergences between documents.
 
-Como não é permitido compilar/linkar nem executar a ROM, **não recalcular ocupação a partir de um novo mapa de linker, não gerar build e não declarar o espaço atual revalidado**. Identificar os valores como “publicados na documentação, não revalidados nesta auditoria” quando não houver uma fonte estática atual suficiente.
+As compiling/linking nor ROM execution is not allowed, **do not recalculate occupancy from a new linker map, do not generate build, and do not declare current space revalidated**. Identify values as "published in documentation, not revalidated in this audit" when no current static source is sufficient.
 
-Separar claramente:
+Clearly separate:
 
-- limitação local de um banco específico (por exemplo, código concentrado no banco `$3B`);
-- capacidade total restante do PRG;
-- requisitos de kernel/vetores que condicionam a colocação de código;
-- afirmações de datas diferentes ou de versões/builds distintas.
+- specific bank local limitation (e.g., code concentrated in bank `$3B`);
+- total remaining PRG capacity;
+- kernel/vector requirements conditioning code placement;
+- statements of different dates or versions/builds.
 
-### 5.5 Inventário de scripts e alegações de validação
+### 5.5 Script inventory and validation claims
 
-Ler `tools/mesen/`, `tools/` e documentos que referenciam build/regressão/realocação/testes. Não executar scripts.
+Read `tools/mesen/`, `tools/` and documents referencing build/regression/relocation/tests. Do not execute scripts.
 
-Para cada item identificado, registrar:
+For each identified item, register:
 
-| Ferramenta/script | Finalidade declarada | Inputs/outputs inferidos pela leitura | Cenário/afirmação coberta | Evidência de execução existente | Status auditado |
+| Tool/script | Declared purpose | Inferred inputs/outputs from reading | Covered scenario/claim | Existing execution evidence | Audited status |
 
-Usar estados controlados:
+Use controlled states:
 
-- `EXISTE — não executado nesta auditoria`;
-- `EXECUÇÃO HISTÓRICA DOCUMENTADA` (somente se houver registro verificável nos documentos/artefatos já presentes);
-- `STATUS DESCONHECIDO`;
-- `DOCUMENTADO, ARTEFATO AUSENTE`.
+- `EXISTS — not executed in this audit`;
+- `DOCUMENTED HISTORICAL EXECUTION` (only if verifiable record exists in present documents/artifacts);
+- `UNKNOWN STATUS`;
+- `DOCUMENTED, ARTIFACT ABSENT`.
 
-Não transformar presença do script em aprovação. Não rodar Mesen/MAME, scripts shell, assembler/linker, `make`, regressão, teste de shift/realocação ou teste manual. Não produzir ROM, mapa, trace ou vídeo novo.
+Do not turn script presence into approval. Do not run Mesen/MAME, shell scripts, assembler/linker, `make`, regression, shift/relocation test, or manual test. Do not produce new ROM, map, trace, or video.
 
-### 5.6 Matriz de consistência documental
+### 5.6 Documentary consistency matrix
 
-Comparar README, roteiro, arquitetura, formatos, RAM, bugs, ferramentas e especificações de tarefa. Para cada conflito ou ambiguidade relevante, registrar:
+Compare README, roadmap, architecture, formats, RAM, bugs, tools, and task specifications. For each relevant conflict or ambiguity, register:
 
-| ID | Afirmação/assunto | Documento A | Documento B | Categoria | Risco | Proposta de destino |
+| ID | Claim/subject | Document A | Document B | Category | Risk | Proposed destination |
 
-Categorias mínimas:
+Minimum categories:
 
-- status/escopo;
-- contagem/métrica;
-- fonte de verdade/geração;
-- capacidade de banco/build;
-- formato/semântica;
-- validação/teste;
-- restrição de personagem/IA.
+- status/scope;
+- count/metric;
+- source of truth/generation;
+- bank/build capacity;
+- format/semantics;
+- validation/test;
+- character/IA restriction.
 
-A auditoria não deve corrigir estes documentos. O campo “proposta de destino” é recomendação, não decisão aprovada. Não marcar interpretação como fato se as fontes não permitirem resolvê-la.
+The audit must not correct these documents. "Proposed destination" field is recommendation, not approved decision. Do not mark interpretation as fact if sources do not allow resolving it.
 
-### 5.7 Backlog e decisões pendentes
+### 5.7 Backlog and pending decisions
 
-Se `tasks/STABILIZATION_BACKLOG.md` existir, atualizar somente:
+If `tasks/STABILIZATION_BACKLOG.md` exists, update only:
 
-- status da Fase 1 para `AUDITORIA CONCLUÍDA — DOCUMENTO ENTREGUE`, sem indicar testes aprovados;
-- links relativos para o novo relatório;
-- decisões D-01–D-07 com estado/evidência apenas quando a auditoria trouxer informação, preservando-as como pendentes até decisão do Mantenedor.
+- Phase 1 status to `AUDIT COMPLETED — DOCUMENT DELIVERED`, without indicating approved tests;
+- relative links to new report;
+- decisions D-01–D-07 with state/evidence only when audit brings information, preserving them as pending until Maintainer decision.
 
-Se o backlog não existir porque a Fase 0 não foi executada, isso é bloqueio de entrada; não criar o backlog em nome da Fase 0 dentro desta tarefa.
+If backlog does not exist because Phase 0 was not executed, this is entry block; do not create backlog on behalf of Phase 0 within this task.
 
-## 6. Estrutura obrigatória de `docs/ESTADO_DO_PROJETO.md`
+## 6. Mandatory `docs/PROJECT_STATUS.md` structure
 
-1. **Metadados da auditoria e limitações** — data, commit, árvore modificada/limpa e atividades não realizadas.
-2. **Resumo executivo** — somente fatos de auditoria; separar itens confirmados de históricos/desconhecidos.
-3. **Fontes de verdade e artefatos gerados**.
-4. **Métricas de labels** — método reproduzível, categorias, totais, limitações.
-5. **Mapa de bancos e capacidade documentada** — status de revalidação explícito.
-6. **Inventário de ferramentas/validações** — sem alegação de aprovação nova.
-7. **Matriz de inconsistências** — IDs estáveis e documentos envolvidos.
-8. **Decisões que permanecem pendentes** — referência ao backlog, se existir.
-9. **Limitações e próximos passos recomendados** — sem implementar ou escolher fonte canônica.
-10. **Índice de fontes** — caminhos relativos internos, método de contagem e arquivos consultados.
+1. **Audit metadata and limitations** — date, commit, modified/clean tree, activities not performed.
+2. **Executive summary** — only audit facts; separate confirmed items from historical/unknown.
+3. **Sources of truth and generated artifacts**.
+4. **Label metrics** — reproducible method, categories, totals, limitations.
+5. **Bank map and documented capacity** — explicit revalidation status.
+6. **Tool/validation inventory** — no new approval claim.
+7. **Inconsistency matrix** — stable IDs and involved documents.
+8. **Pending decisions** — backlog reference, if exists.
+9. **Limitations and recommended next steps** — without implementing or choosing canonical source.
+10. **Source index** — relative internal paths, counting method, consulted files.
 
-## 7. Regras de redação e evidência
+## 7. Writing and evidence rules
 
-Cada declaração significativa deve ser rotulada por contexto, por exemplo:
+Each significant statement must be labeled by context, e.g.:
 
-- **Confirmado por inspeção estática nesta auditoria**;
-- **Publicado anteriormente, não revalidado agora**;
-- **Inferido a partir do nome/estrutura — hipótese**;
-- **Desconhecido/pendente**.
+- **Confirmed by static inspection in this audit**;
+- **Previously published, not revalidated now**;
+- **Inferred from name/structure — hypothesis**;
+- **Unknown/pending**.
 
-Evitar expressões como “testado”, “passa”, “funciona atualmente” ou “validado” sem evidência existente e identificável. Preservar a distinção entre versão de ROM original, builds opcionais e arquivos `.nes` já versionados.
+Avoid expressions like "tested", "passes", "works currently", or "validated" without existing identifiable evidence. Preserve distinction between original ROM version, optional builds, and already-versioned `.nes` files.
 
-## 8. Fora do escopo
+## 8. Out of scope
 
-- Corrigir ou reescrever README, roteiro, arquitetura, formatos, bugs ou especificações; registrar divergências para trabalho posterior.
-- Mudar escopo, resolver decisões pendentes ou autorizar novos personagens/funcionalidades.
-- Alterar annotations, assembly, scripts, ferramentas, assets, configs ou ROMs.
-- Criar ferramentas permanentes de auditoria nesta fase.
-- Executar gerador, assembler, linker, build, Mesen, MAME, testes, regressão, shift/realocação ou validação manual.
-- Inspecionar ou validar a ROM arcade, portar IA ou incorporar dados externos.
+- Correcting or rewriting README, roadmap, architecture, formats, bugs, or specifications; registering divergences for later work.
+- Changing scope, resolving pending decisions, or authorizing new characters/features.
+- Altering annotations, assembly, scripts, tools, assets, configs, or ROMs.
+- Creating permanent audit tools in this phase.
+- Executing generator, assembler, linker, build, Mesen, MAME, tests, regression, shift/relocation, or manual validation.
+- Inspecting or validating arcade ROM, porting AI, or incorporating external data.
 
-## 9. Critérios de aceite
+## 9. Acceptance criteria
 
-- [ ] O gate de entrada da Fase 0 foi verificado; caso contrário, a tarefa foi interrompida e reportada como bloqueada.
-- [ ] `docs/ESTADO_DO_PROJETO.md` existe e contém todas as seções da §6.
-- [ ] As métricas de labels informam método, arquivos, padrões, exclusões, ocorrências e nomes únicos.
-- [ ] Nenhuma métrica de labels depende de número copiado de README/roteiro sem recálculo.
-- [ ] Ocupação de banco está identificada como documental/histórica ou estática atual; nenhum novo mapa de linker foi produzido.
-- [ ] Scripts e validações existentes foram inventariados por leitura, sem execução ou alegação de aprovação.
-- [ ] Divergências têm IDs, referências e proposta; não foram corrigidas silenciosamente.
-- [ ] O status de cada claim distingue confirmação atual, dado histórico, hipótese e desconhecido.
-- [ ] Nenhum arquivo fora da lista de saídas da §2 foi alterado.
-- [ ] Nenhum build, teste, emulador, script de validação ou comando que gere artefatos foi executado.
-- [ ] O estado local preexistente foi preservado.
+- [ ] Phase 0 entry gate verified; otherwise task interrupted and reported as blocked.
+- [ ] `docs/PROJECT_STATUS.md` exists and contains all §6 sections.
+- [ ] Label metrics report method, files, patterns, exclusions, occurrences, and unique names.
+- [ ] No label metric depends on number copied from README/roadmap without recalculation.
+- [ ] Bank occupancy identified as documentary/historical or current static; no new linker map produced.
+- [ ] Existing scripts and validations inventoried by reading, without execution or approval claim.
+- [ ] Divergences have IDs, references, and proposal; not silently corrected.
+- [ ] Each claim status distinguishes current confirmation, historical data, hypothesis, and unknown.
+- [ ] No file outside §2 output list was altered.
+- [ ] No build, test, emulator, validation script, or artifact-generating command was executed.
+- [ ] Preexisting local state preserved.
 
-## 10. Relatório de entrega do Engineer
+## 10. Engineer delivery report
 
-Ao encerrar, o Engineer deve informar:
+Upon closing, the Engineer must inform:
 
-1. confirmação do pré-requisito da Fase 0;
-2. arquivos criados/alterados;
-3. método exato usado para as métricas de labels e resultados por categoria;
-4. quais valores de ocupação são apenas históricos/documentados;
-5. scripts inventariados e status, sem inferir que foram executados;
-6. divergências de maior risco e onde devem ser resolvidas;
-7. decisões que permanecem pendentes;
-8. declaração explícita de que não alterou código/ROM/tools, não compilou, não executou build/teste/emulador e preservou alterações locais.
+1. Phase 0 prerequisite confirmation;
+2. files created/altered;
+3. exact method used for label metrics and results per category;
+4. which occupancy values are only historical/documented;
+5. scripts inventoried and status, without inferring they were executed;
+6. highest-risk divergences and where they should be resolved;
+7. decisions still pending;
+8. explicit statement that code/ROM/tools were not altered, nothing compiled, no build/test/emulator executed, and local changes preserved.

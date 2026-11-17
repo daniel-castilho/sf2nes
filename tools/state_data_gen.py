@@ -1,34 +1,34 @@
 #!/usr/bin/env python3
-"""state_data_gen.py — conversor de estados/quadros do formato declarativo (TOML) para assembly ca65.
+"""state_data_gen.py — converter of states/frames from declarative format (TOML) to ca65 assembly.
 
-Fase 2 — Gate C (implementação da ferramenta). Apenas converte um arquivo de autoria
-declarativo em assembly equivalente aos registros atuais (cabeçalho de estado 7 bytes,
-quadro de animação 14/16 bytes). Não altera annotations, não mexe em src/ manualmente,
-não executa build nem emulador.
+Phase 2 — Gate C (tool implementation). Only converts an authoring file
+declarative into assembly equivalent to current records (7-byte state header,
+animation frame 14/16 bytes). Does not alter annotations, does not touch src/ manually,
+does not run build or emulator.
 
-Uso:
-    python3 tools/state_data_gen.py entrada.toml saida.s
+Usage:
+    python3 tools/state_data_gen.py input.toml output.s
 """
 
 import sys
 import tomllib  # Python 3.11+ stdlib
 
 # ---------------------------------------------------------------------------
-# Limites conhecidos (docs/FORMATOS.md)
+# Limites conhecidos (docs/FORMATS.md)
 # ---------------------------------------------------------------------------
 DURACAO_MIN = 1
 DURACAO_MAX = 100
 
 
 class CampoSimbolico:
-    """Representa um campo que aceita nome simbólico ou inteiro bruto."""
+    """Represents a field that accepts symbolic name or raw integer."""
 
     def __init__(self, simbolo=None, bruto=None):
         self.simbolo = simbolo
         self.bruto = bruto
 
     def emit_byte(self):
-        """Emite o byte para o assembly. Prioriza simbolo se houver, senão bruto."""
+        """Emits the byte for assembly. Prioritizes symbol if present, otherwise raw."""
         if self.bruto is not None:
             return f"${self.bruto & 0xFF:02X}"
         if self.simbolo is not None:
@@ -250,7 +250,7 @@ def converter(toml_path, saida_path):
 
 def main():
     if len(sys.argv) != 3:
-        print("Uso: python3 tools/state_data_gen.py entrada.toml saida.s", file=sys.stderr)
+        print("Usage: python3 tools/state_data_gen.py entrada.toml saida.s", file=sys.stderr)
         sys.exit(1)
     converter(sys.argv[1], sys.argv[2])
 

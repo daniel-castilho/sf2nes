@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Lista, por banco, as faixas que ficaram como DADOS e se foram lidas (R) ou nao (?) no trace."""
+"""Lists, by bank, the ranges that remained as DATA and whether they were read (R) or not (?) in the trace."""
 import sys, os
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from disasm import *
@@ -11,7 +11,7 @@ def main(banks, only_unknown=False, minlen=1):
         for o1, o2 in rgs:
             for o in range(o1, o2 + 1): read[o] = 1
     for b in banks:
-        print('== banco %02X ==' % b)
+        print('== bank %02X ==' % b)
         o = b << 13; end = (b + 1) << 13
         def ffrun(o): return P.prg[o] == 0xFF and all(x == 0xFF for x in P.prg[o:min(o + 16, end)])
         while o < end:

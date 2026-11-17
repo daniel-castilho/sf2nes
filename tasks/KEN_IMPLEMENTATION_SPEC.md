@@ -1,205 +1,205 @@
-# Especificação de implementação — Ken como segundo lutador
+# Implementation specification — Ken as second fighter
 
-**Status:** proposta pronta para implementação, com parâmetros arcade secundários ainda candidatos; consultar §3.1 e não declarar valores como medidos na placa.  
-**Projeto:** Street Fighter II NE (`daniel-castilho/sf2nes`)  
-**Base documental consultada:** `main` / `9ba9b88`  
-**Referência comportamental:** *Street Fighter II: The World Warrior*, World 910522 (`sf2`); dados publicados abaixo são candidatos de fontes secundárias, não medições próprias da placa.  
-**Última revalidação documental:** 2026-11-10.  
-**Escopo:** Etapa 3 — tornar Ken jogável como humano ID `1`; não implementar outros personagens.
+**Status:** proposal ready for implementation, with secondary arcade parameters still candidates; consult §3.1 and do not declare values as measured on the board.  
+**Project:** Street Fighter II NE (`daniel-castilho/sf2nes`)  
+**Documentation base consulted:** `main` / `9ba9b88`  
+**Behavioral reference:** *Street Fighter II: The World Warrior*, World 910522 (`sf2`); published data below are candidates from secondary sources, not own board measurements.  
+**Last documentation revalidation:** 2026-11-10.  
+**Scope:** Stage 3 — make Ken playable as human ID `1`; do not implement other characters.
 
-## 1. Objetivo
+## 1. Objective
 
-Integrar Ken como segundo lutador humano jogável no SF2 NES, ID `1`, reutilizando o motor comum e os recursos de Ken já presentes no cartucho. A entrega deve permitir selecioná-lo e concluir uma luta normal, usando Ryu como referência estrutural do motor, mas preservando os comportamentos de Ken do *World Warrior* identificados em §3.1 (em vez de pressupor equivalência total de quadros, caixas ou resultado de golpes).
+Integrate Ken as second human-playable fighter in SF2 NES, ID `1`, reusing common engine and Ken resources already present in the cartridge. Delivery must allow selecting him and completing a normal fight, using Ryu as structural engine reference, but preserving Ken's *World Warrior* behaviors identified in §3.1 (instead of assuming full equivalence of frames, boxes, or move results).
 
-Não se exige igualdade de tamanho, bytes ou hash com a ROM original. O conteúdo do jogo pode crescer; a ROM original permanece apenas como referência histórica, não como oráculo de build ou critério de aceite.
+No equality of size, bytes, or hash with original ROM is required. Game content may grow; original ROM remains only as historical reference, not as build oracle or acceptance criterion.
 
-## 2. Fontes de verdade e limites
+## 2. Sources of truth and limits
 
-Antes de alterar fontes gerados ou dados do personagem, consulte, nesta ordem prática:
+Before altering generated sources or character data, consult, in this practical order:
 
-- `docs/ROTEIRO.md` — plano e dados preliminares da Etapa 3;
-- `docs/ARQUITETURA.md` — bancos, motor e tabelas do elenco;
-- `docs/FORMATOS.md` — ficha, estados, quadros, metasprites, colisão e golpes;
-- `annotations/sf2ne.ann`, `Makefile`, `sf2ne.cfg` e fontes em `src/` — fluxo real de geração, montagem e ligação.
+- `docs/ROADMAP.md` — Stage 3 plan and preliminary data;
+- `docs/ARCHITECTURE.md` — banks, engine, and roster tables;
+- `docs/FORMATS.md` — sheet, states, frames, metasprites, collision, and moves;
+- `annotations/sf2ne.ann`, `Makefile`, `sf2ne.cfg` and sources in `src/` — actual generation, assembly, and linking flow.
 
-Quando a documentação divergir do código/anotações atuais, registre a divergência e atualize a documentação pertinente no mesmo conjunto de mudanças. Não copie código ou dados de outros ports. Use referências externas somente para esclarecer comportamento; a implementação deve seguir os formatos e o motor deste projeto.
+When documentation diverges from current code/annotations, record the divergence and update relevant documentation in the same change set. Do not copy code or data from other ports. Use external references only to clarify behavior; implementation must follow this project's formats and engine.
 
-### Dentro do escopo
+### Within scope
 
-- Dados de estados/transições necessários para Ken.
-- Conexão de Ken à ficha, seleção e carregamento do lutador.
-- Reutilização dos gráficos já existentes de Ken no banco `$04` e dos recursos de seleção já existentes.
-- Compatibilidade com o motor comum de movimento, ataque, defesa, dano, animação e round.
-- Ajustes necessários ao build para produzir a nova ROM sem exigir igualdade com a ROM original.
-- Atualização da documentação de arquitetura/roteiro e instruções de build.
+- State/transition data necessary for Ken.
+- Ken connection to sheet, selection, and fighter loading.
+- Reuse of existing Ken graphics already in bank `$04` and existing selection resources.
+- Compatibility with common movement, attack, defense, damage, animation, and round engine.
+- Build adjustments necessary to produce new ROM without requiring equality with original ROM.
+- Architecture/roadmap documentation and build instruction updates.
 
-### Fora do escopo
+### Out of scope
 
-- Implementar Chun-Li, Guile ou qualquer outro personagem incompleto.
-- Criar um novo motor de luta, redesenhar a tela de seleção ou refazer o sistema de comandos.
-- Implementar IA própria de Ken nesta entrega. No cenário de um jogador, o oponente CPU continua sendo Ryu; não encaminhe acidentalmente um CPU para dados de IA inexistentes de Ken.
-- Criar testes automatizados, scripts de regressão, infraestrutura de testes ou gates de CI. **Não há testes automatizados neste marco.**
-- Exigir paridade numérica perfeita de balanceamento com arcade. Use dados públicos versionados de Ken como candidatos antes de recorrer aos parâmetros do Ryu; reutilização do Ryu é apenas fallback estrutural/técnico, e todo valor não medido deve ser marcado como provisório. Não simplificar as diferenças de Ken identificadas em §3.1 para uma troca de paleta.
+- Implementing Chun-Li, Guile, or any other incomplete character.
+- Creating a new fighting engine, redesigning selection screen, or redoing command system.
+- Implementing Ken-specific AI in this delivery. In one-player scenario, CPU opponent remains Ryu; do not accidentally route a CPU to nonexistent Ken AI data.
+- Creating automated tests, regression scripts, test infrastructure, or CI gates. **No automated tests in this milestone.**
+- Requiring perfect numerical balance parity with arcade. Use public versioned Ken data as candidates before falling back to Ryu parameters; Ryu reuse is only structural/technical fallback, and every unmeasured value must be marked provisional. Do not simplify Ken differences identified in §3.1 into a palette swap.
 
-## 3. Fatos atuais relevantes
+## 3. Relevant current facts
 
-- O motor carrega uma ficha indexada por `FighterChar` no banco `$3C`; a coluna `0` (Ryu) é a única ficha de luta preenchida.
-- A coluna `1` já corresponde a Ken. `CharFrameBankTbl[1]` aponta para `$04`; o banco `$04` contém cerca de 4,3 KB de recursos de Ken, incluindo frames não conectados ao motor e retrato.
-- `CharStateBankTbl[1]` ainda é `$00` (placeholder). A documentação propõe o banco `$05`, mapeado na janela `$A000`, para os dados de estados de Ken.
-- `D3C_80DC[1]` já contém `$04`; confirme no código e nos dados de quadros se esse valor é de fato a origem adequada das caixas de colisão de Ken antes de depender dele.
-- A ficha contém 23 tabelas de 10 posições: 10 pares de ponteiros (bytes baixo/alto) e 3 tabelas de seleção de banco. O carregador está em `FighterLoadChar` (`3B:E000`). Há uma particularidade documentada: o byte alto do primeiro ponteiro é lido sem índice; isso pressupõe que todos os bancos de estados estejam mapeados em `$A000` e que o byte alto seja `$A0`.
-- `CharNameTbl`, retrato, país/voz de país e frases de vitória já têm entradas para Ken. Reutilize-as; não crie conteúdo duplicado.
-- `AiCharRoutine` só tem implementação para Ryu. Não declare a IA de Ken suportada nesta entrega.
-- `make` atualmente passa por `verify`, que compara o arquivo montado byte a byte com `rom/sf2ne_demo.nes` e exige o SHA-1 histórico. Essa regra é incompatível com a nova direção do projeto e precisa deixar de ser requisito do build principal.
+- Engine loads a sheet indexed by `FighterChar` in bank `$3C`; column `0` (Ryu) is the only filled fight sheet.
+- Column `1` already corresponds to Ken. `CharFrameBankTbl[1]` points to `$04`; bank `$04` contains about 4.3 KB of Ken resources, including frames not connected to engine and portrait.
+- `CharStateBankTbl[1]` is still `$00` (placeholder). Documentation proposes bank `$05`, mapped in window `$A000`, for Ken state data.
+- `D3C_80DC[1]` already contains `$04`; confirm in code and frame data whether this value is indeed the adequate origin of Ken collision boxes before depending on it.
+- Sheet contains 23 tables of 10 positions: 10 pointer pairs (low/high bytes) and 3 bank selection tables. Loader is in `FighterLoadChar` (`3B:E000`). Documented particularity: high byte of first pointer is read without index; this assumes all state banks are mapped at `$A000` and high byte is `$A0`.
+- `CharNameTbl`, portrait, country/voice and victory phrases already have Ken entries. Reuse them; do not create duplicate content.
+- `AiCharRoutine` only has Ryu implementation. Do not declare Ken AI supported in this delivery.
+- `make` currently goes through `verify`, which compares assembled file byte-by-byte with `rom/sf2ne_demo.nes` and requires historical SHA-1. This rule is incompatible with new project direction and must cease to be a main build requirement.
 
-Esses fatos são pontos de partida para a implementação, não substituem a conferência das rotinas, endereços e assets no checkout de trabalho.
+These facts are starting points for implementation, not a substitute for verifying routines, addresses, and assets in working checkout.
 
-### 3.1 Auditoria comportamental da referência World 910522
+### 3.1 World 910522 reference behavioral audit
 
-O repertório e as distinções abaixo delimitam o que significa aproximar Ken do arcade. A tabela triangula fontes comunitárias versionadas; não declara que houve teste de input na ROM. Os números de frames/dano permanecem candidatos, não valores finais de balanceamento NES.
+The repertoire and distinctions below delimit what approximating Ken from arcade means. Table triangulates versioned community sources; does not declare input testing on ROM. Frame/damage numbers remain candidates, not final NES balance values.
 
-| Aspecto | Evidência secundária para *World Warrior* | Consequência para o requisito |
-|---|---|---|
-| Especiais base | Hadouken, Shoryuken e Tatsumaki Senpukyaku aparecem nas listas japonesas versionadas e na tabela SuperCombo WW. | Manter esses três como conjunto de especiais; não acrescentar air Tatsumaki, Shoryureppa, ou técnicas de chute das revisões posteriores. |
-| Normais característicos | SuperCombo WW lista Axe Kick como HK de perto e Drop Knee como LK no ar. | RF-3 deve contabilizar a seleção close/far e essas variantes no inventário normal; não tratá-las como especiais nem pressupor que trocar sprites do Ryu produza a pose/caixa correta. Fonte secundária, confirmar vínculo com o recurso real de Ken. |
-| Agarrões terrestres | Comandos versionados: perto + frente/trás + MP/HP para agarrão de braço/ombro; perto + frente/trás + MK/HK para o agarrão de perna. A página japonesa chama-os 背負い投げ (Seoi Nage) e 地獄車 (Jigoku Guruma); SuperCombo usa Seoi Nage e Tomoe Nage; FAQs em inglês usam Arm/Shoulder Throw e Back Roll. | São dois movimentos funcionais obrigatórios, não apenas “throw” genérico. Preservar distância de captura, trajetória/queda, dano único e diferenças de deslocamento. Para o segundo, registrar os nomes como aliases divergentes e especificar pelo comando/resultado até resolver a nomenclatura da revisão. Não confundir alcance de captura com distância lançada. |
-| Diferença no kick throw | Uma página de matchup SuperCombo descreve o kick throw de Ken como vantagem sobre Ryu; fonte comunitária o descreve como arremesso mais distante. Não há medida comum de deslocamento na referência consultada. | Não reutilizar automaticamente o endpoint/knockback do kick throw do Ryu. A direção qualitativa “lança mais longe” é hipótese de comportamento a verificar; não fixar pixels ou frames. |
-| Tatsumaki — força e multi-hit | SuperCombo WW lista 1 acerto para Short, 2 para Forward e 3 para Roundhouse; também publica startup/duração/dano candidatos. Outras fontes generalistas dizem que Ryu e Ken ainda eram quase clones no World Warrior e que a divergência forte de multi-hit se consolidou em revisões posteriores. | Manter o número de hits como diferença específica por força a conferir. O NES só expõe classes fraca/forte de soco/chute: decidir/documentar o mapeamento de duas forças para os níveis arcade disponíveis, sem inventar um botão médio; não declarar igualdade integral de três níveis. Não copiar o perfil de multi-hit do Ryu sem justificar a adaptação. |
-| Shoryuken | SuperCombo WW assinala maior alcance horizontal que o de Ryu e publica contagens/dano por força; a fama do punho flamejante é atribuída por fontes históricas a Super Street Fighter II, não ao World Warrior. | Preservar como hipótese a possível diferença de alcance por força; manter Shoryuken **sem chama/efeito de fogo** no alvo World 910522. Métricas numéricas não são critério obrigatório nesta etapa. |
-| Hadouken | O comando é o mesmo da família Ryu/Ken; SuperCombo WW e o FAQ de 1999 descrevem variantes de força, e o FAQ afirma que socos mais fortes aceleram o projétil. | Os comandos NES já têm duas classes fraca/forte; a velocidade por classe deve ser associada explicitamente, mas não copiada de Ryu nem quantificada sem validação/versionamento. |
-| Comandos e médio arcade | O arcade possui LP/MP/HP e LK/MK/HK; o motor NES documenta quatro classes `InputAttack`: soco fraco/forte e chute fraco/forte. | Usar a interface NES existente e mapear duas forças, preservando as diferenças de resultado relevantes. A força média arcade não existe como classe separada no esquema atual; não alterar controles nem declarar seis forças suportadas sem decisão explícita. |
-| Revisões posteriores | Páginas brasileiras gerais misturam air Hurricane Kick, especiais adicionais e Super; fontes de SFII Turbo/CE/Super não são prova do World 910522. | Excluir Air Tatsumaki, Shoryureppa, técnicas de chute avançadas e chama do Shoryuken, a menos que haja nova decisão de escopo e confirmação específica de versão. |
+| Aspect | Secondary evidence for *World Warrior* | Consequence for requirement |
+|--------|----------------------------------------|------------------------------|
+| Base specials | Hadouken, Shoryuken, and Tatsumaki Senpukyaku appear in Japanese versioned lists and SuperCombo WW table. | Keep these three as special set; do not add air Tatsumaki, Shoryureppa, or kick techniques from later revisions. |
+| Characteristic normals | SuperCombo WW lists Axe Kick as close HK and Drop Knee as air LK. | RF-3 must account for close/far selection and these variants in normal inventory; do not treat them as specials nor assume swapping Ryu sprites produces correct Ken pose/box. Secondary source, confirm link to real Ken asset. |
+| Ground throws | Versioned commands: near + forward/back + MP/HP for arm/shoulder throw; near + forward/back + MK/HK for leg throw. Japanese page calls them 背負い投げ (Seoi Nage) and 地獄車 (Jigoku Guruma); SuperCombo uses Seoi Nage and Tomoe Nage; English FAQs use Arm/Shoulder Throw and Back Roll. | Two functional mandatory moves, not just generic "throw". Preserve capture distance, trajectory/fall, unique damage, and displacement differences. For second, register names as divergent aliases and specify by command/result until revision nomenclature resolved. Do not confuse capture range with thrown distance. |
+| Kick throw difference | A SuperCombo matchup page describes Ken's kick throw as advantage over Ryu; community source describes it as farther throw. No common displacement measurement in consulted reference. | Do not automatically reuse Ryu's kick throw endpoint/knockback. Qualitative direction "throws farther" is behavior hypothesis to verify; do not fix pixels or frames. |
+| Tatsumaki — force and multi-hit | SuperCombo WW lists 1 hit for Short, 2 for Forward, 3 for Roundhouse; also publishes candidate startup/duration/damage. Other general sources say Ryu and Ken were nearly clones in World Warrior and strong multi-hit divergence consolidated in later revisions. | Keep hit count as force-specific difference to verify. NES only exposes weak/strong punch/kick classes: decide/document mapping of two forces to available arcade levels, without inventing medium button; do not declare full three-level equality. Do not copy Ryu's multi-hit profile without justifying adaptation. |
+| Shoryuken | SuperCombo WW notes greater horizontal range than Ryu's and publishes candidate counts/damage per force; flaming fist fame is attributed by historical sources to Super Street Fighter II, not World Warrior. | Preserve as hypothesis possible per-force range difference; keep Shoryuken **without fire/target effect** on World 910522 target. Numerical metrics are not mandatory criterion in this stage. |
+| Hadouken | Command is same as Ryu/Ken family; SuperCombo WW and 1999 FAQ describe force variants, and FAQ states stronger punches accelerate projectile. | NES commands already have two classes weak/strong; speed per class must be explicitly associated, but not copied from Ryu nor quantified without validation/versioning. |
+| Commands and arcade medium | Arcade has LP/MP/HP and LK/MK/HK; NES engine documents four `InputAttack` classes: weak/strong punch and weak/strong kick. | Use existing NES interface and map two forces, preserving relevant result differences. Arcade medium force does not exist as separate class in current scheme; do not alter controls nor declare six forces supported without explicit decision. |
+| Later revisions | Brazilian general pages mix air Hurricane Kick, additional specials, and Super; SFII Turbo/CE/Super sources are not proof of World 910522. | Exclude Air Tatsumaki, Shoryureppa, advanced kick techniques, and Shoryuken fire, unless new scope decision and specific version confirmation. |
 
-**Conclusão de escopo arcade:** Ken se parece muito com Ryu no *World Warrior*, mas não é seguro traduzir “clone” como “copiar todos os estados, caixas e parâmetros”. Os pontos de atenção sustentados pelo material consultado são os dois agarrões (especialmente o resultado do kick throw), close HK/Axe Kick, aerial LK/Drop Knee, a possível diferença de alcance do Shoryuken e as contagens por força do Tatsumaki. Valores publicados podem guiar uma validação posterior, mas esta especificação não afirma que foram medidos na placa World 910522.
+**Arcade scope conclusion:** Ken resembles Ryu in *World Warrior*, but it is not safe to translate "clone" as "copy all states, boxes, and parameters". Attention points supported by consulted material are the two throws (especially kick throw result), close HK/Axe Kick, air LK/Drop Knee, possible Shoryuken range difference, and per-force Tatsumaki hit counts. Published values may guide later validation, but this specification does not state they were measured on World 910522 board.
 
-### 3.2 Valores públicos de referência — candidatos, não oráculo
+### 3.2 Public reference values — candidates, not oracle
 
-| Grupo | Valor publicado | Uso permitido nesta especificação |
-|---|---|---|
-| Normais | SuperCombo WW lista como exemplos: standing LP `6`, MP `16`, HP `26`, LK `8`, MK `16`, HK `22`; close HK aparece `24,6` (componentes apresentados pela wiki). | Ilustra que não se deve reduzir ataques a uma tabela comum por força nem copiar danos de Ryu. Não converter diretamente para HP/frames NES; consultar os dados completos da wiki apenas para planejar a validação. |
-| Agarrões | SuperCombo WW: dano `32`, duração `130`, stun `7–13`, timer `100`, alcance axial `48`, vantagem de alcance `19`. T.Akiba/NKI: linha “Ken toss” para WW `38` normal / `39` quando atrás, em dados de *Capcom Generations 5* (PlayStation). | Valores de fontes/plataformas diferentes não conciliados. Não escolher um número final nem converter alcance para pixels NES. A eventual distância de lançamento do kick throw é uma propriedade distinta do alcance de captura. |
-| Hadouken | SuperCombo WW: dano `12`, stun `13–19`, timer `120` nas três forças; GameFAQs 1999 diz que força maior acelera o projétil. | Números e diferenças de velocidade são candidatos secundários; verificar se são pertinentes ao alvo e à escala NES antes de usar. |
-| Shoryuken | SuperCombo WW publica a sequência de dano `32/32,16` e vantagens `-11/-22/-33` por força; o formato resumido não explica de modo suficiente a interpretação dos componentes multi-hit. | Conservar apenas como pista para observação, sem inferir quantidade de hits, dano final ou frames de recuperação. A ausência de chama em WW é a restrição de versão mais clara. |
-| Tatsumaki | SuperCombo WW discrimina `1/2/3` acertos para Short/Forward/Roundhouse. As tabelas de Hitboxes são dados comunitários e podem variar por leitura/revisão. | Priorizar a diferença qualitativa por força como candidato. O NES deve mapear as classes disponíveis e declarar a força média não representada; não atribuir dano NES com base nesta contagem isolada. |
+| Group | Published value | Permitted use in this specification |
+|-------|-----------------|-------------------------------------|
+| Normals | SuperCombo WW lists examples: standing LP `6`, MP `16`, HP `26`, LK `8`, MK `16`, HK `22`; close HK appears `24,6` (components presented by wiki). | Illustrates that attacks should not be reduced to a common per-force table nor Ryu damages copied. Do not directly convert to NES HP/frames; consult full wiki data only to plan validation. |
+| Throws | SuperCombo WW: damage `32`, duration `130`, stun `7–13`, timer `100`, axial range `48`, range advantage `19`. T.Akiba/NKI: "Ken toss" line for WW `38` normal / `39` when behind, in *Capcom Generations 5* (PlayStation) data. | Values from different sources/platforms not reconciled. Do not choose final number nor convert range to NES pixels. Eventual kick throw launch distance is distinct property from capture range. |
+| Hadouken | SuperCombo WW: damage `12`, stun `13–19`, timer `120` across three forces; GameFAQs 1999 says stronger force accelerates projectile. | Numbers and speed differences are secondary candidates; verify relevance to target and NES scale before using. |
+| Shoryuken | SuperCombo WW publishes damage sequence `32/32,16` and advantages `-11/-22/-33` per force; summarized format insufficiently explains multi-hit component interpretation. | Keep only as observation clue, without inferring hit count, final damage, or recovery frames. Absence of fire in WW is clearest version restriction. |
+| Tatsumaki | SuperCombo WW discriminates `1/2/3` hits for Short/Forward/Roundhouse. Hitbox tables are community data and may vary by reading/revision. | Prioritize per-force qualitative difference as candidate. NES must map available classes and declare medium force not represented; do not assign NES damage based on this count alone. |
 
-Não replicar extensas tabelas, imagens, hitboxes ou ativos de sites; registrar apenas os requisitos comportamentais e referências para conferência, respeitando licenças. A validação quantitativa pertence à etapa de implementação e não foi executada nesta revalidação documental.
+Do not replicate extensive tables, images, hitboxes, or assets from sites; record only behavioral requirements and references for verification, respecting licenses. Quantitative validation belongs to implementation stage and was not executed in this documentation revalidation.
 
-## 4. Requisitos funcionais
+## 4. Functional requirements
 
-### RF-1 — Seleção e carregamento
+### RF-1 — Selection and loading
 
-- Ken deve ser selecionável como lutador humano no fluxo existente, usando o ID de personagem `1`.
-- O carregador deve obter para Ken todos os ponteiros/tabelas exigidos pelo motor; nenhum ponteiro de luta requerido pode permanecer `$0000` ou herdar acidentalmente a coluna de Ryu.
-- Deve funcionar para o slot P1 e para o slot P2 quando este estiver configurado como humano pelo modo versus já existente no projeto. No modo de um jogador, o oponente CPU permanece Ryu.
-- A seleção de Ken não pode tornar selecionáveis como lutadores jogáveis outros personagens sem ficha implementada. Se a navegação atual permitir chegar a eles, aplique somente a proteção mínima necessária para impedir carregar dados vazios; não implemente os demais personagens.
+- Ken must be selectable as human fighter in existing flow, using character ID `1`.
+- Loader must obtain for Ken all required pointers/tables; no required fight pointer may remain `$0000` or accidentally inherit Ryu's column.
+- Must work for P1 slot and P2 slot when configured as human by existing versus mode. In one-player mode, CPU opponent remains Ryu.
+- Ken selection must not make other characters without implemented sheet selectable as playable fighters. If current navigation allows reaching them, apply only minimum protection necessary to prevent loading empty data; do not implement other characters.
 
-### RF-2 — Gráficos e apresentação
+### RF-2 — Graphics and presentation
 
-- A seleção deve exibir o nome e retrato já existentes de Ken.
-- Em luta, cada estado/quadro de Ken deve apontar para metasprites válidos dos assets já existentes no banco `$04`, usando as páginas CHR e paleta corretas.
-- Não assuma que a ordem ou os offsets dos quadros de Ken são iguais aos de Ryu. Faça um inventário de estados/quadros necessários e mapeie cada referência aos recursos de Ken após inspecionar os registros reais.
-- Não deve haver tiles/paletas incorretos, sprites corrompidos ou leituras fora dos dados do banco durante animações ou espelhamento.
+- Selection must display Ken's existing name and portrait.
+- In fight, each Ken state/frame must point to valid metasprites from existing assets in bank `$04`, using correct CHR pages and palette.
+- Do not assume Ken frame order or offsets equal Ryu's. Inventory necessary states/frames and map each reference to Ken resources after inspecting actual registers.
+- No incorrect tiles/palettes, corrupted sprites, or out-of-bank reads during animations or mirroring.
 
-### RF-3 — Conjunto de luta
+### RF-3 — Fight move set
 
-Ken deve completar um round usando as regras e controles existentes. Cobrir o conjunto-base de luta e preservar as diferenças de referência conhecidas:
+Ken must complete a round using existing rules and controls. Cover base fight set and preserve known reference differences:
 
-- neutro, virar, caminhar para frente/trás, agachar, saltos neutro/diagonal e pouso;
-- ataques normais do esquema de botões em pé, agachado e no ar, com seleção close/far quando aplicável; incluir close HK (Axe Kick, fonte secundária WW) e aerial LK (Drop Knee, fonte secundária WW) no inventário de estados/animações;
-- guarda alta/baixa, reação de dano, hit-freeze/knockback, queda, KO e retorno ao fluxo de round;
-- os dois agarrões terrestres: perto + frente/trás + soco forte (a adaptação NES da família arcade MP/HP) e perto + frente/trás + chute forte (MK/HK); garantir captura elegível, saída/queda própria e dano uma única vez. Não herdar automaticamente o deslocamento do kick throw de Ryu;
-- Hadouken, Shoryuken e Tatsumaki com os comandos já suportados pelo motor; associar transições aos estados próprios de Ken. O arcade tem três forças e o NES duas classes por família: mapear fraco/forte sem alegar variante média. Preservar velocidades distintas do Hadouken como hipótese publicada, tratar a maior extensão do Shoryuken e os hits do Tatsumaki como diferenças a conferir. World 910522 não recebe chama de Shoryuken nem Tatsumaki aéreo das versões posteriores.
+- neutral, turn, walk forward/back, crouch, neutral/diagonal jumps, and landing;
+- normal attacks in standing/crouching/air button scheme, with close/far selection when applicable; include close HK (Axe Kick, secondary WW source) and air LK (Drop Knee, secondary WW source) in state/animation inventory;
+- high/low guard, damage reaction, hit-freeze/knockdown, fall, KO, and return to round flow;
+- two ground throws: near + forward/back + strong punch (NES adaptation of arcade MP/HP family) and near + forward/back + strong kick (MK/HK); ensure eligible capture, own exit/fall, single damage application. Do not automatically inherit Ryu's kick throw displacement;
+- Hadouken, Shoryuken, and Tatsumaki with commands already supported by engine; associate transitions to Ken's own states. Arcade has three forces and NES two classes per family: map weak/strong without claiming medium variant. Preserve distinct Hadouken speeds as published hypothesis; treat greater Shoryuken range and Tatsumaki hits as differences to verify. World 910522 receives no Shoryuken fire nor air Tatsumaki from later revisions.
 
-Reaproveitar lógica comum somente após conferir a semântica dos comandos, os destinos de transição e os efeitos de Ken; o uso do banco/tabelas de Ryu como ponto de partida não autoriza assumir equivalência de frames, hitboxes ou resultados.
+Reuse common logic only after verifying command semantics, transition destinations, and Ken effects; using Ryu bank/tables as starting point does not authorize assuming frame/hitbox/result equivalence.
 
-Use `docs/FORMATOS.md` como referência para estados, encadeamento de quadros, classes, efeitos, caixas de ataque/corpo e contagem de acertos. Os dados devem resultar em colisões compatíveis com os quadros visuais; não basta trocar o banco de sprites mantendo caixas de Ryu que claramente não correspondam à pose de Ken.
+Use `docs/FORMATS.md` as reference for states, frame chaining, classes, effects, attack/body boxes, and hit count. Data must result in collisions compatible with visual frames; it is not enough to swap sprite bank keeping Ryu boxes that clearly don't match Ken's pose.
 
-### RF-4 — Áudio e conclusão
+### RF-4 — Audio and conclusion
 
-- Use as entradas existentes de Ken em `CountryVoiceTbl` e `FighterVoiceTbl` quando compatíveis com os eventos do motor. Não invente índices de amostras DPCM.
-- Nome, voz e frase final existentes devem continuar indexados por Ken. Não é requisito criar frase nova nem novas amostras.
-- A luta deve poder avançar por vitória/derrota e transições normais sem travar nem entrar em tabelas não implementadas.
+- Use Ken's existing entries in `CountryVoiceTbl` and `FighterVoiceTbl` when compatible with engine events. Do not invent DPCM sample indices.
+- Name, voice, and final phrase existing entries must remain indexed by Ken. Not required to create new phrase or new samples.
+- Fight must be able to advance through victory/defeat and normal transitions without locking or entering unimplemented tables.
 
-## 5. Requisitos de dados e implementação
+## 5. Data and implementation requirements
 
-1. **Auditar os assets antes de modelar estados.** Gere/consulte os PNGs exportados pelo fluxo `make assets`, localize os frames de Ken nas páginas CHR e catalogue quais poses cobrem os estados herdados do Ryu. Registre gaps reais; não suponha que todos os movimentos tenham animação dedicada.
-2. **Criar os dados de estados no banco `$05` (`$A000`–`$BFFF`)**, começando pela estrutura de Ryu como referência. O banco deve ser relocável e os rótulos devem ser simbólicos; não copie words/endereço absolutos do banco `$01` sem remapeamento.
-3. **Reaproveitar o motor, não duplicar rotinas comuns.** Estados de Ken devem continuar usando o contrato do motor: cabeçalho de estado de 7 bytes, quadros de 14 bytes (16 nos casos com laço), transições/condições e efeitos definidos em `docs/FORMATOS.md`.
-4. **Preencher a coluna 1 da ficha `$3C`** para os ponteiros requeridos pelo carregador (`$8000`–`$80BE`) e revisar as três tabelas de bancos (`CharStateBankTbl`, `CharFrameBankTbl`, `$80DC`). Reutilize uma tabela comum de comandos apenas após confirmar que os índices e efeitos correspondem; crie uma tabela própria de transições de Ken quando os estados de destino forem específicos.
-5. **Ligar a configuração do banco**: `CharStateBankTbl[1]` deve selecionar `$05`; os frames devem usar `$04`; a fonte das caixas de colisão deve ser verificada, não presumida.
-6. **Anotar os dados estruturais** com a diretiva `statebank` de `annotations/sf2ne.ann`, incluindo faixa de estados/quadros correta, e nomes/rótulos úteis. Seguir o fluxo do projeto para fontes geradas: editar anotações/entradas-fonte apropriadas e regenerar `src/`; não editar manualmente arquivos marcados como gerados se a fonte de verdade for a anotação.
-7. **Não acrescentar IA de Ken por conveniência.** Se os fluxos atuais puderem atribuir Ken à CPU, restrinja ou redirecione essa seleção de modo mínimo e documentado, mantendo a CPU em Ryu nesta entrega.
-8. **Build principal:** o alvo canônico deve montar e entregar a ROM modificada sem comparar bytes/hash com a demo. Pode-se manter uma verificação histórica separada, explicitamente opcional e não usada como gate da ROM nova. Não apagar a ROM original nem sua identificação histórica apenas para fazer o build passar.
-9. **Expansão:** não preservar tamanho ou quantidade de bytes do original. Reutilize bancos livres quando conveniente; se a ROM precisar de mais espaço, ajuste de forma coerente configuração de linkedição, cabeçalho NES/MMC5, contagem de bancos e documentação. O limite deve ser o formato/hardware e o build funcional, não a paridade com o tamanho original.
+1. **Audit assets before modeling states.** Generate/consult PNGs exported by `make assets` flow, locate Ken frames in CHR pages, and catalog which poses cover Ryu-inherited states. Register real gaps; do not assume every move has dedicated animation.
+2. **Create state data in bank `$05` (`$A000`–`$BFFF`)**, starting from Ryu structure as reference. Bank must be relocatable and labels symbolic; do not copy words/absolute addresses from bank `$01` without remapping.
+3. **Reuse engine, do not duplicate common routines.** Ken states must continue using engine contract: 7-byte state header, 14-byte frames (16 in loop cases), transitions/conditions and effects defined in `docs/FORMATS.md`.
+4. **Fill column 1 of sheet `$3C`** for loader-required pointers (`$8000`–`$80BE`) and review three bank tables (`CharStateBankTbl`, `CharFrameBankTbl`, `$80DC`). Reuse common command table only after confirming indices and effects match; create Ken-specific transition table when destination states are Ken-specific.
+5. **Wire bank configuration**: `CharStateBankTbl[1]` must select `$05`; frames must use `$04`; collision box source must be verified, not assumed.
+6. **Annotate structural data** with `statebank` directive of `annotations/sf2ne.ann`, including correct state/frame range, and useful names/labels. Follow project flow for generated sources: edit appropriate annotation/source entries and regenerate `src/`; do not manually edit files marked as generated if annotation is source of truth.
+7. **Do not add Ken AI for convenience.** If current flows can assign Ken to CPU, restrict or minimally redirect that selection, documented, keeping CPU on Ryu in this delivery.
+8. **Main build:** canonical target must assemble and deliver modified ROM without comparing bytes/hash with demo. A separate historical verification may be kept, explicitly optional and not used as gate for new ROM. Do not delete original ROM nor its historical identification just to make build pass.
+9. **Expansion:** do not preserve original byte count or quantity. Reuse free banks when convenient; if ROM needs more space, adjust linker configuration, NES/MMC5 header, bank count, and documentation consistently. Limit must be format/hardware and functional build, not original size parity.
 
-## 6. Sequência de trabalho
+## 6. Work sequence
 
-| Fase | Trabalho | Saída verificável |
-|---|---|---|
-| 1. Inventário | Mapear frames/metasprites de Ken, paleta, colisões, vozes e gaps frente ao conjunto de luta; registrar Axe Kick, Drop Knee, close/far, os dois agarrões e as diferenças candidatas de Hadouken/Shoryuken/Tatsumaki em §3.1. | Nota de implementação com banco/labels, comportamento de origem, mapeamento ao NES e gaps. |
-| 2. Estado-base | Criar banco de estados relocável de Ken com os estados comuns necessários; manter rotinas do motor compartilhadas. | Dados identificados por labels e diretiva `statebank`. |
-| 3. Ficha | Preencher as tabelas/ponteiros da coluna 1 e conectar banco de estados, frames, colisões, especiais e voz. | Carregador resolve a ficha de Ken sem ponteiros vazios. |
-| 4. Seleção | Garantir que o humano possa escolher Ken nos slots suportados; impedir que o fluxo encaminhe CPU para IA ausente. | Caminho de seleção documentado e seguro para Ken vs Ryu. |
-| 5. Build | Ajustar alvo principal para produzir ROM modificada; remover a igualdade com original como condição de sucesso. | ROM montada + mapa/labels de linkedição, se gerados pelo projeto. |
-| 6. Documentação e entrega | Sincronizar arquitetura, formatos, roteiro e instruções de build. | Estado atual, limitações e instruções de uso claros. |
+| Phase | Work | Verifiable output |
+|-------|------|-------------------|
+| 1. Inventory | Map Ken frames/metasprites, palette, collisions, voices, and gaps vs fight set; register Axe Kick, Drop Knee, close/far, both throws, and candidate Hadouken/Shoryuken/Tatsumaki differences from §3.1. | Implementation note with bank/labels, source behavior, NES mapping, and gaps. |
+| 2. Base state | Create relocatable Ken state bank with necessary common states; keep shared engine routines. | Labels and `statebank` directive identified data. |
+| 3. Sheet | Fill column 1 tables/pointers and connect state bank, frames, collisions, specials, voice. | Loader resolves Ken sheet without empty pointers. |
+| 4. Selection | Ensure human can choose Ken in supported slots; prevent flow from routing CPU to missing AI. | Documented and safe Ken vs Ryu selection path. |
+| 5. Build | Adjust main target to produce modified ROM; remove original equality as success condition. | Assembled ROM + linker map/labels, if generated by project. |
+| 6. Documentation and delivery | Sync architecture, formats, roadmap, and build instructions. | Current state, limitations, and clear usage instructions. |
 
-## 7. Aceite manual (sem testes automatizados)
+## 7. Manual acceptance (no automated tests)
 
-Não criar nem executar suítes, scripts de regressão, A/B automatizado ou gates de teste neste marco. O build/assembler/linker continua necessário para produzir a ROM — isso não é um teste automatizado.
+Do not create or execute test suites, regression scripts, automated A/B, or test gates in this milestone. Build/assembler/linker remains necessary to produce ROM — that is not an automated test.
 
-O aceite de jogabilidade é manual em Mesen e deve ser reportado como **não executado**, **com falha** ou **aprovado**, sem inferir aprovação a partir de compilação. Lista para a sessão manual:
+Gameplay acceptance is manual in Mesen and must be reported as **not executed**, **failed**, or **approved**, without inferring approval from compilation. Manual session checklist:
 
-- iniciar a ROM nova e chegar à seleção; escolher Ken;
-- confirmar nome/retrato e começar luta contra Ryu CPU;
-- percorrer movimento, defesa, ataques normais, close HK/Axe Kick, aerial LK/Drop Knee e os três especiais com os comandos atuais;
-- executar ambos os agarrões terrestres e conferir elegibilidade, orientação, animação da vítima, queda e aplicação única de dano; observar se o kick throw desloca a vítima diferentemente do Ryu, sem exigir distância numérica não validada;
-- verificar variantes fraca/forte nos especiais, velocidade/resultados, e documentar que o NES não possui classe média; confirmar que Shoryuken não usa efeito de chama e que não existe comando de Tatsumaki aéreo para World 910522;
-- confirmar visuais, colisões/acertos, dano/reação e funcionamento de um round até o encerramento;
-- repetir a escolha de Ken no slot P2 se o build incluir o modo versus humano;
-- confirmar que não há crash, tela travada, sprite corrompido ou uso acidental de ficha/IA vazia.
+- start new ROM and reach selection; choose Ken;
+- confirm name/portrait and start fight against Ryu CPU;
+- traverse movement, defense, normal attacks, close HK/Axe Kick, air LK/Drop Knee, and three specials with current commands;
+- execute both ground throws and confirm eligibility, orientation, victim animation, fall, and single damage application; observe whether kick throw displaces victim differently than Ryu, without requiring unvalidated numeric distance;
+- verify weak/strong variants in specials, speed/results, and document that NES has no medium class; confirm Shoryuken uses no fire effect and that no air Tatsumaki command exists for World 910522;
+- confirm visuals, collisions/hits, damage/reaction, and round functioning until conclusion;
+- repeat Ken choice in P2 slot if build includes human versus mode;
+- confirm no crash, frozen screen, corrupted sprite, or accidental use of empty sheet/AI.
 
-Se o Engineer não executar o aceite manual, entregar a ROM e instruções para o usuário validar. Como evidência, preferir vídeo curto e/ou filme reproduzível `.mmo` do Mesen iniciado antes do problema; usar Trace Logger somente para uma janela de execução específica quando necessário. Registrar a versão do Mesen, configuração/flags de build e hash da ROM entregue para identificar o artefato — esse hash é metadado, não exigência de igualdade com o original.
+If Engineer does not execute manual acceptance, deliver ROM and instructions for user to validate. As evidence, prefer short video and/or reproducible Mesen `.mmo` film started before problem; use Trace Logger only for a specific execution window when necessary. Record Mesen version, build flags/config, and delivered ROM hash to identify artifact — this hash is metadata, not equality requirement with original.
 
-## 8. Critérios de conclusão
+## 8. Completion criteria
 
-- [ ] Build canônico produz a ROM modificada sem falhar por diferença em relação à demo original.
-- [ ] Ken está ligado às tabelas de dados e é selecionável/controlável nos slots humanos previstos.
-- [ ] Os estados necessários do conjunto de luta funcionam com sprites de Ken, comandos, colisões e transições válidos; incluem dois agarrões terrestres, Axe Kick/Drop Knee e adaptação documentada das variantes de força arcade ao NES.
-- [ ] O fluxo CPU permanece seguro usando Ryu; não há alegação de IA de Ken.
-- [ ] Nenhum outro lutador é declarado implementado.
-- [ ] Não foram adicionados testes automatizados; status do aceite manual está explícito.
-- [ ] README/roteiro/arquitetura/formato e instrução de build descrevem o estado real, limitações, como montar e onde encontrar a ROM.
-- [ ] Entrega inclui caminhos dos arquivos tocados, comando de build, configuração usada, caminho da ROM e seu hash para identificação.
+- [ ] Canonical build produces modified ROM without failing due to difference from original demo.
+- [ ] Ken is linked to data tables and selectable/controllable in expected human slots.
+- [ ] Necessary fight states work with Ken sprites, commands, collisions, and valid transitions; include two ground throws, Axe Kick/Drop Knee, and documented adaptation of arcade force variants to NES.
+- [ ] CPU flow remains safe using Ryu; no claim of Ken AI.
+- [ ] No other fighter declared implemented.
+- [ ] No automated tests added; manual acceptance status explicit.
+- [ ] README/roadmap/architecture/format and build instructions describe actual state, limitations, how to assemble, and where to find ROM.
+- [ ] Delivery includes touched file paths, build command, configuration used, ROM path, and its hash for identification.
 
-## 9. Riscos e decisões de implementação a registrar
+## 9. Risks and implementation decisions to record
 
-| Risco | Tratamento esperado |
-|---|---|
-| A ordem/layout dos frames de Ken difere de Ryu. | Fazer mapa explícito de estados para recursos de Ken; não usar offsets presumidos. |
-| Quadros de Ken não trazem caixas equivalentes aos estados herdados. | Reutilizar/adaptar caixas do próprio banco de Ken se existirem; se for preciso desenhar/substituir dados, registrar quais poses ainda são provisórias. |
-| Pointers internos continuam apontando para o banco `$01`. | Relocar e revisar todas as words/endereços; organizar estado de Ken em labels no banco `$05`. |
-| Alguma tabela do personagem fica sem ponteiro. | Conferir as 10 tabelas de ponteiros e as 3 de bancos antes de declarar a ficha completa. |
-| Build continua preso ao hash original ou ao layout fixo do ROM. | Corrigir o fluxo principal e atualizar header/configuração de bancos; manter comparação histórica somente separada e opcional. |
-| Assets/vozes existentes não cobrem um evento necessário. | Não inventar amostras ou dados; documentar o gap e pedir decisão antes de criar conteúdo fora do escopo. |
-| Reuso integral de Ryu apaga diferenças de Ken em World Warrior. | Usar Ryu como referência estrutural apenas; revisar kick throw, Axe Kick, Drop Knee e os candidatos de especial de §3.1. |
-| Nomes/fontes discordam sobre o kick throw de Ken. | Priorizar o comportamento observável do comando F/B + chute forte e resultado da captura; documentar aliases (Jigoku Guruma / Back Roll / Tomoe Nage) sem transformar a divergência editorial em movimentos extras. |
-| Três forças arcade não cabem nas quatro classes do input NES. | Mapear fraco/forte por família e declarar a força média como não representada; não alterar o esquema de controle nesta entrega sem decisão explícita. |
-| Dados públicos secundários são confundidos com medição de World 910522. | Manter números de frame/dano/alcance como candidatos e distingui-los de evidência da placa; aceite manual é tarefa futura do implementador, não evidência prévia da especificação. |
+| Risk | Expected treatment |
+|------|-------------------|
+| Ken frame order/layout differs from Ryu. | Make explicit state-to-Ken-resource map; do not use presumed offsets. |
+| Ken frames lack boxes equivalent to inherited states. | Reuse/adapt Ken's own bank boxes if they exist; if drawing/replacing data needed, register which poses remain provisional. |
+| Internal pointers keep pointing to bank `$01`. | Relocate and review all words/addresses; organize Ken state in labels in bank `$05`. |
+| Some character sheet table left without pointer. | Verify 10 pointer tables and 3 bank tables before declaring sheet complete. |
+| Build stuck on original hash or fixed ROM layout. | Fix main flow and update header/bank configuration; keep historical comparison separate and optional. |
+| Existing voices/assets don't cover a necessary event. | Do not invent samples or data; document gap and request decision before creating out-of-scope content. |
+| Full Ryu reuse erases Ken's World Warrior differences. | Use Ryu only as structural reference; review kick throw, Axe Kick, Drop Knee, and §3.1 special candidates. |
+| Names/sources disagree on Ken's kick throw. | Prioritize observable behavior of F/B + strong kick command and capture result; document aliases (Jigoku Guruma / Back Roll / Tomoe Nage) without turning editorial divergence into extra moves. |
+| Three arcade forces don't fit four NES input classes. | Map weak/strong per family and declare medium force not represented; do not alter control scheme in this delivery without explicit decision. |
+| Secondary public data confused with World 910522 measurement. | Keep frame/damage/range numbers as candidates and distinguish them from board evidence; manual acceptance is implementer's future task, not spec prior evidence. |
 
-## 10. Inspiração documental aplicada
+## 10. Documentary inspiration applied
 
-Foram consultados os cinco repositórios indicados: [dargent](https://github.com/daniel-castilho/dargent), [spotpobre](https://github.com/daniel-castilho/spotpobre), [timao-flix](https://github.com/daniel-castilho/timao-flix), [tycoma](https://github.com/daniel-castilho/tycoma) e [url-shortener-service](https://github.com/daniel-castilho/url-shortener-service).
+Five indicated repositories were consulted: [dargent](https://github.com/daniel-castilho/dargent), [spotpobre](https://github.com/daniel-castilho/spotpobre), [timao-flix](https://github.com/daniel-castilho/timao-flix), [tycoma](https://github.com/daniel-castilho/tycoma), and [url-shortener-service](https://github.com/daniel-castilho/url-shortener-service).
 
-A especificação adapta práticas úteis observadas nesses projetos: fontes de verdade explícitas, regras/limites não negociáveis, separação entre escopo e não-escopo, requisitos rastreáveis, fases com saídas verificáveis, riscos/pendências visíveis, sincronização de documentação e definição de conclusão. Foram descartadas instruções específicas de Java/Spring/React, arquitetura web, deploy, segurança de serviços e pipelines de testes, por não se aplicarem ao cartucho NES e à decisão atual de não ter testes automatizados.
+Specification adapts useful practices observed in those projects: explicit sources of truth, non-negotiable rules/limits, scope/out-of-scope separation, traceable requirements, phases with verifiable outputs, visible risks/pendencies, documentation synchronization, and completion definition. Discarded Java/Spring/React instructions, web architecture, deploy, service security, and test pipelines, as they don't apply to NES cartridge and current decision of no automated tests.
 
-## 11. Referências comportamentais consultadas na revalidação
+## 11. Behavioral references consulted in revalidation
 
-- [SuperCombo Wiki — Ken, The World Warrior](https://wiki.supercombo.gg/w/Street_Fighter_2:_The_World_Warrior/Ken): repertório versionado, nomes de golpes, tabelas de dano/frames, agarrões e notas sobre variações por força. Fonte de comunidade; seus números e hitboxes são candidatos, não medição independente confirmada da placa World 910522.
-- [SuperCombo Wiki — Ryu, The World Warrior](https://wiki.supercombo.gg/w/Street_Fighter_2:_The_World_Warrior/Ryu): comparação secundária de Tatsumaki e matchup; útil para detectar quando a especificação de Ken herda valores do Ryu sem justificação.
-- [GameFAQs — Ryu/Ken Guide (ARC), RCarlos (1999)](https://gamefaqs.gamespot.com/arcade/583626-street-fighter-ii/faqs/848): identifica versões arcade originais e descreve throws/especiais; afirma que Ryu e Ken são iguais em todos os aspectos, generalização que não deve substituir observações específicas de throws/alcance. Relato comunitário antigo, sem protocolo reproduzível.
-- [homepage3gore — Ken, ストII](https://homepage3gore.game.coocan.jp/st2/ken_1.html): lista japonesa específica para SFII com Seoi Nage e Jigoku Guruma, comandos dos dois throws e os três especiais base. Fonte comunitária concisa; não oferece frames/danos.
-- [T.Akiba’s SF2 Data, tradução NKI](https://zachd.com/nki/ST/data.html): inclui dados comparativos de throws/dano; a própria introdução informa que WW/CE/HF foram testados em *Capcom Generations 5* (PlayStation), não diretamente na placa World 910522. Usar somente como candidato, especialmente onde diverge da SuperCombo.
-- [Jogo de Luta — Ken em Street Fighter 2](https://jogodeluta.com.br/street-fighter/street-fighter-2/ken): fonte brasileira de título/versionamento amplo; a página lista Air Hurricane Kick e Shoryu Reppa, sem separar com clareza World Warrior das revisões posteriores. Não usar esses movimentos para ampliar o conjunto de 910522.
-- [Critical Hits — especiais de Street Fighter 2](https://criticalhits.com.br/games/street-fighter-2-todos-os-golpes-especiais/): lista brasileira não segmentada por revisão e inclui técnicas extras/super; útil apenas para contexto em português, não como prova de World Warrior. A página separada de Champion Edition também é excluída como prova do alvo.
+- [SuperCombo Wiki — Ken, The World Warrior](https://wiki.supercombo.gg/w/Street_Fighter_2:_The_World_Warrior/Ken): versioned repertoire, move names, damage/frame tables, throws, and per-force variation notes. Community source; its numbers and hitboxes are candidates, not independent confirmed World 910522 board measurement.
+- [SuperCombo Wiki — Ryu, The World Warrior](https://wiki.supercombo.gg/w/Street_Fighter_2:_The_World_Warrior/Ryu): secondary comparison of Tatsumaki and matchup; useful to detect when Ken spec inherits Ryu values without justification.
+- [GameFAQs — Ryu/Ken Guide (ARC), RCarlos (1999)](https://gamefaqs.gamespot.com/arcade/583626-street-fighter-ii/faqs/848): identifies original arcade versions and describes throws/specials; states Ryu and Ken are equal in all aspects, generalization that must not replace specific throw/range observations. Old community account, without reproducible protocol.
+- [homepage3gore — Ken, ストII](https://homepage3gore.game.coocan.jp/st2/ken_1.html): Japan-specific SFII list with Seoi Nage and Jigoku Guruma, commands of both throws, and three base specials. Concise community source; offers no frames/damages.
+- [T.Akiba's SF2 Data, NKI translation](https://zachd.com/nki/ST/data.html): includes comparative throw/damage data; its own introduction states WW/CE/HF were tested on *Capcom Generations 5* (PlayStation), not directly on World 910522 board. Use only as candidate, especially where it diverges from SuperCombo.
+- [Jogo de Luta — Ken in Street Fighter 2](https://jogodeluta.com.br/street-fighter/street-fighter-2/ken): Brazilian broad title/versioning source; page lists Air Hurricane Kick and Shoryu Reppa without clearly separating World Warrior from later revisions. Do not use these moves to expand 910522 set.
+- [Critical Hits — Street Fighter 2 specials](https://criticalhits.com.br/games/street-fighter-2-todos-os-golpes-especiais/): Brazilian unsegmented-by-revision list includes extra/super techniques; useful only for Portuguese context, not as World Warrior proof. Separate Champion Edition page also excluded as target proof.
 
-Nenhuma referência desta lista concede licença para incorporar imagens, dados, código ou outros ativos de terceiros. Esta revalidação incorporou somente requisitos e fatos comportamentais parafraseados, com limitações indicadas; não alterou fontes, assets ou ROM.
+No reference in this list grants license to incorporate third-party images, data, code, or other assets. This revalidation incorporated only paraphrased requirements and behavioral facts, with indicated limitations; did not alter sources, assets, or ROM.

@@ -11,7 +11,7 @@ uso: extract_dpcm.py [rom] [dir_saida]
 import sys, os, wave, struct
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-# O que cada amostra e', deduzido do CODIGO que a dispara (ver docs/ARQUITETURA.md, secao Som):
+# What each sample is, deduced from the CODE that triggers it (see docs/ARCHITECTURE.md, Sound section):
 USO = {
     0: 'locutor: "ROUND"  (RoundIntroStep)',
     1: 'locutor: numero do round 1', 2: 'locutor: numero do round 2', 3: 'locutor: numero do round 3',

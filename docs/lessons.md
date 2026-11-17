@@ -1,226 +1,225 @@
-# Lições aprendidas — o travamento do Ken nos golpes especiais
+# Lessons learned — Ken's freeze on special moves
 
-Este documento registra, do começo ao fim, um bug que **só aparecia com o Ken**: o jogo congelava
-assim que o Ken usava um golpe especial perto do Ryu (CPU). A causa não estava nos dados do Ken, nem
-nos quadros de animação, nem na ficha do personagem: era um despacho por `RTS` que só funcionava para
-**um** lutador. Fica aqui o sintoma, o diagnóstico, a causa raiz, a correção, a verificação e a
-alternativa descartada — para não repetir o erro em outros despachos do mesmo tipo.
-
----
-
-## 1. Sintoma
-
-No Mesen (o emulador onde o usuário via o problema), ao escolher o Ken e lutar contra o Ryu controlado
-pela CPU:
-
-* o Ken andava, pulava, socava e chutava normalmente;
-* ao sair um golpe especial (Hadouken, Shoryuken ou Tatsumaki), o jogo **congelava**;
-* o quadro ficava parado, sem som e sem resposta ao controle;
-* o travamento acontecia sobretudo quando o Ken ficava **no ar** — Shoryuken, salto ou o fim de um
-  Tatsumaki — porque era aí que a IA do Ryu entrava no ramo anti-aéreo.
-
-Não era um travamento aleatório: com a mesma sequência de entradas, o congelamento caía sempre no
-mesmo ponto. No teste reproduzível, o Ken entrava no estado `$C4` (Shoryuken) no quadro 1091 e o OAM
-(os sprites, `$0200-$02FF`) parava de mudar no quadro seguinte.
+This document records, from start to finish, a bug that **only appeared with Ken**: the game froze
+as soon as Ken used a special move near Ryu (CPU). The cause was not in Ken's data, nor in the
+animation frames, nor in the character fiche: it was an `RTS` dispatch that only worked for
+**one** fighter. The symptom, diagnosis, root cause, fix, verification and discarded alternative
+are recorded here — so the same mistake is not repeated in other dispatches of the same type.
 
 ---
 
-## 2. Como o diagnóstico foi feito
+## 1. Symptom
 
-O projeto já tinha um harness de Mesen sem janela (`tools/mesen/`, modo `--testrunner`). Foram usados
-três instrumentos, todos em Lua:
+In Mesen (the emulator where the user saw the problem), choosing Ken and fighting against the
+CPU-controlled Ryu:
 
-1. **Detector de congelamento de OAM** — o laço principal redesenha o buffer de sprites todo quadro.
-   Se o hash de `$0200-$02FF` não muda por 150 quadros durante a luta, o jogo não está mais rodando.
-2. **Anel de PCs** — um `addMemoryCallback` de execução grava os últimos milhares de
-   `(PC, banco mapeado)`. Quando o PC repete o mesmo endereço 20 vezes seguidas, é porque a CPU parou
-   (instrução `JAM`).
-3. **Contador de instruções por quadro** — em jogo normal o laço gasta ~9.400 "ops" por quadro (a
-   espera de vblank). No travamento o número saltava para ~29.780 e o OAM congelava: não era espera,
-   era laço morto.
+* Ken walked, jumped, punched and kicked normally;
+* when a special move came out (Hadouken, Shoryuken or Tatsumaki), the game **froze**;
+* the frame stopped, with no sound and no controller response;
+* the freeze happened above all when Ken was **in the air** — Shoryuken, jump or the end of a
+  Tatsumaki — because that's when Ryu's AI entered the anti-air branch.
 
-Com o anel de PCs, o instante do travamento mostrou a sequência:
+It was not a random freeze: with the same input sequence, the freeze always occurred at the same
+point. In the reproducible test, Ken entered state `$C4` (Shoryuken) on frame 1091 and the OAM
+(the sprites, `$0200-$02FF`) stopped changing on the next frame.
+
+---
+
+## 2. How the diagnosis was made
+
+The project already had a headless Mesen harness (`tools/mesen/`, `--testrunner` mode). Three
+instruments were used, all in Lua:
+
+1. **OAM freeze detector** — the main loop redraws the sprite buffer every frame. If the hash of
+   `$0200-$02FF` does not change for 150 frames during the fight, the game is no longer running.
+2. **PC ring** — an `addMemoryCallback` execution logger records the last thousands of
+   `(PC, mapped bank)` pairs. When the PC repeats the same address 20 times in a row, the CPU has
+   stopped (`JAM` instruction).
+3. **Instruction counter per frame** — in normal play the loop spends ~9,400 "ops" per frame (the
+   vblank wait). On the freeze the number jumped to ~29,780 and OAM froze: it was not a wait, it
+   was a dead loop.
+
+With the PC ring, the freeze instant showed the sequence:
 
 ```
 pc=$8F46 ... pc=$8FE8 bank=00
 pc=$A492 bank=01
 pc=$A492 bank=01
-pc=$A492 bank=01   (repetindo para sempre)
+pc=$A492 bank=01   (repeating forever)
 ```
 
-O byte em `$A492` (banco `$01`) é `$02`, que no 6502 é **`JAM`**: a CPU entra em halt e só sai com
-reset. O `$8FE8` é o `RTS` do despacho anti-aéreo da IA do Ryu. Ou seja: o `RTS` estava devolvendo para
-`$A492` em vez de para uma rotina de IA.
+The byte at `$A492` (bank `$01`) is `$02`, which on the 6502 is **`JAM`**: the CPU halts and only
+exits on reset. `$8FE8` is the `RTS` of Ryu's AI anti-air dispatch. That is: the `RTS` was
+returning to `$A492` instead of to an AI routine.
 
 ---
 
-## 3. Causa raiz
+## 3. Root cause
 
-A IA do Ryu tem um despacho por "truque do RTS": empilha um endereço e executa `RTS`; o processador
-"retorna" para a rotina escolhida. Em `$00:8FDC`:
+Ryu's AI has an "RTS trick" dispatch: it pushes an address and executes `RTS`; the processor
+"returns" to the chosen routine. At `$00:8FDC`:
 
 ```asm
 L00_8FCF:
-    lda a:FighterState,y      ; estado do oponente
+    lda a:FighterState,y      ; opponent state
     and #$F8
     cmp #$B0
     bcc L00_8FE9
     cmp #$E1
     bcs L00_8FE9
-    lda a:FighterChar,y       ; personagem do OPONENTE
+    lda a:FighterChar,y       ; opponent character
     tay                       ; Y = 0 (Ryu), 1 (Ken), ...
-    lda D00_9148+1,y          ; byte ALTO da entrada
+    lda D00_9148+1,y          ; high byte of entry
     pha
-    lda D00_9148,y            ; byte BAIXO da entrada
+    lda D00_9148,y            ; low byte of entry
     pha
-    rts                       ; "retorna" para o endereço empilhado
+    rts                       ; "returns" to the pushed address
 ```
 
-A tabela tem **uma única entrada**, guardada como `endereço-1` (o `RTS` soma 1):
+The table has **a single entry**, stored as `address-1` (the `RTS` adds 1):
 
 ```asm
 D00_9148:
-    .word RyuAiAntiAir-1      ; $9148: 49 91  -> alvo $9149 -> RTS vai para $914A
+    .word RyuAiAntiAir-1      ; $9148: 49 91  -> target $9149 -> RTS goes to $914A
 ```
 
-O problema é a indexação. `D00_9148+1,y` e `D00_9148,y` avançam de **1 em 1** com `Y`, mas cada
-entrada ocupa **2 bytes**. Isso só funciona porque, com `Y=0`, os dois acessos caem exatamente nos dois
-bytes da entrada. Com `Y=1` (Ken), eles caem **um byte fora** e leem o começo da rotina seguinte:
+The problem is the indexing. `D00_9148+1,y` and `D00_9148,y` advance **1 at a time** with `Y`, but each
+entry occupies **2 bytes**. This only works because, with `Y=0`, both accesses land exactly on the two
+bytes of the entry. With `Y=1` (Ken), they land **one byte off** and read the start of the next routine:
 
-| `Y` | `D00_9148+1,y` lê | `D00_9148,y` lê | endereço empilhado | `RTS` vai para |
+| `Y` | `D00_9148+1,y` reads | `D00_9148,y` reads | address pushed | `RTS` goes to |
 |---|---|---|---|---|
 | `0` (Ryu) | `$9149 = $91` | `$9148 = $49` | `$9149` | `$914A` = `RyuAiAntiAir` ✅ |
 | `1` (Ken) | `$914A = $A4` | `$9149 = $91` | `$A491` | `$A492` = `$02` = `JAM` ❌ |
 
-O `$A4` vem do primeiro byte de `RyuAiAntiAir` (`ldy OtherFighter` = opcode `A4`). O `$91` é o byte
-alto da própria entrada. A combinação `$A4:$91` forma `$A491`; o `RTS` soma 1 e cai em `$A492`, que no
-banco `$01` é lixo (`$02` = `JAM`).
+The `$A4` comes from the first byte of `RyuAiAntiAir` (`ldy OtherFighter` = opcode `A4`). The `$91`
+is the entry's own high byte. The combination `$A4:$91` forms `$A491`; the `RTS` adds 1 and lands on
+`$A492`, which in bank `$01` is garbage (`$02` = `JAM`).
 
-**Por que só o Ken?** Porque `Y` é o personagem do **oponente**. Enquanto o oponente era o Ryu
-(personagem 0), a tabela era indexada com 0 e funcionava. Com o Ken (personagem 1), a mesma tabela foi
-indexada com 1 e o truque do `RTS` apontou para fora dela. A tabela nunca teve uma segunda entrada — o
-código só nunca tinha sido exercitado com outro índice.
+**Why only Ken?** Because `Y` is the **opponent's** character. While the opponent was Ryu
+(character 0), the table was indexed with 0 and worked. With Ken (character 1), the same table was
+indexed with 1 and the `RTS` trick pointed outside it. The table never had a second entry — the code
+had simply never been exercised with another index.
 
-O [NESdev Wiki](https://www.nesdev.org/wiki/RTS_Trick) descreve o padrão e a pegadinha: no *RTS Trick*
-cada entrada guarda `alvo-1` (o `RTS` soma 1), e numa tabela de endereços de 16 bits o índice precisa
-ser multiplicado por 2 (`ASL A`) antes de indexar. A tabela anti-aérea é uma tabela única de `.word`;
-o `ASL` não existe porque, com uma entrada só, o índice 0 funciona sem escala. Foi essa economia que
-quebrou quando o índice 1 passou a existir.
+The [NESdev Wiki](https://www.nesdev.org/wiki/RTS_Trick) describes the pattern and the pitfall: in
+the *RTS Trick* each entry stores `target-1` (the `RTS` adds 1), and in a 16-bit address table the
+index must be multiplied by 2 (`ASL A`) before indexing. The anti-air table is a single `.word`
+table; the `ASL` doesn't exist because, with one entry only, index 0 works without scaling. It was
+that economy that broke when index 1 came into existence.
 
 ---
 
-## 4. A correção
+## 4. The fix
 
-Como a IA desta entrega é **sempre a do Ryu** (a CPU continua sendo o Ryu; não há IA de Ken), a rotina
-anti-aérea correta é sempre a do Ryu. Em vez de indexar a tabela pelo personagem do oponente, o código
-passa a usar a entrada 0 **sem índice**:
+Since the AI in this delivery is **always Ryu's** (the CPU remains Ryu; there is no Ken AI), the
+correct anti-air routine is always Ryu's. Instead of indexing the table by the opponent's character,
+the code now uses entry 0 **without index**:
 
 ```asm
-    lda D00_9148+1            ; era: lda D00_9148+1,y   (B9 49 91)
+    lda D00_9148+1            ; was: lda D00_9148+1,y   (B9 49 91)
     pha
-    lda D00_9148              ; era: lda D00_9148,y     (B9 48 91)
+    lda D00_9148              ; was: lda D00_9148,y     (B9 48 91)
     pha
     rts
 ```
 
-São **dois bytes** trocados em `$00:8FE0` e `$00:8FE4`: `B9` (`LDA abs,Y`) vira `AD` (`LDA abs`). O
-`tay` em `$8FDF` continua lá e fica inofensivo. Nada é deslocado; o resto do banco não muda.
+**Two bytes** changed at `$00:8FE0` and `$00:8FE4`: `B9` (`LDA abs,Y`) becomes `AD` (`LDA abs`). The
+`tay` at `$8FDF` remains there and is harmless. Nothing is shifted; the rest of the bank does not change.
 
-A correção entra no build canônico pela diretiva `patch` das anotações (é o mecanismo usado para todas
-as mudanças do Ken), em `annotations/sf2ne.ann`:
+The fix enters the canonical build via the `patch` directive of the annotations (the mechanism used for
+all Ken changes), in `annotations/sf2ne.ann`:
 
 ```
-# Ken jogavel: ... (explicacao)
+# Ken playable: ... (explanation)
 patch 00:8FE0 AD
 patch 00:8FE4 AD
 ```
 
-Efeito: qualquer oponente (Ryu, Ken ou outro) usa `RyuAiAntiAir`, exatamente como no Ryu-vs-Ryu. Para
-o Ryu a semântica é **idêntica** à de antes, porque com `Y=0` o código antigo já caía na entrada 0.
+Effect: any opponent (Ryu, Ken or another) uses `RyuAiAntiAir`, exactly as in Ryu-vs-Ryu. For Ryu the
+semantics are **identical** to before, because with `Y=0` the old code already fell on entry 0.
 
 ---
 
-## 5. Por que não uma tabela com duas entradas
+## 5. Why not a two-entry table
 
-A alternativa "óbvia" seria dar ao Ken a sua própria entrada em `D00_9148` e continuar indexando por
-personagem. Ela foi descartada por dois motivos:
+The "obvious" alternative would be to give Ken his own entry in `D00_9148` and keep indexing by
+character. It was discarded for two reasons:
 
-1. **A tabela é entrelaçada, não um vetor de 16 bits.** Os bytes baixos e altos são lidos por duas
-   instruções separadas (`D00_9148` e `D00_9148+1`), com passo 1. Para acomodar duas entradas seria
-   preciso multiplicar o índice por 2 (`ASL A`) antes do `TAY`. O NESdev chama o formato alternativo de
-   *split table*: duas tabelas de 1 byte (baixos e altos) indexadas pelo mesmo `X`; é o formato das
-   outras tabelas de IA do jogo (`D00_913C`/`D00_9140` etc.), mas não desta.
-2. **Não cabe no mecanismo de `patch`.** `patch` sobrescreve bytes no lugar; inserir um `ASL A` (ou
-   qualquer byte) deslocaria todo o código seguinte em 1 byte. Isso exigiria remontar/relocar o banco,
-   muito mais arriscado do que dois bytes de mudança — e sem ganho, já que só existe IA de Ryu.
+1. **The table is interleaved, not a 16-bit vector.** The low and high bytes are read by two
+   separate instructions (`D00_9148` and `D00_9148+1`), with step 1. To accommodate two entries it would
+   be necessary to multiply the index by 2 (`ASL A`) before `TAY`. NESdev calls the alternative format
+   *split table*: two 1-byte tables (lows and highs) indexed by the same `X`; it is the format of the
+   other AI tables in the game (`D00_913C`/`D00_9140` etc.), but not of this one.
+2. **It does not fit the `patch` mechanism.** `patch` overwrites bytes in place; inserting an `ASL A`
+   (or any byte) would shift all subsequent code by 1 byte. That would require rebuilding/relocating the
+   bank, much riskier than a two-byte change — and with no gain, since only Ryu AI exists.
 
-Se um dia houver IA de Ken, o caminho certo é refazer o despacho com índice escalado (`ASL A`) e uma
-tabela de duas entradas em espaço livre (há 2.960 bytes `$FF` a partir de `$00:9470`), não espremer a
-segunda entrada no passo 1.
+If Ken AI ever exists, the right approach is to redo the dispatch with scaled index (`ASL A`) and a
+two-entry table in free space (there are 2,960 `$FF` bytes from `$00:9470`), not to squeeze the second
+entry into step 1.
 
 ---
 
-## 6. Verificação
+## 6. Verification
 
-### 6.1 Invariantes do build
+### 6.1 Build invariants
 
-Comparando `build/sf2ne.nes` com `rom/sf2ne_demo.nes` banco a banco (8 KB por banco). SHA-1 do build
-final: `85610a00f43c06de482f969d8df9764ee5379991`.
+Comparing `build/sf2ne.nes` with `rom/sf2ne_demo.nes` bank by bank (8 KB per bank). SHA-1 of the final
+build: `85610a00f43c06de482f969d8df9764ee5379991`.
 
-| Banco | Diferenças | O que é |
+| Bank | Differences | What it is |
 |---|---|---|
-| `$00` | **2 bytes**: `$8FE0`, `$8FE4` | esta correção (`B9` → `AD`) |
-| `$01` | 0 | banco de estados do Ryu — intocado |
-| `$02` | 0 | dados do Ryu — intocado |
-| `$06` | 0 | dados do Ryu — intocado |
-| `$3B` | 0 | cópia do kernel/código do Ryu — intocado |
-| `$04` | 16 bytes (`$90E0-$90EF`) | stub de IA do Ken |
-| `$05` | banco inteiro | banco de estados do Ken (era `$FF`) |
-| `$37` | 2 bytes (`$F06C-$F06D`) | seleção aceita Ken |
-| `$3C` | 22 bytes | ficha/paleta do Ken na coluna 1 |
-| `$3F` | 18 bytes (`$F828-$F839`) | telas de Disclaimer/QR puladas (NOPs temporários) |
+| `$00` | **2 bytes**: `$8FE0`, `$8FE4` | this fix (`B9` → `AD`) |
+| `$01` | 0 | Ryu state bank — untouched |
+| `$02` | 0 | Ryu data — untouched |
+| `$06` | 0 | Ryu data — untouched |
+| `$3B` | 0 | kernel/Ryu code copy — untouched |
+| `$04` | 16 bytes (`$90E0-$90EF`) | Ken AI stub |
+| `$05` | entire bank | Ken state bank (was `$FF`) |
+| `$37` | 2 bytes (`$F06C-$F06D`) | selection accepts Ken |
+| `$3C` | 22 bytes | Ken fiche/palette in column 1 |
+| `$3F` | 18 bytes (`$F828-$F839`) | Disclaimer/QR screens skipped (temporary NOPs) |
 
-O banco `$00` tem exatamente os dois bytes da correção; a coluna 0 (Ryu) continua byte a byte
-intocada.
+Bank `$00` has exactly the two fix bytes; column 0 (Ryu) remains byte-for-byte untouched.
 
-### 6.2 Reprodução do travamento (antes × depois)
+### 6.2 Freeze reproduction (before × after)
 
-O mesmo roteiro que travava o ROM anterior — Ken selecionado, Ryu CPU ativo, Hadouken repetido:
+The same script that froze the previous ROM — Ken selected, Ryu CPU active, repeated Hadouken:
 
-| ROM | Resultado |
+| ROM | Result |
 |---|---|
-| antes da correção | `CRASH OAM_FROZEN` no quadro **1271**; Ken preso em `$C4`; PC em `$A492` (`JAM`) |
-| depois da correção | roda os **5.000** quadros até o fim, sem congelamento |
+| before fix | `CRASH OAM_FROZEN` on frame **1271**; Ken stuck at `$C4`; PC at `$A492` (`JAM`) |
+| after fix | runs the **5,000** frames to the end, no freeze |
 
-A única diferença funcional entre as duas ROMs é o par de bytes `$8FE0`/`$8FE4`; a tela de aviso já
-estava pulada nas duas.
+The only functional difference between the two ROMs is the byte pair `$8FE0`/`$8FE4`; the warning
+screen was already skipped in both.
 
-### 6.3 Bateria completa (todos os especiais)
+### 6.3 Full battery (all specials)
 
-Roteiro no Mesen com os oito movimentos — Hadouken fraco/forte, Shoryuken fraco/forte, Tatsumaki
-fraco/forte, salto e salto com ataque — em ciclo, contra o Ryu CPU:
+Mesen script with the eight moves — weak/strong Hadouken, weak/strong Shoryuken, weak/strong
+Tatsumaki, jump and jump with attack — in cycle, against CPU Ryu:
 
 ```
-9.000 quadros totais, 5.907 quadros de luta
-antiAir=559  dispatch=297  rts=297      (o caminho anti-aéreo rodou 297 vezes)
+9,000 total frames, 5,907 fight frames
+antiAir=559  dispatch=297  rts=297      (the anti-air path ran 297 times)
 CRASH: 0
 ```
 
-Cada movimento foi tentado 21–22 vezes. O contador `antiAir` confirma que o ramo que antes levava ao
-`JAM` foi executado centenas de vezes **sem** travar. Os bytes no ROM montado são:
+Each move was attempted 21–22 times. The `antiAir` counter confirms that the branch that previously
+led to `JAM` was executed hundreds of times **without** freezing. The bytes in the assembled ROM are:
 
 ```
 $8FDC: B9 00 00 A8 AD 49 91 48 AD 48 91 48 60
-                          ^^          ^^
-                       $8FE0       $8FE4
+                           ^^          ^^
+                        $8FE0       $8FE4
 ```
 
-### 6.4 Como repetir
+### 6.4 How to repeat
 
 ```sh
 make gen && make
 MESEN_DIR=$PWD/mesen OUT=/tmp/ken-test
-# BATTERY = script Lua de diagnostico usado nesta investigacao (fica fora do repositorio)
+# BATTERY = diagnostic Lua script used in this investigation (stays outside the repository)
 env -u DISPLAY HOME="$MESEN_DIR/home" LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libstdc++.so.6 \
     SF2_OUT="$OUT" SF2_FRAMES=9000 \
     "$MESEN_DIR/Mesen" --testrunner --timeout=480 \
@@ -228,87 +227,87 @@ env -u DISPLAY HOME="$MESEN_DIR/home" LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libst
 grep -E "CRASH|COUNTERS|STATS" "$OUT/battery.log"
 ```
 
-Os scripts de teste são ferramenta de diagnóstico e ficam **fora** do repositório (o aceite do projeto
-é manual).
+The test scripts are diagnostic tools and stay **outside** the repository (project acceptance is
+manual).
 
 ---
 
-## 7. Lições gerais
+## 7. General lessons
 
-* **"Funciona para o único caso que existe" não é "está correto".** O despacho foi escrito quando só
-  havia Ryu; o índice 0 escondia o erro de passo. Ao adicionar o segundo personagem, o primeiro teste
-  tem de ser justamente o índice 1.
-* **Truque do `RTS` com tabela de passo 1 só comporta uma entrada.** Se a tabela guarda `endereço-1` e
-  o índice avança 1 byte, duas entradas exigem `ASL A` (índice × 2) e uma tabela de verdade. Não
-  empilhe a segunda entrada "no meio" da primeira.
-* **`JAM` (`$02`) é assinatura de desvio para o vazio.** PC repetindo o mesmo endereço, OAM congelado e
-  contagem de instruções muito acima do normal apontam para um `RTS`/`JMP` que caiu fora do código.
-* **Um anel de `(PC, banco)` vale mais que um `breakpoint`.** Foi ele que mostrou `$8FE8` (o `RTS`) e
-  `$A492` (o `JAM`) na ordem exata, sem precisar adivinhar onde parar.
-* **Despachos irmãos merecem a mesma auditoria.** Há outro truque de `RTS` em `$3F:E6E6`
-  (`AiCharRoutine`), com **uma** entrada (`RyuAiThink-1`) indexada por `FighterChar,x` (o personagem da
-  própria IA). Hoje é seguro porque a única IA é a do Ryu (`x` sempre 0). Se um dia houver IA de Ken,
-  esse é o primeiro lugar a corrigir — pelo mesmo motivo.
+* **"Works for the only case that exists" is not "is correct."** The dispatch was written when only
+  Ryu existed; index 0 hid the stride error. When adding the second character, the first test must be
+  precisely index 1.
+* **`RTS` trick with a step-1 table supports only one entry.** If the table stores `address-1` and the
+  index advances 1 byte, two entries require `ASL A` (index × 2) and a real table. Do not stack the
+  second entry "in the middle" of the first.
+* **`JAM` (`$02`) is a signature of diversion into the void.** PC repeating the same address, OAM
+  frozen, and instruction count far above normal point to an `RTS`/`JMP` that fell outside code.
+* **A `(PC, bank)` ring is worth more than a `breakpoint`.** It showed `$8FE8` (the `RTS`) and
+  `$A492` (the `JAM`) in exact order, without guessing where to stop.
+* **Sibling dispatches deserve the same audit.** There is another `RTS` trick at `$3F:E6E6`
+  (`AiCharRoutine`), with **one** entry (`RyuAiThink-1`) indexed by `FighterChar,x` (the IA's own
+  character). Today it is safe because the only AI is Ryu's (`x` always 0). If Ken AI ever exists,
+  this is the first place to fix — for the same reason.
 
 ---
 
-## 8. Arquivos tocados por esta correção
+## 8. Files touched by this fix
 
-| Arquivo | Mudança |
+| File | Change |
 |---|---|
-| `annotations/sf2ne.ann` | comentário + `patch 00:8FE0 AD` e `patch 00:8FE4 AD` (correção) e `patch 3F:F828` (aviso/QR pulados, temporário) |
-| `src/bank_00.s` | gerado: `lda D00_9148+1` / `lda D00_9148` (sem `,y`) |
-| `src/bank_3F.s` | gerado: 18 `nop` no lugar do `farcall ScreenDisclaimer` |
-| `docs/lessons.md` | este documento |
-| `README.md` | referência a este documento |
-| `build/sf2ne.nes` | ROM canônica com a correção |
+| `annotations/sf2ne.ann` | comment + `patch 00:8FE0 AD` and `patch 00:8FE4 AD` (fix) and `patch 3F:F828` (warning/QR skipped, temporary) |
+| `src/bank_00.s` | generated: `lda D00_9148+1` / `lda D00_9148` (without `,y`) |
+| `src/bank_3F.s` | generated: 18 `nop` in place of `farcall ScreenDisclaimer` |
+| `docs/lessons.md` | this document |
+| `README.md` | reference to this document |
+| `build/sf2ne.nes` | canonical ROM with the fix |
 
-O banco `$00` é o único banco de código do Ryu alterado, e apenas nesses dois bytes.
+Bank `$00` is the only Ryu code bank modified, and only in those two bytes.
 
 ---
 
-## 9. Referências
+## 9. References
 
-* NESdev Wiki — [RTS Trick](https://www.nesdev.org/wiki/RTS_Trick): entradas `alvo-1`, o `RTS` soma 1,
-  e o launcher precisa ser chamado por `JSR` (ou ser tail-call) para o retorno não se perder.
-* NESdev Wiki — [Jump table](https://www.nesdev.org/wiki/Jump_table): índice × 2 para tabela de
-  endereços de 16 bits; *split tables* (baixos/altos) indexadas pelo mesmo `X`.
+* NESdev Wiki — [RTS Trick](https://www.nesdev.org/wiki/RTS_Trick): `target-1` entries, the `RTS` adds 1,
+  and the launcher must be called by `JSR` (or be a tail-call) so the return is not lost.
+* NESdev Wiki — [Jump table](https://www.nesdev.org/wiki/Jump_table): index × 2 for 16-bit address tables;
+  *split tables* (lows/highs) indexed by the same `X`.
 * NESdev Wiki — [6502 assembly optimisations](https://www.nesdev.org/wiki/6502_assembly_optimisations):
-  seção "Use Jump tables with RTS instruction instead of JMP indirect".
+  section "Use Jump tables with RTS instruction instead of JMP indirect".
 
 ---
 
-## 10. Apêndice — o que os lotes de naming de dados `$3C`/`$3F`/`$20` ensinaram
+## 10. Appendix — what the `$3C`/`$3F`/`$20` data naming batches taught
 
-Os primeiros lotes de nomes para labels automáticos de dados (33 labels de `$3C`, 15 de `$3F` e 30 de
-`$20`, ver `tasks/DATA_NAMING_3C.md`, `tasks/DATA_NAMING_3F.md` e `tasks/DATA_NAMING_20.md`) não mudaram
-bytes, mas expuseram cinco armadilhas de leitura:
+The first batches of names for automatic data labels (33 labels from `$3C`, 15 from `$3F` and 30 from
+`$20`, see `tasks/DATA_NAMING_3C.md`, `tasks/DATA_NAMING_3F.md` and `tasks/DATA_NAMING_20.md`) did not
+change bytes, but exposed five reading pitfalls:
 
-* **Não classifique um banco pelo endereço.** A triagem inicial tratou `$29`/`$2D` como "IA" porque
-  ficam perto do motor; os cabeçalhos gerados mostram que são **música FamiTone2** (173 labels). Ler o
-  cabeçalho e o consumidor antes de propor categoria custa menos que refazer o inventário.
-* **A métrica canônica de labels é cega para comentário na mesma linha.** O regex
-  `^[A-Za-z_][A-Za-z0-9_]*:$` não conta `EdgeARel`, `EdgeBRel` e `EdgeBBtn` (no `$3F`), que têm
-  comentário depois dos dois-pontos. Por isso a soma por banco (1.010 semânticos) difere do total único
-  publicado (1.006). Ao comparar métricas, use sempre o mesmo comando e registre a diferença.
-* **Tabelas "por personagem" têm passo fixo — confirme o passo no consumidor.** Em `$3C`, as fichas
-  usam 1 byte por personagem (10 bytes por tabela), enquanto as paletas usam 12 bytes por personagem
-  (`FighterChar*12`) e os tiles de retrato, 6. Um nome `*Tbl` só é seguro depois de achar a
-  multiplicação no código que lê a tabela; e pares `Lo`/`Hi` devem ser nomeados como par, porque um
-  deles pode ser lido sem `,y` (caso de `CharDirTransHiTbl` em `3B:E025`).
-* **Procure a documentação antes de inferir pelo código.** No lote `$3F`, `docs/FORMATOS.md` §11/§15 já
-  descrevia as tabelas de knockback, reação de queda/KO, sfx de impacto e projetil com os mesmos
-  endereços. Ler o documento primeiro evitou adivinhar a semântica de `EF06`/`EF20` (knockback X/Y) e
-  revelou de passagem vários tamanhos errados no índice de tabelas.
-* **O gerador anexa o comentário à linha `.byte`.** Por isso um diff "por linha" acusa dezenas de
-  mudanças em dados mesmo quando os operandos são idênticos. A verificação correta compara as diretivas
-  `.byte`/`.word` com o comentário removido (ou, mais simples, confia no SHA-1 do ROM).
-* **Metasprite não é texto: leia a sequência de desenho, não o gráfico.** No `$20`, `85BE` desenha o
-  dígito "4" em `dx=0` e depois "ROUND" em `dx=$10`, produzindo "4ROUND" em vez de "ROUND 4" — um
-  possível bug preservado como curiosidade. Já `848B` é um bloco gráfico 48×32 sem texto legível
-  (confiança MÉDIA). Quando o metasprite não forma uma frase, o nome deve descrever a **rotina
-  consumidora** (`RoundEndDrawTieAltMetasprite`), não inventar uma legenda.
+* **Do not classify a bank by its address.** Initial triage treated `$29`/`$2D` as "AI" because they are
+  near the engine; generated headers show they are **FamiTone2 music** (173 labels). Reading the header
+  and the consumer before proposing a category costs less than redoing the inventory.
+* **The canonical label metric is blind to comments on the same line.** The regex
+  `^[A-Za-z_][A-Za-z0-9_]*:$` does not count `EdgeARel`, `EdgeBRel` and `EdgeBBtn` (in `$3F`), which have
+  a comment after the colon. That is why the per-bank sum (1,010 semantic) differs from the unique total
+  published (1,006). When comparing metrics, always use the same command and record the difference.
+* **"Per-character" tables have a fixed stride — confirm the stride in the consumer.** In `$3C`, fiches
+  use 1 byte per character (10 bytes per table), while palettes use 12 bytes per character
+  (`FighterChar*12`) and portrait tiles, 6. A `*Tbl` name is only safe after finding the multiplication
+  in the code that reads the table; and `Lo`/`Hi` pairs should be named as a pair, because one of them
+  may be read without `,y` (case of `CharDirTransHiTbl` at `3B:E025`).
+* **Look for documentation before inferring from code.** In the `$3F` batch, `docs/FORMATS.md` §11/§15
+  already described the knockback, fall/KO reaction, impact sfx and projectile tables with the same
+  addresses. Reading the document first avoided guessing the semantics of `EF06`/`EF20` (knockback X/Y)
+  and incidentally revealed several wrong sizes in the table index.
+* **The generator appends the comment to the `.byte` line.** That is why a "per-line" diff accuses dozens
+  of changes in data even when operands are identical. Correct verification compares the `.byte`/`.word`
+  directives with the comment removed (or, simpler, trusts the ROM SHA-1).
+* **Metasprite is not text: read the drawing sequence, not the graphic.** In `$20`, `85BE` draws digit
+  "4" at `dx=0` and then "ROUND" at `dx=$10`, producing "4ROUND" instead of "ROUND 4" — a possible bug
+  preserved as a curiosity. And `848B` is a 48×32 graphic block without readable text (MEDIUM confidence).
+  When the metasprite does not form a phrase, the name should describe the **consumer routine**
+  (`RoundEndDrawTieAltMetasprite`), not invent a caption.
 
-**Regra prática:** para cada lote, (1) leia o consumidor, (2) proponha nome + confiança, (3) aplique só
-labels/comentários, (4) valide com `make gen`, `make` e SHA-1 idêntico, (5) confirme que nenhum operando
-`.byte`/`.word` mudou. O SHA-1 é a prova de que o naming é cosmético.
+**Practical rule:** for each batch, (1) read the consumer, (2) propose name + confidence, (3) apply only
+labels/comments, (4) validate with `make gen`, `make` and identical SHA-1, (5) confirm that no `.byte`/
+`.word` operand changed. The SHA-1 is the proof that naming is cosmetic.

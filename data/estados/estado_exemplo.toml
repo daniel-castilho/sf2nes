@@ -1,60 +1,60 @@
 # Exemplo esquemático — NÃO é dado real do jogo.
-# Apenas valida o desenho do schema (Fase 2).
+# Only validates the schema design (Phase 2).
 # Valores simbólicos/fictícios; não reproduz sequência real do jogo.
 
 [[personagem]]
-id = "ryu_exemplo"
-banco_estados = "BancoEstadosRyu"
-banco_frames = "BancoFramesRyu"
+id = "ryu_example"
+state_bank = "BancoEstadosRyu"
+frame_bank = "BancoFramesRyu"
 
 [[personagem.estado]]
 id = "EstadoParado"
-condicao_entrada = { simbolo = "CondOponentePerto", bruto = 2 }
-cadeia_natural = "EstadoSeguinte"
-classe = { simbolo = "ClasseEmPe", bruto = 89 }
-acertos_golpe = 0
-quadro_inicial = "q1"
+entry_condition = { symbol = "CondOpponentNear", raw = 2 }
+natural_chain = "EstadoSeguinte"
+class = { symbol = "ClasseEmPe", raw = 89 }
+hit_count = 0
+initial_frame = "q1"
 
 [[personagem.estado.quadro]]
 id = "q1"
-duracao = 8
+duration = 8
 metasprite = "ms_parado"
-efeito_parametro = { bruto = 0 }
-efeito_tipo = { simbolo = "EfeitoNenhum", bruto = 0 }
-flags = { bruto = 16 }
-movimento_modo = { simbolo = "MovAbsoluto", bruto = 0 }
-velocidade_x = 0
-velocidade_y = 0
-repeticao = 0
-proximo_quadro = "q2"
+effect_param = { raw = 0 }
+effect_type = { symbol = "EfeitoNenhum", raw = 0 }
+flags = { raw = 16 }
+movement_mode = { symbol = "MovAbsoluto", raw = 0 }
+vel_x = 0
+vel_y = 0
+repeat = 0
+next_frame = "q2"
 
 [[personagem.estado.quadro]]
 id = "q2"
 duracao = 4
 metasprite = "ms_parado2"
-efeito_parametro = { bruto = 0 }
-efeito_tipo = { simbolo = "EfeitoNenhum", bruto = 0 }
-flags = { bruto = 16 }
-movimento_modo = { simbolo = "MovAbsoluto", bruto = 0 }
-velocidade_x = 0
-velocidade_y = 0
-repeticao = 0
+effect_param = { raw = 0 }
+effect_type = { symbol = "EfeitoNenhum", raw = 0 }
+flags = { raw = 16 }
+movement_mode = { symbol = "MovAbsoluto", raw = 0 }
+vel_x = 0
+vel_y = 0
+repeat = 0
 
 [[personagem.estado]]
 id = "EstadoSeguinte"
 condicao_entrada = { simbolo = "CondVitoria", bruto = 10 }
 classe = { simbolo = "ClasseAgachado", bruto = 41 }
-acertos_golpe = 0
+hit_count = 0
 quadro_inicial = "q3"
 
 [[personagem.estado.quadro]]
 id = "q3"
 duracao = 6
 metasprite = "ms_seguinte"
-efeito_parametro = { bruto = 0 }
-efeito_tipo = { simbolo = "EfeitoNenhum", bruto = 0 }
-flags = { bruto = 16 }
-movimento_modo = { simbolo = "MovAbsoluto", bruto = 0 }
-velocidade_x = 0
-velocidade_y = 0
-repeticao = 0
+effect_param = { raw = 0 }
+effect_type = { symbol = "EfeitoNenhum", raw = 0 }
+flags = { raw = 16 }
+movement_mode = { symbol = "MovAbsoluto", raw = 0 }
+vel_x = 0
+vel_y = 0
+repeat = 0

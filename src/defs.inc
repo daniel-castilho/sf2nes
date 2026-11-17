@@ -1,5 +1,5 @@
-; Definicoes comuns a todos os modulos.
-.setcpu "6502X"     ; o jogo usa o opcode nao-oficial AXS #imm ($CB)
+; Common definitions for all modules.
+.setcpu "6502X"     ; the game uses the unofficial opcode AXS #imm ($CB)
 .include "hw.inc"
 .include "ram.inc"
 .include "macros.inc"

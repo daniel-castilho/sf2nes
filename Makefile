@@ -1,14 +1,14 @@
-# Street Fighter II NE (DEMO by Parisoft) — disassembly remontavel
+# Street Fighter II NE (DEMO by Parisoft) — remontable disassembly
 #
-#   make          monta build/sf2ne.nes (build canonico: ROM modificada, com o Ken jogavel)
-#   make verify   conferencia HISTORICA opcional: compara o build com rom/sf2ne_demo.nes
-#   make gen      regenera src/ a partir de rom/ + trace/ + annotations/sf2ne.ann
-#   make fixed    monta build/sf2ne_fixed.nes com as correcoes opcionais ligadas (blocos `alt` das anotacoes)
-#   make prontos  monta as variantes jogaveis em prontos/ (reset corrigido, versus, golpe forte unico, golpe na borda)
-#   make assets   exporta os graficos (PNG) e as vozes (WAV) para extracted/
+#   make          builds build/sf2ne.nes (canonical build: modified ROM, with Ken playable)
+#   make verify   optional HISTORICAL check: compares the build with rom/sf2ne_demo.nes
+#   make gen      regenerates src/ from rom/ + trace/ + annotations/sf2ne.ann
+#   make fixed    builds build/sf2ne_fixed.nes with optional fixes linked (annotation `alt` blocks)
+#   make prontos  builds playable variants in prontos/ (reset fix, versus, strong attack once, edge attack)
+#   make assets   exports graphics (PNG) and voices (WAV) to extracted/
 #   make clean
 #
-# Requisitos: cc65 (ca65/ld65) e python3.   Debian/Ubuntu: sudo apt install cc65
+# Requirements: cc65 (ca65/ld65) and python3.   Debian/Ubuntu: sudo apt install cc65
 
 ROM      := rom/sf2ne_demo.nes
 SHA1     := 0bf9dc578de5a10bb9f429845c26fd2f958a9aed
@@ -18,8 +18,8 @@ OBJS     := $(patsubst src/%.s,$(BUILD)/%.o,$(SRCS))
 INCS     := $(wildcard src/*.inc)
 CA65FLAGS := -I src --bin-include-dir .
 
-# Definicoes do build canonico (make). O demo original nao tem o Ken nem a bandeira do pais de
-# destino visivel na selecao; `make fixed`/`make prontos` montam as variantes historicas, sem estas
+# Canonical build definitions (make). The original demo does not have Ken nor the destination country flag of
+# destination visible on selection; `make fixed`/`make prontos` build the historical variants, without these
 # definicoes.
 DEFS     := -D DEST_FLAG_BLINK
 
@@ -33,17 +33,17 @@ $(BUILD)/%.o: src/%.s $(INCS)
 $(BUILD)/sf2ne.nes: $(OBJS) sf2ne.cfg
 	ld65 -C sf2ne.cfg $(OBJS) -o $@ -m $(BUILD)/sf2ne.map -Ln $(BUILD)/sf2ne.labels
 
-# Conferencia HISTORICA, opcional: o build canonico inclui o Ken e nao precisa ser igual ao demo.
+# HISTORICAL check, optional: the canonical build includes Ken and does not need to be equal to the demo.
 verify: $(BUILD)/sf2ne.nes
-	@if cmp -s $(BUILD)/sf2ne.nes $(ROM); then 	    echo "OK: build/sf2ne.nes e' identico ao ROM original (sha1 $(SHA1))"; 	else 	    echo "ATENCAO: build/sf2ne.nes diverge do ROM original (sha1 $(SHA1)); esperado no build com o Ken"; 	fi
+	@if cmp -s $(BUILD)/sf2ne.nes $(ROM); then 	    echo "OK: build/sf2ne.nes is identical to original ROM (sha1 $(SHA1))"; 	else 	    echo "WARNING: build/sf2ne.nes diverges from original ROM (sha1 $(SHA1)); expected in Ken build"; 	fi
 
 gen:
 	python3 tools/disasm.py
 
 # Conversao de estados/quadros do formato declarativo (TOML) para assembly.
-# Alvo separado e nao destrutivo: nao modifica o make gen existente.
-# Os arquivos .s gerados sao colocados em src/ e podem ser incluidos no build
-# via annotations/sf2ne.ann (keepbank) ou sf2ne.cfg.
+# Separate non-destructive target: does not modify the existing make gen.
+# The generated .s files are placed in src/ and can be included in the build
+# via annotations/sf2ne.ann (keepbank) or sf2ne.cfg.
 STATE_TOML_DIR := data/estados
 STATE_GEN_DIR  := src
 STATE_GEN_TOOL := tools/state_data_gen.py
@@ -56,8 +56,8 @@ gen-states:
 		python3 $(STATE_GEN_TOOL) "$$f" "$(STATE_GEN_DIR)/$$base.s"; \
 	done
 
-# ---- versao com correcoes (nao e' identica ao original, de proposito)
-# correcoes ligadas no `make fixed`. Para experimentar outras:  make fixed FIXDEFS="-D FIX_SOFT_RESET -D FIX_HEAVY_ONCE"
+# ---- version with fixes (not identical to original, on purpose)
+# fixes linked in `make fixed`. To experiment with others:  make fixed FIXDEFS="-D FIX_SOFT_RESET -D FIX_HEAVY_ONCE"
 FIXDEFS  ?= -D FIX_SOFT_RESET
 FIXOBJS  := $(patsubst src/%.s,$(BUILD)/fixed/%.o,$(SRCS))
 
@@ -73,7 +73,7 @@ fixed:
 	@$(MAKE) --no-print-directory $(BUILD)/sf2ne_fixed.nes FIXDEFS="$(FIXDEFS)" > /dev/null
 	@echo "build/sf2ne_fixed.nes: $$(cmp -l $(BUILD)/sf2ne_fixed.nes $(ROM) | wc -l) bytes diferentes do original ($(FIXDEFS))"
 
-# ROMs prontos para jogar (copias em prontos/, que e' versionado; build/ nao e')
+# ROMs ready to play (copies in prontos/, which is versioned; build/ is not)
 prontos:
 	@mkdir -p prontos
 	@$(MAKE) --no-print-directory fixed && cp $(BUILD)/sf2ne_fixed.nes prontos/sf2ne_reset_corrigido.nes

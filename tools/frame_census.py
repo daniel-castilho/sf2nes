@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
-"""Censo dos bytes dos quadros de animacao, lendo o ROM diretamente.
+"""Census of animation frame bytes, reading the ROM directly.
 
-Caminha o grafo do banco de estados (tabelas $A000-$A0AF + cadeias +1/+2 e
-+3/+4 dos cabecalhos) e imprime estatisticas dos bytes +5..+11 dos quadros:
-  +5 -> zp_3A (parametro do efeito)   +6 -> zp_3C (tipo do efeito)
-  +7 -> zp_38 (flags)                 +8 -> zp_2E (modo de movimento)
-  +9/+10 -> VelX/VelY                 +11 -> desvio (repeticoes)
-Uso: frame_census.py [banco=01] [ROM=rom/sf2ne_demo.nes]
+Walks the state bank graph (tables $A000-$A0AF + chains +1/+2 and
++3/+4 of headers) and prints statistics of frame bytes +5..+11:
+  +5 -> zp_3A (effect param)   +6 -> zp_3C (effect type)
+  +7 -> zp_38 (flags)                 +8 -> zp_2E (movement mode)
+  +9/+10 -> VelX/VelY                 +11 -> deviation (repeats)
+Usage: frame_census.py [bank=01] [ROM=rom/sf2ne_demo.nes]
 
-Nota: so conta o alcancavel a partir das tabelas de ponteiros e das cadeias
-(+1/+2, +3/+4) dos cabecalhos; o gerador (disasm.py) ve o banco inteiro e
-inclui os orfaos sem ponteiro -- banco 01 do Ryu: 69 estados/269 quadros
-aqui contra 71/274 no `make gen`. Nao e bug.
+Note: only counts what's reachable from pointer tables and chains
+(+1/+2, +3/+4) of headers; the generator (disasm.py) sees the whole bank and
+includes pointerless orphans — Ryu's bank 01: 69 states/269 frames
+here vs 71/274 in `make gen`. Not a bug.
 """
 import re, sys
 from collections import Counter, defaultdict

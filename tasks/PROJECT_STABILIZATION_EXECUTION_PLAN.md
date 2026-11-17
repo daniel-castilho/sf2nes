@@ -1,231 +1,231 @@
-# Plano de execução — estabilização e manutenibilidade do projeto
+# Execution plan — project stabilization and maintainability
 
-**Status:** plano proposto; não autoriza implementação, build nem execução de testes.  
-**Decisão de produto:** pausar novos personagens e funcionalidades para reduzir o custo e o risco de manutenção do que já existe.  
-**Projeto:** Street Fighter II NE (`daniel-castilho/sf2nes`).  
-**Data:** 2026-11-10.  
-**Público:** mantenedor do projeto e Software Engineer responsável por eventual execução.
+**Status:** proposed plan; does not authorize implementation, build, or test execution.  
+**Product decision:** pause new characters and features to reduce cost and risk of maintaining what already exists.  
+**Project:** Street Fighter II NE (`daniel-castilho/sf2nes`).  
+**Date:** 2026-11-10.  
+**Audience:** project Maintainer and Software Engineer responsible for eventual execution.
 
-## 1. Objetivo
+## 1. Objective
 
-Organizar uma fase de melhoria interna que torne o projeto mais fácil de entender, editar e validar, sem ampliar o conteúdo do jogo. O plano aproveita as sugestões externas que têm valor, corrige recomendações incompatíveis com o fluxo existente e adia refatorações ou funcionalidades sem necessidade demonstrada.
+Organize an internal improvement phase that makes the project easier to understand, edit, and validate, without expanding game content. The plan leverages valuable external suggestions, corrects recommendations incompatible with the existing flow, and postpones refactorings or features without demonstrated need.
 
-O foco é:
+The focus is:
 
-1. estabelecer um retrato confiável do estado atual e reconciliar documentação divergente;
-2. melhorar a forma de autoria dos dados de estados e quadros;
-3. reduzir o custo de navegação pelo código com nomenclatura baseada em evidência;
-4. deixar hipóteses, fontes de verdade e validações planejadas explícitas;
-5. preparar uma proposta de validação futura sem executá-la nesta etapa.
+1. establish a reliable portrait of current state and reconcile divergent documentation;
+2. improve the way state and frame data are authored;
+3. reduce code navigation cost with evidence-based naming;
+4. leave hypotheses, sources of truth, and planned validations explicit;
+5. prepare a future validation proposal without executing it in this stage.
 
-## 2. Princípios e limites não negociáveis
+## 2. Non-negotiable principles and limits
 
-- **Sem novos personagens ou funcionalidades** durante esta fase. Não implementar novos estados de Ken nem iniciar outro lutador.
-- A decisão de escopo de Ken continua: humano P2, `ID 1`; a CPU de um jogador continua Ryu; IA própria de Ken fora do escopo. Nenhum outro personagem deve ser declarado implementado.
-- A REA da IA arcade é uma pesquisa separada. Nenhum código, bytecode, dado ou ativo da ROM arcade pode ser copiado para o projeto.
-- `src/` é gerado no fluxo atual. Não congelar ou editar esses arquivos informalmente; qualquer troca de fonte de verdade exige decisão documentada e migração explícita.
-- Não usar `clean`, `reset`, `restore` ou operações que descartem alterações locais sem autorização.
-- Este documento **não autoriza** modificar fontes, annotations, ferramentas, assets, ROMs, compilar, executar emulador, rodar testes ou validar gameplay. Essas ações requerem uma autorização posterior, com escopo próprio.
-- Testes e verificações citados adiante são tarefas futuras do Engineer, não autorização para executá-los agora.
-- Nenhum percentual de labels nomeados é um critério de sucesso isolado. Prioridade é reduzir a ambiguidade nas rotinas e dados que mais dificultam manutenção.
+- **No new characters or features** during this phase. Do not implement new Ken states nor start another fighter.
+- Ken scope decision remains: human P2, ID `1`; one-player CPU opponent remains Ryu; Ken-specific AI out of scope. No other character must be declared implemented.
+- Arcade AI REA is separate research. No arcade code, bytecode, data, or asset may be copied into the project.
+- `src/` is generated in the current flow. Do not freeze or informally edit these files; any source-of-truth swap requires documented decision and explicit migration.
+- Do not use `clean`, `reset`, `restore`, or operations that discard local changes without authorization.
+- This document **does not authorize** modifying sources, annotations, tools, assets, ROMs, compiling, running emulator, running tests, or validating gameplay. These actions require later authorization with specific scope.
+- Tests and verifications cited ahead are future Engineer tasks, not authorization to execute them now.
+- No percentage of named labels is an isolated success criterion. Priority is reducing ambiguity in routines and data that most hinder maintenance.
 
-## 3. Leitura crítica das sugestões externas
+## 3. Critical reading of external suggestions
 
-| Sugestão | Decisão | Motivo / tratamento |
-|---|---|---|
-| Melhorar naming | **Adotar com foco** | Começar por rotinas centrais, chamadas frequentes, dispatchers e RAM compartilhada. Nomear apenas quando houver evidência; manter hipótese marcada. |
-| Criar formato textual para estados/quadros | **Prioridade alta, especificar antes de implementar** | Já consta no `docs/ROTEIRO.md` como ferramenta futura. Usar dados atuais do Ryu como caso de referência, sem criar conteúdo novo. Preservar uma fonte de verdade. |
-| Congelar `src/` e editar assembly gerado | **Não adotar informalmente** | Contradiz o fluxo atual `annotations` → gerador → `src/` e pode causar sobrescrita ou divergência. Qualquer congelamento futuro precisa de ADR, plano de migração e indicação explícita da nova fonte canônica. |
-| Criar testes específicos para Ken | **Adiar** | A ideia pode ser útil quando Ken for retomado, mas a IA de Ken e Ken-vs-Ken conflitam com o escopo atual. Preparar apenas uma proposta de cobertura futura; não criar nem executar testes agora. |
-| Criar conversores PNG→CHR e WAV→DPCM | **Adiar** | São ferramentas de produção de conteúdo; não reduzem o principal atrito imediato sem demanda de arte/áudio. Antes de retomá-las, verificar ferramentas, disponibilidade, licenças e formatos. |
-| Extrair o kernel para um banco dedicado | **Adiar / não priorizar** | Há bancos PRG vazios, e o roteiro já descreve como acomodar código adicional. A repetição do kernel atende vetores/interrupções e tem restrições de tempo; refatorar sem necessidade medida aumenta risco. |
-| UI de dificuldade/versus | **Fora desta fase** | É funcionalidade visível ao jogador, não manutenção interna. |
-| Planejar novos bancos de código | **Manter mapa, sem expansão preventiva** | `docs/ARQUITETURA.md` e `docs/ROTEIRO.md` já documentam ocupação e alternativa para bancos adicionais. Atualizar somente se os dados atuais divergirem. |
-| Documentar decisões e formatos | **Adotar como trabalho contínuo** | Já existem `docs/FORMATOS.md`, `docs/ARQUITETURA.md` e marcações de hipótese; o trabalho é reconciliar e completar lacunas com evidência, sem duplicar conteúdo. |
+| Suggestion | Decision | Reason/treatment |
+|------------|----------|------------------|
+| Improve naming | **Adopt with focus** | Start with central routines, frequent calls, dispatchers, and shared RAM. Name only when evidence exists; keep hypothesis marked. |
+| Create text format for states/frames | **High priority, specify before implementing** | Already in `docs/ROADMAP.md` as future tool. Use current Ryu data as reference case, without creating new content. Preserve a source of truth. |
+| Freeze `src/` and edit generated assembly | **Not adopted informally** | Contradicts current `annotations` → generator → `src/` flow and may cause overwrite or divergence. Any future freeze needs ADR, migration plan, and explicit new canonical source indication. |
+| Create Ken-specific tests | **Defer** | Idea may be useful when Ken is resumed, but Ken AI and Ken-vs-Ken conflict with current scope. Prepare only a future coverage proposal; do not create or execute tests now. |
+| Create PNG→CHR and WAV→DPCM converters | **Defer** | Content production tools; do not reduce main immediate friction without art/audio demand. Before resuming them, verify tools, availability, licenses, and formats. |
+| Extract kernel to dedicated bank | **Defer / not prioritize** | There are empty PRG banks, and roadmap already describes how to accommodate additional code. Kernel repetition serves vectors/interrupts and has cycle constraints; refactoring without measured need increases risk. |
+| Difficulty/versus UI | **Out of this phase** | Player-visible functionality, not internal maintenance. |
+| Plan new code banks | **Keep map, no preventive expansion** | `docs/ARCHITECTURE.md` and `docs/ROADMAP.md` already document occupancy and alternative for additional banks. Update only if current data diverge. |
+| Document decisions and formats | **Adopt as ongoing work** | `docs/FORMATS.md`, `docs/ARCHITECTURE.md`, and hypothesis markings already exist; work is to reconcile and complete gaps with evidence, without duplicating content. |
 
-## 4. Ordem de execução proposta
+## 4. Proposed execution order
 
-A ordem abaixo é deliberada: primeiro medir e organizar; depois desenhar a ferramenta; só então alterar o fluxo. Nenhuma fase de implementação começa automaticamente pela aprovação deste plano.
+The order below is deliberate: first measure and organize; then design the tool; only then alter the flow. No implementation phase starts automatically by approval of this plan.
 
-### Fase 0 — congelar escopo e preparar o trabalho
+### Phase 0 — freeze scope and prepare work
 
-**Objetivo:** evitar que tarefas de conteúdo se infiltrem na fase de manutenibilidade.
+**Objective:** prevent content tasks from infiltrating the maintainability phase.
 
-**Atividades futuras**
+**Future activities**
 
-- Registrar em `docs/ROTEIRO.md` ou num ADR a pausa de novos personagens e funcionalidades.
-- Separar manutenção estrutural, REA/documentação e conteúdo de jogo em listas distintas.
-- Criar uma lista de decisões pendentes, com responsável e evidência necessária.
+- Register in `docs/ROADMAP.md` or an ADR the pause of new characters and features.
+- Separate structural maintenance, REA/documentation, and game content into distinct lists.
+- Create a pending-decision list, with owner and necessary evidence.
 
-**Saída:** escopo de estabilização acordado; nenhuma tarefa desta fase pode introduzir uma mudança jogável.
+**Output:** agreed stabilization scope; no task in this phase may introduce a playable change.
 
-**Gate:** autorização do mantenedor antes de editar documentação do projeto.
+**Gate:** Maintainer authorization before editing project documentation.
 
-### Fase 1 — auditoria reproduzível do estado atual
+### Phase 1 — reproducible audit of current state
 
-**Objetivo:** criar uma única linha de base confiável, sem inferir números de documentos possivelmente desatualizados.
+**Objective:** create a single reliable baseline, without inferring numbers from possibly outdated documents.
 
-**Atividades futuras**
+**Future activities**
 
-- Inventariar fontes de verdade: `annotations/sf2ne.ann`, gerador, `src/`, `docs/`, scripts em `tools/` e configurações do build.
-- Definir como contar labels totais, nomes semânticos, labels de código e labels de dados. Documentar o critério para não comparar categorias diferentes.
-- Reconciliar a contagem publicada de labels no README com as notas do roteiro e a saída atual do gerador.
-- Confirmar mapa de bancos, espaço livre e localização do kernel, distinguindo ocupação por banco da ocupação total do PRG.
-- Inventariar scripts de comparação/regressão e documentos que os mencionam. Marcar “existente”, “documentado”, “executado anteriormente” ou “pendente” apenas com evidência disponível; não executar nenhum script nesta fase.
-- Identificar contradições entre README, `docs/ARQUITETURA.md`, `docs/ROTEIRO.md`, `docs/FORMATOS.md`, `docs/BUGS.md` e especificações de tarefas.
+- Inventory sources of truth: `annotations/sf2ne.ann`, generator, `src/`, `docs/`, scripts in `tools/`, and build configurations.
+- Define how to count total labels, semantic names, code labels, and data labels. Document criterion to avoid comparing different categories.
+- Reconcile README's published label count with roadmap notes and current generator output.
+- Confirm bank map, free space, and kernel location, distinguishing per-bank occupancy from total PRG occupancy.
+- Inventory comparison/regression scripts and documents mentioning them. Mark "existing", "documented", "previously executed", or "pending" only with available evidence; do not execute any script in this phase.
+- Identify contradictions among README, `docs/ARCHITECTURE.md`, `docs/ROADMAP.md`, `docs/FORMATS.md`, `docs/BUGS.md`, and task specifications.
 
-**Saídas propostas**
+**Proposed outputs**
 
-- Um registro de estado atual com métricas e critérios de contagem.
-- Uma matriz documento → fonte de verdade → divergência → ação proposta.
-- Um inventário de validações existentes e pendentes, sem resultados novos de teste.
+- A current state record with metrics and counting criteria.
+- A document → source of truth → divergence → proposed action matrix.
+- An inventory of existing and pending validations, without new test results.
 
-**Critérios de saída**
+**Exit criteria**
 
-- Os números usados no plano são reproduzíveis por um método descrito.
-- “Código”, “dados”, “label genérico” e “label semântico” não são misturados numa única métrica.
-- Não há afirmação de teste aprovado sem evidência já existente.
+- Numbers used in the plan are reproducible by a described method.
+- "Code", "data", "generic label", and "semantic label" are not mixed into a single metric.
+- No claim of approved test without existing evidence.
 
-### Fase 2 — especificação do formato de autoria de estados e quadros
+### Phase 2 — state and frame authoring format specification
 
-**Objetivo:** definir um formato humano-legível para os dados atuais, sem alterar sua semântica ou acrescentar conteúdo.
+**Objective:** define a human-readable format for current data, without altering its semantics or adding content.
 
-**Atividades futuras**
+**Future activities**
 
-- Usar `docs/FORMATOS.md` como contrato inicial e listar todos os campos, tamanhos, ponteiros, laços, sentinelas, tabelas de seleção e exceções documentadas.
-- Escolher entre macros ca65 e uma entrada declarativa externa (por exemplo, YAML/TOML/JSON) somente depois de comparar legibilidade, tipagem, validação, diffs e integração com o gerador.
-- Definir como representar labels simbólicos, bancos, ponteiros relativos/absolutos, campos opcionais e hipóteses.
-- Proibir conversões silenciosas de valores inválidos ou perda de campos desconhecidos.
-- Especificar como o gerador reporta erros com arquivo/linha/campo e como evita sobrescrever fontes canônicas.
-- Usar primeiro um subconjunto representativo dos dados existentes do Ryu para documentar a prova de cobertura; não criar estados de Ken nesta fase.
+- Use `docs/FORMATS.md` as initial contract and list all fields, sizes, pointers, loops, sentinels, selection tables, and documented exceptions.
+- Choose between ca65 macros and an external declarative entry (e.g., YAML/TOML/JSON) only after comparing readability, typing, validation, diffs, and integration with generator.
+- Define how to represent symbolic labels, banks, relative/absolute pointers, optional fields, and hypotheses.
+- Prohibit silent conversions of invalid values or loss of unknown fields.
+- Specify how the generator reports errors with file/line/field and how it avoids overwriting canonical sources.
+- Use first a representative subset of existing Ryu data to document coverage proof; do not create Ken states in this phase.
 
-**Saídas propostas**
+**Proposed outputs**
 
-- ADR de formato e decisão explícita da fonte canônica.
-- Esquema da linguagem/formatos e gramática dos registros.
-- Plano de conversão do banco existente em etapas, com rollback documental.
-- Critérios de equivalência estrutural que o Engineer poderá verificar depois de autorização.
+- Format ADR and explicit canonical source decision.
+- Language/schema schema and record grammar.
+- Stepwise existing-bank conversion plan, with documentary rollback.
+- Structural equivalence criteria that the Engineer can verify after authorization.
 
-**Critérios de saída**
+**Exit criteria**
 
-- Todos os campos já documentados no formato binário têm representação definida ou uma exceção registrada.
-- O formato não exige editar `src/` gerado à mão.
-- A especificação separa os dados originais de qualquer conteúdo futuro.
-- A conversão e a verificação ainda não são executadas por este plano.
+- All fields already documented in binary format have defined representation or a registered exception.
+- Format does not require hand-editing generated `src/`.
+- Specification separates original data from any future content.
+- Conversion and verification are not executed by this plan.
 
-### Fase 3 — naming guiado por risco e evidência
+### Phase 3 — evidence-guided naming
 
-**Objetivo:** tornar as áreas mais caras de navegar mais compreensíveis sem produzir nomes especulativos.
+**Objective:** make the most expensive-to-navigate areas more understandable without producing speculative names.
 
-**Ordem sugerida**
+**Suggested order**
 
-1. Dispatchers, chamadas entre bancos e rotinas centrais do ciclo da luta.
-2. Carregamento da ficha do personagem, mudança de estado, input/comandos e movimentação compartilhada.
-3. Rotinas de desenho, colisão, dano e demais funções que afetam muitas tabelas.
-4. Dados de personagem/tabelas com função recorrente, sempre distinguindo dados de código.
-5. Rotinas auxiliares raras, somente quando forem tocadas por outra tarefa autorizada.
+1. Dispatchers, inter-bank calls, and central fight loop routines.
+2. Character sheet loading, state change, input/commands, and shared movement.
+3. Drawing, collision, damage, and other functions affecting many tables.
+4. Character data/tables with recurrent function, always distinguishing code from data.
+5. Rare auxiliary routines, only when touched by another authorized task.
 
-**Regras de naming**
+**Naming rules**
 
-- Um nome semântico precisa de evidência estática, anotação de rastreamento já existente ou relação de dados demonstrável.
-- Não substituir label genérico por nome “plausível” sem demonstrar a função; marcar incertezas como hipótese.
-- Registrar nomes de RAM compartilhada de forma consistente com `docs/RAM.md`.
-- Não renomear símbolos públicos usados por ferramentas/scripts sem atualizar suas referências de forma controlada.
-- Medir progresso por cobertura de rotinas críticas nomeadas e por redução de ambiguidades, além da contagem global.
+- A semantic name needs static evidence, existing tracking annotation, or demonstrable data relationship.
+- Do not replace generic label with "plausible" name without demonstrating function; mark uncertainties as hypothesis.
+- Register shared RAM labels consistently with `docs/RAM.md`.
+- Do not rename public symbols used by tools/scripts without controlled reference updates.
+- Measure progress by coverage of critical named routines and ambiguity reduction, beyond global count.
 
-**Saídas propostas**
+**Proposed outputs**
 
-- Lista priorizada de labels críticos e evidência associada.
-- Alterações futuras em annotations/documentação geradas pelo fluxo estabelecido.
-- Métricas antes/depois produzidas com o critério da Fase 1.
+- Prioritized list of critical labels and associated evidence.
+- Future annotation/documentation changes generated by established flow.
+- Before/after metrics produced with Phase 1 criterion.
 
-**Critérios de saída**
+**Exit criteria**
 
-- Nomes novos são rastreáveis à evidência.
-- Não há edição direta e divergente de `src/` gerado.
-- A meta é compreensão/manutenção, não atingir arbitrariamente 60–70% do total.
+- New names are traceable to evidence.
+- No direct divergent editing of generated `src/`.
+- Goal is understanding/maintenance, not arbitrarily reaching 60–70% of total.
 
-### Fase 4 — completar documentação operacional e decisões
+### Phase 4 — complete operational documentation and decisions
 
-**Objetivo:** reduzir o custo de retomada do projeto e evitar que documentos diferentes orientem ações incompatíveis.
+**Objective:** reduce project resumption cost and avoid different documents guiding incompatible actions.
 
-**Atividades futuras**
+**Future activities**
 
-- Marcar cada formato e comportamento como confirmado, hipótese ou desconhecido.
-- Manter uma matriz de responsabilidade documental: arquitetura descreve estrutura; formatos descreve registros/semântica; roteiro lista etapas; bugs registra defeito e status; tasks especificam entregas pontuais.
-- Corrigir recomendações históricas incompatíveis com decisões atuais, por exemplo, validações ou mudanças de escopo já adiadas.
-- Registrar limites e interfaces das ferramentas: arquivos de entrada, saída, opções, se são geradas e os casos de erro esperados.
-- Manter REA arcade em documento separado, sem misturá-la a dados/implementação NES.
+- Mark each format and behavior as confirmed, hypothesis, or unknown.
+- Keep a documentation responsibility matrix: architecture describes structure; formats describe records/semantics; roadmap lists stages; bugs register defect and status; tasks specify point deliveries.
+- Correct historical recommendations incompatible with current decisions, e.g., validations or scope changes already deferred.
+- Register tool limits and interfaces: input files, output, options, whether generated, and expected error cases.
+- Keep arcade REA in a separate document, without mixing it with NES data/implementation.
 
-**Saída:** documentação consistente, sem duplicar especificações funcionais em diversos arquivos.
+**Output:** consistent documentation, without duplicating functional specifications across multiple files.
 
-**Critério de saída:** cada fato crítico tem uma fonte de verdade identificável e as hipóteses permanecem explicitamente sinalizadas.
+**Exit criterion:** every critical fact has an identifiable source of truth and hypotheses remain explicitly signaled.
 
-### Fase 5 — proposta de validação futura (somente especificação)
+### Phase 5 — future validation proposal (specification only)
 
-**Objetivo:** determinar o que deveria ser verificado quando houver autorização e quando a implementação de conteúdo for retomada.
+**Objective:** determine what should be verified when there is authorization and when content implementation is resumed.
 
-**Atividades futuras**
+**Future activities**
 
-- Mapear o que os scripts existentes afirmam cobrir e quais cenários não cobrem, sem executá-los agora.
-- Propor níveis distintos: integridade do gerador/formato, equivalência estrutural dos dados, build, regressão de funcionalidades já existentes e aceitação manual em emulador.
-- Definir casos de Ken somente quando a implementação for retomada e respeitando o escopo vigente; não presumir Ken-vs-Ken ou IA de Ken.
-- Descrever evidências requeridas para qualquer alegação de “aprovado”.
+- Map what existing scripts claim to cover and which scenarios they do not cover, without executing them now.
+- Propose distinct levels: generator/format integrity, structural data equivalence, build, regression of existing features, and manual acceptance in emulator.
+- Define Ken cases only when implementation is resumed and respecting current scope; do not assume Ken-vs-Ken or Ken AI.
+- Describe evidence required for any "approved" claim.
 
-**Saída:** plano de validação com casos, pré-condições, artefatos e responsável.
+**Output:** validation plan with cases, preconditions, artifacts, and owner.
 
-**Gate obrigatório:** nenhuma automação é criada e nenhum teste/build/emulador é executado sem autorização explícita posterior.
+**Mandatory gate:** no automation is created and no test/build/emulator is executed without subsequent explicit authorization.
 
-## 5. Trabalho explicitamente adiado ou excluído
+## 5. Work explicitly deferred or excluded
 
-- Implementar Ken, IA de Ken, novos personagens ou novos golpes/estados jogáveis.
-- Acrescentar tela de seleção de dificuldade/versus ou qualquer outra interface nova.
-- Converter imagens/áudio ou integrar ferramenta externa de assets.
-- Extrair/refatorar o kernel para banco dedicado.
-- Alterar o layout de bancos apenas para antecipar uma expansão hipotética.
-- Refazer o sistema de build ou congelar `src/` sem ADR aprovado.
-- Executar Mesen, MAME, regressão, teste de shift/realocação, build ou teste manual nesta etapa.
-- Copiar código, dados ou ativos do arcade ou de ports de terceiros.
+- Implementing Ken, Ken AI, new characters, or new playable moves/states.
+- Adding difficulty/versus selection screen or any other new interface.
+- Converting images/audio or integrating external asset tool.
+- Extracting/refactoring kernel to dedicated bank.
+- Changing bank layout only to anticipate hypothetical expansion.
+- Redoing build or freezing `src/` without approved ADR.
+- Running Mesen, MAME, regression, shift/relocation test, build, or manual test in this stage.
+- Copying code, data, or assets from arcade or third-party ports.
 
-Os itens podem ser reconsiderados em decisões futuras, cada um com objetivo, risco, evidência e escopo próprios.
+Items may be reconsidered in future decisions, each with its own objective, risk, evidence, and scope.
 
-## 6. Dependências e riscos
+## 6. Dependencies and risks
 
-| Risco/dependência | Tratamento |
-|---|---|
-| Métricas antigas ou critérios diferentes de contagem | Definir o método na Fase 1 antes de estabelecer metas. |
-| `src/` e annotations divergirem | Preservar o fluxo gerado; se houver mudança de fonte canônica, exigir ADR e migração explícita. |
-| Novo formato não representar casos raros do Ryu | Fazer inventário completo dos campos e exceções antes de codificar o conversor. |
-| Naming especulativo piorar a documentação | Exigir evidência e registrar hipóteses em vez de nomes definitivos. |
-| Testes documentados parecerem autorização para executá-los | Repetir o gate de autorização em toda especificação de execução. |
-| Refatoração do kernel perturbar vetores/tempos de IRQ | Adiar até existir necessidade mensurável e plano específico de compatibilidade/ciclos. |
-| Ferramentas externas de assets indisponíveis ou com licença inadequada | Fazer auditoria de disponibilidade/licença antes de incluí-las num escopo futuro. |
-| REA arcade se misturar à implementação NES | Manter documentos e rastreabilidade separados; transportar apenas especificações comportamentais autorizadas. |
+| Risk/dependency | Treatment |
+|-----------------|-----------|
+| Old metrics or different counting criteria | Define method in Phase 1 before setting goals. |
+| `src/` and annotations diverge | Preserve generated flow; if canonical source changes, require ADR and explicit migration. |
+| New format does not represent rare Ryu cases | Complete inventory of fields and exceptions before coding converter. |
+| Speculative naming worsens documentation | Require evidence and register hypotheses instead of definitive names. |
+| Documented tests appear as authorization to execute them | Repeat authorization gate in every execution specification. |
+| Kernel refactoring disturbs vectors/IRQ timings | Defer until measurable need and specific compatibility/cycle plan exist. |
+| External asset tools unavailable or inadequate license | Audit availability/license before including in future scope. |
+| Arcade REA mixing into NES implementation | Keep documents and traceability separate; transport only authorized behavioral specifications. |
 
-## 7. Gates de decisão
+## 7. Decision gates
 
-Cada fase de execução futura exige uma decisão explícita do mantenedor:
+Each future execution phase requires an explicit Maintainer decision:
 
-1. **Gate A — auditoria documental:** autoriza leitura e edição de documentação; não autoriza alteração de código ou execução de build/teste.
-2. **Gate B — desenho do formato:** autoriza produzir a especificação/ADR do formato; não autoriza o conversor.
-3. **Gate C — implementação do formato:** autoriza mudanças em ferramentas e dados, com arquivos de entrada/saída delimitados; verificações técnicas só conforme autorização expressa.
-4. **Gate D — naming:** autoriza mudanças em annotations e geração das fontes simbólicas; qualquer build/teste continua dependente de autorização própria.
-5. **Gate E — validação:** define se serão permitidos testes automatizados, build, emulador ou testes manuais, quais arquivos/artefatos e quais cenários.
+1. **Gate A — documentary audit:** authorizes reading and editing documentation; does not authorize code alteration or build/test execution.
+2. **Gate B — format design:** authorizes producing format specification/ADR; does not authorize converter.
+3. **Gate C — format implementation:** authorizes tool and data changes, with delimited input/output files; technical verifications only per express authorization.
+4. **Gate D — naming:** authorizes annotation changes and symbolic source generation; any build/test continues dependent on specific authorization.
+5. **Gate E — validation:** defines whether automated tests, build, emulator, or manual tests will be allowed, which files/artifacts, and which scenarios.
 
-A aprovação deste documento, por si só, **não abre nenhum desses gates**.
+Approval of this document, by itself, **does not open any of these gates**.
 
-## 8. Definição de conclusão da fase de estabilização
+## 8. Stabilization phase completion definition
 
-A fase só será considerada concluída quando:
+The phase will be considered concluded only when:
 
-- [ ] houver uma linha de base verificável de labels, bancos, ferramentas, fontes canônicas e validações;
-- [ ] README, roteiro, arquitetura, formatos e bugs estiverem consistentes sobre o estado do projeto;
-- [ ] houver decisão documentada sobre o formato canônico de autoria de estados/quadros e seu gerador;
-- [ ] a estratégia de naming priorizar criticidade e evidência, sem meta percentual arbitrária;
-- [ ] houver um plano de validação futuro explicitamente separado da autorização para executá-lo;
-- [ ] novos personagens/funcionalidades permanecerem pausados durante a fase;
-- [ ] nenhuma alteração local preexistente for descartada sem autorização.
+- [ ] there is a verifiable baseline of labels, banks, tools, canonical sources, and validations;
+- [ ] README, roadmap, architecture, formats, and bugs are consistent about project state;
+- [ ] there is a documented decision on canonical state/frame authoring format and its generator;
+- [ ] naming strategy prioritizes criticality and evidence, without arbitrary percentage goal;
+- [ ] there is a future validation plan explicitly separated from authorization to execute it;
+- [ ] new characters/features remain paused during the phase;
+- [ ] no preexisting local change is discarded without authorization.
 
-## 9. Próxima ação recomendada
+## 9. Recommended next action
 
-Solicitar primeiro o **Gate A** para realizar a auditoria documental e consolidar as métricas atuais. Depois da linha de base, decidir se o maior retorno imediato vem da especificação do formato textual ou do naming das rotinas críticas. Não iniciar conversor, campanha ampla de renomeação, teste, build ou refatoração antes dessa decisão.
+First request **Gate A** to perform documentary audit and consolidate current metrics. After the baseline, decide whether the highest immediate return comes from text format specification or critical routine naming. Do not start converter, broad renaming campaign, test, build, or refactoring before that decision.
