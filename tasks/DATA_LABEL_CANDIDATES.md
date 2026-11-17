@@ -1,11 +1,11 @@
 # Inventário de labels de dados — triagem inicial
 
-- **Status:** triagem estática; nenhum nome foi alterado.
+- **Status:** triagem estática; nomes aplicados nos lotes `$3C`, `$3F` e `$20`.
 - **Escopo:** 1.213 labels automáticos de dados (`D<bb>_<aaaa>`) em `src/bank_*.s`.
 - **Fonte:** `src/bank_*.s` gerados a partir de `annotations/sf2ne.ann`; leitura somente.
 - **Objetivo:** classificar por banco/subsistema, referências e categoria para escolher o primeiro lote de naming de dados.
 - **Inventário completo:** `tasks/DATA_LABEL_INVENTORY.tsv` (1.213 linhas, tabulação).
-- **Nota:** snapshot anterior aos lotes de dados. Após `tasks/DATA_NAMING_3C.md` (33 labels) e `tasks/DATA_NAMING_3F.md` (15), restam **1.165** labels automáticos de dados.
+- **Nota:** snapshot anterior aos lotes de dados. Após `tasks/DATA_NAMING_3C.md` (33 labels), `tasks/DATA_NAMING_3F.md` (15) e `tasks/DATA_NAMING_20.md` (30), restam **1.135** labels automáticos de dados.
 
 ## 1. Método
 
@@ -116,12 +116,13 @@ São os labels com consumidor identificável no código — maior chance de rece
 
 ## 4. Próximo passo sugerido
 
-1. Escolher um subsistema da seção 2. Candidatos com melhor relação evidência/esforço:
-   - **Motor/núcleo de luta (`$3F`, 15 labels)** — poucos labels e alto impacto de leitura.
-   - **Fichas/seleção/VS (`$3C`, 33 labels)** — dados nomeáveis por personagem e tela.
-   - **HUD/efeitos (`$20`, 30 labels)** — sprites com texto reconhecível ("ROUND", "FIGHT").
-2. Ler o fluxo consumidor e propor nomes com evidência/confiança/risco no formato de `tasks/NAMING_CANDIDATES.md`.
-3. Aplicar somente após autorização explícita; validar com `make gen`, `make` e SHA-1 idêntico.
+1. Lotes já aplicados: **Motor/núcleo de luta (`$3F`, 15)**, **Fichas/seleção/VS (`$3C`, 33)** e
+   **HUD/efeitos (`$20`, 30)** — ver `tasks/DATA_NAMING_3F.md`, `tasks/DATA_NAMING_3C.md` e
+   `tasks/DATA_NAMING_20.md`.
+2. Próximos candidatos da seção 2, pela relação evidência/esforço: **Telas RLE + tabelas (`$36`, 30)** e
+   **Luta/HUD/VS/utilitários de vídeo (`$3B`, 35)**.
+3. Ler o fluxo consumidor e propor nomes com evidência/confiança/risco no formato de `tasks/NAMING_CANDIDATES.md`.
+4. Aplicar somente após autorização explícita; validar com `make gen`, `make` e SHA-1 idêntico.
 
-> Nada foi renomeado nesta triagem. ROM canônico: `3ad177a0a7867a821e6c1709b4e6dbdda3555aa1`.
+> Os lotes aplicados não mudaram bytes. ROM canônico: `3ad177a0a7867a821e6c1709b4e6dbdda3555aa1`.
 

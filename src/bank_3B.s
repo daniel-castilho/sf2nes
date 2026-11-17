@@ -723,16 +723,16 @@ FadeIn_NextColor:
     rts                                         ; E57C  60
 
 D3B_E57D:
-    .word D20_8509                              ; E57D  09 85
-    .word D20_8509                              ; E57F  09 85
-    .word D20_851A                              ; E581  1A 85
-    .word D20_851A                              ; E583  1A 85
+    .word ProjectileFrame0                      ; E57D  09 85
+    .word ProjectileFrame0                      ; E57F  09 85
+    .word ProjectileFrame1                      ; E581  1A 85
+    .word ProjectileFrame1                      ; E583  1A 85
     .byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00; E585
 D3B_E595:
-    .word D20_853A                              ; E595  3A 85
-    .word D20_8549                              ; E597  49 85
-    .word D20_8556                              ; E599  56 85
-    .word D20_8565                              ; E59B  65 85
+    .word ProjectileClashFrame0                 ; E595  3A 85
+    .word ProjectileClashFrame1                 ; E597  49 85
+    .word ProjectileClashFrame2                 ; E599  56 85
+    .word ProjectileClashFrame3                 ; E59B  65 85
 
 ; <- jmp RoundInitLoadStage
 ; modos: intro do round
@@ -2824,45 +2824,45 @@ RoundIntroDraw:
     sta zp_DB                                   ; F786  85 DB
     lda #$80                                    ; F788  A9 80
     sta zp_DC                                   ; F78A  85 DC
-    lda #<D20_8469                              ; F78C  A9 69
+    lda #<RoundIntroBattleText                  ; F78C  A9 69
     sta zp_D9                                   ; F78E  85 D9
-    lda #>D20_8469                              ; F790  A9 84
+    lda #>RoundIntroBattleText                  ; F790  A9 84
     sta zp_DA                                   ; F792  85 DA
     ldy #$01                                    ; F794  A0 01
     jmp DrawMetasprite                          ; F796  4C EA F2
 
 D3B_F799:
-    .word D20_84C6                              ; F799  C6 84
-    .word D20_84B9                              ; F79B  B9 84
-    .word D20_84AC                              ; F79D  AC 84
-    .word D20_8574                              ; F79F  74 85
-    .word D20_8580                              ; F7A1  80 85
-    .word D20_858E                              ; F7A3  8E 85
-    .word D20_8580                              ; F7A5  80 85
-    .word D20_8574                              ; F7A7  74 85       (inferido)
-    .word D20_84C6                              ; F7A9  C6 84
-    .word D20_84B9                              ; F7AB  B9 84
-    .word D20_84AC                              ; F7AD  AC 84
-    .word D20_8574                              ; F7AF  74 85
-    .word D20_8580                              ; F7B1  80 85
-    .word D20_859E                              ; F7B3  9E 85
-    .word D20_8580                              ; F7B5  80 85
-    .word D20_8574                              ; F7B7  74 85       (inferido)
-    .word D20_84C6                              ; F7B9  C6 84
-    .word D20_84B9                              ; F7BB  B9 84
-    .word D20_84AC                              ; F7BD  AC 84
-    .word D20_8574                              ; F7BF  74 85
-    .word D20_8580                              ; F7C1  80 85
-    .word D20_85AE                              ; F7C3  AE 85
-    .word D20_8580                              ; F7C5  80 85
-    .word D20_8574                              ; F7C7  74 85       (inferido)
-    .word D20_84C6                              ; F7C9  C6 84
-    .word D20_84B9                              ; F7CB  B9 84
-    .word D20_84AC                              ; F7CD  AC 84
-    .word D20_8574                              ; F7CF  74 85
-    .word D20_8580                              ; F7D1  80 85
-    .word D20_85BE                              ; F7D3  BE 85
-    .word D20_8580                              ; F7D5  80 85
+    .word FightTextZoomLarge                    ; F799  C6 84
+    .word FightTextZoomMedium                   ; F79B  B9 84
+    .word FightTextZoomSmall                    ; F79D  AC 84
+    .word FightText                             ; F79F  74 85
+    .word RoundTextFlash                        ; F7A1  80 85
+    .word RoundText1                            ; F7A3  8E 85
+    .word RoundTextFlash                        ; F7A5  80 85
+    .word FightText                             ; F7A7  74 85       (inferido)
+    .word FightTextZoomLarge                    ; F7A9  C6 84
+    .word FightTextZoomMedium                   ; F7AB  B9 84
+    .word FightTextZoomSmall                    ; F7AD  AC 84
+    .word FightText                             ; F7AF  74 85
+    .word RoundTextFlash                        ; F7B1  80 85
+    .word RoundText2                            ; F7B3  9E 85
+    .word RoundTextFlash                        ; F7B5  80 85
+    .word FightText                             ; F7B7  74 85       (inferido)
+    .word FightTextZoomLarge                    ; F7B9  C6 84
+    .word FightTextZoomMedium                   ; F7BB  B9 84
+    .word FightTextZoomSmall                    ; F7BD  AC 84
+    .word FightText                             ; F7BF  74 85
+    .word RoundTextFlash                        ; F7C1  80 85
+    .word RoundText3                            ; F7C3  AE 85
+    .word RoundTextFlash                        ; F7C5  80 85
+    .word FightText                             ; F7C7  74 85       (inferido)
+    .word FightTextZoomLarge                    ; F7C9  C6 84
+    .word FightTextZoomMedium                   ; F7CB  B9 84
+    .word FightTextZoomSmall                    ; F7CD  AC 84
+    .word FightText                             ; F7CF  74 85
+    .word RoundTextFlash                        ; F7D1  80 85
+    .word RoundText4                            ; F7D3  BE 85
+    .word RoundTextFlash                        ; F7D5  80 85
     .byte $74,$85                               ; F7D7
 D3B_F7D9:
     .byte $40,$01,$01,$02,$02,$50,$02,$02       ; F7D9
@@ -2887,9 +2887,9 @@ RoundEnd_TimeUpCheck:
     bcs RoundEnd_StepCheck                      ; F800  B0 17
     iny                                         ; F802  C8
     sty a:RoundStepTimer                        ; F803  8C B7 00
-    lda #<D20_85CE                              ; F806  A9 CE
+    lda #<TimeOverText                          ; F806  A9 CE
     sta zp_D9                                   ; F808  85 D9
-    lda #>D20_85CE                              ; F80A  A9 85
+    lda #>TimeOverText                          ; F80A  A9 85
     sta zp_DA                                   ; F80C  85 DA
     lda #$70                                    ; F80E  A9 70
     sta zp_DB                                   ; F810  85 DB
@@ -2928,8 +2928,8 @@ RoundEnd_VoiceWin:
     lda #$07                                    ; F841  A9 07       voz 7 = "WIN"
     sta VoiceQueued                             ; F843  8D 5E 04
 RoundEnd_DrawYouWin:
-    lda #<D20_85EA                              ; F846  A9 EA       RoundEnd_DrawYouWin — desenha o sprite de "YOU WIN" ($20:85EA)
-    ldx #>D20_85EA                              ; F848  A2 85
+    lda #<YouWinText                            ; F846  A9 EA       RoundEnd_DrawYouWin — desenha o sprite de "YOU WIN" ($20:85EA)
+    ldx #>YouWinText                            ; F848  A2 85
     jmp RoundEndDrawCenter                      ; F84A  4C 5C F8
 
 
@@ -2941,8 +2941,8 @@ RoundEnd_VoicePerfect:
     lda #$09                                    ; F853  A9 09       voz 9 = "PERFECT" (vencedor humano com energia cheia, $58)
     sta VoiceQueued                             ; F855  8D 5E 04
 RoundEnd_DrawPerfect:
-    lda #<D20_852B                              ; F858  A9 2B       RoundEnd_DrawPerfect — desenha o sprite de "PERFECT" ($20:852B)
-    ldx #>D20_852B                              ; F85A  A2 85
+    lda #<PerfectText                           ; F858  A9 2B       RoundEnd_DrawPerfect — desenha o sprite de "PERFECT" ($20:852B)
+    ldx #>PerfectText                           ; F85A  A2 85
 
 ; <- jmp RoundEnd_NextStep
 ; modos: fim do round
@@ -2963,9 +2963,9 @@ RoundEnd_VoiceLose:
     lda #$08                                    ; F86F  A9 08       voz 8 = "LOSE" (o vencedor e' a CPU)
     sta VoiceQueued                             ; F871  8D 5E 04
 RoundEnd_DrawYouLose:
-    lda #<D20_85D9                              ; F874  A9 D9       RoundEnd_DrawYouLose — desenha o sprite de "YOU LOSE" ($20:85D9)
+    lda #<YouLoseText                           ; F874  A9 D9       RoundEnd_DrawYouLose — desenha o sprite de "YOU LOSE" ($20:85D9)
     sta zp_D9                                   ; F876  85 D9
-    lda #>D20_85D9                              ; F878  A9 85
+    lda #>YouLoseText                           ; F878  A9 85
     sta zp_DA                                   ; F87A  85 DA
     lda #$60                                    ; F87C  A9 60
     sta zp_DB                                   ; F87E  85 DB
@@ -2979,9 +2979,9 @@ RoundEnd_DrawTie:
     lda a:TimerOnes                             ; F887  AD BA 00    RoundEnd_DrawTie — empate: desenha o sprite de empate ($20:84A1)
     ora a:TimerTens                             ; F88A  0D BB 00
     bne RoundEnd_DrawTieAlt                     ; F88D  D0 13
-    lda #<D20_84A1                              ; F88F  A9 A1
+    lda #<DrawGameText                          ; F88F  A9 A1
     sta zp_D9                                   ; F891  85 D9
-    lda #>D20_84A1                              ; F893  A9 84
+    lda #>DrawGameText                          ; F893  A9 84
     sta zp_DA                                   ; F895  85 DA
     lda #$70                                    ; F897  A9 70
     sta zp_DB                                   ; F899  85 DB
@@ -2991,9 +2991,9 @@ RoundEnd_DrawTie:
 
 
 RoundEnd_DrawTieAlt:
-    lda #<D20_848B                              ; F8A2  A9 8B       RoundEnd_DrawTieAlt — empate com relogio no ar: variante do sprite ($20:848B) (nt)
+    lda #<RoundEndDrawTieAltMetasprite          ; F8A2  A9 8B       RoundEnd_DrawTieAlt — empate com relogio no ar: variante do sprite ($20:848B) (nt)
     sta zp_D9                                   ; F8A4  85 D9       (nt)
-    lda #>D20_848B                              ; F8A6  A9 84       (nt)
+    lda #>RoundEndDrawTieAltMetasprite          ; F8A6  A9 84       (nt)
     sta zp_DA                                   ; F8A8  85 DA       (nt)
     lda #$68                                    ; F8AA  A9 68       (nt)
     sta zp_DB                                   ; F8AC  85 DB       (nt)

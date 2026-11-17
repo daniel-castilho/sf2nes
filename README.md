@@ -36,17 +36,18 @@ Leia nesta ordem:
 3. [`docs/BUGS.md`](docs/BUGS.md) — bugs relatados: o que já foi resolvido e onde estão os outros.
 4. [`docs/ROTEIRO.md`](docs/ROTEIRO.md) — o caminho para terminar o jogo, e como usar IA nisso sem se enganar.
 5. [`docs/FERRAMENTAS.md`](docs/FERRAMENTAS.md) — scripts, formato das anotações, emulador sem janela.
-6. [`docs/lessons.md`](docs/lessons.md) — lições aprendidas: como o travamento do Ken nos golpes especiais foi diagnosticado e corrigido (sintoma, traço de PC, causa raiz, correção e verificação) e o que o primeiro lote de naming de dados (`$3C`) ensinou sobre leitura de tabelas e métricas.
+6. [`docs/lessons.md`](docs/lessons.md) — lições aprendidas: como o travamento do Ken nos golpes especiais foi diagnosticado e corrigido (sintoma, traço de PC, causa raiz, correção e verificação) e o que os lotes de naming de dados (`$3C`, `$3F` e `$20`) ensinaram sobre leitura de tabelas, metasprites e métricas.
 
 ## O que ainda **não** está pronto
 
 **Foco atual — estabilização e manutenibilidade.** A implementação de novos personagens e funcionalidades de jogo está pausada, não cancelada. O próximo ciclo de trabalho será definido após a Fase 3 de naming (`tasks/NAMING_CANDIDATES.md`, `docs/ESTADO_DO_PROJETO.md` e `tasks/PROJECT_STABILIZATION_EXECUTION_PLAN.md`).
 
-Há 2.145 definições de rótulo (2.141 nomes únicos): **976 semânticos** e **1.165 automáticos de dados**
+Há 2.145 definições de rótulo (2.141 nomes únicos): **1.006 semânticos** e **1.135 automáticos de dados**
   (`D01_A4CB`…). **Não resta nenhum rótulo automático de código** (`L3F_E4DA`…): os lotes P0/P1, P2 e
-  FamiTone2 da Fase 3 nomearam os 379 que existiam. Os lotes de dados `$3C` (33) e `$3F` (15) já nomearam
-  fichas, paletas, retratos e as tabelas do núcleo de luta (`tasks/DATA_NAMING_3C.md`,
-  `tasks/DATA_NAMING_3F.md`); os 1.165 restantes estão inventariados em `tasks/DATA_LABEL_INVENTORY.tsv`.
+  FamiTone2 da Fase 3 nomearam os 379 que existiam. Os lotes de dados `$3C` (33), `$3F` (15) e `$20` (30)
+  já nomearam fichas, paletas, retratos, o núcleo de luta e o HUD/efeitos (`tasks/DATA_NAMING_3C.md`,
+  `tasks/DATA_NAMING_3F.md`, `tasks/DATA_NAMING_20.md`); os 1.135 restantes estão inventariados em
+  `tasks/DATA_LABEL_INVENTORY.tsv`.
   Das variáveis, 78 têm nome. O inventário da Fase 3 está em `tasks/NAMING_CANDIDATES.md`.
 * **Formatos de dados parcialmente documentados:** metasprites e estados estão entendidos; caixas de colisão,
   bytes 5–10 do quadro de animação, opcodes dos roteiros de IA e condições de transição ainda não.

@@ -278,19 +278,19 @@ O banco `$00` é o único banco de código do Ryu alterado, e apenas nesses dois
 
 ---
 
-## 10. Apêndice — o que os lotes de naming de dados `$3C`/`$3F` ensinaram
+## 10. Apêndice — o que os lotes de naming de dados `$3C`/`$3F`/`$20` ensinaram
 
-Os primeiros lotes de nomes para labels automáticos de dados (33 labels de `$3C` e 15 de `$3F`, ver
-`tasks/DATA_NAMING_3C.md` e `tasks/DATA_NAMING_3F.md`) não mudaram bytes, mas expuseram quatro
-armadilhas de leitura:
+Os primeiros lotes de nomes para labels automáticos de dados (33 labels de `$3C`, 15 de `$3F` e 30 de
+`$20`, ver `tasks/DATA_NAMING_3C.md`, `tasks/DATA_NAMING_3F.md` e `tasks/DATA_NAMING_20.md`) não mudaram
+bytes, mas expuseram cinco armadilhas de leitura:
 
 * **Não classifique um banco pelo endereço.** A triagem inicial tratou `$29`/`$2D` como "IA" porque
   ficam perto do motor; os cabeçalhos gerados mostram que são **música FamiTone2** (173 labels). Ler o
   cabeçalho e o consumidor antes de propor categoria custa menos que refazer o inventário.
 * **A métrica canônica de labels é cega para comentário na mesma linha.** O regex
   `^[A-Za-z_][A-Za-z0-9_]*:$` não conta `EdgeARel`, `EdgeBRel` e `EdgeBBtn` (no `$3F`), que têm
-  comentário depois dos dois-pontos. Por isso a soma por banco (980 semânticos) difere do total único
-  publicado (976). Ao comparar métricas, use sempre o mesmo comando e registre a diferença.
+  comentário depois dos dois-pontos. Por isso a soma por banco (1.010 semânticos) difere do total único
+  publicado (1.006). Ao comparar métricas, use sempre o mesmo comando e registre a diferença.
 * **Tabelas "por personagem" têm passo fixo — confirme o passo no consumidor.** Em `$3C`, as fichas
   usam 1 byte por personagem (10 bytes por tabela), enquanto as paletas usam 12 bytes por personagem
   (`FighterChar*12`) e os tiles de retrato, 6. Um nome `*Tbl` só é seguro depois de achar a
@@ -303,6 +303,11 @@ armadilhas de leitura:
 * **O gerador anexa o comentário à linha `.byte`.** Por isso um diff "por linha" acusa dezenas de
   mudanças em dados mesmo quando os operandos são idênticos. A verificação correta compara as diretivas
   `.byte`/`.word` com o comentário removido (ou, mais simples, confia no SHA-1 do ROM).
+* **Metasprite não é texto: leia a sequência de desenho, não o gráfico.** No `$20`, `85BE` desenha o
+  dígito "4" em `dx=0` e depois "ROUND" em `dx=$10`, produzindo "4ROUND" em vez de "ROUND 4" — um
+  possível bug preservado como curiosidade. Já `848B` é um bloco gráfico 48×32 sem texto legível
+  (confiança MÉDIA). Quando o metasprite não forma uma frase, o nome deve descrever a **rotina
+  consumidora** (`RoundEndDrawTieAltMetasprite`), não inventar uma legenda.
 
 **Regra prática:** para cada lote, (1) leia o consumidor, (2) proponha nome + confiança, (3) aplique só
 labels/comentários, (4) valide com `make gen`, `make` e SHA-1 idêntico, (5) confirme que nenhum operando

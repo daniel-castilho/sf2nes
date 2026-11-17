@@ -2112,6 +2112,65 @@ label 3C:8604 WinQuoteLine2
 comment 3C:8604 frase do vencedor, 2a linha
 
 # ============================================================================================================
+# BANCO $20 — HUD/efeitos de texto, bandeiras da selecao e retrato do M.Bison
+# ============================================================================================================
+# --- retrato ---
+label 20:8391 PortraitWinMBison
+comment 20:8391 retrato de vitoria do M.Bison (indice 8 de PortraitWinLayoutTbl)
+
+# --- intro do round: "BATTLE", "ROUND n" e "FIGHT!" ---
+label 20:8469 RoundIntroBattleText
+comment 20:8469 texto "BATTLE" desenhado por RoundIntroDraw
+label 20:84AC FightTextZoomSmall
+label 20:84B9 FightTextZoomMedium
+label 20:84C6 FightTextZoomLarge
+comment 20:84AC "FIGHT!" em 3 tamanhos crescentes (D3B_F799)
+label 20:8574 FightText
+comment 20:8574 texto "FIGHT"
+label 20:8580 RoundTextFlash
+comment 20:8580 variante de flash do texto de round (passos 6 e 4)
+label 20:858E RoundText1
+label 20:859E RoundText2
+label 20:85AE RoundText3
+label 20:85BE RoundText4
+comment 20:858E "ROUND 1".."ROUND 4"; 85BE desenha o digito antes de "ROUND"
+
+# --- selecao: cursor e bandeiras ---
+label 20:8476 SelectCursorMetasprite
+comment 20:8476 cursor da selecao (SelectDrawCursor/SelectDrawBlink)
+label 20:84D3 FlagBrazil
+label 20:84DC FlagChina
+label 20:84E5 FlagJapan
+label 20:84EE FlagThailand
+label 20:84F7 FlagUsa
+label 20:8500 FlagUssr
+comment 20:84D3 bandeiras da selecao (D37_F29B); 84EE tambem usada por M.Bison
+
+# --- fim do round ---
+label 20:848B RoundEndDrawTieAltMetasprite
+comment 20:848B variante do sprite de empate (relogio ainda no ar)
+label 20:84A1 DrawGameText
+comment 20:84A1 texto "DRAW GAME" (empate com o relogio zerado)
+label 20:852B PerfectText
+comment 20:852B texto "PERFECT!"
+label 20:85CE TimeOverText
+comment 20:85CE texto "TIME OVER"
+label 20:85D9 YouLoseText
+comment 20:85D9 texto "YOU LOSE"
+label 20:85EA YouWinText
+comment 20:85EA texto "YOU WIN" (metasprite de 16 bytes; cauda ate 8630 sem consumidor)
+
+# --- projeteis ---
+label 20:8509 ProjectileFrame0
+label 20:851A ProjectileFrame1
+comment 20:8509 quadros de voo do projetil (D3B_E57D)
+label 20:853A ProjectileClashFrame0
+label 20:8549 ProjectileClashFrame1
+label 20:8556 ProjectileClashFrame2
+label 20:8565 ProjectileClashFrame3
+comment 20:853A quadros do choque de projeteis (D3B_E595, ProjFlags bit 7)
+
+# ============================================================================================================
 # RAM
 # ============================================================================================================
 # --- lutadores: vetores de 2 posicoes, indice X = 0 (P1) ou 1 (P2)

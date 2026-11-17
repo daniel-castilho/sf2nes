@@ -22,7 +22,7 @@ Fatos confirmados por inspeção estática nesta auditoria:
 - O fluxo de build é `annotations/sf2ne.ann` → `tools/disasm.py` (`make gen`) → `src/*.s` → `ca65`/`ld65` (`make`) → `build/sf2ne.nes`.
 - O build canônico inclui o Ken jogável (P1) e diverge do ROM original; `make verify` aviso por design.
 - Foram identificadas **2.145 definições de label** nos arquivos `src/bank_*.s`, gerando **2.141 nomes únicos** (4 ocorrências duplicadas de 3 nomes, sendo 1 nome duplicado dentro de um mesmo banco).
-- Destes, **976 são labels semânticos** (nome atribuído, não padrão automático de endereço) e **1.165 são automáticos de dados** (`D<bb>_<aaaa>`); **não resta nenhum label automático de código** (`L<bb>_<aaaa>`). *Métrica atualizada após os lotes P0/P1, P2, PAD, FamiTone2 e dos lotes de dados `$3C` e `$3F`; o total de definições não mudou — 2.145 — porque as renomeações não criam nem removem rótulos.*
+- Destes, **1.006 são labels semânticos** (nome atribuído, não padrão automático de endereço) e **1.135 são automáticos de dados** (`D<bb>_<aaaa>`); **não resta nenhum label automático de código** (`L<bb>_<aaaa>`). *Métrica atualizada após os lotes P0/P1, P2, PAD, FamiTone2 e dos lotes de dados `$3C`, `$3F` e `$20`; o total de definições não mudou — 2.145 — porque as renomeações não criam nem removem rótulos.*
 - Há **322 diretivas `.global`** em `src/globals.inc` (símbolos visíveis entre bancos).
 - Ocupação de bancos PRG é conhecida apenas pelos valores publicados na documentação (não revalidados nesta auditoria — nenhum build ou mapa de linker foi produzido).
 - Existem scripts de validação em `tools/` e `tools/mesen/`; nenhum foi executado nesta auditoria, portanto nenhuma alegação de aprovação é feita.
@@ -67,8 +67,8 @@ Itens não confirmados (exigem build/execução/inspeção fora do escopo):
 | Total de definições de rótulo em `src/bank_*.s` | 2.145 ocorrências | Conta cada definição, incluindo duplicadas entre bancos |
 | Nomes únicos globalmente | 2.141 | 4 ocorrências a menos que o total (3 nomes duplicados) |
 | Automáticos de código (`L<bb>_<aaaa>`) | **0** | Era 379 na Fase 1; zerado pelos lotes P0/P1, P2 e FamiTone2 |
-| Automáticos de dados (`D<bb>_<aaaa>`) | 1.165 únicos | Padrão confirmado no gerador; 33 renomeados no lote `$3C` e 15 no `$3F` |
-| **Semânticos (nome atribuído)** | **976 únicos** | Rótulos globais não automáticos (549 na Fase 1) |
+| Automáticos de dados (`D<bb>_<aaaa>`) | 1.135 únicos | Padrão confirmado no gerador; 33 renomeados no lote `$3C`, 15 no `$3F` e 30 no `$20` |
+| **Semânticos (nome atribuído)** | **1.006 únicos** | Rótulos globais não automáticos (549 na Fase 1) |
 | Diretivas `.global` em `src/globals.inc` | 322 únicos | Símbolos visíveis entre bancos (subconjunto dos semânticos) |
 
 ### Detalhamento por banco (nomes únicos)
@@ -80,7 +80,7 @@ Itens não confirmados (exigem build/execução/inspeção fora do escopo):
 | `$04` | 3 | 3 | 0 | 3 | 0 |
 | `$05` | 353 | 353 | 0 | 352 | 1 |
 | `$08`, `$0C`, `$10`, `$1C`, `$24` | 5 | 5 | 0 | 5 | 0 |
-| `$20` | 30 | 30 | 0 | 30 | 0 |
+| `$20` | 30 | 30 | 0 | 0 | 30 |
 | `$29` | 103 | 103 | 0 | 103 | 0 |
 | `$2D` | 70 | 70 | 0 | 70 | 0 |
 | `$36` | 30 | 30 | 0 | 30 | 0 |
@@ -89,11 +89,11 @@ Itens não confirmados (exigem build/execução/inspeção fora do escopo):
 | `$3C` | 38 | 38 | 0 | 0 | 38 |
 | `$3F` | 411 | 410 | 0 | 0 | 411 |
 | Outros ($02,$06,$0A,$0E,$12,$16,$1A,$1E,$22,$26,$2A,$3A) | 0 | 0 | 0 | 0 | 0 |
-| **Total** | **2.145** | **2.144**¹ | **0** | **1.165** | **980**¹ |
+| **Total** | **2.145** | **2.144**¹ | **0** | **1.135** | **1.010**¹ |
 
-¹ Soma por banco. Globalmente são **2.141 nomes únicos** e **976 semânticos únicos**: `ResetStub` aparece em três bancos (`$37`, `$3B`, `$3F`), `RoundStart` em dois (`$3B`, `$3F`) e `InputButtons` duas vezes dentro do `$3F`. O regex canônico também não conta três rótulos semânticos com comentário na mesma linha (`EdgeARel`, `EdgeBRel`, `EdgeBBtn`); incluí-los elevaria a soma por banco para 983 e o total único para 979.
+¹ Soma por banco. Globalmente são **2.141 nomes únicos** e **1.006 semânticos únicos**: `ResetStub` aparece em três bancos (`$37`, `$3B`, `$3F`), `RoundStart` em dois (`$3B`, `$3F`) e `InputButtons` duas vezes dentro do `$3F`. O regex canônico também não conta três rótulos semânticos com comentário na mesma linha (`EdgeARel`, `EdgeBRel`, `EdgeBBtn`); incluí-los elevaria a soma por banco para 1.013 e o total único para 1.009.
 
-> Nenhum banco tem mais rótulo automático de código; os 1.165 automáticos restantes são todos de dados (`D<bb>_<aaaa>`).
+> Nenhum banco tem mais rótulo automático de código; os 1.135 automáticos restantes são todos de dados (`D<bb>_<aaaa>`).
 
 ### Regras aplicadas e limitações
 
@@ -164,7 +164,7 @@ Comparando `README.md`, `docs/ROTEIRO.md`, `docs/ARQUITETURA.md`, `docs/FORMATOS
 
 | ID | Afirmação/assunto | Documento A | Documento B | Categoria | Risco | Proposta de destino |
 |----|-------------------|-------------|-------------|-----------|-------|---------------------|
-| IN-01 | Número de rótulos: "1.795 rótulos; 304 têm nome de verdade" (README §"O que ainda não está pronto") | `README.md` | Contagem recalculada (2.145 definições, 2.141 únicos, 961 semânticos, 0 automáticos de código) | Contagem/métrica | Resolvido na Fase 3 — README e este documento foram reconciliados | Manter a métrica canônica da seção 4; D-01 segue pendente para o critério formal |
+| IN-01 | Número de rótulos: "1.795 rótulos; 304 têm nome de verdade" (README §"O que ainda não está pronto") | `README.md` | Contagem recalculada (2.145 definições, 2.141 únicos, 1.006 semânticos, 0 automáticos de código) | Contagem/métrica | Resolvido na Fase 3 — README e este documento foram reconciliados | Manter a métrica canônica da seção 4; D-01 segue pendente para o critério formal |
 | IN-02 | Contagem de variáveis nomeadas: "78 têm nome" (README) | `README.md` | Não recalculada nesta auditoria (exigiria inspeção de `ram.inc`) | Contagem/métrica | Baixo | Verificar contra `src/ram.inc` na Fase 1 |
 | IN-03 | "Código nunca executado (14–17% dos bancos `$37` e `$3F`)" (README) | `README.md` | Não revalidado (exigiria traces atuais) | Capacidade de banco/build | Médio — percentual pode estar desatualizado | Confirmar com `datamap.py`/traces na Fase 1, sem executar emulador |
 | IN-04 | "52 farcall e 7 farjmp" (ARQUITETURA.md §2.7) | `docs/ARQUITETURA.md` | Não recontado nesta auditoria | Fonte de verdade/geração | Baixo | Verificar contra anotações/gerador na Fase 4 |
@@ -193,7 +193,7 @@ Nenhuma dessas decisões foi resolvida nesta auditoria.
 - Nenhuma montagem, execução, emulação ou teste foi realizado. Todas as métricas de ocupação de banco são documentadas/históricas, não revalidadas.
 - Nenhuma ferramenta permanente de auditoria foi criada (conforme o escopo da Fase 1 proíbe).
 - Nenhuma divergência de documento foi corrigida; todas foram registradas na seção 7.
-- O número histórico de rótulos do README (1.795) não foi usado; uma nova contagem foi feita a partir dos fontes gerados e atualizada na Fase 3 e no lote `$3C` (2.145 definições, 2.141 nomes únicos, 961 semânticos).
+- O número histórico de rótulos do README (1.795) não foi usado; uma nova contagem foi feita a partir dos fontes gerados e atualizada na Fase 3 e nos lotes `$3C`, `$3F` e `$20` (2.145 definições, 2.141 nomes únicos, 1.006 semânticos).
 
 ### Próximos passos recomendados (sem implementar nem escolher fonte canônica)
 
@@ -226,10 +226,10 @@ Nenhuma dessas decisões foi resolvida nesta auditoria.
 
 **Método de contagem de rótulos:** `grep -rhE '^[A-Za-z_][A-Za-z0-9_]*:$' src/bank_*.s`, com classificação por padrões `L<bb>_<aaaa>` (código) e `D<bb>_<aaaa>` (dados) confirmados no gerador; tudo o resto é semântico. Arquivos consultados: todos os `src/bank_*.s` listados no índice acima.
 
-## 11. Estado após a Fase 3 (naming) e os lotes de dados `$3C`/`$3F`
+## 11. Estado após a Fase 3 (naming) e os lotes de dados `$3C`/`$3F`/`$20`
 
-- **Data:** 2026-11-15
-- **Base commitada:** `64a29f8` (lote `$3C`)
+- **Data:** 2026-11-16
+- **Base commitada:** `92fbde1` (lote `$3F`)
 - **Árvore de trabalho:** alterações de `annotations/sf2ne.ann`, `src/bank_*.s`, `tasks/` e documentação ainda não commitadas; nenhum push nesta sessão.
 
 ### 11.1 Métricas reconciliadas
@@ -239,11 +239,11 @@ Nenhuma dessas decisões foi resolvida nesta auditoria.
 | Definições de rótulo | 2.145 | **2.145** |
 | Nomes únicos | 2.141 | **2.141** |
 | Automáticos de código (`L`) | 379 | **0** |
-| Automáticos de dados (`D`) | 1.213 | **1.165** |
-| Semânticos únicos | 549 | **976** |
-| Soma semântica por banco | — | **980** |
+| Automáticos de dados (`D`) | 1.213 | **1.135** |
+| Semânticos únicos | 549 | **1.006** |
+| Soma semântica por banco | — | **1.010** |
 
-A diferença de 980 para 976 é explicada por nomes repetidos entre bancos: `ResetStub` (3×), `RoundStart` (2×) e `InputButtons` (2× dentro do `$3F`). O método canônico (`grep -rhE '^[A-Za-z_][A-Za-z0-9_]*:$' src/bank_*.s`) não conta três rótulos com comentário na mesma linha (`EdgeARel`, `EdgeBRel`, `EdgeBBtn`); incluí-los daria 979 semânticos únicos e 983 na soma por banco.
+A diferença de 1.010 para 1.006 é explicada por nomes repetidos entre bancos: `ResetStub` (3×), `RoundStart` (2×) e `InputButtons` (2× dentro do `$3F`). O método canônico (`grep -rhE '^[A-Za-z_][A-Za-z0-9_]*:$' src/bank_*.s`) não conta três rótulos com comentário na mesma linha (`EdgeARel`, `EdgeBRel`, `EdgeBBtn`); incluí-los daria 1.009 semânticos únicos e 1.013 na soma por banco.
 
 ### 11.2 Lotes aplicados
 
@@ -255,9 +255,10 @@ A diferença de 980 para 976 é explicada por nomes repetidos entre bancos: `Res
 | FamiTone2 | 109 | 107 internos `_FT2*` + 2 rotinas de topo | `make` + SHA-1 idêntico |
 | Dados `$3C` | 33 | Fichas, paletas e retratos: 20 tabelas de ponteiros (`Char*Tbl`), banco de colisão, 7 paletas e 5 tabelas de retrato/nome | `make` + SHA-1 idêntico |
 | Dados `$3F` | 15 | Núcleo de luta: projetil, sfx de impacto, knockback por classe, reação de queda/KO e despachos de movimento | `make` + SHA-1 idêntico |
-| **Total** | **436** | — | — |
+| Dados `$20` | 30 | HUD/efeitos: textos de intro/fim de round, bandeiras da seleção, cursor, projéteis, choque e retrato do M.Bison | `make` + SHA-1 idêntico |
+| **Total** | **466** | — | — |
 
-O inventário linha a linha, com ID único, ID anterior, símbolo anterior, evidência, confiança e risco, está em `tasks/NAMING_CANDIDATES.md` (Fase 3), `tasks/DATA_NAMING_3C.md` e `tasks/DATA_NAMING_3F.md` (lotes de dados).
+O inventário linha a linha, com ID único, ID anterior, símbolo anterior, evidência, confiança e risco, está em `tasks/NAMING_CANDIDATES.md` (Fase 3), `tasks/DATA_NAMING_3C.md`, `tasks/DATA_NAMING_3F.md` e `tasks/DATA_NAMING_20.md` (lotes de dados).
 
 ### 11.3 Verificação de integridade
 
@@ -268,6 +269,7 @@ O inventário linha a linha, com ID único, ID anterior, símbolo anterior, evid
 | SHA-1 de `build/sf2ne.nes` | `3ad177a0a7867a821e6c1709b4e6dbdda3555aa1` (idêntico ao baseline) |
 | Colunas de bytes vs `HEAD` | `$00` 297/297, `$37` 1723/1723, `$3B` 2461/2461, `$3C` 1232/1232, `$3F` 3001/3001 — idênticas |
 | Diretivas `.byte`/`.word` de `src/bank_3F.s` | 155 antes, 155 depois; operandos idênticos (só labels/comentários) |
+| Diretivas `.byte`/`.word` de `src/bank_20.s` | 144 antes, 144 depois; operandos idênticos (só labels/comentários) |
 | `make fixed` | OK — divergência esperada (`-D FIX_SOFT_RESET`) |
 | Rótulos automáticos de código | 0 |
 
@@ -275,7 +277,7 @@ Nenhuma execução em emulador foi feita nesta fase; a verificação é estátic
 
 ### 11.4 Pendências
 
-- **Commit:** os lotes de dados `$3C` e `$3F`, o inventário e esta documentação aguardam aprovação explícita do usuário; nada foi pushado. O relatório da Fase 3 está em `tasks/PHASE_3_EXECUTION_REPORT.md`.
+- **Commit:** o lote de dados `$20`, o inventário e esta documentação aguardam aprovação explícita do usuário; nada foi pushado. Os lotes `$3C` e `$3F` já estão commitados (`64a29f8`, `92fbde1`). O relatório da Fase 3 está em `tasks/PHASE_3_EXECUTION_REPORT.md`.
 - **D-01…D-07:** continuam `PENDENTE` em `tasks/STABILIZATION_BACKLOG.md`.
-- **Dados (`D<bb>_<aaaa>`, 1.165):** inventariados e priorizados em `tasks/DATA_LABEL_INVENTORY.tsv`; lotes `$3C` (33) e `$3F` (15) aplicados. Próximos candidatos: `$20` (30), `$36` (30) e `$3B` (35).
+- **Dados (`D<bb>_<aaaa>`, 1.135):** inventariados e priorizados em `tasks/DATA_LABEL_INVENTORY.tsv`; lotes `$3C` (33), `$3F` (15) e `$20` (30) aplicados. Próximos candidatos: `$36` (30) e `$3B` (35).
 - **Migração de estados/quadros para TOML:** não autorizada e não iniciada.

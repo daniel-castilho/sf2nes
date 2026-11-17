@@ -1824,9 +1824,9 @@ SelectDrawCursor:
     lda #$20                                    ; EFFA  A9 20       SelectDrawCursor — selecao: desenha o cursor e a bandeira do pais na posicao atual
     ora #$80                                    ; EFFC  09 80
     sta MMC5_PRG_8000                           ; EFFE  8D 14 51
-    lda #<D20_8476                              ; F001  A9 76
+    lda #<SelectCursorMetasprite                ; F001  A9 76
     sta zp_D9                                   ; F003  85 D9
-    lda #>D20_8476                              ; F005  A9 84
+    lda #>SelectCursorMetasprite                ; F005  A9 84
     sta zp_DA                                   ; F007  85 DA
     ldx zp_E9                                   ; F009  A6 E9
     lda D37_F2BB,x                              ; F00B  BD BB F2    [idx $00..$07]
@@ -2131,23 +2131,23 @@ SelectEnd:
 D37_F293:
     .byte $00,$04,$03,$07,$01,$02,$09,$08       ; F293
 D37_F29B:
-    .byte <(D20_84E5)                           ; F29B  E5
-    .byte <(D20_84D3)                           ; F29C  D3
-    .byte <(D20_84F7)                           ; F29D  F7
-    .byte <(D20_84EE)                           ; F29E  EE
-    .byte <(D20_84F7)                           ; F29F  F7
-    .byte <(D20_84DC)                           ; F2A0  DC
-    .byte <(D20_8500)                           ; F2A1  00
-    .byte <(D20_84EE)                           ; F2A2  EE
+    .byte <(FlagJapan)                          ; F29B  E5
+    .byte <(FlagBrazil)                         ; F29C  D3
+    .byte <(FlagUsa)                            ; F29D  F7
+    .byte <(FlagThailand)                       ; F29E  EE
+    .byte <(FlagUsa)                            ; F29F  F7
+    .byte <(FlagChina)                          ; F2A0  DC
+    .byte <(FlagUssr)                           ; F2A1  00
+    .byte <(FlagThailand)                       ; F2A2  EE
 D37_F2A3:
-    .byte >(D20_84E5)                           ; F2A3  84
-    .byte >(D20_84D3)                           ; F2A4  84
-    .byte >(D20_84F7)                           ; F2A5  84
-    .byte >(D20_84EE)                           ; F2A6  84
-    .byte >(D20_84F7)                           ; F2A7  84
-    .byte >(D20_84DC)                           ; F2A8  84
-    .byte >(D20_8500)                           ; F2A9  85
-    .byte >(D20_84EE)                           ; F2AA  84
+    .byte >(FlagJapan)                          ; F2A3  84
+    .byte >(FlagBrazil)                         ; F2A4  84
+    .byte >(FlagUsa)                            ; F2A5  84
+    .byte >(FlagThailand)                       ; F2A6  84
+    .byte >(FlagUsa)                            ; F2A7  84
+    .byte >(FlagChina)                          ; F2A8  84
+    .byte >(FlagUssr)                           ; F2A9  85
+    .byte >(FlagThailand)                       ; F2AA  84
 D37_F2AB:
     .byte $80,$B0,$BC,$68,$B9,$6E,$4A,$68       ; F2AB
 D37_F2B3:

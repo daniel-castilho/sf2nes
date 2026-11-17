@@ -138,7 +138,7 @@ PortraitWinLayoutTbl:
     .word D10_8000                              ; 84AE  00 80
     .byte $00,$00,$00,$00                       ; 84B0
     .word D1C_8000                              ; 84B4  00 80
-    .word D20_8391                              ; 84B6  91 83
+    .word PortraitWinMBison                     ; 84B6  91 83
     .word D24_8000                              ; 84B8  00 80
 PortraitLoseLayoutTbl:
     .word D00_8144                              ; 84BA  44 81
