@@ -1,7 +1,7 @@
 # Estado do Projeto — auditoria (Fase 1) e atualização da Fase 3
 
 > **Nota de leitura:** as seções 1–10 preservam a auditoria estática da Fase 1, feita sobre `ada6c6f`.
-> A **seção 11** registra o estado após os lotes de naming da Fase 3 (Gate D, P2, PAD e FamiTone2),
+> A **seção 11** registra o estado após os lotes de naming da Fase 3 (Gate D, P2, PAD, FamiTone2 e dados `$3C`/`$3F`/`$20`), encerrada em 2026-11-16,
 > com as métricas reconciliadas. Onde as duas visões divergirem, a seção 11 prevalece para o estado atual.
 
 ## 1. Metadados da auditoria e limitações
@@ -100,7 +100,7 @@ Itens não confirmados (exigem build/execução/inspeção fora do escopo):
 - O número histórico do README ("1.795 rótulos; 304 têm nome de verdade") foi substituído na Fase 3; as contagens acima foram recalculadas a partir dos fontes gerados e o README agora publica a métrica canônica.
 - Não foram somadas categorias sobrepostas; o total de rótulos não é usado como medida única de qualidade.
 - O rótulo `InputButtons` está duplicado dentro de `src/bank_3F.s` (2 definições, 1 nome único). Os rótulos `ResetStub` (bancos `$37`, `$3B`, `$3F`) e `RoundStart` (bancos `$3B`, `$3F`) aparecem em múltiplos bancos; contados como 1 nome único cada globalmente.
-- A auditoria da Fase 1 não renomeou rótulos. Na Fase 3, os lotes P0/P1, P2, PAD e FamiTone2 renomearam 388 rótulos (ver seção 11 e `tasks/NAMING_CANDIDATES.md`), sem alterar nenhum byte.
+- A auditoria da Fase 1 não renomeou rótulos. Na Fase 3, os lotes P0/P1, P2, PAD e FamiTone2 renomearam 388 rótulos e os lotes de dados `$3C`, `$3F` e `$20` renomearam mais 78 — **466 no total** (ver seção 11, `tasks/NAMING_CANDIDATES.md` e `tasks/PHASE_3_EXECUTION_REPORT.md` §10), sem alterar nenhum byte.
 - Não foi criada nem modificada ferramenta permanente em `tools/` nesta fase.
 
 ## 5. Mapa de bancos e capacidade documentada
@@ -164,7 +164,7 @@ Comparando `README.md`, `docs/ROTEIRO.md`, `docs/ARQUITETURA.md`, `docs/FORMATOS
 
 | ID | Afirmação/assunto | Documento A | Documento B | Categoria | Risco | Proposta de destino |
 |----|-------------------|-------------|-------------|-----------|-------|---------------------|
-| IN-01 | Número de rótulos: "1.795 rótulos; 304 têm nome de verdade" (README §"O que ainda não está pronto") | `README.md` | Contagem recalculada (2.145 definições, 2.141 únicos, 1.006 semânticos, 0 automáticos de código) | Contagem/métrica | Resolvido na Fase 3 — README e este documento foram reconciliados | Manter a métrica canônica da seção 4; D-01 segue pendente para o critério formal |
+| IN-01 | Número de rótulos: "1.795 rótulos; 304 têm nome de verdade" (README §"O que ainda não está pronto") | `README.md` | Contagem recalculada (2.145 definições, 2.141 únicos, 1.006 semânticos, 0 automáticos de código) | Contagem/métrica | Resolvido na Fase 3 — README e este documento foram reconciliados | Manter a métrica canônica da seção 4; D-01 foi resolvida no fechamento da Fase 3 |
 | IN-02 | Contagem de variáveis nomeadas: "78 têm nome" (README) | `README.md` | Não recalculada nesta auditoria (exigiria inspeção de `ram.inc`) | Contagem/métrica | Baixo | Verificar contra `src/ram.inc` na Fase 1 |
 | IN-03 | "Código nunca executado (14–17% dos bancos `$37` e `$3F`)" (README) | `README.md` | Não revalidado (exigiria traces atuais) | Capacidade de banco/build | Médio — percentual pode estar desatualizado | Confirmar com `datamap.py`/traces na Fase 1, sem executar emulador |
 | IN-04 | "52 farcall e 7 farjmp" (ARQUITETURA.md §2.7) | `docs/ARQUITETURA.md` | Não recontado nesta auditoria | Fonte de verdade/geração | Baixo | Verificar contra anotações/gerador na Fase 4 |
@@ -172,13 +172,13 @@ Comparando `README.md`, `docs/ROTEIRO.md`, `docs/ARQUITETURA.md`, `docs/FORMATOS
 | IN-06 | README descreve o build canônico como "com o Ken jogável" e `make verify` avisa que diverge do original | `README.md` | `Makefile` (`DEFS := -D DEST_FLAG_BLINK`, build diverge por design) | Fonte de verdade/geração | Baixo — comportamento intencional, documentado | Nenhuma ação; está consistente na intenção |
 | IN-07 | "Ken tem 4,3 KB de frames prontos agora integrados ao banco $05" (README §Achados) vs "O banco $05 é fonte à mão (o original é todo $FF)" (ROTEIRO.md Etapa 3) | `README.md`, `docs/ROTEIRO.md` | Fontes descrevem situações complementares (frames vs estados) | Status/escopo | Baixo | Esclarecer na Fase 4 |
 
-## 8. Decisões que permanecem pendentes
+## 8. Decisões de estabilização
 
-Referência a `tasks/STABILIZATION_BACKLOG.md` (criado na Fase 0). Todas as decisões D-01 a D-07 permanecem como `PENDENTE`:
+Referência a `tasks/STABILIZATION_BACKLOG.md` (criado na Fase 0). No fechamento da Fase 3 (2026-11-16), D-01 e D-03 foram resolvidas; D-02 permanece `PROPOSTO`; D-04 a D-07 seguem `PENDENTE`:
 
-- **D-01:** Método reproduzível para contar labels (bloqueia métricas de naming e comparação futura).
-- **D-02:** Fonte canônica para autoria de estados/quadros (bloqueia implementar conversor ou migrar dados).
-- **D-03:** Primeira leva de naming e evidência mínima (bloqueia campanha de renomeação).
+- **D-01 — RESOLVIDO:** método reproduzível para contar labels, registrado na seção 4 e em `tasks/PHASE_3_EXECUTION_REPORT.md` §10.2.
+- **D-02 — PROPOSTO:** fonte canônica para autoria de estados/quadros; não bloqueou o naming de símbolos (bloqueia implementar conversor ou migrar dados).
+- **D-03 — RESOLVIDO:** primeira leva de naming e evidência mínima, registrada em `tasks/NAMING_CANDIDATES.md` e nos relatórios de lote.
 - **D-04:** Critérios para reabrir implementação de personagens/funcionalidades (bloqueia retomar trilha C).
 - **D-05:** Validações futuras autorizadas, por quem, em que escopo (bloqueia criar/rodar testes, builds ou validação em emulador).
 - **D-06:** Avaliação de ferramentas externas de assets (bloqueia integração de conversores externos).
@@ -198,7 +198,7 @@ Nenhuma dessas decisões foi resolvida nesta auditoria.
 ### Próximos passos recomendados (sem implementar nem escolher fonte canônica)
 
 1. **Solicitar Gate A** (auditoria documental) para consolidar as métricas atuais e resolver divergências documentadas (seção 7).
-2. **Definir critério de contagem de labels** (D-01) antes de estabelecer metas de naming (Fase 3).
+2. **Critério de contagem de labels** (D-01): resolvido no fechamento da Fase 3; a métrica canônica está na seção 4.
 3. **Decidir fonte canônica para estados/quadros** (D-02) antes de especificar formato textual (Fase 2).
 4. **Avaliar se o percentual de código nunca executado (14–17%) precisa de revalidação** com traces existentes, sem executar emulador novo.
 
@@ -229,8 +229,8 @@ Nenhuma dessas decisões foi resolvida nesta auditoria.
 ## 11. Estado após a Fase 3 (naming) e os lotes de dados `$3C`/`$3F`/`$20`
 
 - **Data:** 2026-11-16
-- **Base commitada:** `92fbde1` (lote `$3F`)
-- **Árvore de trabalho:** alterações de `annotations/sf2ne.ann`, `src/bank_*.s`, `tasks/` e documentação ainda não commitadas; nenhum push nesta sessão.
+- **Base commitada:** `2df963c` (lote `$20`; anteriores: `64a29f8`, `92fbde1`)
+- **Árvore de trabalho:** limpa; todos os lotes commitados e pushados. A Fase 3 foi encerrada em 2026-11-16.
 
 ### 11.1 Métricas reconciliadas
 
@@ -277,7 +277,7 @@ Nenhuma execução em emulador foi feita nesta fase; a verificação é estátic
 
 ### 11.4 Pendências
 
-- **Commit:** o lote de dados `$20`, o inventário e esta documentação aguardam aprovação explícita do usuário; nada foi pushado. Os lotes `$3C` e `$3F` já estão commitados (`64a29f8`, `92fbde1`). O relatório da Fase 3 está em `tasks/PHASE_3_EXECUTION_REPORT.md`.
-- **D-01…D-07:** continuam `PENDENTE` em `tasks/STABILIZATION_BACKLOG.md`.
-- **Dados (`D<bb>_<aaaa>`, 1.135):** inventariados e priorizados em `tasks/DATA_LABEL_INVENTORY.tsv`; lotes `$3C` (33), `$3F` (15) e `$20` (30) aplicados. Próximos candidatos: `$36` (30) e `$3B` (35).
+- **Commit:** Fase 3 encerrada em 2026-11-16; lotes `$3C`, `$3F` e `$20` commitados (`64a29f8`, `92fbde1`, `2df963c`) e pushados. Nada pendente de commit.
+- **Decisões:** D-01 e D-03 resolvidas no fechamento; D-02 permanece `PROPOSTO` (não bloqueia naming); D-04…D-07 seguem `PENDENTE` em `tasks/STABILIZATION_BACKLOG.md`.
+- **Dados (`D<bb>_<aaaa>`, 1.135):** inventariados e priorizados em `tasks/DATA_LABEL_INVENTORY.tsv`; lotes `$3C` (33), `$3F` (15) e `$20` (30) aplicados. Próximos candidatos: `$36` (30), `$3B` (35) e `$37` (27); os bancos grandes de Ryu/Ken (`$00`/`$01`/`$05`, 865) podem permanecer P3.
 - **Migração de estados/quadros para TOML:** não autorizada e não iniciada.

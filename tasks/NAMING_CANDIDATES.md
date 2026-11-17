@@ -539,7 +539,7 @@ Método canônico: `grep -rhE '^[A-Za-z_][A-Za-z0-9_]*:$' src/bank_*.s`, com `L<
 
 ## 8. Pendências e próximo passo
 
-1. **Commit:** os lotes P2, PAD e FT2 e esta documentação aguardam aprovação explícita do usuário; nada foi commitado ou pushado nesta sessão. O relatório de execução está em `tasks/PHASE_3_EXECUTION_REPORT.md`.
-2. **Lote de dados (`D<bb>_<aaaa>`, 1.213):** priorizado em `tasks/DATA_LABEL_INVENTORY.tsv`; o primeiro lote (`$3C`, 33 labels) foi aplicado em `tasks/DATA_NAMING_3C.md`. Restam 1.180.
-3. **Decisões D-01…D-07:** permanecem `PENDENTE` em `tasks/STABILIZATION_BACKLOG.md`.
+1. **Commit:** concluído — os lotes P2, PAD e FT2 foram commitados em `e2e18f3`. Os lotes de dados `$3C` (33), `$3F` (15) e `$20` (30) foram commitados em `64a29f8`, `92fbde1` e `2df963c`. O relatório de execução está em `tasks/PHASE_3_EXECUTION_REPORT.md` §10.
+2. **Lote de dados (`D<bb>_<aaaa>`, 1.213):** priorizado em `tasks/DATA_LABEL_INVENTORY.tsv`; `$3C` (33), `$3F` (15) e `$20` (30) aplicados. Restam 1.135.
+3. **Decisões:** D-01 e D-03 resolvidas no fechamento da Fase 3; D-02 permanece `PROPOSTO`; D-04…D-07 seguem `PENDENTE` em `tasks/STABILIZATION_BACKLOG.md`.
 4. **Migração de estados/quadros para TOML:** não autorizada e não iniciada.

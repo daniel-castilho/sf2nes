@@ -1,6 +1,7 @@
 # Decisão de formato — autoria de estados e quadros (Fase 2)
 
 **Status:** PROPOSTO (recomendação do Engineer; aguarda decisão explícita do Mantenedor)  
+**Atualização 2026-11-16:** a decisão permanece `PROPOSTO`; o fechamento da Fase 3 não a utilizou como pré-requisito, pois o naming atuou apenas em símbolos (`annotations/sf2ne.ann`). Ver `tasks/PHASE_3_EXECUTION_REPORT.md` §10.4.  
 **Origem:** `tasks/PHASE_2_STATE_DATA_FORMAT_SPEC.md` (Fase 2 do plano de estabilização)  
 **Tipo:** documento de decisão/design — não autoriza implementação, build, teste ou migração  
 **Pré-requisitos confirmados:** Fase 0 aceita, Fase 1 concluída com `docs/ESTADO_DO_PROJETO.md` disponível

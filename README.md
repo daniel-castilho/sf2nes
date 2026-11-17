@@ -40,7 +40,7 @@ Leia nesta ordem:
 
 ## O que ainda **não** está pronto
 
-**Foco atual — estabilização e manutenibilidade.** A implementação de novos personagens e funcionalidades de jogo está pausada, não cancelada. O próximo ciclo de trabalho será definido após a Fase 3 de naming (`tasks/NAMING_CANDIDATES.md`, `docs/ESTADO_DO_PROJETO.md` e `tasks/PROJECT_STABILIZATION_EXECUTION_PLAN.md`).
+**Foco atual — estabilização e manutenibilidade.** A implementação de novos personagens e funcionalidades de jogo está pausada, não cancelada. A Fase 3 de naming foi encerrada em 2026-11-16 (`tasks/PHASE_3_EXECUTION_REPORT.md` §10); restam 1.135 labels automáticos de dados, mantidos como backlog P3/opaco em `tasks/DATA_LABEL_INVENTORY.tsv`. O próximo ciclo de trabalho será definido a partir de `tasks/NAMING_CANDIDATES.md`, `docs/ESTADO_DO_PROJETO.md` e `tasks/PROJECT_STABILIZATION_EXECUTION_PLAN.md`.
 
 Há 2.145 definições de rótulo (2.141 nomes únicos): **1.006 semânticos** e **1.135 automáticos de dados**
   (`D01_A4CB`…). **Não resta nenhum rótulo automático de código** (`L3F_E4DA`…): os lotes P0/P1, P2 e

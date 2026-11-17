@@ -1,6 +1,7 @@
 # Especificação técnica — Fase 3: naming guiado por risco e evidência
 
 **Status:** pronta para detalhamento/execução futura após os gates de entrada; não autoriza mudanças nesta conversa.  
+**Status de execução:** CONCLUÍDA em 2026-11-16; aceite e ressalvas registrados em `tasks/PHASE_3_EXECUTION_REPORT.md` §10.4.  
 **Projeto:** Street Fighter II NE (`daniel-castilho/sf2nes`).  
 **Origem:** Fase 3 de `tasks/PROJECT_STABILIZATION_EXECUTION_PLAN.md`.  
 **Pré-requisitos:** Fase 0 aceita; Fase 1 concluída com métrica reproduzível em `docs/ESTADO_DO_PROJETO.md`; Fase 2 concluída com fonte canônica e fluxo de geração decididos/aprovados.  
