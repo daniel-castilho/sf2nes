@@ -121,28 +121,29 @@ Metrics in sections 4 and 7 are historical (before data batches). The metrics in
 | Data `$36` | 27 | stages: RLE backgrounds, CHR/split tables, attributes and palette | `fa7c215`* |
 | Data `$3B` | 35 | fight/VS/select HUD: fade bounds, projectile frames, HUD tiles, screen palettes/RLE, round-intro tables, stage banks, reset filler | `3ba99e3` |
 | Data `$37` | 17 | sound/select/title data: voice continuation, sfx dispatch/pointer list, FamiTone2 tables, select/title tables, reset filler | `cfc7d78` |
-| Data `$29` | 46 | music modules: title/select/versus/win-quote headers, instrument lists, envelopes, channel starts and loop targets; 57 reference/artifact labels deferred | pending |
-| **Total** | **203** | — | — |
+| Data `$29` | 46 | music modules: title/select/versus/win-quote headers, instrument lists, envelopes, channel starts and loop targets; 57 reference/artifact labels deferred | `3540a92` |
+| Data `$2D` | 14 | Fight music module: header, instrument list, envelopes, five channel starts and five loop targets; 55 reference blocks and 1 artifact deferred | pending |
+| **Total** | **217** | — | — |
 
 \* The `$36` batch was applied before `fa7c215` and entered the repository bundled with that English-translation commit; it has no separate commit.
 
-With the 388 code labels, Phase 3 and the follow-up batches renamed **591 labels** (545 committed plus the
-46 of `$29`).
+With the 388 code labels, Phase 3 and the follow-up batches renamed **605 labels** (591 committed plus the
+14 of `$2D`).
 
 ### 10.2 Final metrics
 
 Canonical method: `grep -rhE '^[A-Za-z_][A-Za-z0-9_]*:$' src/bank_*.s`, with the caveat of the three labels with same-line comment (`EdgeARel`, `EdgeBRel`, `EdgeBBtn`).
 
-| Metric | Phase 1 | Closing | After `$36` | After `$3B` | After `$37` | After `$29` |
-|--------|---------|---------|-------------|-------------|-------------|-------------|
-| Label definitions | 2,145 | **2,145** | **2,145** | **2,145** | **2,145** | **2,145** |
-| Unique names | 2,141 | **2,141** | **2,141** | **2,141** | **2,140** | **2,140** |
-| Automatic code (`L`) | 379 | **0** | **0** | **0** | **0** | **0** |
-| Automatic data (`D`) | 1,213 | **1,135** | **1,108** | **1,073** | **1,056** | **1,010** |
-| Unique semantic | 549 | **1,006** | **1,033** | **1,068** | **1,084** | **1,130** |
-| Semantic sum by bank | — | **1,010** | **1,037** | **1,072** | **1,089** | **1,135** |
+| Metric | Phase 1 | Closing | After `$36` | After `$3B` | After `$37` | After `$29` | After `$2D` |
+|--------|---------|---------|-------------|-------------|-------------|-------------|-------------|
+| Label definitions | 2,145 | **2,145** | **2,145** | **2,145** | **2,145** | **2,145** | **2,145** |
+| Unique names | 2,141 | **2,141** | **2,141** | **2,141** | **2,140** | **2,140** | **2,140** |
+| Automatic code (`L`) | 379 | **0** | **0** | **0** | **0** | **0** | **0** |
+| Automatic data (`D`) | 1,213 | **1,135** | **1,108** | **1,073** | **1,056** | **1,010** | **996** |
+| Unique semantic | 549 | **1,006** | **1,033** | **1,068** | **1,084** | **1,130** | **1,144** |
+| Semantic sum by bank | — | **1,010** | **1,037** | **1,072** | **1,089** | **1,135** | **1,149** |
 
-The 1,135 vs 1,130 difference comes from `ResetStub` (3×), `ResetVectorFill` (2×), `RoundStart` (2×), and `InputButtons` (2× in `$3F`). The canonical regex does not count the three same-line-comment labels; including them would give 1,133 unique semantic and 1,138 bank sum.
+The 1,149 vs 1,144 difference comes from `ResetStub` (3×), `ResetVectorFill` (2×), `RoundStart` (2×), and `InputButtons` (2× in `$3F`). The canonical regex does not count the three same-line-comment labels; including them would give 1,147 unique semantic and 1,152 bank sum.
 
 ### 10.3 Verification
 
@@ -158,13 +159,15 @@ The 1,135 vs 1,130 difference comes from `ResetStub` (3×), `ResetVectorFill` (2
 | `src/bank_37.s` after `$37` | 17 `D37_*` replaced; 10 sfx streams kept automatic; identical `.byte`/`.word` operands except two `SfxStreamPtrTbl` and one `ResetVectorFill` label operands |
 | `src/bank_29.s` after `$29` | 46 `D29_*` replaced; 57 reference/artifact labels kept automatic; 824 `.byte`/`.word`/`.res` directives before and after, 50 differ only by symbol rename |
 | `src/globals.inc` after `$29` | four `.global` names renamed (`D29_*` → `Music*Header`); count unchanged |
-| `src/bank_05.s` (Ken, manual source) | 0 references to `D20_*`, `D29_*` or `D36_*` |
+| `src/bank_2D.s` after `$2D` | 14 `D2D_*` replaced; 56 reference/artifact labels kept automatic; 632 `.byte`/`.word`/`.res` directives before and after, 15 differ only by symbol rename |
+| `src/globals.inc` after `$2D` | one `.global` name renamed (`D2D_A000` → `MusicFightHeader`); count unchanged |
+| `src/bank_05.s` (Ken, manual source) | 0 references to `D20_*`, `D29_*`, `D2D_*` or `D36_*` |
 | `make fixed` | OK — expected divergence (`-D FIX_SOFT_RESET`) |
 
 ### 10.4 Decisions and acceptance
 
 - **D-01 — RESOLVED.** Reproducible method registered in `docs/PROJECT_STATUS.md` §4/§11 and in this section: count definitions and unique names separately, distinguish code/data/semantic, and keep the caveat of the three same-line-comment labels.
-- **D-03 — RESOLVED.** First batch was P0/P1 (engine core), followed by P2/PAD/FamiTone2 and `$3C`, `$3F`, `$20`, `$36`, `$3B`, `$37` and `$29` data. Minimum evidence: demonstrable consumer, table structure, or existing documentation; confidence `HIGH`/`MEDIUM`; `LOW` remains automatic. In `$36`, three write-only labels (`C005`, `C00A`, `C00F`) stayed automatic for lack of a static consumer; in `$29`, 53 shared reference blocks and 4 instrument-record artifacts stayed automatic for lack of an independent identity.
+- **D-03 — RESOLVED.** First batch was P0/P1 (engine core), followed by P2/PAD/FamiTone2 and `$3C`, `$3F`, `$20`, `$36`, `$3B`, `$37`, `$29` and `$2D` data. Minimum evidence: demonstrable consumer, table structure, or existing documentation; confidence `HIGH`/`MEDIUM`; `LOW` remains automatic. In `$36`, three write-only labels (`C005`, `C00A`, `C00F`) stayed automatic for lack of a static consumer; in `$29`, 53 shared reference blocks and 4 instrument-record artifacts stayed automatic; in `$2D`, 55 reference blocks and 1 artifact stayed automatic for lack of an independent identity.
 - **D-02 — PROPOSED, non-blocking for naming.** Decision on state/frame canonical source (`tasks/STATE_DATA_FORMAT_DECISION.md`) still awaits Maintainer. Phase 3 did not use it: naming acted only on symbols, whose canonical source is `annotations/sf2ne.ann`.
 - **D-04…D-07 — PENDING**, no change in this phase.
 
@@ -187,7 +190,7 @@ Phase 3 spec §12 acceptance criteria:
 
 ### 10.5 Pendencies and next step
 
-- **1,010 automatic data labels remain**; spec allows keeping them when semantics is undetermined (P3/opaque). Distribution: `$00` 206, `$01` 304, `$04` 3, `$05` 352, `$08/$0C/$10/$1C/$24` 5, `$29` 57, `$2D` 70, `$36` 3, `$37` 10.
-- Next candidates by evidence/effort: `$2D` Fight music (70). Large Ryu/Ken banks (`$00`/`$01`/`$05`, 862) require state/frame analysis and may remain P3.
+- **996 automatic data labels remain**; spec allows keeping them when semantics is undetermined (P3/opaque). Distribution: `$00` 206, `$01` 304, `$04` 3, `$05` 352, `$08/$0C/$10/$1C/$24` 5, `$29` 57, `$2D` 56, `$36` 3, `$37` 10.
+- Next candidates by evidence/effort: large Ryu/Ken banks (`$00`/`$01`/`$05`, 862) require state/frame analysis and may remain P3; the music banks are exhausted.
 - The three `$36` write-only labels (`C005`, `C00A`, `C00F`) stay automatic until a consumer appears; `MMC5_CHR_BG2` is never used in the ROM.
 - No character, feature, or playable content was started.

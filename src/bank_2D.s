@@ -5,32 +5,32 @@
 ;
 .include "defs.inc"
 .segment "BANK2D"
-D2D_A000:
-    .byte $01                                   ; A000
-    .word D2D_A013                              ; A001  13 A0
+MusicFightHeader:
+    .byte $01                                   ; A000              fight music module header: 1 song, instrument list at A013, 5 channel pointers, tempo $0100 (NTSC)
+    .word MusicFightInstruments                 ; A001  13 A0
     .word D2D_A017+1                            ; A003  18 A0       (inferred)
-    .word D2D_A021                              ; A005  21 A0
-    .word D2D_A239                              ; A007  39 A2
-    .word D2D_A6C3                              ; A009  C3 A6
-    .word D2D_A985                              ; A00B  85 A9
-    .word D2D_B200                              ; A00D  00 B2
+    .word MusicFightPulse1                      ; A005  21 A0
+    .word MusicFightPulse2                      ; A007  39 A2
+    .word MusicFightTriangle                    ; A009  C3 A6
+    .word MusicFightNoise                       ; A00B  85 A9
+    .word MusicFightDpcm                        ; A00D  00 B2
     .byte $33,$01,$00,$01                       ; A00F
-D2D_A013:
-    .word D2D_A01E                              ; A013  1E A0
-    .word D2D_A01B                              ; A015  1B A0
+MusicFightInstruments:
+    .word MusicFightEnvFullVolume               ; A013  1E A0       instrument list; 8-byte records read by _FT2SetInstrument (instrument 0 uses the envelopes below)
+    .word MusicFightEnvZero                     ; A015  1B A0
 D2D_A017:
-    .word D2D_A01B                              ; A017  1B A0
-    .word D2D_A01B                              ; A019  1B A0
-D2D_A01B:
-    .byte $C0,$00,$00                           ; A01B
-D2D_A01E:
-    .byte $CF,$00,$00                           ; A01E
-D2D_A021:
-    .byte $FB,$01,$71,$80,$25,$70,$95,$97,$71,$81,$70,$95,$97,$97,$97,$97; A021
+    .word MusicFightEnvZero                     ; A017  1B A0
+    .word MusicFightEnvZero                     ; A019  1B A0
+MusicFightEnvZero:
+    .byte $C0,$00,$00                           ; A01B              constant volume 0 envelope (C0 00 00); instrument 0 pointers 2-4
+MusicFightEnvFullVolume:
+    .byte $CF,$00,$00                           ; A01E              constant volume 15 envelope (CF 00 00); instrument 0 pointer 1
+MusicFightPulse1:
+    .byte $FB,$01,$71,$80,$25,$70,$95,$97,$71,$81,$70,$95,$97,$97,$97,$97; A021              pulse 1 channel start (header +5); FamiToneMusicPlay installs the pointer
     .byte $97,$97,$97,$97,$97,$77,$97,$97,$97,$97,$27,$95,$97,$29,$89,$27; A031
     .byte $89,$8B,$77,$25,$89,$97,$85           ; A041
-D2D_A048:
-    .byte $97,$97,$97,$97,$8F,$77,$80,$25,$85,$83,$77,$25,$89,$79,$87,$8F; A048
+MusicFightLoopPulse1:
+    .byte $97,$97,$97,$97,$8F,$77,$80,$25,$85,$83,$77,$25,$89,$79,$87,$8F; A048              loop target of $FD at A236; pulse 1 channel
     .byte $77,$24,$85,$97,$97,$97,$8F,$25,$85,$8F,$1D,$85,$83,$20,$89,$22; A058
     .byte $85,$97,$97,$97,$97,$97,$8F,$24,$85,$8F,$25,$85,$8F,$27,$85,$85; A068
     .byte $97,$97,$87,$25,$89,$24,$81,$87,$25,$8D,$97,$87,$22,$8D,$97,$87; A078
@@ -67,13 +67,13 @@ D2D_A1A1:
     .byte $97,$97,$97,$97,$97,$97,$8F,$71,$25,$70,$85,$85,$93,$93,$93,$93; A20A
     .byte $93,$93,$93,$93,$93,$93,$93,$83,$77,$8F,$93,$93,$93,$93,$27,$91; A21A
     .byte $93,$87,$29,$89,$27,$91,$83,$77,$25,$8D,$93,$89,$FD; A22A
-    .word D2D_A048                              ; A237  48 A0
-D2D_A239:
-    .byte $71,$80,$22,$70,$95,$97,$71,$81,$70,$95,$97,$97,$97,$97,$97,$97; A239
+    .word MusicFightLoopPulse1                  ; A237  48 A0
+MusicFightPulse2:
+    .byte $71,$80,$22,$70,$95,$97,$71,$81,$70,$95,$97,$97,$97,$97,$97,$97; A239              pulse 2 channel start (header +7)
     .byte $97,$97,$97,$76,$97,$97,$97,$97,$24,$95,$97,$25,$89,$24,$89,$8B; A249
     .byte $76,$22,$89,$97,$85                   ; A259
-D2D_A25E:
-    .byte $97,$97,$97,$97,$8F,$76,$80,$22,$85,$83,$76,$22,$89,$78,$87,$8F; A25E
+MusicFightLoopPulse2:
+    .byte $97,$97,$97,$97,$8F,$76,$80,$22,$85,$83,$76,$22,$89,$78,$87,$8F; A25E              loop target of $FD at A6C0; pulse 2 channel
     .byte $76,$20,$85,$97,$97,$97,$8F,$22,$85,$97,$8F,$24,$83,$75,$81,$81; A26E
     .byte $74,$81,$76,$0A,$83,$75,$83,$74,$81,$76,$25,$83,$75,$81,$81,$74; A27E
     .byte $81,$76,$22,$83,$75,$83,$74,$81,$76,$16,$83,$75,$81,$81,$74,$81; A28E
@@ -161,14 +161,14 @@ D2D_A58B:
     .byte $97,$97,$97,$97,$97,$8F,$71,$22,$70,$85,$85,$93,$93,$93,$93,$93; A695
     .byte $93,$93,$93,$93,$93,$93,$83,$76,$8F,$93,$93,$93,$93,$24,$91,$93; A6A5
     .byte $87,$25,$89,$24,$91,$83,$76,$22,$8D,$93,$89,$FD; A6B5
-    .word D2D_A25E                              ; A6C1  5E A2
-D2D_A6C3:
-    .byte $80,$16,$95,$97,$97,$8B,$14,$89,$16,$95,$8B,$14,$89,$16,$89,$19; A6C3
+    .word MusicFightLoopPulse2                  ; A6C1  5E A2
+MusicFightTriangle:
+    .byte $80,$16,$95,$97,$97,$8B,$14,$89,$16,$95,$8B,$14,$89,$16,$89,$19; A6C3              triangle channel start (header +9)
     .byte $89,$8B,$18,$89,$8B,$14,$89,$11,$95,$16,$95,$8B,$14,$89,$16,$95; A6D3
     .byte $8B,$14,$89,$16,$89,$19,$89,$8B,$1B,$89,$97,$1D,$95,$16,$95,$8B; A6E3
     .byte $14,$89,$16,$95,$85                   ; A6F3
-D2D_A6F8:
-    .byte $83,$80,$14,$89,$16,$85,$83,$19,$91,$83,$18,$91; A6F8
+MusicFightLoopTriangle:
+    .byte $83,$80,$14,$89,$16,$85,$83,$19,$91,$83,$18,$91; A6F8              loop target of $FD at A982; triangle channel
 D2D_A704:
     .byte $83,$14,$89,$11,$85,$8F,$16,$85,$97   ; A704
 D2D_A70D:
@@ -237,9 +237,9 @@ D2D_A895:
     .byte $81,$93,$14,$89,$11,$85,$8F,$16,$81,$93,$8B,$14,$85,$83,$16,$8D; A958
     .byte $93,$14,$89,$16,$85,$83,$19,$8D,$87,$1B,$89,$93,$83,$1D,$8D,$87; A968
     .byte $16,$89,$93,$83,$14,$89,$16,$81,$93,$89,$FD; A978
-    .word D2D_A6F8                              ; A983  F8 A6
-D2D_A985:
-    .byte $73,$80,$0C,$72,$81,$71,$81,$70,$85,$76,$09,$89,$75,$83,$74,$81; A985
+    .word MusicFightLoopTriangle                ; A983  F8 A6
+MusicFightNoise:
+    .byte $73,$80,$0C,$72,$81,$71,$81,$70,$85,$76,$09,$89,$75,$83,$74,$81; A985              noise channel start (header +11)
     .byte $76,$8B,$75,$83,$74,$81               ; A995
 D2D_A99B:
     .byte $76,$05,$75,$81,$74,$81,$73,$81,$72,$81,$71,$81,$70,$8B; A99B
@@ -280,8 +280,8 @@ D2D_A9E4:
     .word D2D_A9BD                              ; AA1D  BD A9
     .byte $FF,$03                               ; AA1F
     .word D2D_A9A9                              ; AA21  A9 A9
-D2D_AA23:
-    .byte $83,$76,$80,$05,$75,$81,$74,$81,$73,$81,$72,$81,$71,$81,$73,$0C; AA23
+MusicFightLoopNoise:
+    .byte $83,$76,$80,$05,$75,$81,$74,$81,$73,$81,$72,$81,$71,$81,$73,$0C; AA23              loop target of $FD at B1FD; noise channel
     .byte $72,$81,$71,$81,$70,$81               ; AA33
 D2D_AA39:
     .byte $83,$76,$05,$75,$81,$74,$81,$73,$81,$72,$81,$71,$81,$76,$81,$75; AA39
@@ -684,12 +684,12 @@ D2D_B17F:
     .byte $81,$73,$81,$72,$81,$71,$81,$76,$09,$81,$FF,$06; B1E7
     .word D2D_A501                              ; B1F3  01 A5
     .byte $73,$0C,$72,$81,$71,$81,$70,$83,$FD   ; B1F5
-    .word D2D_AA23                              ; B1FE  23 AA
-D2D_B200:
-    .byte $97,$97,$97,$97,$97,$97,$97,$97,$97,$97,$97,$97,$97,$97,$97,$97; B200
+    .word MusicFightLoopNoise                   ; B1FE  23 AA
+MusicFightDpcm:
+    .byte $97,$97,$97,$97,$97,$97,$97,$97,$97,$97,$97,$97,$97,$97,$97,$97; B200              DPCM channel start (header +13)
     .byte $97,$97,$97,$97,$97,$85               ; B210
-D2D_B216:
-    .byte $97,$97,$97,$97,$97,$97,$97,$97,$97,$97,$97,$97,$97,$97,$97,$97; B216
+MusicFightLoopDpcm:
+    .byte $97,$97,$97,$97,$97,$97,$97,$97,$97,$97,$97,$97,$97,$97,$97,$97; B216              loop target of $FD at B309; DPCM channel loops on itself
     .byte $97,$97,$97,$97,$97,$85,$97,$97,$97,$97,$97,$97,$97,$97,$97,$97; B226
     .byte $97,$97,$97,$97,$97,$97,$97,$97,$97,$97,$97,$85,$97,$97,$97,$97; B236
     .byte $97,$97,$97,$97,$97,$97,$97,$97,$97,$97,$97,$97,$97,$97,$97,$97; B246
@@ -705,5 +705,5 @@ D2D_B216:
     .byte $97,$97,$97,$97,$97,$97,$97,$97,$97,$97,$97,$85,$93,$93,$93,$93; B2E6
     .byte $93,$93,$93,$93,$93,$93,$93,$93,$93,$93,$93,$93,$93,$93,$93,$93; B2F6
     .byte $93,$93,$89,$FD                       ; B306
-    .word D2D_B216                              ; B30A  16 B2
+    .word MusicFightLoopDpcm                    ; B30A  16 B2
     .res 3316, $FF                              ; B30C

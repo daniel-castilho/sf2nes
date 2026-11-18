@@ -2536,9 +2536,9 @@ RoundStart:
     farcall FadeIn                              ; F55D  A9 F5 48 A9 6E 48 A9 3B .. -> 3B:E4D6
     lda #$2D                                    ; F56F  A9 2D
     sta MusicBank                               ; F571  8D 5F 04
-    lda #<D2D_A000                              ; F574  A9 00
+    lda #<MusicFightHeader                      ; F574  A9 00
     sta zp_D5                                   ; F576  85 D5
-    lda #>D2D_A000                              ; F578  A9 A0
+    lda #>MusicFightHeader                      ; F578  A9 A0
     sta zp_D6                                   ; F57A  85 D6
     farcall SoundLoadSong                       ; F57C  A9 F5 48 A9 8D 48 A9 3B .. -> 37:E3E0
 

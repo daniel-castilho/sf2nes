@@ -2882,3 +2882,39 @@ comment 29:B659 loop target of $FD at B65A; DPCM channel loops on itself
 
 
 # ============================================================================================================
+# BANK $2D — Fight music module (FamiTone2 data)
+# ============================================================================================================
+# 14 structural names; 55 reference blocks and 1 instrument-record artifact stay
+# automatic (P3). Evidence and deferred streams: tasks/DATA_NAMING_2D.md.
+
+label 2D:A000 MusicFightHeader
+comment 2D:A000 fight music module header: 1 song, instrument list at A013, 5 channel pointers, tempo $0100 (NTSC)
+label 2D:A013 MusicFightInstruments
+comment 2D:A013 instrument list; 8-byte records read by _FT2SetInstrument (instrument 0 uses the envelopes below)
+label 2D:A01B MusicFightEnvZero
+comment 2D:A01B constant volume 0 envelope (C0 00 00); instrument 0 pointers 2-4
+label 2D:A01E MusicFightEnvFullVolume
+comment 2D:A01E constant volume 15 envelope (CF 00 00); instrument 0 pointer 1
+label 2D:A021 MusicFightPulse1
+comment 2D:A021 pulse 1 channel start (header +5); FamiToneMusicPlay installs the pointer
+label 2D:A239 MusicFightPulse2
+comment 2D:A239 pulse 2 channel start (header +7)
+label 2D:A6C3 MusicFightTriangle
+comment 2D:A6C3 triangle channel start (header +9)
+label 2D:A985 MusicFightNoise
+comment 2D:A985 noise channel start (header +11)
+label 2D:B200 MusicFightDpcm
+comment 2D:B200 DPCM channel start (header +13)
+label 2D:A048 MusicFightLoopPulse1
+comment 2D:A048 loop target of $FD at A236; pulse 1 channel
+label 2D:A25E MusicFightLoopPulse2
+comment 2D:A25E loop target of $FD at A6C0; pulse 2 channel
+label 2D:A6F8 MusicFightLoopTriangle
+comment 2D:A6F8 loop target of $FD at A982; triangle channel
+label 2D:AA23 MusicFightLoopNoise
+comment 2D:AA23 loop target of $FD at B1FD; noise channel
+label 2D:B216 MusicFightLoopDpcm
+comment 2D:B216 loop target of $FD at B309; DPCM channel loops on itself
+
+
+# ============================================================================================================

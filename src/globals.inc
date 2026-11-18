@@ -226,7 +226,6 @@
 .global D10_8000
 .global D1C_8000
 .global D24_8000
-.global D2D_A000
 .global D36_C005
 .global D36_C00A
 .global D36_C00F
@@ -252,6 +251,7 @@
 .global JoyPollBoth
 .global JoyPollBothSel
 .global Match
+.global MusicFightHeader
 .global MusicSelectHeader
 .global MusicTitleHeader
 .global MusicVersusHeader

@@ -277,13 +277,13 @@ Bank `$00` is the only Ryu code bank modified, and only in those two bytes.
 
 ---
 
-## 10. Appendix — what the `$3C`/`$3F`/`$20`/`$36`/`$3B`/`$37`/`$29` data naming batches taught
+## 10. Appendix — what the `$3C`/`$3F`/`$20`/`$36`/`$3B`/`$37`/`$29`/`$2D` data naming batches taught
 
 The data batches (33 labels from `$3C`, 15 from `$3F`, 30 from `$20`, 27 from `$36`, 35 from `$3B`,
-17 from `$37` and 46 from `$29`, see `tasks/DATA_NAMING_3C.md`, `tasks/DATA_NAMING_3F.md`,
-`tasks/DATA_NAMING_20.md`, `tasks/DATA_NAMING_36.md`, `tasks/DATA_NAMING_3B.md`,
-`tasks/DATA_NAMING_37.md` and `tasks/DATA_NAMING_29.md`) did not change bytes, but exposed these
-reading pitfalls:
+17 from `$37`, 46 from `$29` and 14 from `$2D`, see `tasks/DATA_NAMING_3C.md`,
+`tasks/DATA_NAMING_3F.md`, `tasks/DATA_NAMING_20.md`, `tasks/DATA_NAMING_36.md`,
+`tasks/DATA_NAMING_3B.md`, `tasks/DATA_NAMING_37.md`, `tasks/DATA_NAMING_29.md` and
+`tasks/DATA_NAMING_2D.md`) did not change bytes, but exposed these reading pitfalls:
 
 * **Do not classify a bank by its address.** Initial triage treated `$29`/`$2D` as "AI" because they are
   near the engine; generated headers show they are **FamiTone2 music** (173 labels). Reading the header
@@ -361,6 +361,10 @@ reading pitfalls:
   speed command, and its `$FD` loop targets `B36D` — the first note after the command, with no label of
   its own. Do not assume the loop target equals the channel start; decode the `$FD` word. In the same
   module, pulse 2, triangle, noise and DPCM *are* both start and loop target.
+* **Do not generalize loop sharing from one module.** In `$29` Select two channels could reach the same
+  `$FD` target through shared blocks, but in `$2D` all five targets are distinct and each is reached by
+  exactly one channel. Check the `$FD` table per module instead of copying the previous batch's naming
+  pattern.
 * **Shared reference blocks are not owned by one channel.** The 53 `$FF <length> <word>` targets in
   `$29` are fragments reused by different channels and can be reached from several streams. Naming them
   `Ref0..52` would restate the index and break on reuse; they stayed automatic (P3). Only the
