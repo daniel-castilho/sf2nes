@@ -277,11 +277,12 @@ Bank `$00` is the only Ryu code bank modified, and only in those two bytes.
 
 ---
 
-## 10. Appendix — what the `$3C`/`$3F`/`$20`/`$36` data naming batches taught
+## 10. Appendix — what the `$3C`/`$3F`/`$20`/`$36`/`$3B` data naming batches taught
 
-The data batches (33 labels from `$3C`, 15 from `$3F`, 30 from `$20` and 27 from `$36`, see
-`tasks/DATA_NAMING_3C.md`, `tasks/DATA_NAMING_3F.md`, `tasks/DATA_NAMING_20.md` and
-`tasks/DATA_NAMING_36.md`) did not change bytes, but exposed these reading pitfalls:
+The data batches (33 labels from `$3C`, 15 from `$3F`, 30 from `$20`, 27 from `$36` and 35 from `$3B`, see
+`tasks/DATA_NAMING_3C.md`, `tasks/DATA_NAMING_3F.md`, `tasks/DATA_NAMING_20.md`,
+`tasks/DATA_NAMING_36.md` and `tasks/DATA_NAMING_3B.md`) did not change bytes, but exposed these reading
+pitfalls:
 
 * **Do not classify a bank by its address.** Initial triage treated `$29`/`$2D` as "AI" because they are
   near the engine; generated headers show they are **FamiTone2 music** (173 labels). Reading the header
@@ -322,10 +323,18 @@ The data batches (33 labels from `$3C`, 15 from `$3F`, 30 from `$20` and 27 from
 * **Do not "fix" a table quirk that the only used entry hides.** `C000`–`C00F` are indexed with
   `y = layout*2` although each table has 5 bytes; for layouts 3–4 that would read `$FF`. Only layout 0 has
   data, so behavior is the first byte. Naming documents the observed use; it does not repair the indexing.
-* **Translation can desynchronize the generator.** After `fa7c215`, `make gen` rewrites file headers back
-  to Portuguese because `tools/disasm.py` still contains the old strings. The label/comment body comes from
-  the translated annotations, and ROM bytes do not change; the header-only diff must be discarded instead
-  of committed.
+* **The RLE count repeats the last literal — there is no value byte.** `PpuUnRle` (`3B:E3BE`) writes every
+  byte that differs from the tag and keeps it as `RleLast`; on `tag,count` it repeats that last byte
+  `count` times, and `tag,$00` ends the stream. A first decode pass that consumed an extra byte after the
+  count gave 1,011/456/471/61 bytes for the `$3B` streams; the correct decode gives exactly 1,024
+  (`VersusBgRle`) and 480+480+64 (`SelectBgTopRle`/`SelectBgBottomRle`/`SelectBgAttrRle`). Sanity-check a
+  decoded size against the nametable/attribute geometry before naming the stream.
+* **Translation can desynchronize the generator.** After `fa7c215`, `annotations/sf2ne.ann` is in English
+  while the committed `src/*.s` still carry the pre-translation Portuguese comments. `make gen` rewrites
+  the file headers back to Portuguese (the strings are hardcoded in `tools/disasm.py`) and translates the
+  whole comment body, producing a ~1,000-line diff that mixes translation with naming. The `$3B` batch was
+  therefore applied mechanically to `src/*.s` (rename plus comment re-alignment), keeping the diff to
+  labels only; a dedicated regeneration/translation commit is still pending.
 
 **Practical rule:** for each batch, (1) read the consumer, (2) propose name + confidence, (3) apply only
 labels/comments, (4) validate with `make gen`, `make` and identical SHA-1, (5) confirm that no `.byte`/

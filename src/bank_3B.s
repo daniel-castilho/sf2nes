@@ -358,7 +358,7 @@ VsStageIndex:
     asl a                                       ; E294  0A          VsStageIndex — tela VS: indice do cenario (x2) para as tabelas do banco $36
     sta zp_D5                                   ; E295  85 D5
     tay                                         ; E297  A8
-    lda D3B_F8FE,x                              ; E298  BD FE F8    [idx $00..$00]
+    lda StageBankTbl,x                          ; E298  BD FE F8    [idx $00..$00]
     ora #$80                                    ; E29B  09 80
     sta MMC5_PRG_C000                           ; E29D  8D 16 51
     lda #$CD                                    ; E2A0  A9 CD
@@ -454,7 +454,7 @@ RoundInitLoadStage:
 RoundStageIndex:
     asl a                                       ; E381  0A          RoundStageIndex — inicio do round: indice do cenario (x2) para as tabelas do banco $36
     tay                                         ; E382  A8
-    lda D3B_F8FE,x                              ; E383  BD FE F8    [idx $00..$00]
+    lda StageBankTbl,x                          ; E383  BD FE F8    [idx $00..$00]
     ora #$80                                    ; E386  09 80
     sta MMC5_PRG_C000                           ; E388  8D 16 51
     lda StagePaletteTbl,y                       ; E38B  B9 8C C0    [bancos $36 idx $00..$00]
@@ -538,13 +538,13 @@ PpuWrite64Loop:
     bne PpuWrite64Loop                          ; E403  D0 F6
     rts                                         ; E405  60
 
-D3B_E406:
+FadeOutMaxTbl:
     .byte $10,$20,$10,$30,$20,$10,$40,$30,$20,$10; E406
-D3B_E410:
+FadeOutMinTbl:
     .byte $00,$10,$00,$20,$10,$00,$30,$20,$10,$00; E410
-D3B_E41A:
+FadeInMaxTbl:
     .byte $40,$40,$30,$40,$30,$20               ; E41A
-D3B_E420:
+FadeInMinTbl:
     .byte $30,$30,$20,$30,$20,$10               ; E420
 
 ; <- farjmp SelectWaitEnd, farcall ScreenDisclaimer, farjmp ScreenSupport, farjmp TitleExit, jmp VersusDraw, jmp WinQuoteWinnerText ... (+1)
@@ -595,9 +595,9 @@ FadeOutDarken:
     ldy #$17                                    ; E47E  A0 17       prepara o escurecimento das 24 cores (Y=$17) e cai no laco
 FadeOutDarkenLoop:
     lda a:PaletteBuf,y                          ; E480  B9 BC 00    escurece uma cor da paleta em um degrau conforme o passo do fade
-    cmp D3B_E406,x                              ; E483  DD 06 E4    [idx $00..$80]
+    cmp FadeOutMaxTbl,x                         ; E483  DD 06 E4    [idx $00..$80]
     bcs FadeOut_NextColor                       ; E486  B0 0E
-    cmp D3B_E410,x                              ; E488  DD 10 E4    [idx $00..$7B]
+    cmp FadeOutMinTbl,x                         ; E488  DD 10 E4    [idx $00..$7B]
     bcc FadeOut_NextColor                       ; E48B  90 09
     sbc #$10                                    ; E48D  E9 10
     bpl FadeOut_StoreColor                      ; E48F  10 02
@@ -708,9 +708,9 @@ FadeIn_StepPrepare:
     ldy #$17                                    ; E55F  A0 17       FadeIn_StepPrepare — fade-in: prepara o degrau (24 cores)
 FadeIn_ColorLoop:
     lda FadePalette,y                           ; E561  B9 85 04    FadeIn_ColorLoop — fade-in: clareia as cores dentro da faixa do degrau
-    cmp D3B_E420,x                              ; E564  DD 20 E4    [idx $00..$06]
+    cmp FadeInMinTbl,x                          ; E564  DD 20 E4    [idx $00..$06]
     bcc FadeIn_NextColor                        ; E567  90 0D
-    cmp D3B_E41A,x                              ; E569  DD 1A E4    [idx $00..$05]
+    cmp FadeInMaxTbl,x                          ; E569  DD 1A E4    [idx $00..$05]
     bcs FadeIn_NextColor                        ; E56C  B0 08
     lda a:PaletteBuf,y                          ; E56E  B9 BC 00
     adc #$10                                    ; E571  69 10
@@ -722,13 +722,13 @@ FadeIn_NextColor:
     bpl FadeIn_VBlankFlagClear                  ; E57A  10 AD
     rts                                         ; E57C  60
 
-D3B_E57D:
+ProjectileFrameTbl:
     .word ProjectileFrame0                      ; E57D  09 85
     .word ProjectileFrame0                      ; E57F  09 85
     .word ProjectileFrame1                      ; E581  1A 85
     .word ProjectileFrame1                      ; E583  1A 85
     .byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00; E585
-D3B_E595:
+ProjectileClashFrameTbl:
     .word ProjectileClashFrame0                 ; E595  3A 85
     .word ProjectileClashFrame1                 ; E597  49 85
     .word ProjectileClashFrame2                 ; E599  56 85
@@ -886,15 +886,15 @@ HudUpdate:
     ldx #$00                                    ; E69B  A2 00       (nt)
 HudNameScrollP1Set:
     stx ram_0412                                ; E69D  8E 12 04    HudNameScrollP1Set — atualiza o nome rolante do P1 (ram_040D-ram_0411) (nt)
-    lda D3B_E808,x                              ; E6A0  BD 08 E8    (nt)
+    lda PressStartScrollText,x                  ; E6A0  BD 08 E8    (nt)
     sta ram_040D                                ; E6A3  8D 0D 04    (nt)
-    lda D3B_E809,x                              ; E6A6  BD 09 E8    (nt)
+    lda PressStartScrollTextOfs1,x              ; E6A6  BD 09 E8    (nt)
     sta ram_040E                                ; E6A9  8D 0E 04    (nt)
-    lda D3B_E80A,x                              ; E6AC  BD 0A E8    (nt)
+    lda PressStartScrollTextOfs2,x              ; E6AC  BD 0A E8    (nt)
     sta ram_040F                                ; E6AF  8D 0F 04    (nt)
-    lda D3B_E80B,x                              ; E6B2  BD 0B E8    (nt)
+    lda PressStartScrollTextOfs3,x              ; E6B2  BD 0B E8    (nt)
     sta ram_0410                                ; E6B5  8D 10 04    (nt)
-    lda D3B_E80C,x                              ; E6B8  BD 0C E8    (nt)
+    lda PressStartScrollTextOfs4,x              ; E6B8  BD 0C E8    (nt)
     sta ram_0411                                ; E6BB  8D 11 04    (nt)
 HudNameScrollP2:
     ldx ram_0418                                ; E6BE  AE 18 04    HudNameScrollP2 — le o indice de rolagem do nome do P2
@@ -906,15 +906,15 @@ HudNameScrollP2:
     ldx #$00                                    ; E6CA  A2 00
 HudNameScrollP2Set:
     stx ram_0418                                ; E6CC  8E 18 04    HudNameScrollP2Set — atualiza o nome rolante do P2 (ram_0413-ram_0417)
-    lda D3B_E808,x                              ; E6CF  BD 08 E8    [idx $00..$0F]
+    lda PressStartScrollText,x                  ; E6CF  BD 08 E8    [idx $00..$0F]
     sta ram_0413                                ; E6D2  8D 13 04
-    lda D3B_E809,x                              ; E6D5  BD 09 E8    [idx $00..$0F]
+    lda PressStartScrollTextOfs1,x              ; E6D5  BD 09 E8    [idx $00..$0F]
     sta ram_0414                                ; E6D8  8D 14 04
-    lda D3B_E80A,x                              ; E6DB  BD 0A E8    [idx $00..$0F]
+    lda PressStartScrollTextOfs2,x              ; E6DB  BD 0A E8    [idx $00..$0F]
     sta ram_0415                                ; E6DE  8D 15 04
-    lda D3B_E80B,x                              ; E6E1  BD 0B E8    [idx $00..$0F]
+    lda PressStartScrollTextOfs3,x              ; E6E1  BD 0B E8    [idx $00..$0F]
     sta ram_0416                                ; E6E4  8D 16 04
-    lda D3B_E80C,x                              ; E6E7  BD 0C E8    [idx $00..$0F]
+    lda PressStartScrollTextOfs4,x              ; E6E7  BD 0C E8    [idx $00..$0F]
     sta ram_0417                                ; E6EA  8D 17 04
 HudWinsUpdate:
     lda ScreenMode                              ; E6ED  A5 B0       HudWinsUpdate — escreve os placares de vitorias dos dois lutadores
@@ -924,15 +924,15 @@ HudWinsUpdate:
     asl a                                       ; E6F5  0A
     adc FighterWins                             ; E6F6  65 10
     tax                                         ; E6F8  AA
-    lda D3B_E81C,x                              ; E6F9  BD 1C E8    [idx $00..$06]
+    lda HudWinsP1Col0Tbl,x                      ; E6F9  BD 1C E8    [idx $00..$06]
     sta ram_0419                                ; E6FC  8D 19 04
     adc #$10                                    ; E6FF  69 10
     sta ram_041C                                ; E701  8D 1C 04
-    lda D3B_E81D,x                              ; E704  BD 1D E8    [idx $00..$06]
+    lda HudWinsP1Col1Tbl,x                      ; E704  BD 1D E8    [idx $00..$06]
     sta ram_041A                                ; E707  8D 1A 04
     adc #$10                                    ; E70A  69 10
     sta ram_041D                                ; E70C  8D 1D 04
-    lda D3B_E81E,x                              ; E70F  BD 1E E8    [idx $00..$06]
+    lda HudWinsP1Col2Tbl,x                      ; E70F  BD 1E E8    [idx $00..$06]
     sta ram_041B                                ; E712  8D 1B 04
     adc #$10                                    ; E715  69 10
     sta ram_041E                                ; E717  8D 1E 04
@@ -940,15 +940,15 @@ HudWinsUpdate:
     asl a                                       ; E71C  0A
     adc FighterWins+1                           ; E71D  65 11
     tax                                         ; E71F  AA
-    lda D3B_E825,x                              ; E720  BD 25 E8    [idx $00..$06]
+    lda HudWinsP2Col0Tbl,x                      ; E720  BD 25 E8    [idx $00..$06]
     sta ram_041F                                ; E723  8D 1F 04
     adc #$10                                    ; E726  69 10
     sta ram_0422                                ; E728  8D 22 04
-    lda D3B_E826,x                              ; E72B  BD 26 E8    [idx $00..$06]
+    lda HudWinsP2Col1Tbl,x                      ; E72B  BD 26 E8    [idx $00..$06]
     sta ram_0420                                ; E72E  8D 20 04
     adc #$10                                    ; E731  69 10
     sta ram_0423                                ; E733  8D 23 04
-    lda D3B_E827,x                              ; E736  BD 27 E8    [idx $00..$06]
+    lda HudWinsP2Col2Tbl,x                      ; E736  BD 27 E8    [idx $00..$06]
     sta ram_0421                                ; E739  8D 21 04
     adc #$10                                    ; E73C  69 10
     sta ram_0424                                ; E73E  8D 24 04
@@ -980,7 +980,7 @@ HudDamageUpdate:
     ldx #$07                                    ; E771  A2 07
 HudBarTileP1:
     stx ram_043C                                ; E773  8E 3C 04    HudBarTileP1 — escreve os tiles da barra do P1 (ram_0425/ram_0430)
-    lda D3B_E82E,x                              ; E776  BD 2E E8    [idx $00..$07]
+    lda HudHpBarP1Tbl,x                         ; E776  BD 2E E8    [idx $00..$07]
     sta ram_0425,y                              ; E779  99 25 04
     clc                                         ; E77C  18
     adc #$08                                    ; E77D  69 08
@@ -1000,7 +1000,7 @@ HudDamageUpdateP2:
     ldx #$07                                    ; E794  A2 07
 HudBarTileP2:
     stx ram_0454                                ; E796  8E 54 04    HudBarTileP2 — escreve os tiles da barra do P2 (ram_043D/ram_0448)
-    lda D3B_E837,x                              ; E799  BD 37 E8    [idx $00..$07]
+    lda HudHpBarP2Tbl,x                         ; E799  BD 37 E8    [idx $00..$07]
     sta ram_043D,y                              ; E79C  99 3D 04
     clc                                         ; E79F  18
     adc #$08                                    ; E7A0  69 08
@@ -1035,12 +1035,12 @@ HudWarnSelectP1:
 ; modos: intro do round, luta, fim do round
 HudWarnLowHpDraw:
     stx ram_0459                                ; E7C6  8E 59 04    desenha o aviso de energia baixa para o lutador X
-    lda D3B_E840,x                              ; E7C9  BD 40 E8    [idx $00..$01]
+    lda HudLowHpWarnLeftTbl,x                   ; E7C9  BD 40 E8    [idx $00..$01]
     sta ram_0455                                ; E7CC  8D 55 04
     clc                                         ; E7CF  18
     adc #$10                                    ; E7D0  69 10
     sta ram_0457                                ; E7D2  8D 57 04
-    lda D3B_E842,x                              ; E7D5  BD 42 E8    [idx $00..$01]
+    lda HudLowHpWarnRightTbl,x                  ; E7D5  BD 42 E8    [idx $00..$01]
     sta ram_0456                                ; E7D8  8D 56 04
     adc #$10                                    ; E7DB  69 10
     sta ram_0458                                ; E7DD  8D 58 04
@@ -1065,35 +1065,35 @@ HudTimerUpdate:
 HudTimerUpdateEnd:
     rts                                         ; E807  60          HudTimerUpdateEnd — fim do bloco do relogio
 
-D3B_E808:
+PressStartScrollText:
     .byte $20                                   ; E808
-D3B_E809:
+PressStartScrollTextOfs1:
     .byte $20                                   ; E809
-D3B_E80A:
+PressStartScrollTextOfs2:
     .byte $20                                   ; E80A
-D3B_E80B:
+PressStartScrollTextOfs3:
     .byte $20                                   ; E80B
-D3B_E80C:
+PressStartScrollTextOfs4:
     .byte $20,$50,$52,$45,$53,$53,$20,$20,$20,$20,$20,$53,$54,$41,$52,$54; E80C
-D3B_E81C:
+HudWinsP1Col0Tbl:
     .byte $00                                   ; E81C
-D3B_E81D:
+HudWinsP1Col1Tbl:
     .byte $00                                   ; E81D
-D3B_E81E:
+HudWinsP1Col2Tbl:
     .byte $02,$03,$01,$02,$03,$04,$05           ; E81E
-D3B_E825:
+HudWinsP2Col0Tbl:
     .byte $09                                   ; E825
-D3B_E826:
+HudWinsP2Col1Tbl:
     .byte $00                                   ; E826
-D3B_E827:
+HudWinsP2Col2Tbl:
     .byte $00,$09,$0A,$08,$06,$07,$08           ; E827
-D3B_E82E:
+HudHpBarP1Tbl:
     .byte $60,$61,$62,$63,$64,$65,$66,$67,$70   ; E82E
-D3B_E837:
+HudHpBarP2Tbl:
     .byte $60,$71,$72,$73,$74,$75,$76,$77,$70   ; E837
-D3B_E840:
+HudLowHpWarnLeftTbl:
     .byte $0C,$0E                               ; E840
-D3B_E842:
+HudLowHpWarnRightTbl:
     .byte $0D,$0F                               ; E842
 
 ; <- jmp K_FEC2
@@ -1327,15 +1327,15 @@ VsScreenIndexSet:
     jsr VersusLoadStage                         ; EA8A  20 8A E2
     rts                                         ; EA8D  60
 
-D3B_EA8E:
+VersusBgPalette:
     .byte $16,$27,$37                           ; EA8E
-D3B_EA91:
+VersusBgPal3Color0:
     .byte $16                                   ; EA91
-D3B_EA92:
+VersusBgPal3Color1:
     .byte $27                                   ; EA92
-D3B_EA93:
+VersusBgPal3Color2:
     .byte $01                                   ; EA93
-D3B_EA94:
+VersusBgRle:
     .byte $30,$00,$30,$FE,$00,$30,$FE,$00,$30,$4E,$01,$02,$03,$04,$05,$06; EA94
     .byte $07,$00,$30,$17,$08,$09,$0A,$0B,$0C,$0D,$0E,$0F,$00,$30,$17,$10; EAA4
     .byte $11,$12,$13,$14,$15,$16,$17,$00,$30,$17,$18,$19,$1A,$1B,$1C,$1D; EAB4
@@ -1350,13 +1350,13 @@ VersusDraw:
     sta PPUADDR                                 ; EAF4  8D 06 20
     lda #$00                                    ; EAF7  A9 00
     sta PPUADDR                                 ; EAF9  8D 06 20
-    lda #<D3B_EA94                              ; EAFC  A9 94
-    ldx #>D3B_EA94                              ; EAFE  A2 EA
+    lda #<VersusBgRle                           ; EAFC  A9 94
+    ldx #>VersusBgRle                           ; EAFE  A2 EA
     jsr PpuUnRle                                ; EB00  20 BE E3
     jsr VersusDrawFighters                      ; EB03  20 F2 EB
     ldx #$05                                    ; EB06  A2 05
 VsPaletteCopyLoop:
-    lda D3B_EA8E,x                              ; EB08  BD 8E EA    [idx $00..$05] VsPaletteCopyLoop — copia 6 bytes da paleta da tela VS para PaletteBuf
+    lda VersusBgPalette,x                       ; EB08  BD 8E EA    [idx $00..$05] VsPaletteCopyLoop — copia 6 bytes da paleta da tela VS para PaletteBuf
     sta a:PaletteBuf+6,x                        ; EB0B  9D C2 00
     dex                                         ; EB0E  CA
     bpl VsPaletteCopyLoop                       ; EB0F  10 F7
@@ -1494,11 +1494,11 @@ WinQuoteClearAttr:
     dex                                         ; EC3F  CA
     bne WinQuoteClearAttr                       ; EC40  D0 FA
     jsr VersusDrawFighters                      ; EC42  20 F2 EB
-    lda D3B_EA91                                ; EC45  AD 91 EA
+    lda VersusBgPal3Color0                      ; EC45  AD 91 EA
     sta a:PaletteBuf+9                          ; EC48  8D C5 00
-    lda D3B_EA92                                ; EC4B  AD 92 EA
+    lda VersusBgPal3Color1                      ; EC4B  AD 92 EA
     sta a:PaletteBuf+10                         ; EC4E  8D C6 00
-    lda D3B_EA93                                ; EC51  AD 93 EA
+    lda VersusBgPal3Color2                      ; EC51  AD 93 EA
     sta a:PaletteBuf+11                         ; EC54  8D C7 00
     jsr FadeIn                                  ; EC57  20 D6 E4
     lda #$29                                    ; EC5A  A9 29
@@ -2295,9 +2295,9 @@ DrawProjectile:
     lsr a                                       ; F2A5  4A
     asl a                                       ; F2A6  0A
     tay                                         ; F2A7  A8
-    lda D3B_E595,y                              ; F2A8  B9 95 E5    [idx $00..$06]
+    lda ProjectileClashFrameTbl,y               ; F2A8  B9 95 E5    [idx $00..$06]
     sta zp_D9                                   ; F2AB  85 D9
-    lda D3B_E595+1,y                            ; F2AD  B9 96 E5    [idx $00..$06]
+    lda ProjectileClashFrameTbl+1,y             ; F2AD  B9 96 E5    [idx $00..$06]
     sta zp_DA                                   ; F2B0  85 DA
     jmp DrawProjectileMetasprite                ; F2B2  4C D0 F2
 
@@ -2316,9 +2316,9 @@ DrawProjectileSprite:
     asl a                                       ; F2C2  0A
     adc zp_D9                                   ; F2C3  65 D9
     tay                                         ; F2C5  A8
-    lda D3B_E57D,y                              ; F2C6  B9 7D E5    [idx $00..$06]
+    lda ProjectileFrameTbl,y                    ; F2C6  B9 7D E5    [idx $00..$06]
     sta zp_D9                                   ; F2C9  85 D9
-    lda D3B_E57D+1,y                            ; F2CB  B9 7E E5    [idx $00..$06]
+    lda ProjectileFrameTbl+1,y                  ; F2CB  B9 7E E5    [idx $00..$06]
     sta zp_DA                                   ; F2CE  85 DA
 
 ; <- jmp DrawProjectile
@@ -2465,9 +2465,9 @@ SelectScreenBuild:
     sta a:FighterChrPage+1                      ; F378  8D 41 00
     ldx #$05                                    ; F37B  A2 05
 SelectScreenBuildPaletteLoop:
-    lda D3B_F545,x                              ; F37D  BD 45 F5    [idx $00..$05] laco de copia de paletas na construcao da tela de selecao
+    lda SelectBgPalette,x                       ; F37D  BD 45 F5    [idx $00..$05] laco de copia de paletas na construcao da tela de selecao
     sta a:PaletteBuf+6,x                        ; F380  9D C2 00
-    lda D3B_F54B,x                              ; F383  BD 4B F5    [idx $00..$05]
+    lda SelectSpritePalette,x                   ; F383  BD 4B F5    [idx $00..$05]
     sta a:PaletteBuf+18,x                       ; F386  9D CE 00
     dex                                         ; F389  CA
     bpl SelectScreenBuildPaletteLoop            ; F38A  10 F1
@@ -2475,17 +2475,17 @@ SelectScreenBuildPaletteLoop:
     sta PPUADDR                                 ; F38E  8D 06 20
     lda #$00                                    ; F391  A9 00
     sta PPUADDR                                 ; F393  8D 06 20
-    lda #<D3B_F3AB                              ; F396  A9 AB
-    ldx #>D3B_F3AB                              ; F398  A2 F3
+    lda #<SelectBgTopRle                        ; F396  A9 AB
+    ldx #>SelectBgTopRle                        ; F398  A2 F3
     jsr PpuUnRle                                ; F39A  20 BE E3
-    lda #<D3B_F4B9                              ; F39D  A9 B9
-    ldx #>D3B_F4B9                              ; F39F  A2 F4
+    lda #<SelectBgBottomRle                     ; F39D  A9 B9
+    ldx #>SelectBgBottomRle                     ; F39F  A2 F4
     jsr PpuUnRle                                ; F3A1  20 BE E3
-    lda #<D3B_F538                              ; F3A4  A9 38
-    ldx #>D3B_F538                              ; F3A6  A2 F5
+    lda #<SelectBgAttrRle                       ; F3A4  A9 38
+    ldx #>SelectBgAttrRle                       ; F3A6  A2 F5
     jmp PpuUnRle                                ; F3A8  4C BE E3
 
-D3B_F3AB:
+SelectBgTopRle:
     .byte $9B,$00,$9B,$27,$66,$5E,$48,$78,$50,$6A,$00,$00,$6C,$50,$5E,$50; F3AB
     .byte $4C,$6E,$00,$9B,$11,$67,$5F,$49,$79,$51,$6B,$00,$00,$6D,$51,$5F; F3BB
     .byte $51,$4D,$6F,$00,$9B,$10,$01,$02,$00,$03,$04,$05,$06,$07,$08,$00; F3CB
@@ -2503,7 +2503,7 @@ D3B_F3AB:
     .byte $86,$87,$88,$00,$9B,$0D,$89,$8A,$00,$9B,$03,$8B,$8C,$8D,$8E,$00; F48B
     .byte $9B,$03,$8F,$90,$91,$92,$00,$9B,$13,$93,$59,$94,$95,$00,$9B,$03; F49B
     .byte $96,$97,$98,$00,$9B,$1C,$99,$9A,$00,$9B,$07,$00,$9B,$00; F4AB
-D3B_F4B9:
+SelectBgBottomRle:
     .byte $61,$00,$61,$48,$01,$02,$03,$04,$05,$06,$07,$08,$09,$0A,$0B,$0C; F4B9
     .byte $00,$61,$13,$0D,$0E,$0F,$10,$11,$12,$13,$14,$15,$16,$17,$18,$00; F4C9
     .byte $61,$13,$19,$1A,$1B,$1C,$1D,$1E,$1F,$20,$21,$22,$23,$24,$00,$61; F4D9
@@ -2512,11 +2512,11 @@ D3B_F4B9:
     .byte $3E,$3F,$40,$41,$42,$43,$44,$45,$46,$47,$48,$00,$61,$13,$49,$4A; F509
     .byte $4B,$4C,$4D,$4E,$4F,$50,$51,$52,$53,$54,$00,$61,$13,$55,$56,$57; F519
     .byte $58,$59,$5A,$5B,$5C,$5D,$5E,$5F,$60,$00,$61,$A9,$00,$61,$00; F529
-D3B_F538:
+SelectBgAttrRle:
     .byte $00,$AA,$00,$1F,$FF,$00,$17,$0F,$00,$06,$0F,$00,$00; F538
-D3B_F545:
+SelectBgPalette:
     .byte $00,$28,$11,$00,$10,$20               ; F545
-D3B_F54B:
+SelectSpritePalette:
     .byte $11,$16,$20,$1A,$27,$21               ; F54B
 
 ; ------------------------------------------------------------------------------------------------
@@ -2741,7 +2741,7 @@ RoundIntro_TimerTick:
 
 ; modos: intro do round
 RoundIntro_StepDelay:
-    ldy D3B_F7D9,x                              ; F6F2  BC D9 F7    [idx $00..$06] RoundIntro_StepDelay — carrega o atraso do passo; passo 6 = voz "ROUND"
+    ldy RoundIntroStepDelayTbl,x                ; F6F2  BC D9 F7    [idx $00..$06] RoundIntro_StepDelay — carrega o atraso do passo; passo 6 = voz "ROUND"
     dey                                         ; F6F5  88
     sty a:RoundStepTimer                        ; F6F6  8C B7 00
     cpx #$06                                    ; F6F9  E0 06
@@ -2778,9 +2778,9 @@ RoundIntroDraw:
     adc a:RoundStep                             ; F722  6D B6 00
     asl a                                       ; F725  0A
     tax                                         ; F726  AA
-    lda D3B_F799,x                              ; F727  BD 99 F7    [idx $00..$3C]
+    lda RoundIntroMetaspriteTbl,x               ; F727  BD 99 F7    [idx $00..$3C]
     sta zp_D9                                   ; F72A  85 D9
-    lda D3B_F799+1,x                            ; F72C  BD 9A F7    [idx $00..$3C]
+    lda RoundIntroMetaspriteTbl+1,x             ; F72C  BD 9A F7    [idx $00..$3C]
     sta zp_DA                                   ; F72F  85 DA
     lda #$20                                    ; F731  A9 20
     ora #$80                                    ; F733  09 80
@@ -2831,7 +2831,7 @@ RoundIntroDraw:
     ldy #$01                                    ; F794  A0 01
     jmp DrawMetasprite                          ; F796  4C EA F2
 
-D3B_F799:
+RoundIntroMetaspriteTbl:
     .word FightTextZoomLarge                    ; F799  C6 84
     .word FightTextZoomMedium                   ; F79B  B9 84
     .word FightTextZoomSmall                    ; F79D  AC 84
@@ -2864,7 +2864,7 @@ D3B_F799:
     .word RoundText4                            ; F7D3  BE 85
     .word RoundTextFlash                        ; F7D5  80 85
     .byte $74,$85                               ; F7D7
-D3B_F7D9:
+RoundIntroStepDelayTbl:
     .byte $40,$01,$01,$02,$02,$50,$02,$02       ; F7D9
 
 ; <- jmp RoundLogic_EndCheck
@@ -3047,7 +3047,7 @@ PaletteFlashRestore:
     sta a:PaletteBuf+17                         ; F8FA  8D CD 00
     rts                                         ; F8FD  60
 
-D3B_F8FE:
+StageBankTbl:
     .byte $36,$36,$36,$36,$36,$3A,$3A,$3A,$3A,$3A; F8FE
 
 ; <- jsr FadeOut_RoundEndPath, jsr FadeIn, jsr FightFrame
@@ -3212,7 +3212,7 @@ ResetStub:
 .include "kernel.inc"
 
     .byte $FF,$FF,$FF,$FF                       ; FF9B
-D3B_FF9F:
+ResetVectorFill:
     .res 91, $FF                                ; FF9F
     .word NmiHandler                            ; FFFA  1E FE
 
@@ -3222,7 +3222,7 @@ __alt_3B_FFFC:
     .assert * - __alt_3B_FFFC <= $2, error, "bloco alt FIX_SOFT_RESET em $FFFC passou do tamanho"
     .res $2 - (* - __alt_3B_FFFC), $FF
 .else
-    .word D3B_FF9F                              ; FFFC  9F FF
+    .word ResetVectorFill                       ; FFFC  9F FF
 .endif
 
     .word IrqHandler                            ; FFFE  7C FC

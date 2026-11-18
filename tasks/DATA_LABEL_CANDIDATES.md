@@ -1,11 +1,11 @@
 # Data label inventory — initial screening
 
-- **Status:** static screening; names applied in batches `$3C`, `$3F`, and `$20`.  
+- **Status:** static screening; names applied in batches `$3C`, `$3F`, `$20`, `$36` and `$3B`.  
 - **Scope:** 1,213 automatic data labels (`D<bb>_<aaaa>`) in `src/bank_*.s`.  
 - **Source:** `src/bank_*.s` generated from `annotations/sf2ne.ann`; read-only.  
 - **Objective:** classify by bank/subsystem, references, and category to choose the first data naming batch.  
 - **Complete inventory:** `tasks/DATA_LABEL_INVENTORY.tsv` (1,213 rows, tab-separated).  
-- **Note:** snapshot prior to data batches. After `tasks/DATA_NAMING_3C.md` (33 labels), `tasks/DATA_NAMING_3F.md` (15), `tasks/DATA_NAMING_20.md` (30) and `tasks/DATA_NAMING_36.md` (27), **1,108** automatic data labels remain.
+- **Note:** snapshot prior to data batches. After `tasks/DATA_NAMING_3C.md` (33 labels), `tasks/DATA_NAMING_3F.md` (15), `tasks/DATA_NAMING_20.md` (30), `tasks/DATA_NAMING_36.md` (27) and `tasks/DATA_NAMING_3B.md` (35), **1,073** automatic data labels remain.
 
 ## 1. Method
 

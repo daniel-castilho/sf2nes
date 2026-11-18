@@ -1357,6 +1357,78 @@ label 3B:F93F StageSplit_HitStopTick
 comment 3B:F93F StageSplit_HitStopTick — StageSplitSetup: -1 no HitStop e devolve a paridade nos flags
 label 3B:F967 StageParallaxLoop
 comment 3B:F967 StageParallaxLoop — calcula o deslocamento do parallax do cenario
+
+# --- data ---
+label 3B:E406 FadeOutMaxTbl
+comment 3B:E406 fade-out: upper bound per step; a color is darkened while E410 <= color < this (10 steps)
+label 3B:E410 FadeOutMinTbl
+comment 3B:E410 fade-out: lower bound per step (10 steps)
+label 3B:E41A FadeInMaxTbl
+comment 3B:E41A fade-in: upper bound per step (6 bytes; step 6 is a no-op, see tasks/DATA_NAMING_3B.md)
+label 3B:E420 FadeInMinTbl
+comment 3B:E420 fade-in: lower bound per step (6 bytes)
+label 3B:E57D ProjectileFrameTbl
+comment 3B:E57D projectile flight frames: 4 pointers (speeds 0/1; speed 2 would read the padding)
+label 3B:E595 ProjectileClashFrameTbl
+comment 3B:E595 projectile clash frames: 4 pointers (ProjFlags bit 7)
+label 3B:E808 PressStartScrollText
+comment 3B:E808 "     PRESS     START": 5-byte window advances 5 bytes every 32 frames
+label 3B:E809 PressStartScrollTextOfs1
+comment 3B:E809 same 20-byte text, window +1
+label 3B:E80A PressStartScrollTextOfs2
+comment 3B:E80A same 20-byte text, window +2
+label 3B:E80B PressStartScrollTextOfs3
+comment 3B:E80B same 20-byte text, window +3
+label 3B:E80C PressStartScrollTextOfs4
+comment 3B:E80C same 20-byte text, window +4
+label 3B:E81C HudWinsP1Col0Tbl
+comment 3B:E81C P1 wins graphic: 3 rows x 3 columns, index = FighterWins*3
+label 3B:E81D HudWinsP1Col1Tbl
+comment 3B:E81D P1 wins graphic, column 1 (same 9-byte table)
+label 3B:E81E HudWinsP1Col2Tbl
+comment 3B:E81E P1 wins graphic, column 2 (same 9-byte table)
+label 3B:E825 HudWinsP2Col0Tbl
+comment 3B:E825 P2 wins graphic: 3 rows x 3 columns, index = (FighterWins+1)*3
+label 3B:E826 HudWinsP2Col1Tbl
+comment 3B:E826 P2 wins graphic, column 1 (same 9-byte table)
+label 3B:E827 HudWinsP2Col2Tbl
+comment 3B:E827 P2 wins graphic, column 2 (same 9-byte table)
+label 3B:E82E HudHpBarP1Tbl
+comment 3B:E82E P1 HP bar tiles, index 0-7; +$08 = second CHR row; byte 8 = full-bar tile
+label 3B:E837 HudHpBarP2Tbl
+comment 3B:E837 P2 HP bar tiles, index 0-7; +$08 = second CHR row; byte 8 = full-bar tile
+label 3B:E840 HudLowHpWarnLeftTbl
+comment 3B:E840 low-HP warning (HP < $2C), left tile per fighter; +$10 = second row
+label 3B:E842 HudLowHpWarnRightTbl
+comment 3B:E842 low-HP warning (HP < $2C), right tile per fighter; +$10 = second row
+label 3B:EA8E VersusBgPalette
+comment 3B:EA8E VS/win-quote BG palettes 2-3 (6 colors to PaletteBuf+6)
+label 3B:EA91 VersusBgPal3Color0
+comment 3B:EA91 VS/win-quote BG palette 3, color 0 (re-copied by ScreenWinQuote)
+label 3B:EA92 VersusBgPal3Color1
+comment 3B:EA92 VS/win-quote BG palette 3, color 1
+label 3B:EA93 VersusBgPal3Color2
+comment 3B:EA93 VS/win-quote BG palette 3, color 2
+label 3B:EA94 VersusBgRle
+comment 3B:EA94 full VS screen: 1,024 bytes to $2800 (960 nametable + 64 attributes)
+label 3B:F3AB SelectBgTopRle
+comment 3B:F3AB select screen rows 0-14 (480 bytes to $2800)
+label 3B:F4B9 SelectBgBottomRle
+comment 3B:F4B9 select screen rows 15-29 (480 bytes, written after the top half)
+label 3B:F538 SelectBgAttrRle
+comment 3B:F538 select screen attributes (64 bytes to $2BC0)
+label 3B:F545 SelectBgPalette
+comment 3B:F545 select BG palettes 2-3 (6 colors to PaletteBuf+6)
+label 3B:F54B SelectSpritePalette
+comment 3B:F54B select sprite palettes 2-3 (6 colors to PaletteBuf+18)
+label 3B:F799 RoundIntroMetaspriteTbl
+comment 3B:F799 round intro: 32 metasprite pointers, index = (RoundNumber*8 + RoundStep)*2
+label 3B:F7D9 RoundIntroStepDelayTbl
+comment 3B:F7D9 round intro: delay per step (RoundStep 0-7)
+label 3B:F8FE StageBankTbl
+comment 3B:F8FE stage bank per country (0-4 -> $36, 5-9 -> $3A)
+label 3B:FF9F ResetVectorFill
+comment 3B:FF9F 91 bytes of $FF; the reset vector points here when bank $3B is mapped (docs/BUGS.md)
 # ============================================================================================================
 # BANK $37 — sound (FamiTone2 + DPCM voices), warning / title / selection screens
 # ============================================================================================================
@@ -2123,7 +2195,7 @@ comment 20:8469 "BATTLE" text drawn by RoundIntroDraw
 label 20:84AC FightTextZoomSmall
 label 20:84B9 FightTextZoomMedium
 label 20:84C6 FightTextZoomLarge
-comment 20:84AC "FIGHT!" in 3 increasing sizes (D3B_F799)
+comment 20:84AC "FIGHT!" in 3 increasing sizes (RoundIntroMetaspriteTbl)
 label 20:8574 FightText
 comment 20:8574 text "FIGHT"
 label 20:8580 RoundTextFlash
@@ -2162,12 +2234,12 @@ comment 20:85EA text "YOU WIN" (16-byte metasprite; tail to 8630 without consume
 # --- projeteis ---
 label 20:8509 ProjectileFrame0
 label 20:851A ProjectileFrame1
-comment 20:8509 projectile flight frames (D3B_E57D)
+comment 20:8509 projectile flight frames (ProjectileFrameTbl)
 label 20:853A ProjectileClashFrame0
 label 20:8549 ProjectileClashFrame1
 label 20:8556 ProjectileClashFrame2
 label 20:8565 ProjectileClashFrame3
-comment 20:853A projectile clash frames (D3B_E595, ProjFlags bit 7)
+comment 20:853A projectile clash frames (ProjectileClashFrameTbl, ProjFlags bit 7)
 
 # ============================================================================================================
 # BANK $36 — stages: RLE nametables, attributes, palette and screen-split IRQ parameters

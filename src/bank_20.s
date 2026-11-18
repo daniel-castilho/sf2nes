@@ -89,7 +89,7 @@ RoundEndDrawTieAltMetasprite:
 DrawGameText:
     .byte $03,$FF,$00,$04,$00,$EF,$26,$28,$2A,$2C,$80; 84A1              texto "DRAW GAME" (empate com o relogio zerado)
 FightTextZoomSmall:
-    .byte $01,$FF,$00,$06,$04,$EF,$48,$4A,$4C,$4E,$50,$52,$80; 84AC              "FIGHT!" em 3 tamanhos crescentes (D3B_F799)
+    .byte $01,$FF,$00,$06,$04,$EF,$48,$4A,$4C,$4E,$50,$52,$80; 84AC              "FIGHT!" em 3 tamanhos crescentes (RoundIntroMetaspriteTbl)
 FightTextZoomMedium:
     .byte $01,$FF,$00,$06,$04,$EF,$54,$56,$58,$5A,$5C,$5E,$80; 84B9
 FightTextZoomLarge:
@@ -107,7 +107,7 @@ FlagUsa:
 FlagUssr:
     .byte $00,$FF,$00,$02,$00,$EF,$18,$0A,$80   ; 8500
 ProjectileFrame0:
-    .byte $02,$80,$03,$F4,$FF,$00,$02,$04,$80,$00,$03,$F4,$EF,$00,$02,$04; 8509              projectile flight frames (D3B_E57D)
+    .byte $02,$80,$03,$F4,$FF,$00,$02,$04,$80,$00,$03,$F4,$EF,$00,$02,$04; 8509              projectile flight frames (ProjectileFrameTbl)
     .byte $80                                   ; 8519
 ProjectileFrame1:
     .byte $02,$80,$03,$F4,$FF,$06,$08,$0A,$80,$00,$03,$F4,$EF,$06,$08,$0A; 851A
@@ -115,7 +115,7 @@ ProjectileFrame1:
 PerfectText:
     .byte $03,$FF,$00,$08,$00,$EF,$12,$10,$14,$16,$10,$18,$1A,$1C,$80; 852B              texto "PERFECT!"
 ProjectileClashFrame0:
-    .byte $02,$80,$02,$FC,$FF,$0C,$0E,$80,$00,$02,$FC,$EF,$0C,$0E,$80; 853A              quadros do choque de projeteis (D3B_E595, ProjFlags bit 7)
+    .byte $02,$80,$02,$FC,$FF,$0C,$0E,$80,$00,$02,$FC,$EF,$0C,$0E,$80; 853A              quadros do choque de projeteis (ProjectileClashFrameTbl, ProjFlags bit 7)
 ProjectileClashFrame1:
     .byte $02,$80,$01,$04,$FF,$10,$80,$00,$01,$04,$EF,$10,$80; 8549
 ProjectileClashFrame2:

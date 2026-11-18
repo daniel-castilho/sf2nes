@@ -129,16 +129,16 @@ With the 388 code labels, Phase 3 and the follow-up batches renamed **493 labels
 
 Canonical method: `grep -rhE '^[A-Za-z_][A-Za-z0-9_]*:$' src/bank_*.s`, with the caveat of the three labels with same-line comment (`EdgeARel`, `EdgeBRel`, `EdgeBBtn`).
 
-| Metric | Phase 1 | Closing | After `$36` |
-|--------|---------|---------|-------------|
-| Label definitions | 2,145 | **2,145** | **2,145** |
-| Unique names | 2,141 | **2,141** | **2,141** |
-| Automatic code (`L`) | 379 | **0** | **0** |
-| Automatic data (`D`) | 1,213 | **1,135** | **1,108** |
-| Unique semantic | 549 | **1,006** | **1,033** |
-| Semantic sum by bank | — | **1,010** | **1,037** |
+| Metric | Phase 1 | Closing | After `$36` | After `$3B` |
+|--------|---------|---------|-------------|-------------|
+| Label definitions | 2,145 | **2,145** | **2,145** | **2,145** |
+| Unique names | 2,141 | **2,141** | **2,141** | **2,141** |
+| Automatic code (`L`) | 379 | **0** | **0** | **0** |
+| Automatic data (`D`) | 1,213 | **1,135** | **1,108** | **1,073** |
+| Unique semantic | 549 | **1,006** | **1,033** | **1,068** |
+| Semantic sum by bank | — | **1,010** | **1,037** | **1,072** |
 
-The 1,037 vs 1,033 difference comes from `ResetStub` (3×), `RoundStart` (2×), and `InputButtons` (2× in `$3F`). The canonical regex does not count the three same-line-comment labels; including them would give 1,036 unique semantic and 1,040 bank sum.
+The 1,072 vs 1,068 difference comes from `ResetStub` (3×), `RoundStart` (2×), and `InputButtons` (2× in `$3F`). The canonical regex does not count the three same-line-comment labels; including them would give 1,071 unique semantic and 1,075 bank sum.
 
 ### 10.3 Verification
 
@@ -180,7 +180,7 @@ Phase 3 spec §12 acceptance criteria:
 
 ### 10.5 Pendencies and next step
 
-- **1,108 automatic data labels remain**; spec allows keeping them when semantics is undetermined (P3/opaque). Distribution: `$00` 206, `$01` 304, `$04` 3, `$05` 352, `$08/$0C/$10/$1C/$24` 5, `$29` 103, `$2D` 70, `$36` 3, `$37` 27, `$3B` 35.
-- Next candidates by evidence/effort: `$3B` (35) and `$37` (27); then music (`$29`/`$2D`, 173). Large Ryu/Ken banks (`$00`/`$01`/`$05`, 862) require state/frame analysis and may remain P3.
+- **1,073 automatic data labels remain**; spec allows keeping them when semantics is undetermined (P3/opaque). Distribution: `$00` 206, `$01` 304, `$04` 3, `$05` 352, `$08/$0C/$10/$1C/$24` 5, `$29` 103, `$2D` 70, `$36` 3, `$37` 27.
+- Next candidates by evidence/effort: `$37` (27); then music (`$29`/`$2D`, 173). Large Ryu/Ken banks (`$00`/`$01`/`$05`, 862) require state/frame analysis and may remain P3.
 - The three `$36` write-only labels (`C005`, `C00A`, `C00F`) stay automatic until a consumer appears; `MMC5_CHR_BG2` is never used in the ROM.
 - No character, feature, or playable content was started.

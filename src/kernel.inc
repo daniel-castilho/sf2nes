@@ -12,7 +12,7 @@
 ; IrqStage > 0              -> divisoes seguintes da luta; a ultima faz o chao linha a linha (paralaxe)
 ; IrqStage < 0 (bit 7)      -> telas de menu (selecao / VS / frase): troca de CHR por faixa
 ; ATENCAO: os lacos de espera (dex/bne, nop) sao contagem de ciclos. Mexer aqui desalinha a imagem.
-; <- tabela D37_FF9F, tabela D3B_FF9F, tabela NmiVector
+; <- tabela D37_FF9F, tabela ResetVectorFill, tabela NmiVector
 ; modos: selecao, intro do round, luta, fim do round
 IrqHandler:
     pha                                         ; FC7C  48
@@ -256,7 +256,7 @@ MenuSplitChrB:
 ; ------------------------------------------------------------------------------------------------
 ; NMI (vblank): envia a OAM, roda a tarefa do modo de tela atual (ScreenMode), acerta os bancos de CHR
 ; dos sprites dos dois lutadores, a rolagem e os registradores do PPU, e sinaliza o laco principal.
-; <- tabela D37_FF9F, tabela D3B_FF9F, tabela NmiVector
+; <- tabela D37_FF9F, tabela ResetVectorFill, tabela NmiVector
 ; modos: todos
 NmiHandler:
     pha                                         ; FE1E  48
