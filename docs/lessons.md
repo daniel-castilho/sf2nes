@@ -427,6 +427,23 @@ bytes, but exposed these reading pitfalls:
   `$8A59` is also the source of the `$90F1` defeat copy. The label `KenWinPortraitLayout` documents the
   original role; the `$90F1` comment must say it is a copy with an extra empty group, or the next reader
   will "deduplicate" the two and reintroduce the 255-iteration portrait overflow.
+* **A fixed-size record can be a variable-length sequence.** `docs/FORMATS.md` described the collision
+  record as 12 bytes (three boxes), but `LoadHitBoxes` (`3F:EBA5`) advances **1 byte** for a box with
+  `height = 0` and 4 bytes only for a present box. Ryu's 269 reachable frames use 6-, 9- and 12-byte
+  records, and a fixed 12-byte read shifts every later box and invents heights such as `$FE`. Walk the
+  consumer, not the example: `00:9356` happens to be the all-present case.
+* **A documentation bit can be inverted.** `docs/FORMATS.md` §5/§6 said flag bit 3 (`$08`) meant "do not
+  force `AnimTimer=1`"; `TransApply` (`3F:E13B`) actually branches to `TransAnimTimerSet` **when the bit
+  is set**, so it forces an immediate transition. The data agrees: 33 frames carry the bit (`fl=$0A`×15,
+  `$0E`×1, `$0F`×5, `$1F`×12), in guard, standing, walk and jump states, with durations from 3 to 100.
+  Read the branch target, not the comment inherited from an earlier pass, and fix the canonical document
+  before adding new notes.
+* **AI operands have no count and are persistent.** In `AiScriptLoop` (`3F:E7E7`) the next opcode is the
+  first byte `≥ $80`, so every preceding byte `< $80` is an operand; the operand registers (`zp_6D`,
+  `zp_6E`) are not cleared between opcodes. `82 00 82 89` and `82 01 82 8B 82 01 82 89` rely on this
+  reuse. Treating a missing operand as malformed would reject valid scripts, and AI tests also invert the
+  condition convention: they pass when the **Z flag** is set (normally `A = 0`), while state conditions
+  pass on **nonzero**.
 
 **Practical rule:** for each batch, (1) read the consumer, (2) propose name + confidence, (3) apply only
 labels/comments, (4) run `make gen` from the canonical `.ann` (or validate in a scratch copy), then run

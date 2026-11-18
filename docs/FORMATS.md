@@ -5,7 +5,7 @@ Field-by-field reference of the data driving the fight engine: character fiche, 
 Conventions:
 
 * `BB:AAAA` = 8 KB PRG bank + CPU address. 16-bit pointers are little-endian (lo first). Signed bytes: `$80`–`$FF` are negative.
-* **Frame bank** = the one mapped at `$8000` by `FighterFrameBank` (`$00` for Ryu): metasprites and collision boxes. **State bank** = the one mapped at `$A000` by `FighterStateBank` (`$01` for Ryu): states and animation frames.
+* **Frame bank** = the one mapped at `$8000` by `FighterFrameBank` (`$00` for Ryu, `$04` for Ken): metasprites. **Collision bank** = the one mapped at `$8000` by `zp_1C` (`CharHitBoxBankTbl`; also `$00`/`$04` for Ryu/Ken): collision boxes. **State bank** = the one mapped at `$A000` by `FighterStateBank` (`$01`/`$05` for Ryu/Ken): states and animation frames.
 * Everything is **per fighter**: X = 0 (P1) or 1 (P2) indexes `Fighter*` variables and table copies in `ram_03xx`.
 * Census numbers (71 states / 274 frames for Ryu) come from the generator (`make gen`); per-field statistics come from `tools/frame_census.py`, which only sees the **269 reachable frames** (the 5 orphans of §2 are excluded) — so section totals below give 269.
 
@@ -108,11 +108,13 @@ The +0 header byte dispatches via `StateCondDispatch` (`3F:E168`): table `3F:E17
 | `$06` | CondOnGroundOrVelX (E204) | on ground or sliding (`VelX`/`VelXSub` ≠ 0) |
 | `$07` | CondInputDown (E212) | `InputDir` = `$08`/`$0B`/`$0C`; returns own `InputDir` |
 | `$08` | CondProjectileFree (E224) | my projectile slot free (`ProjX` = 0) |
-| `$09` | CondCanGrab (E22E) | `\|ΔX\| < $18`, both on ground, direction forward/back and opponent class < `$30` or `$50`–`$9F` |
+| `$09` | CondCanGrab (E22E) | `\|ΔX\| < $18`, both on ground, direction forward/back and opponent class < `$30`, `$50`–`$9F` or ≥ `$A9` |
 | `$0A` | CondVictory (E271) | round mine, opponent fallen (`≥ $F0`), no projectiles in air and voice channel free |
 | `$0B` | CondRoundLost (E296) | round ended not mine (works for draw) |
 
 `CondOpponentFarBack` returns full mirror byte (`$00`/`$40`): outside walker (which only tests ≠ 0), this is the value written to `FighterFlip` to turn — see bit 4 flag in §6.
+
+**Return convention:** the walker treats **any nonzero value as true**; conditions are not required to return `1` (e.g. `CondInputDown` returns `InputDir`, `CondOnGroundOrVelX` returns `FloorY`). This is the **opposite** of AI tests (§14), which pass when the Z flag is set (normally `A = 0`). The dispatch has no range check: `$0C`–`$7F` would index past the 12-word table, but Ryu data only uses `$00`–`$0B` and `≥ $80`. Details and per-condition quirks: `docs/FORMATS_OPEN.md` §3.
 
 ## 5. Transition walker
 
@@ -123,7 +125,7 @@ Per frame, for each fighter (`FighterUpdate` → `3F:EFCE`): input/IA → `Input
 1. Pre-filters by origin: with `zp_DD=$04`, a node equal to current state is skipped (unless current class `& $F8` is `$28` — guard `$28`–`$2F` — or `$30` — reaction `$30`–`$37`); with `zp_DD=$02` during a move with sound (class `$70`–`$98`), only current node passes.
 2. Outside these cases: if my class doesn't have bit 2 (airborne, §3), test `CondOpponentFarBack` — back turned and far, node skipped (doesn't react from behind).
 3. Test node: `+0 ≥ $80` = true immediately; otherwise call condition (§4).
-4. True → `TransApply` (`3F:E13B`): writes `FighterNextPtr` = node address; for classes `$28`–`$40` and `$B0`–`$E0` forces `AnimTimer=1` (move starts next frame), unless current frame has flag bit 3.
+4. True → `TransApply` (`3F:E13B`): writes `FighterNextPtr` = node address; forces `AnimTimer=1` (move starts next frame) when the **current frame has flag bit 3** (`$08`), or, without that bit, when the node class is `$28`–`$40` or `$B0`–`$E0`. So bit 3 means **force an immediate transition**, not "do not force".
 5. False → `TransNextNode` (`3F:E129`): follows +1/+2 and repeats; pointer `0` = end, nothing changes.
 
 `FighterNextPtr` commit happens in `AnimAdvance` (`3F:E2A6`): node becomes `FighterStatePtr`, 1st frame is `node+7`, class passes through `StateSetByte` (writes `FighterState` and triggers sound/voice of family) and +6 goes to `AttackHitsLeft`.
@@ -159,7 +161,7 @@ Flags (+7 → `FrameFlags`):
 | 0 (`$01`) | frame accepts **special move** (table `ram_0326`) |
 | 1 (`$02`) | frame accepts **button move** (table `ram_0322`; sets `BtnAHold`/`BtnBHold=$15`) |
 | 2 (`$04`) | frame accepts **direction** (table `ram_031E`) |
-| 3 (`$08`) | do not force `AnimTimer=1` on transition (§5) |
+| 3 (`$08`) | **force** `AnimTimer=1` on an accepted transition (§5), even outside classes `$28`–`$40`/`$B0`–`$E0`; 33 frames use it (`$0A`×15, `$0E`×1, `$0F`×5, `$1F`×12) |
 | 4 (`$10`) | re-face: each frame writes `FighterFlip=$40`/`$00` per opponent side (`3F:EFCE`) |
 | 5 (`$20`) | exempt from X edge clamp (`$20`–`$E0`) and speed adjustment near corner (§8); blocks `GuardRedirect` (§13) |
 | 6 (`$40`) | clamped at edge, clamp overflow added to X of **opponent** (`F62C`) — shove "through" victim |
@@ -220,7 +222,7 @@ Census of 269 reachable frames (§2): `+6` = `$00`×229, `$01`×1, `$0B`×2, `$0
 
 Census: mode `$02`×105, `$04`×143, `$01`×12, `$05`×8, `$00`×1. Walk uses `$04` with `+$17` = 23/16 ≈ 1.4 px per frame, **forward only** — holding back is guard (direction table entry 2, §13); ±32 = ±2 px is guard/reaction tremor (§6); jumps use `$02`/`$04` with negative `VelY`.
 
-**Each frame**, application dispatches again by mode (`L3F_F0A5`, table `MoveApplyDispatchLo`/`MoveApplyDispatchHi`): mode `$00` positions **relative to opponent** (`F0BD`: X = opponent X ± `VelX`, consumed — unique throw victim frame in census); others are absolute: `$01` applies direct (`F0F2`), `$02`/`$03` integrate `VelY` with ground and camera (`F236`) and `$04`/`$05` apply `VelX` with corner rules (`F377`). After moving: overlapping fighters (same height, |ΔX| < $10) shove half the invasion (max 2 px) and `L3F_F5CD` clamps each X to `$20`–`$E0`, saving overflow in `zp_E1`/`zp_E2` (crossed: each writes to other's slot). Bit 5 flag exempts frame from clamp; with bit 6, overflow is added to **opponent** X (`F62C`) — corner knockback shoves attacker along. And throw victim (`HitReactClass & $3F = $0C`) that moved and got clamped at edge with camera at limit (`$58`/`$A0`) escapes throw (`F648`: `HitFreeze`, `HitReactClass=0`, sfx `$09`).
+**Each frame**, application dispatches again by mode (`L3F_F0A5`, table `MoveApplyDispatchLo`/`MoveApplyDispatchHi`): mode `$00` positions **relative to opponent** (`F0BD`: X = opponent X ± `VelX`, consumed — unique throw victim frame in census); others are absolute: `$01` applies direct (`F0F2`), `$02`/`$03` integrate `VelY` with ground and camera (`F236`) and `$04`/`$05` apply `VelX` with corner rules (`F377`). After moving: overlapping fighters (both movement modes even, `|ΔY| < $21`, `|ΔX| < $10`) shove half the invasion (max 2 px) and `L3F_F5CD` clamps each X to `$20`–`$E0`, saving overflow in `zp_E1`/`zp_E2` (crossed: each writes to other's slot). Bit 5 flag exempts frame from clamp; with bit 6, overflow is added to **opponent** X (`F62C`) — corner knockback shoves attacker along. And throw victim (`HitReactClass & $3F = $0C`) that moved and got clamped at edge with camera at limit (`$58`/`$A0`) escapes throw (`F648`: `HitFreeze`, `HitReactClass=0`, sfx `$09`).
 
 ## 9. Metasprite (frame bank)
 
@@ -250,18 +252,30 @@ Real example (`00:8D81`, standing pose):
  CHR page $2B
 ```
 
-## 10. Collision boxes (frame bank)
+## 10. Collision boxes (collision bank)
 
-Frame pointer +3/+4 → **12 bytes = 3 boxes** `[height][dy][dx][width]`: body 1, body 2 and attack. Height `0` = absent box (attack is `0000`-pointed on frames without hit).
+Frame pointer +3/+4 is read only when its **high byte is nonzero**; if it is zero, all 12 box bounds are zeroed and no record is read. When present, the record is a sequence of **three boxes — body 1, body 2, attack** — each `[height][dy][dx][width]`. A box with `height = 0` is absent and consumes **only its height byte**; a present box consumes 4 bytes. Records are therefore 3–12 bytes, not always 12.
 
-Geometry (with fighter `FighterX`/`FighterY`):
+| body 1 | body 2 | attack | Length | Ryu frames (269 reachable) |
+|--------|--------|--------|--------|----------------------------|
+| present | present | absent | 9 | 118 |
+| present | absent | absent | 6 | 76 |
+| present | absent | present | 9 | 14 |
+| absent | absent | present | 6 | 5 |
+| absent | present | absent | 6 | 2 |
+| present | present | present | 12 | 11 |
+| *(no pointer)* | — | — | — | 43 |
+
+Reading a fixed 12 bytes shifts every later box and invents huge heights (e.g. `$FE`). Body 2 is a real body box (not projectile-only) and can exist without body 1. The attack box is present in only 30 of the 269 frames.
+
+Geometry (with the fighter's own `FighterX`/`FighterY` and signed `dy`/`dx`):
 
 * top = `Y + dy`, bottom = top + height;
 * unmirrored: left = `X + dx`, right = left + width;
 * mirrored: right = `X − dx`, left = right − width;
-* attack box clamped to `$20`–`$E0` (never leaves screen).
+* **only the far edge of the attack box is clamped** — right at `$E0` when unflipped, left at `$20` when mirrored. Body boxes and the near edge are never clamped, so "never leaves the screen" is stronger than the code.
 
-Real example (`00:9356`, far strong kick frame — trunk, whole body, stretched leg):
+Real example (`00:9356`, far strong kick frame — trunk, whole body, stretched leg, all three boxes present):
 
 ```
 0D BD 00 0E | 36 C8 FB 14 | 0A C8 03 25
@@ -269,6 +283,18 @@ body1:  h=$0D dy=-67 dx=0    w=14  (trunk)
 body2:  h=$36 dy=-56 dx=-5   w=20  (whole body, for projectile/throw hit)
 attack: h=$0A dy=-56 dx=3    w=37  (leg up to X+40)
 ```
+
+Example of absent boxes (`00:93FB`, 6 bytes: `00 00 21 CF 03 1A`): body 1 and body 2 absent (1 byte each), attack `h=$21` (33), `dy=$CF` (−49), `dx=$03`, `w=$1A` (26).
+
+Census (Ryu, 269 reachable frames):
+
+| Box | Present | Height | `dy` | `dx` | Width |
+|-----|---------|--------|------|------|-------|
+| body 1 | 219 | 10–68 | −72…−29 | −24…11 | 12–27 |
+| body 2 | 131 | 15–54 | −73…−16 | −20…14 | 16–38 |
+| attack | 30 | 10–60 | −86…−16 | −32…15 | 15–52 |
+
+Consumers and open points (intent of body 1 vs body 2, corner behaviour): `docs/FORMATS_OPEN.md` §1.
 
 ## 11. Hit and damage
 
@@ -353,7 +379,7 @@ Two levels: `RyuAiThink` (`00:8F46`) chooses script (table `00:8E72`, 8 pointers
 
 Outside move (class < `$50`, flags & 7 = 0), `L3F_E74C` holds back by default (`$06`, or `$0C` down-diagonal if opponent crouching) — that's why CPU retreats.
 
-**Bytecode**: each byte `≥ $80` is an opcode (`$80`–`$91` → `AiOp00`–`AiOp11` via `AiOpLo/Hi` table), with 0–2 operands `< $80`; `$FF` ends (zp_71=0 → calls thinker again). Actions (`$80`–`$86`) chain in same frame; **tests (`≥ $07`) that fail pause script and re-test every frame**; `$8D` decrements `zp_6F` and waits for zero (delay: `$84 $78` + `$8D` ≈ 120 frames).
+**Bytecode**: each byte `≥ $80` is an opcode (`$80`–`$91` → `AiOp00`–`AiOp11` via `AiOpLo/Hi` table), followed by **any number of consecutive operands `< $80`** — the first byte `≥ $80` starts the next opcode, so there is no per-opcode operand count. `$FF` ends (zp_71=0 → calls thinker again). Actions (`$80`–`$86`) chain in same frame; **tests (`$87`–`$91`) that fail pause script and re-test every frame**. AI tests **pass when the Z flag is set** (normally `A=0`; opposite of conditions, §4). Operand registers (`zp_6D`, `zp_6E`) persist between opcodes, so an opcode without an operand silently reuses the previous value; Ryu relies on this (`82 00 82 89`, `82 01 82 8B 82 01 82 89`). `$84`/`$8D` set and decrement `zp_6F,x` (delay), but Ryu's reachable scripts do not use them; the `84 78 8D` sequence lives in an unreferenced block at `$8EB4`. Full interpreter and per-opcode notes: `docs/FORMATS_OPEN.md` §2.
 
 | Opcode | Action |
 |--------|--------|
@@ -361,16 +387,16 @@ Outside move (class < `$50`, flags & 7 = 0), `L3F_E74C` holds back by default (`
 | `$81` | direction + button (2 ops) |
 | `$82` | special move by index (writes `CmdMoveIdx` directly) |
 | `$83` | defend (back / down-diagonal if opponent crouching) |
-| `$84` | `zp_6F` = operand |
-| `$85` | `zp_6F` = zeropage byte given by op0+x `(nt)` |
-| `$86` | `zp_6F`++ |
+| `$84` | `zp_6F,x` = operand (delay; unused in Ryu reachable scripts) |
+| `$85` | `zp_6F,x` = zeropage byte at op0+x (Ryu: `85 08` snapshots `FighterX,x`) |
+| `$86` | `zp_6F`++ — **global** `zp_6F`, not `zp_6F,x`; unused in Ryu data (probable bug) |
 | `$87` | my state >> 3 = op0? |
 | `$88` | my state & op0 = op0? |
 | `$89` | my state = `$58` family (e.g. wait for initial state `$59`) |
 | `$8A` | in move `$B0`–`$E0`? `(nt)` |
 | `$8B` | no my projectile in air? |
-| `$8C` | distance test `(nt)` |
-| `$8D` | decrements `zp_6F` and waits for zero |
+| `$8C` | distance test: edge of screen, or `\|FighterX − stored X\| ≥ op0`; zero-displacement branch has an exact-16 quirk |
+| `$8D` | `zp_6F,x--`; pass when it reaches zero (unused in Ryu reachable scripts) |
 | `$8E` | waits `\|ΔX\| < op0` |
 | `$8F` | waits `\|ΔX\| ≥ op0` |
 | `$90` | opponent state >> 3 = op0? |

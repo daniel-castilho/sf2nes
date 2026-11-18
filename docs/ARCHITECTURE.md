@@ -193,15 +193,17 @@ The first animation frame of the state comes right after the header (header + 7)
 |--------|---------|
 | +0 | duration in video frames (1–100) |
 | +1, +2 | pointer to metasprite (frame bank) |
-| +3, +4 | pointer to collision boxes (frame bank), or 0 |
+| +3, +4 | pointer to collision boxes (collision bank, `zp_1C`) — read only when the **high byte is nonzero**; `0` = no boxes |
 | +5 | effect parameter → `EffectParam` (damage `&$1F` when frame hits; projectile speed) |
 | +6 | effect type → `EffectType`: `$0B` fires projectile, `$20` sound effect, `$8x`/`$Cx` opponent hit reaction class |
-| +7 | flags → `FrameFlags` (bit 0 special move, bit 1 button move, bit 2 direction) |
+| +7 | flags → `FrameFlags` (bit 0 special move, bit 1 button move, bit 2 direction, bit 3 force immediate transition, bit 4 re-face, bit 5 edge-clamp exempt, bit 6 shove overflow to opponent) |
 | +8 | movement mode: 0/1 absolute speed, 2/3 acceleration, 4/5 subpixel (vel/16) |
 | +9, +10 | `VelX` / `VelY` (signed; interpreted per mode +8) |
 | +11 | loop repeats → `LoopRepeat` (`zp_44`) |
 | +12, +13 | pointer to next frame (0 = end of state) |
 | +14, +15 | **only if +11 ≠ 0**: loop target pointer (where to repeat while loop not zero) |
+
+The collision record behind +3/+4 is **variable-length**: three boxes (body 1, body 2, attack), each 4 bytes when its height byte is nonzero and 1 byte when absent. Details in `docs/FORMATS.md` §10 and `docs/FORMATS_OPEN.md` §1.
 
 **The 12 conditions** (dispatched by `StateCondDispatch`, `3F:E168`; table at `3F:E171` holds address−1): `CondOpponentAttacks` (0), `CondOpponentFarBack` (1), `CondOpponentNear` (2), `CondStanding` (3), `CondCrouching` (4), `CondInAir` (5), `CondOnGroundOrVelX` (6), `CondInputDown` (7), `CondProjectileFree` (8), `CondCanGrab` (9), `CondVictory` ($0A), `CondRoundLost` ($0B). Exact semantics of each are in `annotations/sf2ne.ann` comments and `docs/FORMATS.md`.
 

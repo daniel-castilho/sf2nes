@@ -25,18 +25,26 @@ Requirements: `python3` and `cc65` (`sudo apt install cc65`). The emulator is on
 | **Relocatable** | All 11 code and data banks shifted by 1 byte at once (44,892 different bytes) → the game runs **identical to the original**: same screens, same sound, same result, in 5 test matches of 9,000–12,000 frames. That is: code and data can be inserted and removed. |
 | **Code × data** | Separation taken from real emulator execution (7,805 instructions seen in 28 scripted matches) + static analysis. Coverage per bank: `$00` 96%, `$37` 83%, `$3B` 98%, `$3F` 86%. |
 | **Symbolic pointers** | 114 immediate pairs and 2,550 bytes of data discovered by source tracing in the emulator; plus 187 completed by table structure. |
-| **Structure understood** | cartridge and MMC5 map, IRQ/NMI kernel, inter-bank calls, screen flow, fight loop, sound (FamiTone2), voice directory, character fiche, **state bank format** (71 states, 274 frames). |
+| **Structure understood** | cartridge and MMC5 map, IRQ/NMI kernel, inter-bank calls, screen flow, fight loop, sound (FamiTone2), voice directory, character fiche, **state bank format** (71 states, 274 frames), **collision boxes** (variable-length records), **AI bytecode** (18 opcodes) and **transition conditions** (12 conditions). |
 | **Bugs** | soft reset freeze: cause found, fixed (14 bytes per bank) and tested. Command delay and repetition: cause found and measured (`InputButtons`). |
 | **Findings** | the engine already runs **2 players** — just needs connecting (option `MODE_VERSUS`, 1 byte); the planned roster of 10 fighters, with names and phrases, is in the ROM; Ken has 4.3 KB of frames ready now integrated into bank `$05`; versus and single player modes work. |
+
+All data formats driving the fight engine — character fiche, state banks, animation frames, metasprites,
+collision boxes, damage, commands, projectile, AI bytecode and transition conditions — are documented in
+[`docs/FORMATS.md`](docs/FORMATS.md). Details that remain static-only (collision record quirks, AI operand
+persistence, condition return values) and the open gaps are in
+[`docs/FORMATS_OPEN.md`](docs/FORMATS_OPEN.md).
 
 Read in this order:
 
 1. [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — how the game works internally.
-2. [`docs/RAM.md`](docs/RAM.md) — known variables.
-3. [`docs/BUGS.md`](docs/BUGS.md) — reported bugs: what is resolved and where the others are.
-4. [`docs/ROADMAP.md`](docs/ROADMAP.md) — the path to finishing the game, and how to use AI without fooling yourself.
-5. [`docs/TOOLS.md`](docs/TOOLS.md) — scripts, annotation format, headless emulator.
-6. [`docs/lessons.md`](docs/lessons.md) — lessons learned: how Ken's freeze on special moves was diagnosed and fixed (symptom, PC trace, root cause, fix and verification) and what the data naming batches (`$3C`, `$3F`, `$20`, `$36`, `$3B`, `$37`, `$29`, `$2D`, `$01`, `$05`, `$00` and `$04`) taught about table reading, metasprites, stage layouts, sound data, state chains, AI bytecode, Ken fiche data and metrics.
+2. [`docs/FORMATS.md`](docs/FORMATS.md) — field-by-field data formats (fiche, states, frames, collision, damage, commands, AI).
+3. [`docs/FORMATS_OPEN.md`](docs/FORMATS_OPEN.md) — collision boxes, AI bytecode and transition conditions in detail, plus open gaps.
+4. [`docs/RAM.md`](docs/RAM.md) — known variables.
+5. [`docs/BUGS.md`](docs/BUGS.md) — reported bugs: what is resolved and where the others are.
+6. [`docs/ROADMAP.md`](docs/ROADMAP.md) — the path to finishing the game, and how to use AI without fooling yourself.
+7. [`docs/TOOLS.md`](docs/TOOLS.md) — scripts, annotation format, headless emulator.
+8. [`docs/lessons.md`](docs/lessons.md) — lessons learned: how Ken's freeze on special moves was diagnosed and fixed (symptom, PC trace, root cause, fix and verification) and what the data naming batches (`$3C`, `$3F`, `$20`, `$36`, `$3B`, `$37`, `$29`, `$2D`, `$01`, `$05`, `$00` and `$04`) taught about table reading, metasprites, stage layouts, sound data, state chains, AI bytecode, Ken fiche data and metrics.
 
 ## What is still **not** ready
 
@@ -46,8 +54,6 @@ There are 2,145 label definitions (2,140 unique names): **1,254 semantic** and *
   (`D01_A4CB`…). **No automatic code labels remain** (`L3F_E4DA`…): the P0/P1, P2 and FamiTone2 batches of Phase 3 named the 379 that existed. The `$3C` (33), `$3F` (15), `$20` (30), `$36` (27), `$3B` (35), `$37` (17), `$29` (46), `$2D` (14), `$01` (38), `$05` (38), `$00` (31) and `$04` (3) data batches already named fiches, palettes, portraits, the fight core, HUD/effects, the stage backgrounds, the fight/VS/select HUD, the sound/select/title tables, the music modules, the Ryu/Ken state-bank anchors, Ryu's AI scripts/helper tables and Ken's fiche-referenced data (`tasks/DATA_NAMING_3C.md`, `tasks/DATA_NAMING_3F.md`, `tasks/DATA_NAMING_20.md`, `tasks/DATA_NAMING_36.md`, `tasks/DATA_NAMING_3B.md`, `tasks/DATA_NAMING_37.md`, `tasks/DATA_NAMING_29.md`, `tasks/DATA_NAMING_2D.md`, `tasks/DATA_NAMING_01.md`, `tasks/DATA_NAMING_05.md`, `tasks/DATA_NAMING_00.md`, `tasks/DATA_NAMING_04.md`); the remaining 886 are inventoried in
   `tasks/DATA_LABEL_INVENTORY.tsv`.
   Of the variables, 78 are named. The Phase 3 inventory is in `tasks/NAMING_CANDIDATES.md`.
-* **Partially documented data formats:** metasprites and states are understood; collision boxes,
-  bytes 5–10 of the animation frame, AI script opcodes and transition conditions are not yet documented.
 * **Code never executed** (14–17% of banks `$37` and `$3F`): came from static analysis. These are mostly
   unused FamiTone2 resources and rare engine branches. It's disassembled but not exercised.
 * **Voices:** the sample directory keeps address/64; moving a sample requires manually editing the table.
