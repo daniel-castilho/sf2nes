@@ -1420,9 +1420,9 @@ VsTextP2Line2Loop:
     jsr FadeIn                                  ; EB8F  20 D6 E4
     lda #$29                                    ; EB92  A9 29
     sta MusicBank                               ; EB94  8D 5F 04
-    lda #<D29_B34A                              ; EB97  A9 4A
+    lda #<MusicVersusHeader                     ; EB97  A9 4A
     sta zp_D5                                   ; EB99  85 D5
-    lda #>D29_B34A                              ; EB9B  A9 B3
+    lda #>MusicVersusHeader                     ; EB9B  A9 B3
     sta zp_D6                                   ; EB9D  85 D6
     farcall SoundLoadSong                       ; EB9F  A9 EB 48 A9 B0 48 A9 3B .. -> 37:E3E0
     lda #$00                                    ; EBB1  A9 00
@@ -1503,9 +1503,9 @@ WinQuoteClearAttr:
     jsr FadeIn                                  ; EC57  20 D6 E4
     lda #$29                                    ; EC5A  A9 29
     sta MusicBank                               ; EC5C  8D 5F 04
-    lda #<D29_B4BD                              ; EC5F  A9 BD
+    lda #<MusicWinQuoteHeader                   ; EC5F  A9 BD
     sta zp_D5                                   ; EC61  85 D5
-    lda #>D29_B4BD                              ; EC63  A9 B4
+    lda #>MusicWinQuoteHeader                   ; EC63  A9 B4
     sta zp_D6                                   ; EC65  85 D6
     farcall SoundLoadSong                       ; EC67  A9 EC 48 A9 78 48 A9 3B .. -> 37:E3E0
     ldx a:RoundResult                           ; EC79  AE B9 00

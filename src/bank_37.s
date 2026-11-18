@@ -1767,9 +1767,9 @@ SelectInit:
 .endif
 
     sta MusicBank                               ; EF94  8D 5F 04
-    lda #<D29_AAB6                              ; EF97  A9 B6
+    lda #<MusicSelectHeader                     ; EF97  A9 B6
     sta zp_D5                                   ; EF99  85 D5
-    lda #>D29_AAB6                              ; EF9B  A9 AA
+    lda #>MusicSelectHeader                     ; EF9B  A9 AA
     sta zp_D6                                   ; EF9D  85 D6
     farcall SoundLoadSong                       ; EF9F  A9 EF 48 A9 B0 48 A9 37 .. -> 37:E3E0
     ldy #$00                                    ; EFB1  A0 00
@@ -2332,9 +2332,9 @@ ScreenTitle:
     sta FadePalette+10                          ; F4EB  8D 8F 04
     lda #$29                                    ; F4EE  A9 29
     sta MusicBank                               ; F4F0  8D 5F 04
-    lda #<D29_A000                              ; F4F3  A9 00
+    lda #<MusicTitleHeader                      ; F4F3  A9 00
     sta zp_D5                                   ; F4F5  85 D5
-    lda #>D29_A000                              ; F4F7  A9 A0
+    lda #>MusicTitleHeader                      ; F4F7  A9 A0
     sta zp_D6                                   ; F4F9  85 D6
     farcall SoundLoadSong                       ; F4FB  A9 F5 48 A9 0C 48 A9 37 .. -> 37:E3E0
     farcall DrawTitleScreen                     ; F50D  A9 F5 48 A9 1E 48 A9 37 .. -> 3B:FADC

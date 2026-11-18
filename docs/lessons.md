@@ -277,12 +277,13 @@ Bank `$00` is the only Ryu code bank modified, and only in those two bytes.
 
 ---
 
-## 10. Appendix — what the `$3C`/`$3F`/`$20`/`$36`/`$3B`/`$37` data naming batches taught
+## 10. Appendix — what the `$3C`/`$3F`/`$20`/`$36`/`$3B`/`$37`/`$29` data naming batches taught
 
-The data batches (33 labels from `$3C`, 15 from `$3F`, 30 from `$20`, 27 from `$36`, 35 from `$3B` and
-17 from `$37`, see `tasks/DATA_NAMING_3C.md`, `tasks/DATA_NAMING_3F.md`, `tasks/DATA_NAMING_20.md`,
-`tasks/DATA_NAMING_36.md`, `tasks/DATA_NAMING_3B.md` and `tasks/DATA_NAMING_37.md`) did not change
-bytes, but exposed these reading pitfalls:
+The data batches (33 labels from `$3C`, 15 from `$3F`, 30 from `$20`, 27 from `$36`, 35 from `$3B`,
+17 from `$37` and 46 from `$29`, see `tasks/DATA_NAMING_3C.md`, `tasks/DATA_NAMING_3F.md`,
+`tasks/DATA_NAMING_20.md`, `tasks/DATA_NAMING_36.md`, `tasks/DATA_NAMING_3B.md`,
+`tasks/DATA_NAMING_37.md` and `tasks/DATA_NAMING_29.md`) did not change bytes, but exposed these
+reading pitfalls:
 
 * **Do not classify a bank by its address.** Initial triage treated `$29`/`$2D` as "AI" because they are
   near the engine; generated headers show they are **FamiTone2 music** (173 labels). Reading the header
@@ -344,6 +345,27 @@ bytes, but exposed these reading pitfalls:
   actual sound identity (hit, block, projectile, …) needs audio/runtime confirmation. They stayed
   automatic (P3); naming them `SfxStream0..9` would only restate the index, and naming them by event
   would assert more than the static evidence supports.
+* **Read the instrument reader before trusting upstream FamiTone2 layout.** The public FamiTone2
+  instruments start with a duty byte and carry three envelope pointers. In `$29` the game's
+  `_FT2SetInstrument` (`37:EAA1`) indexes with `instrument*8`, has **no duty byte**, and reads four
+  envelope pointers for pulse channels (three for triangle, first/second/fourth for noise). Naming the
+  records from the upstream source would have produced wrong offsets. Read the local consumer, then
+  compare.
+* **A header field can be dead; check who overwrites it.** Each `$29` header has a DPCM list pointer at
+  `+3/+4`, and `FamiToneInit` dutifully copies it to `FT_DPCM_LIST`. But `SoundLoadSong` immediately
+  calls `SoundInitVoices`, whose `FtSetSampleTable` (`37:E47F`) overwrites `FT_DPCM_LIST` with
+  `VoiceSampleTbl`. The field is unused, and because it points at `+1` it even creates four spurious
+  labels one byte before the third envelope word (`A017`, `AACD`, `B361`, `B4D4`). Naming those words
+  as real envelopes would duplicate `EnvZero`; they stayed automatic (P3).
+* **A loop command can skip the channel label.** The Versus pulse 1 stream starts at `B36B` with a
+  speed command, and its `$FD` loop targets `B36D` — the first note after the command, with no label of
+  its own. Do not assume the loop target equals the channel start; decode the `$FD` word. In the same
+  module, pulse 2, triangle, noise and DPCM *are* both start and loop target.
+* **Shared reference blocks are not owned by one channel.** The 53 `$FF <length> <word>` targets in
+  `$29` are fragments reused by different channels and can be reached from several streams. Naming them
+  `Ref0..52` would restate the index and break on reuse; they stayed automatic (P3). Only the
+  structurally distinct anchors (header, instrument list, envelopes, channel starts, loop targets) were
+  named.
 * **Translation can desynchronize the generator.** After `fa7c215`, `annotations/sf2ne.ann` was in English
   while the committed `src/*.s` still carried the pre-translation Portuguese comments and `tools/disasm.py`
   still emitted Portuguese headers/auto-comments. Running `make gen` mixed translation with naming. This

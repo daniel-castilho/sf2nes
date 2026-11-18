@@ -20,7 +20,7 @@ Facts confirmed by static inspection in this audit:
 - The build flow is `annotations/sf2ne.ann` → `tools/disasm.py` (`make gen`) → `src/*.s` → `ca65`/`ld65` (`make`) → `build/sf2ne.nes`.
 - The canonical build includes playable Ken (P1) and diverges from the original ROM; `make verify` warns by design.
 - **2,145 label definitions** were identified in `src/bank_*.s` files, generating **2,140 unique names** (5 duplicate occurrences of 4 names, being 1 name duplicated within the same bank).
-- Of these, **1,084 are semantic labels** (assigned name, not automatic address pattern) and **1,056 are automatic data labels** (`D<bb>_<aaaa>`); **no automatic code labels remain** (`L<bb>_<aaaa>`). *Metric updated after P0/P1, P2, PAD, FamiTone2 batches and data `$3C`, `$3F`, `$20`, `$36`, `$3B` and `$37` batches; the total number of definitions did not change — 2,145 — because renames neither create nor remove labels.*
+- Of these, **1,130 are semantic labels** (assigned name, not automatic address pattern) and **1,010 are automatic data labels** (`D<bb>_<aaaa>`); **no automatic code labels remain** (`L<bb>_<aaaa>`). *Metric updated after P0/P1, P2, PAD, FamiTone2 batches and data `$3C`, `$3F`, `$20`, `$36`, `$3B`, `$37` and `$29` batches; the total number of definitions did not change — 2,145 — because renames neither create nor remove labels.*
 - There are **322 `.global` directives** in `src/globals.inc` (symbols visible between banks).
 - PRG bank occupancy is known only from values published in documentation (not revalidated in this audit — no build or linker map was produced).
 - Validation scripts exist in `tools/` and `tools/mesen/`; none were executed in this audit, so no approval claim is made.
@@ -65,8 +65,8 @@ Items not confirmed (require build/execution/inspection outside scope):
 | Total label definitions in `src/bank_*.s` | 2,145 occurrences | Counts each definition, including duplicates between banks |
 | Globally unique names | 2,140 | 5 fewer than total (4 duplicate names) |
 | Automatic code (`L<bb>_<aaaa>`) | **0** | Was 379 in Phase 1; zeroed by P0/P1, P2 and FamiTone2 batches |
-| Automatic data (`D<bb>_<aaaa>`) | 1,056 unique | Pattern confirmed in generator; 33 renamed in `$3C`, 15 in `$3F`, 30 in `$20`, 27 in `$36`, 35 in `$3B` and 17 in `$37` |
-| **Semantic (assigned name)** | **1,084 unique** | Global non-automatic labels (549 in Phase 1) |
+| Automatic data (`D<bb>_<aaaa>`) | 1,010 unique | Pattern confirmed in generator; 33 renamed in `$3C`, 15 in `$3F`, 30 in `$20`, 27 in `$36`, 35 in `$3B`, 17 in `$37` and 46 in `$29` |
+| **Semantic (assigned name)** | **1,130 unique** | Global non-automatic labels (549 in Phase 1) |
 | `.global` directives in `src/globals.inc` | 322 unique | Symbols visible between banks (subset of semantic) |
 
 ### Detail by bank (unique names)
@@ -79,7 +79,7 @@ Items not confirmed (require build/execution/inspection outside scope):
 | `$05` | 353 | 353 | 0 | 352 | 1 |
 | `$08`, `$0C`, `$10`, `$1C`, `$24` | 5 | 5 | 0 | 5 | 0 |
 | `$20` | 30 | 30 | 0 | 0 | 30 |
-| `$29` | 103 | 103 | 0 | 103 | 0 |
+| `$29` | 103 | 103 | 0 | 57 | 46 |
 | `$2D` | 70 | 70 | 0 | 70 | 0 |
 | `$36` | 30 | 30 | 0 | 3 | 27 |
 | `$37` | 277 | 277 | 0 | 10 | 267 |
@@ -87,11 +87,11 @@ Items not confirmed (require build/execution/inspection outside scope):
 | `$3C` | 38 | 38 | 0 | 0 | 38 |
 | `$3F` | 411 | 410 | 0 | 0 | 411 |
 | Others ($02,$06,$0A,$0E,$12,$16,$1A,$1E,$22,$26,$2A,$3A) | 0 | 0 | 0 | 0 | 0 |
-| **Total** | **2,145** | **2,144**¹ | **0** | **1,056** | **1,089**¹ |
+| **Total** | **2,145** | **2,144**¹ | **0** | **1,010** | **1,135**¹ |
 
-¹ Sum per bank. Globally there are **2,140 unique names** and **1,084 unique semantic**: `ResetStub` appears in three banks (`$37`, `$3B`, `$3F`), `ResetVectorFill` in two (`$37`, `$3B`), `RoundStart` in two (`$3B`, `$3F`) and `InputButtons` twice within `$3F`. The canonical regex also does not count three semantic labels with comment on same line (`EdgeARel`, `EdgeBRel`, `EdgeBBtn`); including them would raise per-bank sum to 1,092 and total unique to 1,087.
+¹ Sum per bank. Globally there are **2,140 unique names** and **1,130 unique semantic**: `ResetStub` appears in three banks (`$37`, `$3B`, `$3F`), `ResetVectorFill` in two (`$37`, `$3B`), `RoundStart` in two (`$3B`, `$3F`) and `InputButtons` twice within `$3F`. The canonical regex also does not count three semantic labels with comment on same line (`EdgeARel`, `EdgeBRel`, `EdgeBBtn`); including them would raise per-bank sum to 1,138 and total unique to 1,133.
 
-> No bank has automatic code labels anymore; the remaining 1,056 automatics are all data (`D<bb>_<aaaa>`).
+> No bank has automatic code labels anymore; the remaining 1,010 automatics are all data (`D<bb>_<aaaa>`).
 
 ### Rules applied and limitations
 
@@ -162,7 +162,7 @@ Comparing `README.md`, `docs/ROADMAP.md`, `docs/ARCHITECTURE.md`, `docs/FORMATS.
 
 | ID | Claim/subject | Document A | Document B | Category | Risk | Proposed destination |
 |----|---------------|------------|------------|----------|------|----------------------|
-| IN-01 | Label count: "1,795 labels; 304 have real names" (README §"What is not ready yet") | `README.md` | Recalculated count (2,145 definitions, 2,140 unique, 1,084 semantic, 0 automatic code) | Count/metric | Resolved in Phase 3 — README and this document reconciled | Keep canonical metric from section 4; D-01 resolved at Phase 3 close |
+| IN-01 | Label count: "1,795 labels; 304 have real names" (README §"What is not ready yet") | `README.md` | Recalculated count (2,145 definitions, 2,140 unique, 1,130 semantic, 0 automatic code) | Count/metric | Resolved in Phase 3 — README and this document reconciled | Keep canonical metric from section 4; D-01 resolved at Phase 3 close |
 | IN-02 | Named variable count: "78 named" (README) | `README.md` | Not recalculated in this audit (would require `ram.inc` inspection) | Count/metric | Low | Verify against `src/ram.inc` in Phase 1 |
 | IN-03 | "Never executed code (14–17% of banks `$37` and `$3F`)" (README) | `README.md` | Not revalidated (would require current traces) | Bank capacity/build | Medium — percentage may be outdated | Confirm with `datamap.py`/traces in Phase 1, without running emulator |
 | IN-04 | "52 farcall and 7 farjmp" (ARCHITECTURE.md §2.7) | `docs/ARCHITECTURE.md` | Not recounted in this audit | Source of truth/generation | Low | Verify against annotations/generator in Phase 4 |
@@ -191,7 +191,7 @@ None of these was resolved in this audit.
 - No assembly, execution, emulation or testing was performed. All bank occupancy metrics are documented/historical, not revalidated.
 - No permanent audit tool was created (as Phase 1 scope prohibits).
 - No document divergence was corrected; all were registered in section 7.
-- README historical label count (1,795) was not used; a new count was made from generated sources and updated in Phase 3 and in `$3C`, `$3F`, `$20`, `$36`, `$3B` and `$37` batches (2,145 definitions, 2,140 unique names, 1,084 semantic).
+- README historical label count (1,795) was not used; a new count was made from generated sources and updated in Phase 3 and in `$3C`, `$3F`, `$20`, `$36`, `$3B`, `$37` and `$29` batches (2,145 definitions, 2,140 unique names, 1,130 semantic).
 
 ### Recommended next steps (without implementing or choosing canonical source)
 
@@ -224,11 +224,11 @@ None of these was resolved in this audit.
 
 **Label counting method:** `grep -rhE '^[A-Za-z_][A-Za-z0-9_]*:$' src/bank_*.s`, with classification by `L<bb>_<aaaa>` (code) and `D<bb>_<aaaa>` (data) patterns confirmed in generator; everything else is semantic. Files consulted: all `src/bank_*.s` listed in the index above.
 
-## 11. Status after Phase 3 (naming) and data `$3C`/`$3F`/`$20`/`$36`/`$3B`/`$37` batches
+## 11. Status after Phase 3 (naming) and data `$3C`/`$3F`/`$20`/`$36`/`$3B`/`$37`/`$29` batches
 
 - **Date:** 2026-11-17
-- **Base committed:** `3ba99e3` (`$3B` batch; previous: `8108eb1` `$36`, `fa7c215`, `2df963c`, `64a29f8`, `92fbde1`)
-- **Working tree:** clean; the `$37` batch (`annotations/sf2ne.ann`, `src/bank_37.s`, comments in `src/bank_20.s`/`src/kernel.inc`, docs and `tasks/DATA_NAMING_37.md`) is committed as `cfc7d78` and pushed. Phase 3 closed on 2026-11-16.
+- **Base committed:** `c871806` (generator regeneration; previous: `cfc7d78` `$37`, `3ba99e3` `$3B`, `8108eb1` `$36`, `fa7c215`, `2df963c`, `64a29f8`, `92fbde1`)
+- **Working tree:** the `$29` batch (`annotations/sf2ne.ann`, `src/bank_29.s`, `src/bank_37.s`, `src/bank_3B.s`, `src/globals.inc`, docs and `tasks/DATA_NAMING_29.md`) is applied and validated, pending commit authorization. Phase 3 closed on 2026-11-16.
 
 ### 11.1 Reconciled metrics
 
@@ -237,11 +237,11 @@ None of these was resolved in this audit.
 | Label definitions | 2,145 | **2,145** |
 | Unique names | 2,141 | **2,140** |
 | Automatic code (`L`) | 379 | **0** |
-| Automatic data (`D`) | 1,213 | **1,056** |
-| Unique semantic | 549 | **1,084** |
-| Per-bank semantic sum | — | **1,089** |
+| Automatic data (`D`) | 1,213 | **1,010** |
+| Unique semantic | 549 | **1,130** |
+| Per-bank semantic sum | — | **1,135** |
 
-The 1,089 vs 1,084 difference is explained by repeated names between banks: `ResetStub` (3×), `ResetVectorFill` (2×), `RoundStart` (2×) and `InputButtons` (2× within `$3F`). Canonical method (`grep -rhE '^[A-Za-z_][A-Za-z0-9_]*:$' src/bank_*.s`) does not count three labels with comment on same line (`EdgeARel`, `EdgeBRel`, `EdgeBBtn`); including them would give 1,087 unique semantic and 1,092 per-bank sum.
+The 1,135 vs 1,130 difference is explained by repeated names between banks: `ResetStub` (3×), `ResetVectorFill` (2×), `RoundStart` (2×) and `InputButtons` (2× within `$3F`). Canonical method (`grep -rhE '^[A-Za-z_][A-Za-z0-9_]*:$' src/bank_*.s`) does not count three labels with comment on same line (`EdgeARel`, `EdgeBRel`, `EdgeBBtn`); including them would give 1,133 unique semantic and 1,138 per-bank sum.
 
 ### 11.2 Batches applied
 
@@ -257,9 +257,10 @@ The 1,089 vs 1,084 difference is explained by repeated names between banks: `Res
 | Data `$36` | 27 | Stages: RLE backgrounds, CHR/split tables, attributes and palette | `make` + identical SHA-1 |
 | Data `$3B` | 35 | Fight/VS/select HUD: fade bounds, projectile frames, HUD tiles, screen palettes/RLE, round-intro tables, stage banks, reset filler | `make` + identical SHA-1 |
 | Data `$37` | 17 | Sound/select/title data: voice continuation, sfx dispatch/pointer list, FamiTone2 tables, select/title tables, reset filler | `make` + identical SHA-1 |
-| **Total** | **545** | — | — |
+| Data `$29` | 46 | Music modules: title/select/versus/win-quote headers, instrument lists, zero/full-volume envelopes, channel starts and loop targets; 57 reference/artifact labels deferred | `make` + identical SHA-1 |
+| **Total** | **591** | — | — |
 
-Line-by-line inventory, with unique ID, previous ID, previous symbol, evidence, confidence and risk, is in `tasks/NAMING_CANDIDATES.md` (Phase 3), `tasks/DATA_NAMING_3C.md`, `tasks/DATA_NAMING_3F.md`, `tasks/DATA_NAMING_20.md`, `tasks/DATA_NAMING_36.md`, `tasks/DATA_NAMING_3B.md` and `tasks/DATA_NAMING_37.md` (data batches).
+Line-by-line inventory, with unique ID, previous ID, previous symbol, evidence, confidence and risk, is in `tasks/NAMING_CANDIDATES.md` (Phase 3), `tasks/DATA_NAMING_3C.md`, `tasks/DATA_NAMING_3F.md`, `tasks/DATA_NAMING_20.md`, `tasks/DATA_NAMING_36.md`, `tasks/DATA_NAMING_3B.md`, `tasks/DATA_NAMING_37.md` and `tasks/DATA_NAMING_29.md` (data batches).
 
 ### 11.3 Integrity verification
 
@@ -274,7 +275,9 @@ Line-by-line inventory, with unique ID, previous ID, previous symbol, evidence, 
 | `src/bank_36.s` | 27 `D36_*` replaced; 3 write-only labels kept automatic; identical `.byte`/`.word` operands |
 | `src/bank_3B.s` after `$36` | only `VersusLoadStage`/`RoundInitLoadStage` now cite `Stage*` names |
 | `src/bank_37.s` after `$37` | 17 `D37_*` replaced; 10 sfx streams kept automatic; identical `.byte`/`.word` operands except two `SfxStreamPtrTbl` and one `ResetVectorFill` label operands |
-| `src/bank_05.s` (Ken, manual source) | 0 references to `D20_*` or `D36_*` |
+| `src/bank_29.s` after `$29` | 46 `D29_*` replaced; 57 reference/artifact labels kept automatic; 824 `.byte`/`.word`/`.res` directives before and after, 50 differ only by symbol rename |
+| `src/globals.inc` after `$29` | four `.global` names renamed (`D29_*` → `Music*Header`); count unchanged |
+| `src/bank_05.s` (Ken, manual source) | 0 references to `D20_*`, `D29_*` or `D36_*` |
 | `make fixed` | OK — expected divergence (`-D FIX_SOFT_RESET`) |
 | Automatic code labels | 0 |
 
@@ -282,8 +285,8 @@ No emulator execution was done in this phase; verification is static (flow, call
 
 ### 11.4 Pending
 
-- **Commit:** Phase 3 closed on 2026-11-16; `$3C`, `$3F` and `$20` batches committed (`64a29f8`, `92fbde1`, `2df963c`). The `$36` batch was applied before `fa7c215` and is recorded in `8108eb1`; the `$3B` batch is committed as `3ba99e3`; the `$37` batch is committed as `cfc7d78` and pushed.
+- **Commit:** Phase 3 closed on 2026-11-16; `$3C`, `$3F` and `$20` batches committed (`64a29f8`, `92fbde1`, `2df963c`). The `$36` batch was applied before `fa7c215` and is recorded in `8108eb1`; the `$3B` batch is committed as `3ba99e3`; the `$37` batch is committed as `cfc7d78` and pushed; the `$29` batch is applied and validated, pending commit authorization.
 - **Decisions:** D-01 and D-03 resolved at close; D-02 remains `PROPOSED` (does not block naming); D-04…D-07 follow `PENDING` in `tasks/STABILIZATION_BACKLOG.md`.
-- **Data (`D<bb>_<aaaa>`, 1,056):** inventoried and prioritized in `tasks/DATA_LABEL_INVENTORY.tsv`; `$3C` (33), `$3F` (15), `$20` (30), `$36` (27), `$3B` (35) and `$37` (17) batches applied. Next candidate: music (`$29`/`$2D`, 173); large Ryu/Ken banks (`$00`/`$01`/`$05`, 862) may remain P3.
+- **Data (`D<bb>_<aaaa>`, 1,010):** inventoried and prioritized in `tasks/DATA_LABEL_INVENTORY.tsv`; `$3C` (33), `$3F` (15), `$20` (30), `$36` (27), `$3B` (35), `$37` (17) and `$29` (46) batches applied. Next candidate: `$2D` Fight music (70); large Ryu/Ken banks (`$00`/`$01`/`$05`, 862) may remain P3.
 - **`$36` write-only labels:** `D36_C005`, `D36_C00A` and `D36_C00F` remain automatic until a consumer appears (`MMC5_CHR_BG2` is never used).
 - **State/frame migration to TOML:** not authorized and not started.

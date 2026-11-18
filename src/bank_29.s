@@ -5,28 +5,28 @@
 ;
 .include "defs.inc"
 .segment "BANK29"
-D29_A000:
-    .byte $01                                   ; A000
-    .word D29_A013                              ; A001  13 A0
+MusicTitleHeader:
+    .byte $01                                   ; A000              title music module header: 1 song, instrument list at A013, 5 channel pointers, tempo $0100 (NTSC)
+    .word MusicTitleInstruments                 ; A001  13 A0
     .word D29_A017+1                            ; A003  18 A0       (inferred)
-    .word D29_A021                              ; A005  21 A0
-    .word D29_A2ED                              ; A007  ED A2
-    .word D29_A55D                              ; A009  5D A5
-    .word D29_A633                              ; A00B  33 A6
-    .word D29_AA18                              ; A00D  18 AA
+    .word MusicTitlePulse1                      ; A005  21 A0
+    .word MusicTitlePulse2                      ; A007  ED A2
+    .word MusicTitleTriangle                    ; A009  5D A5
+    .word MusicTitleNoise                       ; A00B  33 A6
+    .word MusicTitleDpcm                        ; A00D  18 AA
     .byte $33,$01,$00,$01                       ; A00F
-D29_A013:
-    .word D29_A01E                              ; A013  1E A0
-    .word D29_A01B                              ; A015  1B A0
+MusicTitleInstruments:
+    .word MusicTitleEnvFullVolume               ; A013  1E A0       instrument list; 8-byte records read by _FT2SetInstrument (instrument 0 uses the envelopes below)
+    .word MusicTitleEnvZero                     ; A015  1B A0
 D29_A017:
-    .word D29_A01B                              ; A017  1B A0
-    .word D29_A01B                              ; A019  1B A0
-D29_A01B:
-    .byte $C0,$00,$00                           ; A01B
-D29_A01E:
-    .byte $CF,$00,$00                           ; A01E
-D29_A021:
-    .byte $FB,$01,$72,$80,$25,$83,$71,$83,$70,$89,$72,$2C,$81,$81,$71,$83; A021
+    .word MusicTitleEnvZero                     ; A017  1B A0
+    .word MusicTitleEnvZero                     ; A019  1B A0
+MusicTitleEnvZero:
+    .byte $C0,$00,$00                           ; A01B              constant volume 0 envelope (C0 00 00); instrument 0 pointers 2-4
+MusicTitleEnvFullVolume:
+    .byte $CF,$00,$00                           ; A01E              constant volume 15 envelope (CF 00 00); instrument 0 pointer 1
+MusicTitlePulse1:
+    .byte $FB,$01,$72,$80,$25,$83,$71,$83,$70,$89,$72,$2C,$81,$81,$71,$83; A021              pulse 1 channel start (header +5); FamiToneMusicPlay installs the pointer
     .byte $70,$89,$72,$31,$83,$71,$81,$81,$70,$89,$72,$25,$83,$71,$83,$70; A031
     .byte $81,$87,$73,$2C,$83,$72,$83,$71,$83,$70,$81,$83,$73,$31,$83,$72; A041
     .byte $83,$71,$83,$70,$85,$73,$25,$83,$72,$83,$71,$83,$70,$85,$73,$2C; A051
@@ -81,8 +81,8 @@ D29_A0F8:
     .byte $97,$FF,$05,$99,$A2,$23,$95,$8F,$27,$85,$8B,$29,$89,$97,$97,$97; A2C8
     .byte $97,$97,$97,$97,$97,$97,$97,$97,$97,$97,$8F,$70,$00,$85,$97,$97; A2D8
     .byte $85,$81,$FD,$E9,$A2                   ; A2E8
-D29_A2ED:
-    .byte $71,$80,$19,$70,$95,$97,$97,$97,$97,$97,$97,$97,$97,$97,$97,$97; A2ED
+MusicTitlePulse2:
+    .byte $71,$80,$19,$70,$95,$97,$97,$97,$97,$97,$97,$97,$97,$97,$97,$97; A2ED              pulse 2 channel start (header +7)
     .byte $97,$97,$97,$76,$91,$75,$85,$83,$74,$89,$73,$81,$76,$19,$85,$89; A2FD
     .byte $75,$89,$74,$83,$85,$73,$89,$72,$87,$81,$71,$89,$70,$8B,$76,$19; A30D
     .byte $8F,$75,$85,$83,$74,$81,$85,$73,$81,$76,$19,$8D,$81,$75,$89,$74; A31D
@@ -121,8 +121,8 @@ D29_A2ED:
     .byte $81,$8D,$75,$81,$76,$1D,$85,$89,$75,$81,$76,$19,$89,$85,$75,$81; A52D
     .byte $76,$1E,$8D,$81,$75,$81,$76,$1D,$8F,$75,$81,$76,$19,$8F,$75,$81; A53D
     .byte $76,$25,$81,$8D,$75,$81,$70,$00,$85,$97,$97,$85,$81,$FD,$59,$A5; A54D
-D29_A55D:
-    .byte $97,$97,$97,$97,$97,$97,$97,$97,$97,$97,$97,$97,$97,$97,$97,$80; A55D
+MusicTitleTriangle:
+    .byte $97,$97,$97,$97,$97,$97,$97,$97,$97,$97,$97,$97,$97,$97,$97,$80; A55D              triangle channel start (header +9)
     .byte $0D,$95,$97,$97,$97,$97,$97,$85,$97,$97,$04,$91,$0B,$81,$97,$8B; A56D
     .byte $0D,$89,$97,$97,$97,$97,$97,$97,$97,$97,$97,$97,$87,$0B,$8D,$97; A57D
     .byte $0D,$95,$97,$97,$97,$85,$97,$97,$97,$97,$97,$97,$97,$87,$0B,$8D; A58D
@@ -136,8 +136,8 @@ D29_A55D:
     .byte $83,$17,$91,$97,$85,$97,$97,$97,$97,$8B,$19,$89,$97,$97,$97,$97; A60D
     .byte $97,$97,$97,$97,$97,$97,$87,$17,$8D,$97,$19,$95,$8F,$00,$85,$97; A61D
     .byte $97,$85,$81,$FD,$2F,$A6               ; A62D
-D29_A633:
-    .byte $71,$80,$0C,$70,$95,$97,$97,$97,$97,$97,$8F,$71,$81,$70,$85,$97; A633
+MusicTitleNoise:
+    .byte $71,$80,$0C,$70,$95,$97,$97,$97,$97,$97,$8F,$71,$81,$70,$85,$97; A633              noise channel start (header +11)
     .byte $97,$97,$97,$97,$97,$87,$73,$81,$72,$81,$71,$81,$70,$89,$97,$76; A643
     .byte $05,$75,$81,$74,$81,$73,$81,$72,$81,$71,$81,$70,$8B,$8F,$73,$0C; A653
     .byte $72,$81,$71,$81,$70,$81,$97           ; A663
@@ -205,8 +205,8 @@ D29_A67A:
     .byte $FF,$09,$D9,$A6,$FF,$05,$A5,$A6,$FF,$08,$AF,$A6,$76,$09,$83,$75; A9EC
     .byte $83,$74,$83,$73,$83,$72,$81,$76,$83,$81,$75,$83,$74,$83,$73,$83; A9FC
     .byte $72,$81,$70,$00,$85,$97,$97,$85,$81,$FD,$14,$AA; AA0C
-D29_AA18:
-    .byte $97,$97,$97,$97,$97,$97,$97,$97,$97,$97,$97,$97,$97,$97,$97,$97; AA18
+MusicTitleDpcm:
+    .byte $97,$97,$97,$97,$97,$97,$97,$97,$97,$97,$97,$97,$97,$97,$97,$97; AA18              DPCM channel start (header +13)
     .byte $97,$97,$97,$97,$97,$85,$97,$97,$97,$97,$97,$97,$97,$97,$97,$97; AA28
     .byte $97,$97,$97,$97,$97,$97,$97,$97,$97,$97,$97,$85,$97,$97,$97,$97; AA38
     .byte $97,$97,$97,$97,$97,$97,$97,$97,$97,$97,$97,$97,$97,$97,$97,$97; AA48
@@ -216,28 +216,28 @@ D29_AA18:
     .byte $97,$97,$97,$97,$97,$97,$97,$97,$97,$97,$97,$97,$97,$97,$97,$97; AA88
     .byte $97,$97,$97,$85,$97,$97,$97,$97,$97,$97,$97,$97,$97,$97,$97,$97; AA98
     .byte $97,$97,$97,$97,$97,$97,$97,$97,$97,$85,$81,$FD,$B2,$AA; AAA8
-D29_AAB6:
-    .byte $01                                   ; AAB6
-    .word D29_AAC9                              ; AAB7  C9 AA
+MusicSelectHeader:
+    .byte $01                                   ; AAB6              select music module header: 1 song, instrument list at AAC9, 5 channel pointers, tempo $0100 (NTSC)
+    .word MusicSelectInstruments                ; AAB7  C9 AA
     .word D29_AACD+1                            ; AAB9  CE AA       (inferred)
-    .word D29_AAD7                              ; AABB  D7 AA
-    .word D29_ACDE                              ; AABD  DE AC
-    .word D29_AEEF                              ; AABF  EF AE
-    .word D29_B05F                              ; AAC1  5F B0
-    .word D29_B2C6                              ; AAC3  C6 B2
+    .word MusicSelectPulse1                     ; AABB  D7 AA
+    .word MusicSelectPulse2                     ; AABD  DE AC
+    .word MusicSelectTriangle                   ; AABF  EF AE
+    .word MusicSelectNoise                      ; AAC1  5F B0
+    .word MusicSelectDpcm                       ; AAC3  C6 B2
     .byte $33,$01,$00,$01                       ; AAC5
-D29_AAC9:
-    .word D29_AAD4                              ; AAC9  D4 AA
-    .word D29_AAD1                              ; AACB  D1 AA
+MusicSelectInstruments:
+    .word MusicSelectEnvFullVolume              ; AAC9  D4 AA       instrument list; 8-byte records read by _FT2SetInstrument (instrument 0 uses the envelopes below)
+    .word MusicSelectEnvZero                    ; AACB  D1 AA
 D29_AACD:
-    .word D29_AAD1                              ; AACD  D1 AA
-    .word D29_AAD1                              ; AACF  D1 AA
-D29_AAD1:
-    .byte $C0,$00,$00                           ; AAD1
-D29_AAD4:
-    .byte $CF,$00,$00                           ; AAD4
-D29_AAD7:
-    .byte $FB,$01                               ; AAD7
+    .word MusicSelectEnvZero                    ; AACD  D1 AA
+    .word MusicSelectEnvZero                    ; AACF  D1 AA
+MusicSelectEnvZero:
+    .byte $C0,$00,$00                           ; AAD1              constant volume 0 envelope (C0 00 00); instrument 0 pointers 2-4
+MusicSelectEnvFullVolume:
+    .byte $CF,$00,$00                           ; AAD4              constant volume 15 envelope (CF 00 00); instrument 0 pointer 1
+MusicSelectPulse1:
+    .byte $FB,$01                               ; AAD7              pulse 1 channel start (header +5); FamiToneMusicPlay installs the pointer
 D29_AAD9:
     .byte $71,$80,$10,$70,$8D,$8F,$8F,$8F,$8F,$8F,$8F,$8F,$8F,$8F,$8F,$8F; AAD9
     .byte $8F,$8F,$8F,$8F,$8F,$8F,$8F,$8F,$8F,$8F,$8F,$8F,$71,$25,$70,$8D; AAE9
@@ -254,8 +254,8 @@ D29_AB1A:
     .byte $04,$81,$72,$85,$71,$81,$76,$22,$81   ; AB1A
 D29_AB23:
     .byte $85,$75,$81,$76,$25,$83               ; AB23
-D29_AB29:
-    .byte $81,$75,$81,$76,$80,$29,$87,$75,$81   ; AB29
+MusicSelectLoopPulse1Pulse2:
+    .byte $81,$75,$81,$76,$80,$29,$87,$75,$81   ; AB29              loop target of $FD at ACDB; reached from pulse 1 and pulse 2
 D29_AB32:
     .byte $76,$2C,$87,$75,$81,$76,$2A,$81       ; AB32
 D29_AB3A:
@@ -402,9 +402,9 @@ D29_AC17:
     .byte $FF,$04                               ; ACD6
     .word D29_AB23                              ; ACD8  23 AB
     .byte $81,$FD                               ; ACDA
-    .word D29_AB29                              ; ACDC  29 AB
-D29_ACDE:
-    .byte $FF,$02                               ; ACDE
+    .word MusicSelectLoopPulse1Pulse2           ; ACDC  29 AB
+MusicSelectPulse2:
+    .byte $FF,$02                               ; ACDE              pulse 2 channel start (header +7)
     .word D29_AAD9                              ; ACE0  D9 AA
     .byte $8F,$8F,$8F,$8F,$8F,$8F,$8F,$8F,$8F,$8F,$8F,$8F,$8F,$8F,$8F,$8F; ACE2
     .byte $8F,$8F,$8F,$8F,$8F,$8F,$8F,$71,$22,$70,$8D; ACF2
@@ -421,8 +421,8 @@ D29_AD19:
 D29_AD1E:
     .byte $71,$81,$70,$89,$76,$1E,$81,$FF,$04   ; AD1E
     .word D29_AD10                              ; AD27  10 AD
-D29_AD29:
-    .byte $FF,$03                               ; AD29
+MusicSelectLoopPulse2Noise:
+    .byte $FF,$03                               ; AD29              loop target of $FD at AEEC; reached from pulse 2 and noise
     .word D29_AD19                              ; AD2B  19 AD
     .byte $76,$80,$1D,$83,$75,$83,$74,$83,$73,$81; AD2D
 D29_AD37:
@@ -573,16 +573,16 @@ D29_ADAA:
     .byte $FF,$04                               ; AEE7
     .word D29_AD10                              ; AEE9  10 AD
     .byte $81,$FD                               ; AEEB
-    .word D29_AD29                              ; AEED  29 AD
-D29_AEEF:
-    .byte $80,$0F,$8D,$87,$19,$85,$83,$1B,$89,$8B,$16,$81,$87,$19,$85,$83; AEEF
+    .word MusicSelectLoopPulse2Noise            ; AEED  29 AD
+MusicSelectTriangle:
+    .byte $80,$0F,$8D,$87,$19,$85,$83,$1B,$89,$8B,$16,$81,$87,$19,$85,$83; AEEF              triangle channel start (header +9)
     .byte $1B,$89,$8B,$14,$81,$87,$16,$85,$83,$19,$89,$1B,$89,$19,$81,$87; AEFF
     .byte $16,$85,$83,$14,$89,$0F,$8D,$87,$19,$85,$83,$1B,$89,$8B,$16,$81; AF0F
     .byte $87,$19,$85,$83,$1B,$89,$8B,$14,$81,$87,$16,$85,$83,$19,$89,$1B; AF1F
     .byte $8D,$87,$0D,$85,$8F,$0F,$8D,$87,$19,$85,$83,$1B,$89,$8B,$16,$81; AF2F
     .byte $87,$19,$85,$83,$1B,$89,$8B,$14,$81,$87,$16,$83; AF3F
-D29_AF4B:
-    .byte $83,$80,$19,$89,$1B,$89,$19,$81,$87,$16,$85,$83,$14,$89,$0F,$8D; AF4B
+MusicSelectLoopTriangle:
+    .byte $83,$80,$19,$89,$1B,$89,$19,$81,$87,$16,$85,$83,$14,$89,$0F,$8D; AF4B              loop target of $FD at B05C; triangle channel
     .byte $87,$19,$85,$83,$1B,$89,$8B,$16,$81,$87,$19,$85,$83,$1B,$89,$8B; AF5B
     .byte $14,$81,$87,$16,$85,$83,$19,$89,$1B,$8D,$87,$0D,$85,$8F,$0F,$8D; AF6B
     .byte $87,$19,$85,$83,$1B,$89,$8B,$16,$81,$87,$19,$85,$83,$1B,$89,$8B; AF7B
@@ -600,9 +600,9 @@ D29_AF4B:
     .byte $83,$19,$89,$1B,$8D,$87,$0D,$85,$8F,$0F,$8D,$87,$19,$85,$83,$1B; B03B
     .byte $89,$8B,$16,$81,$87,$19,$85,$83,$1B,$89,$8B,$14,$81,$87,$16,$83; B04B
     .byte $81,$FD                               ; B05B
-    .word D29_AF4B                              ; B05D  4B AF
-D29_B05F:
-    .byte $73,$80,$0C,$72,$81,$71,$81,$70,$89,$8F,$8F; B05F
+    .word MusicSelectLoopTriangle               ; B05D  4B AF
+MusicSelectNoise:
+    .byte $73,$80,$0C,$72,$81,$71,$81,$70,$89,$8F,$8F; B05F              noise channel start (header +11)
 D29_B06A:
     .byte $76,$05,$75,$81,$74,$81,$73,$81,$72,$81,$71,$81,$70,$83,$8F,$8F; B06A
 D29_B07A:
@@ -633,8 +633,8 @@ D29_B0FE:
     .byte $76,$81,$75,$81,$74,$81,$73,$81,$72,$81,$71,$81,$76,$81,$75,$81; B0FE
 D29_B10E:
     .byte $74,$81,$73,$81,$72,$81,$71,$81,$76,$81,$75,$81,$74,$81; B10E
-D29_B11C:
-    .byte $FF,$03                               ; B11C
+MusicSelectLoopNoise:
+    .byte $FF,$03                               ; B11C              loop target of $FD at B2C3; noise channel
     .word D29_B0F8                              ; B11E  F8 B0
     .byte $76,$80,$09,$83,$75,$83,$74,$83,$73,$81,$FF,$07; B120
     .word D29_B0EB                              ; B12C  EB B0
@@ -801,48 +801,48 @@ D29_B1DC:
     .byte $FF,$07                               ; B2BD
     .word D29_B10E                              ; B2BF  0E B1
     .byte $72,$81,$FD                           ; B2C1
-    .word D29_B11C                              ; B2C4  1C B1
-D29_B2C6:
-    .byte $8F,$8F,$8F,$8F,$8F,$8F,$8F,$8F,$8F,$8F,$8F,$8F,$8F,$8F,$8F,$8F; B2C6
+    .word MusicSelectLoopNoise                  ; B2C4  1C B1
+MusicSelectDpcm:
+    .byte $8F,$8F,$8F,$8F,$8F,$8F,$8F,$8F,$8F,$8F,$8F,$8F,$8F,$8F,$8F,$8F; B2C6              DPCM channel start (header +13)
     .byte $8F,$8F,$8F,$8F,$8F,$8F,$8F,$8F,$8F,$8F,$8F,$8F,$8F,$8F,$8F,$8D; B2D6
-D29_B2E6:
-    .byte $8F,$8F,$8F,$8F,$8F,$8F,$8F,$8F,$8F,$8F,$8F,$8F,$8F,$8F,$8F,$8F; B2E6
+MusicSelectLoopDpcm:
+    .byte $8F,$8F,$8F,$8F,$8F,$8F,$8F,$8F,$8F,$8F,$8F,$8F,$8F,$8F,$8F,$8F; B2E6              loop target of $FD at B347; DPCM channel
     .byte $8F,$8F,$8F,$8F,$8F,$8F,$8F,$8F,$8F,$8F,$8F,$8F,$8F,$8F,$8F,$8D; B2F6
     .byte $8F,$8F,$8F,$8F,$8F,$8F,$8F,$8F,$8F,$8F,$8F,$8F,$8F,$8F,$8F,$8F; B306
     .byte $8F,$8F,$8F,$8F,$8F,$8F,$8F,$8F,$8F,$8F,$8F,$8F,$8F,$8F,$8F,$8D; B316
     .byte $8F,$8F,$8F,$8F,$8F,$8F,$8F,$8F,$8F,$8F,$8F,$8F,$8F,$8F,$8F,$8F; B326
     .byte $8F,$8F,$8F,$8F,$8F,$8F,$8F,$8F,$8F,$8F,$8F,$8F,$8F,$8F,$8F,$8D; B336
     .byte $81,$FD                               ; B346
-    .word D29_B2E6                              ; B348  E6 B2
-D29_B34A:
-    .byte $01                                   ; B34A
-    .word D29_B35D                              ; B34B  5D B3
+    .word MusicSelectLoopDpcm                   ; B348  E6 B2
+MusicVersusHeader:
+    .byte $01                                   ; B34A              versus music module header: 1 song, instrument list at B35D, 5 channel pointers, tempo $0100 (NTSC)
+    .word MusicVersusInstruments                ; B34B  5D B3
     .word D29_B361+1                            ; B34D  62 B3       (inferred)
-    .word D29_B36B                              ; B34F  6B B3
-    .word D29_B3AE                              ; B351  AE B3
-    .word D29_B410                              ; B353  10 B4
-    .word D29_B41D                              ; B355  1D B4
-    .word D29_B4B2                              ; B357  B2 B4
+    .word MusicVersusPulse1                     ; B34F  6B B3
+    .word MusicVersusPulse2                     ; B351  AE B3
+    .word MusicVersusTriangle                   ; B353  10 B4
+    .word MusicVersusNoise                      ; B355  1D B4
+    .word MusicVersusDpcm                       ; B357  B2 B4
     .byte $33,$01,$00,$01                       ; B359
-D29_B35D:
-    .word D29_B368                              ; B35D  68 B3
-    .word D29_B365                              ; B35F  65 B3
+MusicVersusInstruments:
+    .word MusicVersusEnvFullVolume              ; B35D  68 B3       instrument list; 8-byte records read by _FT2SetInstrument (instrument 0 uses the envelopes below)
+    .word MusicVersusEnvZero                    ; B35F  65 B3
 D29_B361:
-    .word D29_B365                              ; B361  65 B3
-    .word D29_B365                              ; B363  65 B3
-D29_B365:
-    .byte $C0,$00,$00                           ; B365
-D29_B368:
-    .byte $CF,$00,$00                           ; B368
-D29_B36B:
-    .byte $FB,$01,$77,$80,$28,$97,$76,$81,$77,$25,$8B,$28,$97,$76,$81,$77; B36B
+    .word MusicVersusEnvZero                    ; B361  65 B3
+    .word MusicVersusEnvZero                    ; B363  65 B3
+MusicVersusEnvZero:
+    .byte $C0,$00,$00                           ; B365              constant volume 0 envelope (C0 00 00); instrument 0 pointers 2-4
+MusicVersusEnvFullVolume:
+    .byte $CF,$00,$00                           ; B368              constant volume 15 envelope (CF 00 00); instrument 0 pointer 1
+MusicVersusPulse1:
+    .byte $FB,$01,$77,$80,$28,$97,$76,$81,$77,$25,$8B,$28,$97,$76,$81,$77; B36B              pulse 1 channel start (header +5); the loop command at B3AB targets B36D, not this label
     .byte $2C,$8B,$2F,$8B,$31,$8B,$2C,$8B,$2A,$8B,$28,$8B,$2F,$8B,$2D,$8B; B37B
     .byte $33,$8B,$36,$8B,$34,$97,$76,$81,$77,$2F,$97,$76,$8D,$75,$81,$77; B38B
     .byte $31,$97,$76,$8D,$75,$8D,$74,$81,$70,$91; B39B
 D29_B3A5:
     .byte $F9,$F9,$F9,$B9,$00,$D3,$FD,$6D,$B3   ; B3A5
-D29_B3AE:
-    .byte $76,$80,$19,$97,$75,$8D,$74,$81,$76,$8D,$71,$81,$70,$B5,$75,$28; B3AE
+MusicVersusPulse2:
+    .byte $76,$80,$19,$97,$75,$8D,$74,$81,$76,$8D,$71,$81,$70,$B5,$75,$28; B3AE              pulse 2 channel start (header +7); also loop target of $FD at B40D
     .byte $83,$74,$83,$75,$2A,$83,$74,$81,$75,$28,$83,$74,$83,$75,$27,$83; B3BE
     .byte $74,$83,$75,$28,$83,$74,$81,$75,$29,$83,$74,$83,$75,$2A,$83,$74; B3CE
     .byte $83,$75,$31,$83,$74,$81,$75,$30,$83,$74,$83,$75,$2F,$83,$74,$83; B3DE
@@ -850,10 +850,10 @@ D29_B3AE:
     .byte $81,$76,$99,$75,$8D,$74,$8D,$73,$81,$70,$93,$FF,$06; B3FE
     .word D29_B3A5                              ; B40B  A5 B3
     .byte $FD,$AE,$B3                           ; B40D
-D29_B410:
-    .byte $F9,$F9,$ED,$F9,$F9,$F9,$B9,$80,$00,$D3,$FD,$10,$B4; B410
-D29_B41D:
-    .byte $76,$80,$09,$83,$75,$83,$74,$83,$73,$83,$72,$83,$71,$83,$70,$81; B41D
+MusicVersusTriangle:
+    .byte $F9,$F9,$ED,$F9,$F9,$F9,$B9,$80,$00,$D3,$FD,$10,$B4; B410              triangle channel start (header +9); also loop target of $FD at B41A
+MusicVersusNoise:
+    .byte $76,$80,$09,$83,$75,$83,$74,$83,$73,$83,$72,$83,$71,$83,$70,$81; B41D              noise channel start (header +11); also loop target of $FD at B4AF
     .byte $76,$05,$75,$81,$74,$81,$73,$81,$72,$81,$71,$81,$70,$81,$76,$09; B42D
     .byte $83,$75,$83,$74,$83,$73,$83,$72,$83,$71,$83,$70,$81,$75,$0B,$8B; B43D
     .byte $77,$07,$83,$76,$83,$75,$83,$77,$09,$83,$76,$83,$75,$83,$76,$85; B44D
@@ -864,52 +864,52 @@ D29_B41D:
     .byte $76,$81,$75,$81,$74,$81,$73,$81,$72,$81,$71,$81,$70,$BD,$FF,$06; B49D
     .word D29_B3A5                              ; B4AD  A5 B3
     .byte $FD,$1D,$B4                           ; B4AF
-D29_B4B2:
-    .byte $F9,$F9,$ED,$F9,$F9,$F9,$F9,$95,$FD,$B2,$B4; B4B2
-D29_B4BD:
-    .byte $01                                   ; B4BD
-    .word D29_B4D0                              ; B4BE  D0 B4
+MusicVersusDpcm:
+    .byte $F9,$F9,$ED,$F9,$F9,$F9,$F9,$95,$FD,$B2,$B4; B4B2              DPCM channel start (header +13); also loop target of $FD at B4BA
+MusicWinQuoteHeader:
+    .byte $01                                   ; B4BD              win quote music module header: 1 song, instrument list at B4D0, 5 channel pointers, tempo $0100 (NTSC)
+    .word MusicWinQuoteInstruments              ; B4BE  D0 B4
     .word D29_B4D4+1                            ; B4C0  D5 B4       (inferred)
-    .word D29_B4DE                              ; B4C2  DE B4
-    .word D29_B524                              ; B4C4  24 B5
-    .word D29_B560                              ; B4C6  60 B5
-    .word D29_B570                              ; B4C8  70 B5
-    .word D29_B654                              ; B4CA  54 B6
+    .word MusicWinQuotePulse1                   ; B4C2  DE B4
+    .word MusicWinQuotePulse2                   ; B4C4  24 B5
+    .word MusicWinQuoteTriangle                 ; B4C6  60 B5
+    .word MusicWinQuoteNoise                    ; B4C8  70 B5
+    .word MusicWinQuoteDpcm                     ; B4CA  54 B6
     .byte $33,$01,$00,$01                       ; B4CC
-D29_B4D0:
-    .word D29_B4DB                              ; B4D0  DB B4
-    .word D29_B4D8                              ; B4D2  D8 B4
+MusicWinQuoteInstruments:
+    .word MusicWinQuoteEnvFullVolume            ; B4D0  DB B4       instrument list; 8-byte records read by _FT2SetInstrument (instrument 0 uses the envelopes below)
+    .word MusicWinQuoteEnvZero                  ; B4D2  D8 B4
 D29_B4D4:
-    .word D29_B4D8                              ; B4D4  D8 B4
-    .word D29_B4D8                              ; B4D6  D8 B4
-D29_B4D8:
-    .byte $C0,$00,$00                           ; B4D8
-D29_B4DB:
-    .byte $CF,$00,$00                           ; B4DB
-D29_B4DE:
-    .byte $FB,$01,$71,$80,$2F,$70,$89,$77,$97,$2E,$97,$76,$8D,$75,$8D,$74; B4DE
+    .word MusicWinQuoteEnvZero                  ; B4D4  D8 B4
+    .word MusicWinQuoteEnvZero                  ; B4D6  D8 B4
+MusicWinQuoteEnvZero:
+    .byte $C0,$00,$00                           ; B4D8              constant volume 0 envelope (C0 00 00); instrument 0 pointers 2-4
+MusicWinQuoteEnvFullVolume:
+    .byte $CF,$00,$00                           ; B4DB              constant volume 15 envelope (CF 00 00); instrument 0 pointer 1
+MusicWinQuotePulse1:
+    .byte $FB,$01,$71,$80,$2F,$70,$89,$77,$97,$2E,$97,$76,$8D,$75,$8D,$74; B4DE              pulse 1 channel start (header +5); FamiToneMusicPlay installs the pointer
     .byte $85,$77,$28,$89,$2E,$95,$2D,$97,$76,$8D,$75,$8D,$74,$85,$77,$1C; B4EE
     .byte $89,$21,$97,$76,$89,$77,$31,$97,$76,$8D,$75,$8D,$74,$8D,$73,$8D; B4FE
     .byte $72,$81,$77,$2C,$95,$2A,$89,$28,$89,$23,$89,$25,$A3,$76,$B9,$70; B50E
     .byte $00,$9B                               ; B51E
-D29_B520:
-    .byte $81,$FD                               ; B520
-    .word D29_B520                              ; B522  20 B5
-D29_B524:
-    .byte $71,$80,$28,$70,$89,$76,$B1,$75,$8D,$74,$8D,$73,$85,$76,$25,$89; B524
+MusicWinQuoteLoopPulse1:
+    .byte $81,$FD                               ; B520              loop target of $FD at B521; pulse 1 channel
+    .word MusicWinQuoteLoopPulse1               ; B522  20 B5
+MusicWinQuotePulse2:
+    .byte $71,$80,$28,$70,$89,$76,$B1,$75,$8D,$74,$8D,$73,$85,$76,$25,$89; B524              pulse 2 channel start (header +7)
     .byte $28,$AF,$75,$8D,$74,$8D,$73,$85,$76,$19,$89,$1C,$97,$75,$89,$76; B534
     .byte $2D,$97,$75,$8D,$74,$8D,$73,$8D,$72,$8D,$71,$81,$76,$28,$95,$23; B544
     .byte $95,$20,$AF,$75,$B9,$70,$00,$9B       ; B554
-D29_B55C:
-    .byte $81,$FD                               ; B55C
-    .word D29_B55C                              ; B55E  5C B5
-D29_B560:
-    .byte $80,$0D,$95,$0D,$F9,$F9,$F9,$83,$19,$D1,$00,$9B; B560
-D29_B56C:
-    .byte $81,$FD                               ; B56C
-    .word D29_B56C                              ; B56E  6C B5
-D29_B570:
-    .byte $76,$80,$05,$75,$81,$74,$81,$73,$81,$72,$81,$71,$81,$76,$09,$83; B570
+MusicWinQuoteLoopPulse2:
+    .byte $81,$FD                               ; B55C              loop target of $FD at B55D; pulse 2 channel
+    .word MusicWinQuoteLoopPulse2               ; B55E  5C B5
+MusicWinQuoteTriangle:
+    .byte $80,$0D,$95,$0D,$F9,$F9,$F9,$83,$19,$D1,$00,$9B; B560              triangle channel start (header +9)
+MusicWinQuoteLoopTriangle:
+    .byte $81,$FD                               ; B56C              loop target of $FD at B56D; triangle channel
+    .word MusicWinQuoteLoopTriangle             ; B56E  6C B5
+MusicWinQuoteNoise:
+    .byte $76,$80,$05,$75,$81,$74,$81,$73,$81,$72,$81,$71,$81,$76,$09,$83; B570              noise channel start (header +11)
     .byte $75,$83,$74,$83,$73,$83,$72,$83,$71,$81,$76,$05,$75,$81,$74,$81; B580
     .byte $73,$81,$72,$81,$71,$81,$70,$97,$75,$0B,$95,$76,$05,$75,$81,$74; B590
     .byte $81,$73,$81,$72,$81,$71,$81,$75,$0B,$8B,$74,$87,$73,$81,$77,$07; B5A0
@@ -923,12 +923,12 @@ D29_B570:
     .byte $81,$70,$8B,$76,$09,$83,$75,$83,$74,$81,$76,$05,$75,$81,$74,$81; B620
     .byte $73,$81,$72,$81,$71,$81,$70,$8B,$76,$09,$83,$75,$83,$74,$81,$76; B630
     .byte $85,$75,$83,$74,$83,$73,$83,$72,$83,$71,$83,$70,$B9,$70,$00,$9B; B640
-D29_B650:
-    .byte $81,$FD                               ; B650
-    .word D29_B650                              ; B652  50 B6
-D29_B654:
-    .byte $F9,$F9,$F9,$F9,$95                   ; B654
-D29_B659:
-    .byte $81,$FD                               ; B659
-    .word D29_B659                              ; B65B  59 B6
+MusicWinQuoteLoopNoise:
+    .byte $81,$FD                               ; B650              loop target of $FD at B651; noise channel
+    .word MusicWinQuoteLoopNoise                ; B652  50 B6
+MusicWinQuoteDpcm:
+    .byte $F9,$F9,$F9,$F9,$95                   ; B654              DPCM channel start (header +13)
+MusicWinQuoteLoopDpcm:
+    .byte $81,$FD                               ; B659              loop target of $FD at B65A; DPCM channel loops on itself
+    .word MusicWinQuoteLoopDpcm                 ; B65B  59 B6
     .res 2467, $FF                              ; B65D

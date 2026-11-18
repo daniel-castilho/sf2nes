@@ -226,10 +226,6 @@
 .global D10_8000
 .global D1C_8000
 .global D24_8000
-.global D29_A000
-.global D29_AAB6
-.global D29_B34A
-.global D29_B4BD
 .global D2D_A000
 .global D36_C005
 .global D36_C00A
@@ -256,6 +252,10 @@
 .global JoyPollBoth
 .global JoyPollBothSel
 .global Match
+.global MusicSelectHeader
+.global MusicTitleHeader
+.global MusicVersusHeader
+.global MusicWinQuoteHeader
 .global NmiFightVram
 .global NmiVsPortraitUpload
 .global NmiVsQuoteUpload

@@ -2775,3 +2775,110 @@ alt DEST_FLAG_BLINK 37:F6A5 C0
 
 
 # ============================================================================================================
+# BANK $29 — music modules: title, selection, versus and win quote (FamiTone2 data)
+# ============================================================================================================
+# 46 structural names; 53 reference blocks and 4 instrument-record artifacts stay
+# automatic (P3). Evidence and deferred streams: tasks/DATA_NAMING_29.md.
+
+# --- Title module ---
+label 29:A000 MusicTitleHeader
+comment 29:A000 title music module header: 1 song, instrument list at A013, 5 channel pointers, tempo $0100 (NTSC)
+label 29:A013 MusicTitleInstruments
+comment 29:A013 instrument list; 8-byte records read by _FT2SetInstrument (instrument 0 uses the envelopes below)
+label 29:A01B MusicTitleEnvZero
+comment 29:A01B constant volume 0 envelope (C0 00 00); instrument 0 pointers 2-4
+label 29:A01E MusicTitleEnvFullVolume
+comment 29:A01E constant volume 15 envelope (CF 00 00); instrument 0 pointer 1
+label 29:A021 MusicTitlePulse1
+comment 29:A021 pulse 1 channel start (header +5); FamiToneMusicPlay installs the pointer
+label 29:A2ED MusicTitlePulse2
+comment 29:A2ED pulse 2 channel start (header +7)
+label 29:A55D MusicTitleTriangle
+comment 29:A55D triangle channel start (header +9)
+label 29:A633 MusicTitleNoise
+comment 29:A633 noise channel start (header +11)
+label 29:AA18 MusicTitleDpcm
+comment 29:AA18 DPCM channel start (header +13)
+
+# --- Select module ---
+label 29:AAB6 MusicSelectHeader
+comment 29:AAB6 select music module header: 1 song, instrument list at AAC9, 5 channel pointers, tempo $0100 (NTSC)
+label 29:AAC9 MusicSelectInstruments
+comment 29:AAC9 instrument list; 8-byte records read by _FT2SetInstrument (instrument 0 uses the envelopes below)
+label 29:AAD1 MusicSelectEnvZero
+comment 29:AAD1 constant volume 0 envelope (C0 00 00); instrument 0 pointers 2-4
+label 29:AAD4 MusicSelectEnvFullVolume
+comment 29:AAD4 constant volume 15 envelope (CF 00 00); instrument 0 pointer 1
+label 29:AAD7 MusicSelectPulse1
+comment 29:AAD7 pulse 1 channel start (header +5); FamiToneMusicPlay installs the pointer
+label 29:ACDE MusicSelectPulse2
+comment 29:ACDE pulse 2 channel start (header +7)
+label 29:AEEF MusicSelectTriangle
+comment 29:AEEF triangle channel start (header +9)
+label 29:B05F MusicSelectNoise
+comment 29:B05F noise channel start (header +11)
+label 29:B2C6 MusicSelectDpcm
+comment 29:B2C6 DPCM channel start (header +13)
+label 29:AB29 MusicSelectLoopPulse1Pulse2
+comment 29:AB29 loop target of $FD at ACDB; reached from pulse 1 and pulse 2
+label 29:AD29 MusicSelectLoopPulse2Noise
+comment 29:AD29 loop target of $FD at AEEC; reached from pulse 2 and noise
+label 29:AF4B MusicSelectLoopTriangle
+comment 29:AF4B loop target of $FD at B05C; triangle channel
+label 29:B11C MusicSelectLoopNoise
+comment 29:B11C loop target of $FD at B2C3; noise channel
+label 29:B2E6 MusicSelectLoopDpcm
+comment 29:B2E6 loop target of $FD at B347; DPCM channel
+
+# --- Versus module ---
+label 29:B34A MusicVersusHeader
+comment 29:B34A versus music module header: 1 song, instrument list at B35D, 5 channel pointers, tempo $0100 (NTSC)
+label 29:B35D MusicVersusInstruments
+comment 29:B35D instrument list; 8-byte records read by _FT2SetInstrument (instrument 0 uses the envelopes below)
+label 29:B365 MusicVersusEnvZero
+comment 29:B365 constant volume 0 envelope (C0 00 00); instrument 0 pointers 2-4
+label 29:B368 MusicVersusEnvFullVolume
+comment 29:B368 constant volume 15 envelope (CF 00 00); instrument 0 pointer 1
+label 29:B36B MusicVersusPulse1
+comment 29:B36B pulse 1 channel start (header +5); the loop command at B3AB targets B36D, not this label
+label 29:B3AE MusicVersusPulse2
+comment 29:B3AE pulse 2 channel start (header +7); also loop target of $FD at B40D
+label 29:B410 MusicVersusTriangle
+comment 29:B410 triangle channel start (header +9); also loop target of $FD at B41A
+label 29:B41D MusicVersusNoise
+comment 29:B41D noise channel start (header +11); also loop target of $FD at B4AF
+label 29:B4B2 MusicVersusDpcm
+comment 29:B4B2 DPCM channel start (header +13); also loop target of $FD at B4BA
+
+# --- WinQuote module ---
+label 29:B4BD MusicWinQuoteHeader
+comment 29:B4BD win quote music module header: 1 song, instrument list at B4D0, 5 channel pointers, tempo $0100 (NTSC)
+label 29:B4D0 MusicWinQuoteInstruments
+comment 29:B4D0 instrument list; 8-byte records read by _FT2SetInstrument (instrument 0 uses the envelopes below)
+label 29:B4D8 MusicWinQuoteEnvZero
+comment 29:B4D8 constant volume 0 envelope (C0 00 00); instrument 0 pointers 2-4
+label 29:B4DB MusicWinQuoteEnvFullVolume
+comment 29:B4DB constant volume 15 envelope (CF 00 00); instrument 0 pointer 1
+label 29:B4DE MusicWinQuotePulse1
+comment 29:B4DE pulse 1 channel start (header +5); FamiToneMusicPlay installs the pointer
+label 29:B524 MusicWinQuotePulse2
+comment 29:B524 pulse 2 channel start (header +7)
+label 29:B560 MusicWinQuoteTriangle
+comment 29:B560 triangle channel start (header +9)
+label 29:B570 MusicWinQuoteNoise
+comment 29:B570 noise channel start (header +11)
+label 29:B654 MusicWinQuoteDpcm
+comment 29:B654 DPCM channel start (header +13)
+label 29:B520 MusicWinQuoteLoopPulse1
+comment 29:B520 loop target of $FD at B521; pulse 1 channel
+label 29:B55C MusicWinQuoteLoopPulse2
+comment 29:B55C loop target of $FD at B55D; pulse 2 channel
+label 29:B56C MusicWinQuoteLoopTriangle
+comment 29:B56C loop target of $FD at B56D; triangle channel
+label 29:B650 MusicWinQuoteLoopNoise
+comment 29:B650 loop target of $FD at B651; noise channel
+label 29:B659 MusicWinQuoteLoopDpcm
+comment 29:B659 loop target of $FD at B65A; DPCM channel loops on itself
+
+
+# ============================================================================================================
