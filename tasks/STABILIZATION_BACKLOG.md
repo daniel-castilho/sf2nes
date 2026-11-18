@@ -67,6 +67,17 @@ All items start as `PENDING`. The backlog does not resolve them on its own nor t
 - **D-02 — ACCEPTED (2026-11-17).** Maintainer accepted the external declarative format (TOML) as canonical source for future state/frame authoring. Implementation, migration, build, and tests remain unauthorized. Phase 3 acted only on symbols, whose canonical source is `annotations/sf2ne.ann`. A Gate C prototype exists (`cb01b25`) but is outside the canonical flow and unvalidated; see `docs/PROJECT_STATUS.md` §11.4/§12.
 - **D-04 — RESOLVED (2026-11-18).** Maintainer reopened character/feature implementation. This unblocks Track C work such as the Guile implementation plan. It does not authorize builds, tests, or emulator validation, which remain gated by D-05, and it does not resolve P8, P9, P10, or P11.
 
+### Guile Phase 2 decision record (2026-11-18)
+
+The Maintainer answered the Phase 1 audit questions; evidence is `tasks/GUILE_IMPLEMENTATION_AUDIT.md` and `tasks/GUILE_BANK_ALLOCATION.md` §6–§7.
+
+- **Bank allocation — APPROVED.** State bank `$09` (window `$A000`), shared frame/hitbox bank `$14` (window `$8000`), and reserved CHR pages `$39`/`$3A` plus `$3B` for the projectile candidate. Bank `$05` remains Ken's; `$0C` portrait PRG/CHR remains untouched; `$29`/`$2D` remain music. Page pairing still needs D-05 validation.
+- **CPU scope — APPROVED.** Guile is human-controlled only (P1/human); the AI fiche pair stays null and CPU stays on Ryu. Selection must not route CPU to Guile.
+- **Projectile path — APPROVED.** Parameterize the shared `ProjHit`/draw path in `$3F`/`$3B` instead of duplicating it.
+- **P10 mechanism — APPROVED.** Use the audited global remap of `CmdKeyAttackTbl[0C]/[0D]` to LK/HK (`$02`/`$03`). The Phase 1 consumer audit found no active Ryu/Ken use of those two keys. No wider remap is authorized.
+- **Pose list — PENDING.** The Maintainer must supply the approved Guile pose list before P8 asset work can be sized.
+- These decisions do not authorize builds, generation, scripts, tests, emulator runs, or any source/annotation/linker/ROM edit. D-05, P8, P9, and P11 remain open.
+
 ---
 
 ## State and language rules

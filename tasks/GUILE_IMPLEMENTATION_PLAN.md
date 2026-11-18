@@ -2,8 +2,8 @@
 
 **Project:** `daniel-castilho/sf2nes` (Street Fighter II NE, MMC5, 6502 assembly).
 **Plan date:** 2026-11-18.
-**Status:** execution plan for future implementation. This document is not authorization to modify code, generate sources, build, test, or run an emulator.
-**Baseline:** public `main` at `50d937680b17aecaac028be4e2aada5b83a991ed`; working tree clean except for one uncommitted draft of `tasks/GUILE_BEHAVIORAL_ENGINEERING_SPEC_EN.md`.
+**Status:** execution plan for future implementation. Decisions recorded in §0 are Maintainer approvals; this document itself does not authorize generation, builds, tests, or emulator runs, which remain gated by D-05.
+**Baseline:** public `main` at `50d937680b17aecaac028be4e2aada5b83a991ed`; reconciliation and Phase 1/2 documents are committed locally and not pushed.
 **Language rule:** all source code, comments, documentation, and plan files are written in English.
 
 ---
@@ -18,15 +18,19 @@
 | P9 | Exact directions/buttons accepted by aerial throws in World 910522 | `PENDING` | Blocks aerial-throw acceptance |
 | P10 | Mapping of three arcade strengths to NES controls | **APPROVED (2026-11-18)**: Sonic Boom LP/HP, Flash Kick LK/HK, two strengths per special, no medium variant | Implementation validation only; the control decision is closed |
 | P11 | Traceability of the decision making aerial throws mandatory | `PENDING` | Blocks aerial-throw implementation claim |
+| Bank allocation | Guile state/frame/hitbox banks and CHR pages | **APPROVED (2026-11-18)**: state `$09`, frame/hitbox `$14`, CHR `$39`/`$3A` plus `$3B` reserve | `tasks/GUILE_BANK_ALLOCATION.md` §7; Maintainer answers Q1–Q3 |
+| CPU scope | Whether Guile must work as CPU | **APPROVED (2026-11-18)**: P1/human only; AI pointer stays null; CPU stays Ryu | Maintainer answer Q4 |
+| Projectile path | How Sonic Boom uses the shared projectile engine | **APPROVED (2026-11-18)**: parameterize the shared hit/draw path | Maintainer answer Q5 |
+| P10 mechanism | How Flash Kick LK/HK is implemented | **APPROVED (2026-11-18)**: audited global remap of `CmdKeyAttackTbl[0C]/[0D]`; no wider remap | Maintainer answer Q6; Phase 1 consumer audit |
 
-D-04 and P10 are resolved. P8, P9, P11 and D-05 stay open and are treated as gates below. Resolving them later does not require rewriting this plan; it only opens the corresponding gate.
+D-04, P10, the Phase 2 allocation, CPU scope, projectile path, and the P10 mechanism are resolved. P8 (including the Maintainer pose list), P9, P11 and D-05 stay open and are treated as gates below. Resolving them later does not require rewriting this plan; it only opens the corresponding gate.
 
 ### Non-negotiable constraints
 
 1. Do not allocate bank `$05` to Guile; it holds Ken's hand-written partial states (`src/bank_05.s`, `docs/ARCHITECTURE.md`).
-2. Do not remap the global `CmdKeyAttackTbl` and do not connect `$3F:E0C7` to Guile without demonstrated semantics.
+2. The only approved global `CmdKeyAttackTbl` change is the remap of keys `$0C`/`$0D` to LK/HK; no wider remap is allowed without a new decision. Do not connect `$3F:E0C7` to Guile without demonstrated semantics.
 3. Do not copy Ryu's fiche pointers, state order, frame counts, or offsets by assumption.
-4. Do not add Guile AI; the AI pointer stays null and CPU must not be routed to Guile.
+4. Do not add Guile AI; the AI pointer stays null and CPU must not be routed to Guile (approved Q4).
 5. Preserve the existing portrait path `PortraitWinLayoutTbl+6` (`3C:84AC`) → `D0C_8000` unless a documented replacement is proven.
 6. `sf2ne.cfg` is **generated** by `tools/disasm.py`; allocation changes go through `annotations/sf2ne.ann` (`keepbank BB`) plus `make gen`, never by hand-editing the cfg.
 
@@ -105,7 +109,7 @@ A Guile frame set comparable to Ken's needs roughly 3–5 KB, so bank `$0C` (813
 | Run `make gen` / `make gen-states` | D-05 |
 | Run `make` / `ld65` / inspect fresh map | D-05 |
 | Produce sprites, palettes, hitboxes, audio | P8 |
-| Remap `CmdKeyAttackTbl` or add per-character attack mapping | P10 approved; consumer audit still required |
+| Apply the approved `CmdKeyAttackTbl[0C]/[0D]` remap | Approved (Q6); Phase 1 consumer audit complete. Any wider remap needs a new decision |
 | Implement aerial throws | P9 + P11 |
 | Run Mesen/MAME validation | D-05 |
 
@@ -134,6 +138,8 @@ Each phase lists its objective, work, deliverable, exit criterion, and gate.
 
 **Objective:** turn every implementation step into a label-and-address fact before writing data.
 
+**Status: COMPLETE.** Delivered as `tasks/GUILE_IMPLEMENTATION_AUDIT.md` (commit `de011b9`). All seven audit questions were answered by the Maintainer on 2026-11-18; Q7 (pose list) is still pending under P8.
+
 **Work — produce `tasks/GUILE_IMPLEMENTATION_AUDIT.md` (English) covering:**
 1. Fiche column 3, byte by byte, for all 10 pointer pairs (`3C:8000–80BE`), with the effective value and the target label.
 2. The direction-pointer quirk (`3B:E025`) and what it implies for the low byte.
@@ -155,6 +161,8 @@ Each phase lists its objective, work, deliverable, exit criterion, and gate.
 
 **Objective:** choose banks and pages before writing data.
 
+**Status: COMPLETE — APPROVED (2026-11-18).** Delivered as `tasks/GUILE_BANK_ALLOCATION.md` (commit `ed461fd`). Approved allocation: state `$09`, shared frame/hitbox `$14`, CHR `$39`/`$3A` plus `$3B` reserve. The approval is recorded in §0 and in the allocation document §7.
+
 **Work:**
 1. Recommend a state bank from the free `$A000`-window set, excluding `$05`, `$29`, `$2D`.
 2. Recommend a frame bank and a hitbox bank, with the trade-offs from Phase 1.
@@ -163,14 +171,14 @@ Each phase lists its objective, work, deliverable, exit criterion, and gate.
 5. Verify by reading the reference ROM that every chosen bank is fully `$FF` and unreferenced.
 
 **Deliverable:** `tasks/GUILE_BANK_ALLOCATION.md`.
-**Exit:** Maintainer approval of the allocation. **Gate:** bank allocation.
+**Exit:** Maintainer approval of the allocation — granted 2026-11-18. **Gate:** bank allocation — resolved; no source/annotation/build change has yet been applied.
 
 ### Phase 3 — Asset production (P8 gate)
 
 **Objective:** obtain legally usable art and audio.
 
 **Work:**
-1. Derive the pose list from the required state set, not from Ryu's 94 poses by default.
+1. Use the Maintainer-provided pose list (Q7 — still pending). Until it is supplied, derive nothing from Ryu's 94 poses by default.
 2. Produce or license-verify sprites, palettes, per-frame hitboxes, and audio.
 3. Document origin, license, conversion steps, tile budget, and CHR page assignment.
 4. Register any gap explicitly; do not invent samples or data.
@@ -223,13 +231,13 @@ Each phase lists its objective, work, deliverable, exit criterion, and gate.
 
 **Work:**
 1. Sonic Boom: frame with effect `$0B` triggers `ProjLaunch`; verify spawn offsets and direction bit.
-2. Parameterize `ProjHit` so Guile does not inherit `$CB`/`$6C`; choose table-driven values or a documented per-fighter path.
+2. Parameterize the shared `ProjHit`/draw path so Guile does not inherit `$CB`/`$6C`; use table-driven values (Q5 approved).
 3. Flash Kick: charge down → up; anti-air collision boxes; coherent landing.
-4. Command list `[08,09,0C,0D,FF]`; resolve `$0C/$0D` → kicks through a per-character mapping or an audited global remap.
-5. Do not connect `3F:E0C7` without demonstrated semantics.
+4. Command list `[08,09,0C,0D,FF]`; apply the approved global remap of `CmdKeyAttackTbl[0C]/[0D]` to LK/HK (`$02`/`$03`). No other key changes.
+5. Do not connect `3F:E0C7` without demonstrated semantics; the approved remap does not by itself prove list order.
 
 **Deliverable:** special states, command list, projectile parameterization.
-**Exit:** both specials reachable and distinguishable by strength. **Gate:** P10 is approved; only the implementation validation remains.
+**Exit:** both specials reachable and distinguishable by strength. **Gate:** P10 and its mechanism are approved; implementation validation still requires D-05.
 
 ### Phase 8 — Throws
 
@@ -313,16 +321,16 @@ Do not touch `src/bank_05.s`.
 
 ## 5. Open decisions register
 
-| # | Question | Blocks | Owner |
+| # | Question | Status / blocks | Owner |
 |---|---|---|---|
-| 1 | State bank, frame bank, hitbox bank, CHR pages | Phases 4–6 | Maintainer |
-| 2 | Reuse bank `$0C` for frames or allocate a new bank | Phase 4 | Maintainer |
-| 3 | Exact `FighterChrPage` pairing rule for two fighters | Phase 3 | Engineer (Phase 1 audit) |
-| 4 | `ProjHit` parameterization: table or per-fighter branch | Phase 7 | Engineer + Maintainer |
-| 5 | `CmdKeyAttackTbl`: per-character mapping or audited global remap | Phase 7 | Engineer + Maintainer (P10 is approved; the mechanism is not) |
-| 6 | Aerial-throw directions and acceptance rule | Phase 8 | Maintainer (P9, P11) |
-| 7 | Which assets are legally usable | Phase 3 | Maintainer (P8) |
-| 8 | Build/test/emulator authorization | Phases 10–11 | Maintainer (D-05) |
+| 1 | State bank, frame bank, hitbox bank, CHR pages | **RESOLVED (2026-11-18)**: `$09`, `$14`, `$39`/`$3A` + `$3B` | Maintainer |
+| 2 | Reuse bank `$0C` for frames or allocate a new bank | **RESOLVED**: new bank `$14`; `$0C` unchanged | Maintainer |
+| 3 | Exact `FighterChrPage` pairing rule for two fighters | Open; D-05 validation; CHR pages reserved provisionally | Engineer + D-05 |
+| 4 | `ProjHit` parameterization: table or per-fighter branch | **RESOLVED**: parameterize shared path | Maintainer (Q5) |
+| 5 | `CmdKeyAttackTbl`: per-character mapping or audited global remap | **RESOLVED**: audited global remap of `$0C`/`$0D` only | Maintainer (Q6) |
+| 6 | Aerial-throw directions and acceptance rule | Open; blocks Phase 8 | Maintainer (P9, P11) |
+| 7 | Approved Guile pose list and legally usable assets | Open; blocks Phase 3/4 | Maintainer (Q7, P8) |
+| 8 | Build/test/emulator authorization | Open; blocks Phases 10–11 | Maintainer (D-05) |
 
 ---
 
@@ -335,25 +343,25 @@ Do not touch `src/bank_05.s`.
 | `make gen` overwrites hand-written data | Declare `keepbank BB` before the first generation |
 | `sf2ne.cfg` hand-edited and later regenerated | Treat the cfg as generated output; change the annotation instead |
 | Guile inherits Ryu's projectile damage/reaction | Parameterize `ProjHit` before wiring Sonic Boom |
-| Global `CmdKeyAttackTbl` remap breaks Ryu/Ken | Audit all consumers; prefer a per-character mapping |
+| Approved `CmdKeyAttackTbl` remap breaks Ryu/Ken | Phase 1 audit found no active Ryu/Ken use of keys `$0C`/`$0D`; change only those two bytes; any wider remap needs a new decision |
 | Aerial throws forced into `$09` | Extend the dispatcher with a new condition code |
-| CPU routed to Guile with a null AI pointer | Restrict CPU to Ryu and document it |
-| Asset provenance unclear | Keep P8 closed until provenance is recorded |
-| Portraits/frames share bank `$0C` and collide | Size the data in Phase 1 before choosing |
+| CPU routed to Guile with a null AI pointer | **Resolved by Q4**: human-controlled only; selection must block CPU routing |
+| Asset provenance unclear or pose list absent | Keep P8 closed until provenance and the Maintainer pose list are recorded |
+| Portraits/frames share bank `$0C` and collide | **Resolved by Q2**: frames/hitboxes use `$14`; `$0C` unchanged |
 | Validation inferred from a successful build | Report manual status explicitly; never infer |
 
 ---
 
 ## 7. Completion criteria
 
-- [ ] Phase 0 committed: spec reconciled with `50d9376`, D-04 recorded as resolved.
-- [ ] Phase 1 audit exists and every step maps to a label and an address.
-- [ ] Allocation approved; bank `$05` untouched.
+- [x] Phase 0 committed: spec reconciled with `50d9376`, D-04 recorded as resolved.
+- [x] Phase 1 audit exists and every step maps to a label and an address.
+- [x] Allocation approved (state `$09`, frame/hitbox `$14`, CHR `$39`/`$3A` + `$3B`); bank `$05` untouched.
 - [ ] Guile fiche has no null pointer in the human-controlled flow.
 - [ ] `FighterRoundInit` loads Guile's own state and frame pointers.
 - [ ] Normal moves, Sonic Boom, and Flash Kick work with Guile data.
 - [ ] Ground throws work; aerial throws either implemented under P9+P11 or reported as gated.
 - [ ] Guile selectable in the supported slots; CPU stays on Ryu.
-- [ ] No Guile AI and no global table remap without a recorded decision.
+- [ ] No Guile AI; only the recorded `CmdKeyAttackTbl[0C]/[0D]` remap; no other table remap.
 - [ ] Build and manual validation executed only under D-05, with explicit status.
 - [ ] Documentation describes the delivered state in English.

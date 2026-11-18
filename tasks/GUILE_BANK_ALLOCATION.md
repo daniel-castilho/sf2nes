@@ -1,11 +1,12 @@
 # Guile implementation — Phase 2 bank allocation proposal
 
-**Status:** PROPOSAL ONLY — NOT APPROVED, NOT ALLOCATED.  
+**Status:** APPROVED BY MAINTAINER (2026-11-18) — see §7. The allocation is authorized; no annotation, source, linker, ROM, or build change has been applied yet.  
 **Prepared:** 2026-11-18.  
-**Plan:** `tasks/GUILE_IMPLEMENTATION_PLAN.md`, Phase 2.  \n**Evidence:** `tasks/GUILE_IMPLEMENTATION_AUDIT.md` (Phase 1), generated `src/`, `annotations/sf2ne.ann`, `sf2ne.cfg`, and read-only byte measurements of `rom/sf2ne_demo.nes`.  
-**Gates still open:** Maintainer approval of bank allocation; D-05 for any `make gen`, `make`, test, or emulator run; P8 for sprites/palettes/hitboxes/audio; P9 + P11 for aerial throws. D-04 is resolved and P10 is approved.
+**Plan:** `tasks/GUILE_IMPLEMENTATION_PLAN.md`, Phase 2.  
+**Evidence:** `tasks/GUILE_IMPLEMENTATION_AUDIT.md` (Phase 1), generated `src/`, `annotations/sf2ne.ann`, `sf2ne.cfg`, and read-only byte measurements of `rom/sf2ne_demo.nes`.  
+**Gates still open:** D-05 for any `make gen`, `make`, test, or emulator run; P8 for sprites/palettes/hitboxes/audio and the Maintainer pose list; P9 + P11 for aerial throws. D-04, P10, and the Phase 2 allocation are resolved/approved.
 
-This document recommends addresses and the exact edits that would be needed **if** the Maintainer approves them. It does not change `annotations/`, `src/`, `sf2ne.cfg`, the ROM, or the build system.
+This document records the approved addresses and the exact edits still to be applied. It does not change `annotations/`, `src/`, `sf2ne.cfg`, the ROM, or the build system.
 
 ---
 
@@ -155,26 +156,28 @@ When P8 produces art, set the first byte of Guile's metasprite records to `$39` 
 
 ---
 
-## 6. Decisions still required
+## 6. Decision record
 
-Approval of this proposal should explicitly answer:
+The Maintainer answered the Phase 1 audit questions on 2026-11-18:
 
-1. **Q1:** approve state bank `$09` (or name another `$A000`-window bank; never `$05`).
-2. **Q2:** approve `$14` as shared frame/hitbox bank (or choose a fresh bank/reuse `$0C` with its coupling risk).
-3. **Q3:** approve the provisional CHR reserve `$39`/`$3A` (+`$3B` for projectile), subject to D-05 confirmation of page pairing.
-4. **Q4:** decide whether Guile must work as CPU. If yes, approve an AI script table in `$14` and a thinker/shared stub; if no, restrict Guile to the human slot and leave pair 9 null.
-5. **Q5:** decide whether to parameterize the shared projectile hit/draw path in `$3F`/`$3B` or use a parallel path; this affects the 867/133-byte margins.
-6. **Q6:** choose the P10 mechanism for Flash Kick buttons (global remap of `CmdKeyAttackTbl[0C]/[0D]`, new charge keys, or per-character attack mapping). P10 itself is approved; only the mechanism is pending.
-7. **Q7:** fix the pose list under P8 before asset work is sized.
+| Question | Decision | Consequence |
+|---|---|---|
+| Q1 — state bank | **Approve `$09`** | `CharStateBankTbl[3]` → `$09`; `GuileDirTransTbl` at `09:A000`; `$05` untouched |
+| Q2 — frame/hitbox bank | **Approve `$14` shared** | `CharFrameBankTbl[3]` and `CharHitBoxBankTbl[3]` → `$14`; `$0C` portrait data untouched |
+| Q3 — CHR pages | **Reserve `$39`/`$3A`, plus `$3B` for projectile** | Provisional until D-05 confirms the exact page-pairing rule |
+| Q4 — CPU scope | **P1/human only** | Leave AI pair 9 null; CPU stays Ryu; selection must not route CPU to Guile |
+| Q5 — projectile path | **Parameterize the shared path** | Patch the shared hit/draw path in `$3F`/`$3B` instead of duplicating it |
+| Q6 — P10 mechanism | **Global remap of `CmdKeyAttackTbl[0C]/[0D]`** | Set keys `$0C`/`$0D` to LK/HK (`$02`/`$03`); change is limited to those two bytes; broader remaps still require a new decision |
+| Q7 — pose list | **Maintainer to provide** | Still pending; asset work and sizing remain P8-blocked until the list is supplied |
 
-P8, P9, P11, and D-05 remain open. This proposal does not resolve them.
+P8, P9, P11, and D-05 remain open. This decision record does not resolve them.
 
 ---
 
 ## 7. Approval record
 
-Until the Maintainer records approval here (or in `tasks/STABILIZATION_BACKLOG.md` / `docs/PROJECT_STATUS.md`), the allocation status remains:
+**APPROVED BY MAINTAINER — 2026-11-18.** The approved allocation is state bank `$09`, shared frame/hitbox bank `$14`, and reserved CHR pages `$39`/`$3A` with `$3B` for the projectile candidate. Guile is human-controlled only; the shared projectile path is parameterized; the P10 Flash Kick mechanism is the audited global remap of keys `$0C`/`$0D`. Q7 (pose list) remains pending under P8.
 
-**PROPOSED — NOT APPROVED — NOT APPLIED.**
+**Applied status:** NOT APPLIED. No annotation, source, linker configuration, ROM, build, generator, test, or emulator change has been made under this approval.
 
-**Exit criterion:** Maintainer approval naming the final state bank, frame/hitbox bank, CHR pages, CPU scope, and P10 mechanism. Only after that may Phase 3+ work be scheduled, still respecting D-05, P8, P9, and P11.
+**Exit criterion:** Phase 2 is complete at approval. Phase 3+ may be scheduled only against the still-open gates: Maintainer pose list + P8 for assets, D-05 for build/generation/tests/emulator, and P9 + P11 for aerial throws.

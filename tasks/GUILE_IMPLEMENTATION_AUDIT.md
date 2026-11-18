@@ -4,7 +4,7 @@
 **Prepared:** 2026-11-18.  
 **Plan:** `tasks/GUILE_IMPLEMENTATION_PLAN.md`, Phase 1.  
 **Evidence base:** generated `src/bank_*.s`, `src/kernel.inc`, `src/ram.inc`, `annotations/sf2ne.ann`, `docs/FORMATS.md`, `docs/ARCHITECTURE.md`, and read-only byte measurements of `rom/sf2ne_demo.nes`. No `make`, `make gen`, script, test, or emulator was run.  
-**Gates still open:** D-05 (all builds/generation/tests/emulator runs), P8 (art/palette/audio/hitbox provenance), P9 + P11 (aerial throws), Maintainer approval of bank allocation. D-04 is resolved and P10 is approved.
+**Gates still open:** D-05 (all builds/generation/tests/emulator runs), P8 (art/palette/audio/hitbox provenance and pose list), P9 + P11 (aerial throws). D-04, P10, and the Phase 2 bank allocation are resolved/approved; see `tasks/GUILE_BANK_ALLOCATION.md` §7.
 
 ---
 
