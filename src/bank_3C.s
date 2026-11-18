@@ -67,10 +67,10 @@ CharCmdListHiTbl:
     .byte $E0,$00,$00,$00,$00,$00,$00,$00,$00   ; 80AB              Ken: >CmdKeyListRyu
 CharAiScriptLoTbl:
     .byte <(RyuAiIdleScriptTbl)                 ; 80B4  72
-    .byte $E0,$00,$00,$00,$00,$00,$00,$00,$00   ; 80B5              Ken: <D04_90E0 (AI stub)
+    .byte $E0,$00,$00,$00,$00,$00,$00,$00,$00   ; 80B5              Ken: <KenAiStubScriptTbl (AI stub)
 CharAiScriptHiTbl:
     .byte >(RyuAiIdleScriptTbl)                 ; 80BE  8E
-    .byte $90,$00,$00,$00,$00,$00,$00,$00,$00   ; 80BF              Ken: >D04_90E0 (AI stub)
+    .byte $90,$00,$00,$00,$00,$00,$00,$00,$00   ; 80BF              Ken: >KenAiStubScriptTbl (AI stub)
 CharStateBankTbl:
     .byte $01,$05,$01,$01,$01,$01,$01,$01,$00,$01; 80C8              column 1 (Ken) = state bank $05
 CharFrameBankTbl:
@@ -132,7 +132,7 @@ PortraitLoseTilesTbl:
     .res 48, $FF                                ; 8476
 PortraitWinLayoutTbl:
     .word D00_8A9D                              ; 84A6  9D 8A
-    .word D04_8A59                              ; 84A8  59 8A
+    .word KenWinPortraitLayout                  ; 84A8  59 8A
     .word D08_8000                              ; 84AA  00 80
     .word D0C_8000                              ; 84AC  00 80
     .word D10_8000                              ; 84AE  00 80

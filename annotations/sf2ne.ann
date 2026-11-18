@@ -2128,11 +2128,19 @@ comment 00:91BA Ryu AI: starts RyuAiScriptDefend ($8F24) always
 # ============================================================================================================
 # BANK $04 — Ken frames/metasprites/collision (original data) + AI stub
 # ============================================================================================================
+# Data batch: fiche-referenced Ken data (win portrait layout, AI stub table/script).
+# Only labels change; no Ken AI is implemented.
+label 04:8A59 KenWinPortraitLayout
+comment 04:8A59 Ken win/normal portrait layout, entry 1 of PortraitWinLayoutTbl (3C:84A8); also reused by $90F1
 # Ken AI stub (this delivery's CPU remains Ryu). Ken's fiche points to $90E0.
 # There are 8 scripts, like RyuAiIdleScriptTbl at $00:8E72, and all lead to the $FF terminator, so that
 # no pointer falls into collision data.
+label 04:90E0 KenAiStubScriptTbl
+comment 04:90E0 8 identical pointers to KenAiStubScript, from CharAiScriptLoTbl/HiTbl column 1 (3C:80B5/80BF)
 patch 04:90E0 F0 90 F0 90 F0 90 F0 90 F0 90 F0 90 F0 90 F0 90
 table 04:90E0 words n=8
+label 04:90F0 KenAiStubScript
+comment 04:90F0 single $FF byte: stub script ends immediately; $90F1 starts the defeat portrait layout
 block 04:90E0 Ken AI stub (this delivery's CPU remains Ryu).
 block 04:90E0 Ken's fiche points here ($90E0). There are 8 scripts, like RyuAiIdleScriptTbl at $00:8E72,
 block 04:90E0 and all lead to the $FF terminator, so that no pointer falls into collision data.
@@ -2338,9 +2346,9 @@ comment 3C:80A1 Ken: <CmdKeyListRyu
 patch 3C:80AB E0
 comment 3C:80AB Ken: >CmdKeyListRyu
 patch 3C:80B5 E0
-comment 3C:80B5 Ken: <D04_90E0 (AI stub)
+comment 3C:80B5 Ken: <KenAiStubScriptTbl (AI stub)
 patch 3C:80BF 90
-comment 3C:80BF Ken: >D04_90E0 (AI stub)
+comment 3C:80BF Ken: >KenAiStubScriptTbl (AI stub)
 patch 3C:80C9 05
 comment 3C:80C8 column 1 (Ken) = state bank $05
 # Ken: triple 0 = blue (B) and triple 1 = red (A). Engine writes confirmation button to zp_12
@@ -2356,7 +2364,7 @@ comment 3C:81E3 Ken portrait: triple 0 (B) = blue
 patch 3C:81E6 16
 comment 3C:81E6 Ken portrait: triple 1 (A) = red
 # Ken's defeat portrait (RoundResult != 0). Ken has no own "hurt" art; we reuse
-# normal layout ($04:8A59) with defeat palettes, as Ryu does in column 0:
+# normal layout (KenWinPortraitLayout, $04:8A59) with defeat palettes, as Ryu does in column 0:
 #   82C6 (BG1) = normal palette (in Ryu, 82C6 == 81D6) -> keeps gi color consistent with fight;
 #   833E (BG0) = normal palette with colors 1/2 swapped (lighter skin, defeat effect);
 #   83B6 (BG2) = defeat palette 2 (same as Ryu), ready for attribute map;

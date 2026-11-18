@@ -171,8 +171,8 @@
     .byte $00,$02,$F8,$B8,$78,$7A,$80,$00,$02,$F0,$B8,$52,$54,$04,$F0,$C8; 8A30
     .byte $56,$58,$5A,$5C,$03,$F0,$D8,$5E,$60,$62,$04,$F0,$E8,$64,$66,$68; 8A40
     .byte $6A,$04,$F0,$F8,$6C,$6E,$70,$72,$80   ; 8A50
-D04_8A59:
-    .byte $10,$00,$06,$00,$AF,$08,$0A,$0C,$0E,$10,$12,$06,$00,$BF,$14,$16; 8A59
+KenWinPortraitLayout:
+    .byte $10,$00,$06,$00,$AF,$08,$0A,$0C,$0E,$10,$12,$06,$00,$BF,$14,$16; 8A59              Ken win/normal portrait layout, entry 1 of PortraitWinLayoutTbl (3C:84A8); also reused by $90F1
     .byte $18,$1A,$1C,$1E,$06,$00,$CF,$20,$22,$24,$26,$28,$2A,$04,$00,$DF; 8A69
     .byte $2C,$2E,$30,$32,$04,$00,$EF,$34,$36,$38,$3A,$80,$00,$02,$20,$DF; 8A79
     .byte $00,$02,$02,$20,$EF,$04,$06,$80,$26,$00,$02,$F8,$B2,$60,$62,$80; 8A89
@@ -281,17 +281,17 @@ D04_8A59:
 ; Ken AI stub (this delivery's CPU remains Ryu).
 ; Ken's fiche points here ($90E0). There are 8 scripts, like RyuAiIdleScriptTbl at $00:8E72,
 ; and all lead to the $FF terminator, so that no pointer falls into collision data.
-D04_90E0:
-    .word D04_90F0                              ; 90E0  F0 90
-    .word D04_90F0                              ; 90E2  F0 90
-    .word D04_90F0                              ; 90E4  F0 90
-    .word D04_90F0                              ; 90E6  F0 90
-    .word D04_90F0                              ; 90E8  F0 90
-    .word D04_90F0                              ; 90EA  F0 90
-    .word D04_90F0                              ; 90EC  F0 90
-    .word D04_90F0                              ; 90EE  F0 90
-D04_90F0:
-    .byte $FF,$10,$00,$06,$00,$AF,$08,$0A,$0C,$0E,$10,$12,$06,$00,$BF,$14; 90F0
+KenAiStubScriptTbl:
+    .word KenAiStubScript                       ; 90E0  F0 90       8 identical pointers to KenAiStubScript, from CharAiScriptLoTbl/HiTbl column 1 (3C:80B5/80BF)
+    .word KenAiStubScript                       ; 90E2  F0 90
+    .word KenAiStubScript                       ; 90E4  F0 90
+    .word KenAiStubScript                       ; 90E6  F0 90
+    .word KenAiStubScript                       ; 90E8  F0 90
+    .word KenAiStubScript                       ; 90EA  F0 90
+    .word KenAiStubScript                       ; 90EC  F0 90
+    .word KenAiStubScript                       ; 90EE  F0 90
+KenAiStubScript:
+    .byte $FF,$10,$00,$06,$00,$AF,$08,$0A,$0C,$0E,$10,$12,$06,$00,$BF,$14; 90F0              single $FF byte: stub script ends immediately; $90F1 starts the defeat portrait layout
     .byte $16,$18,$1A,$1C,$1E,$06,$00,$CF,$20,$22,$24,$26,$28,$2A,$04,$00; 9100
     .byte $DF,$2C,$2E,$30,$32,$04,$00,$EF,$34,$36,$38,$3A,$80,$00,$02,$20; 9110
     .byte $DF,$00,$02,$02,$20,$EF,$04,$06,$80,$00,$80; 9120

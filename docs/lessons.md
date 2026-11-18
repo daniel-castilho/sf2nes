@@ -277,15 +277,15 @@ Bank `$00` is the only Ryu code bank modified, and only in those two bytes.
 
 ---
 
-## 10. Appendix — what the `$3C`/`$3F`/`$20`/`$36`/`$3B`/`$37`/`$29`/`$2D`/`$01`/`$05`/`$00` data naming batches taught
+## 10. Appendix — what the `$3C`/`$3F`/`$20`/`$36`/`$3B`/`$37`/`$29`/`$2D`/`$01`/`$05`/`$00`/`$04` data naming batches taught
 
 The data batches (33 labels from `$3C`, 15 from `$3F`, 30 from `$20`, 27 from `$36`, 35 from `$3B`,
-17 from `$37`, 46 from `$29`, 14 from `$2D`, 38 from `$01`, 38 from `$05` and 31 from `$00`, see
-`tasks/DATA_NAMING_3C.md`, `tasks/DATA_NAMING_3F.md`, `tasks/DATA_NAMING_20.md`,
+17 from `$37`, 46 from `$29`, 14 from `$2D`, 38 from `$01`, 38 from `$05`, 31 from `$00` and 3 from
+`$04`, see `tasks/DATA_NAMING_3C.md`, `tasks/DATA_NAMING_3F.md`, `tasks/DATA_NAMING_20.md`,
 `tasks/DATA_NAMING_36.md`, `tasks/DATA_NAMING_3B.md`, `tasks/DATA_NAMING_37.md`,
 `tasks/DATA_NAMING_29.md`, `tasks/DATA_NAMING_2D.md`, `tasks/DATA_NAMING_01.md`,
-`tasks/DATA_NAMING_05.md` and `tasks/DATA_NAMING_00.md`) did not change bytes, but exposed these
-reading pitfalls:
+`tasks/DATA_NAMING_05.md`, `tasks/DATA_NAMING_00.md` and `tasks/DATA_NAMING_04.md`) did not change
+bytes, but exposed these reading pitfalls:
 
 * **Do not classify a bank by its address.** Initial triage treated `$29`/`$2D` as "AI" because they are
   near the engine; generated headers show they are **FamiTone2 music** (173 labels). Reading the header
@@ -418,6 +418,15 @@ reading pitfalls:
   (`CondEmPe`→`CondStanding`, `CondAgachado`→`CondCrouching`, `CondNoAr`→`CondInAir`,
   `CondInputBaixo`→`CondInputDown`, `CondProjetilLivre`→`CondProjectileFree`). SHA-1 stayed
   `3ad177a0…` and `src/bank_05.s` (hand-written) was untouched.
+* **One byte can separate a stub from real data.** In `$04`, the fiche's AI table (`$90E0`) points eight
+  times to `$90F0`, a single `$FF` terminator: the stub script for this delivery's Ryu-only CPU. `$90F1`,
+  the very next byte, is the **defeat portrait layout** reached from `PortraitLoseLayoutTbl` (`3C:84BC`).
+  Naming by proximity would have merged two unrelated structures; the first byte plus the consumer
+  (`$90E0` vs `3C:84BC`) is what separates them.
+* **A "copy to free space" patch can make the original address ambiguous.** Ken's normal win layout
+  `$8A59` is also the source of the `$90F1` defeat copy. The label `KenWinPortraitLayout` documents the
+  original role; the `$90F1` comment must say it is a copy with an extra empty group, or the next reader
+  will "deduplicate" the two and reintroduce the 255-iteration portrait overflow.
 
 **Practical rule:** for each batch, (1) read the consumer, (2) propose name + confidence, (3) apply only
 labels/comments, (4) run `make gen` from the canonical `.ann` (or validate in a scratch copy), then run

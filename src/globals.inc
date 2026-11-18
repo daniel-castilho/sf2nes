@@ -212,7 +212,6 @@
 .global D00_9455
 .global D00_945E
 .global D00_9467
-.global D04_8A59
 .global D08_8000
 .global D0C_8000
 .global D10_8000
@@ -242,6 +241,7 @@
 .global FlagUssr
 .global JoyPollBoth
 .global JoyPollBothSel
+.global KenWinPortraitLayout
 .global Match
 .global MusicFightHeader
 .global MusicSelectHeader
