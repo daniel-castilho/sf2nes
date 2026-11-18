@@ -111,7 +111,7 @@ class Project:
         for lineno, raw in enumerate(open(ANN, encoding='utf-8'), 1):
             ln = raw.strip()
             if ln.startswith('|'):                      # linha de assembly de um bloco `alt`
-                if cur_alt is None: sys.exit('%s:%d: linha "|" fora de um bloco alt' % (ANN, lineno))
+                if cur_alt is None: sys.exit('%s:%d: "|" line outside an alt block' % (ANN, lineno))
                 cur_alt[2].append(raw.rstrip('\n').split('|', 1)[1])
                 continue
             cur_alt = None
@@ -173,13 +173,13 @@ class Project:
                 elif cmd == 'keepbank':                 # keepbank BB   (banco mantido a mao: garante o segmento no cfg)
                     self.keepbanks.add(int(p[1], 16))
                 else:
-                    raise ValueError('diretiva desconhecida')
+                    raise ValueError('unknown directive')
             except Exception as e:
                 sys.exit('%s:%d: %s  (%s)' % (ANN, lineno, ln, e))
         # as sobrescritas valem para a analise e para a emissao (codigo e dados saem ja' alterados)
         for off, bs in self.patches:
             if not bs or off < 0 or off + len(bs) > len(self.prg) or (off >> 13) != ((off + len(bs) - 1) >> 13):
-                sys.exit('%s: patch em %s precisa ter bytes e nao pode cruzar banco' % (ANN, fmt_off(off)))
+                sys.exit('%s: patch at %s needs bytes and cannot cross a bank' % (ANN, fmt_off(off)))
             self.prg[off:off + len(bs)] = bytes(bs)
 
     def parse(self, s):
@@ -374,13 +374,13 @@ class Project:
                     addr = (((p[oh] << 8) | p[ol]) + 1) & 0xFFFF
                     t = tgt_off(addr)
                     if t is None or not (self.kind[t] == OPC or self.tentative(t)):
-                        self.warn.add('tabela de salto em %s: entrada %d ($%04X) nao parece codigo' % (fmt_off(off), i, addr)); continue
+                        self.warn.add('jump table at %s: entry %d ($%04X) does not look like code' % (fmt_off(off), i, addr)); continue
                     self.typed[self.canon(ol)] = ('lo', t, 1); self.typed[self.canon(oh)] = ('hi', t, 1)
                     self.kind[ol] = self.kind[oh] = DAT
                     new.append(t); cnt += 1
                 self.rts_tables.append((off, 'split', lo, hi, n))
             else:
-                self.warn.add('salto via RTS em %s com tabelas nao reconhecidas (lo=$%04X hi=$%04X)' % (fmt_off(off), lo, hi))
+                self.warn.add('RTS jump at %s with unrecognized tables (lo=$%04X hi=$%04X)' % (fmt_off(off), lo, hi))
         return [t for t in new if self.kind[t] != OPC]
 
     def find_islands(self):
@@ -439,7 +439,7 @@ class Project:
             if self.traced[off]:
                 r = self.dec(off)
                 if r is None:
-                    print('AVISO: trace marcou %s como instrucao, mas o opcode e invalido' % fmt_off(off)); continue
+                    print('WARNING: trace marked %s as an instruction, but the opcode is invalid' % fmt_off(off)); continue
                 self.mark(off, r)
         for off in list(self.ins):
             work.extend(self.successors(off, self.ins[off]))
@@ -466,19 +466,19 @@ class Project:
             off = work.pop()
             if self.kind[off] == OPC or off in seen_fail: continue
             if self.kind[off] in (OPR, DAT):
-                seen_fail.add(off); self.rejected.append((off, 'cai no meio de instrucao/dado')); continue
+                seen_fail.add(off); self.rejected.append((off, 'falls inside an instruction/data')); continue
             block = []; o = off; ok = True; why = ''
             while True:
                 if self.kind[o] == OPC: break
-                if self.kind[o] != UNK: ok = False; why = 'encosta em operando/dado em %s' % fmt_off(o); break
+                if self.kind[o] != UNK: ok = False; why = 'touches operand/data at %s' % fmt_off(o); break
                 r = self.dec(o)
-                if r is None: ok = False; why = 'opcode invalido $%02X em %s' % (self.prg[o], fmt_off(o)); break
-                if any(self.kind[o + i] != UNK for i in range(1, r[0])): ok = False; why = 'sobreposicao em %s' % fmt_off(o); break
-                if r[1] == 'BRK': ok = False; why = 'BRK em %s' % fmt_off(o); break
+                if r is None: ok = False; why = 'invalid opcode $%02X at %s' % (self.prg[o], fmt_off(o)); break
+                if any(self.kind[o + i] != UNK for i in range(1, r[0])): ok = False; why = 'overlap at %s' % fmt_off(o); break
+                if r[1] == 'BRK': ok = False; why = 'BRK at %s' % fmt_off(o); break
                 block.append((o, r))
                 if r[1] in ('RTS', 'RTI') or r[1] == 'JMP': break
                 o += r[0]
-                if (o & 0x1FFF) == 0: ok = False; why = 'passa do fim do banco'; break
+                if (o & 0x1FFF) == 0: ok = False; why = 'runs past the end of the bank'; break
             # bloco feito so de $FF... nao acontece (FF e' invalido)
             if not ok:
                 seen_fail.add(off); self.rejected.append((off, why)); continue
@@ -544,7 +544,7 @@ class Project:
             co = self.canon(o)
             if self.kind[co] == OPC and self.ins[co][2] == 'imm': self.immsym[co] = (part, self.canon(t), 0)
             elif self.kind[co] == DAT: self.typed[co] = (part, self.canon(t), 0)
-            else: self.warn.add('anotacao ptr em %s: nao e\' instrucao imediata nem dado' % fmt_off(o))
+            else: self.warn.add('ptr annotation at %s: not an immediate instruction or data' % fmt_off(o))
         # lo seguido de hi do mesmo alvo = palavra de 16 bits
         for co in sorted(self.typed):
             ty = self.typed[co]
@@ -614,9 +614,9 @@ class Project:
                     size = 16 if (p + 12 <= z and self.prg[p + 11] != 0) else 14
                     if p + size > z: ok = False; break
                     fl = [(1, fbank, True), (3, fbank, False), (12, bank, False)] + ([(14, bank, True)] if size == 16 else [])
-                    kind = 'quadro'
+                    kind = 'frame'
                 elif (w1 == 0 or in_s(w1)) and (w3 == 0 or in_s(w3)):   # cabecalho de estado
-                    size = 7; fl = [(1, bank, False), (3, bank, False)]; kind = 'estado'
+                    size = 7; fl = [(1, bank, False), (3, bank, False)]; kind = 'state'
                 else: ok = False; break
                 for k, tb, req in fl:
                     v = word(p + k)
@@ -652,7 +652,7 @@ class Project:
                 t = ba2off(b, addr)
                 nm = self.names.get(t) or self.labels.get(t)
                 if nm: self.cond_names[i] = nm
-                else: self.warn.add('statecond %s: entrada %d ($%04X) nao tem rotulo' % (fmt_off(off), i, addr))
+                else: self.warn.add('statecond %s: entry %d ($%04X) has no label' % (fmt_off(off), i, addr))
 
     def auto_name(self, off):
         b, a = off2ba(off)
@@ -686,7 +686,7 @@ class Project:
         if v < 0x8000: return None
         if self.in_kernel(off) and (v & 0xE000) == 0xE000 and not (KERNEL_LO <= v < KERNEL_HI):
             c = self.kernel_ext(off, v, mn in ('JSR', 'JMP'))
-            if len(c) > 1: self.warn.add('kernel %04X referencia $%04X valido em varios bancos: %s' % (a, v, c))
+            if len(c) > 1: self.warn.add('kernel %04X references $%04X valid in multiple banks: %s' % (a, v, c))
             return ba2off(c[0], v) if c else None
         if (v & 0xE000) == (a & 0xE000): return ba2off(b, v)
         if mn in ('JSR', 'JMP') and mode == 'abs': return self.resolve_cross(off, v)
@@ -746,7 +746,7 @@ class Project:
                 if t is not None and self.kind[t] == OPC: self.xrefs[self.canon(t)].append((off, mn.lower()))
         for o, ty in sorted(self.typed.items()):
             if ty[0] in ('lo', 'word') and self.kind[ty[1]] == OPC:
-                self.xrefs[self.canon(ty[1])].append((o, 'tabela'))
+                self.xrefs[self.canon(ty[1])].append((o, 'table'))
         self.sub_entries = {t for t, xs in self.xrefs.items() if any(k != 'jmp' for _, k in xs)}
 
     def near_label(self, off):
@@ -764,7 +764,7 @@ class Project:
             o -= 1
         return fmt_off(off)
 
-    MODE_NAMES = ['aviso/QR', 'titulo', 'selecao', 'VS', 'intro do round', 'luta', 'fim do round', 'frase final']
+    MODE_NAMES = ['warning/QR', 'title', 'selection', 'VS', 'round intro', 'fight', 'end of round', 'quote']
 
     def entry_info(self, co):
         """Linhas de comentario automaticas para o inicio de uma rotina."""
@@ -773,7 +773,7 @@ class Project:
         if xs:
             seen = []; 
             for src, kind in xs:
-                nm = ('%s %s' % (kind, self.routine_of(src))) if kind != 'tabela' else 'tabela %s' % self.near_label(src)
+                nm = ('%s %s' % (kind, self.routine_of(src))) if kind != 'table' else 'table %s' % self.near_label(src)
                 if nm not in seen: seen.append(nm)
             more = len(seen) - 6
             out.append('; <- ' + ', '.join(seen[:6]) + (' ... (+%d)' % more if more > 0 else ''))
@@ -782,7 +782,7 @@ class Project:
             ms |= self.modes.get(x, 0); ex += self.execs.get(x, 0)
         if ms:
             names = [self.MODE_NAMES[i] for i in range(8) if ms & (1 << i)]
-            out.append('; modos: %s' % ('todos' if len(names) == 8 else ', '.join(names)))
+            out.append('; modes: %s' % ('all' if len(names) == 8 else ', '.join(names)))
         return out
 
     def prepare_table(self, t):
@@ -805,7 +805,7 @@ class Project:
                 self.typed[self.canon(o)] = ('word', tgt, delta); self.typed[self.canon(o + 1)] = ('skip',)
                 self.sym_for(tgt)
         else:
-            sys.exit('tipo de tabela desconhecido: ' + k)
+            sys.exit('unknown table kind: ' + k)
         self.need_label(off) if k == 'words' else None
 
     # ------------------------------------------------------------------ emissao
@@ -864,12 +864,12 @@ class Project:
         n, mn, mode, v = r
         banks = sorted({o1 >> 13 for o1, o2 in rg})
         if mode in ('izx', 'izy'):
-            return 'le bancos ' + ','.join('$%02X' % b for b in banks)
+            return 'reads banks ' + ','.join('$%02X' % b for b in banks)
         if all(b == (off >> 13) for b in banks):
             hi = max(o2 for o1, o2 in rg); lo = min(o1 for o1, o2 in rg)
             return ('idx $%02X..$%02X' % (off2ba(lo)[1] - v, off2ba(hi)[1] - v)) if mode != 'abs' else ''
         hi = max(off2ba(o2)[1] for o1, o2 in rg); lo = min(off2ba(o1)[1] for o1, o2 in rg)
-        s = 'bancos ' + ','.join('$%02X' % b for b in banks)
+        s = 'banks ' + ','.join('$%02X' % b for b in banks)
         if mode != 'abs': s += ' idx $%02X..$%02X' % (lo - v, hi - v)
         return s
 
@@ -882,8 +882,8 @@ class Project:
                 if o2 >= o1 + s1: break
                 if o2 + s2 > o1 + s1:
                     b1, a1 = off2ba(o1); b2, a2 = off2ba(o2)
-                    sys.exit('annotations: alt %s (%02X:%04X, $%X bytes) e alt %s (%02X:%04X, $%X bytes) '
-                             'se sobrepoem parcialmente' % (n1, b1, a1, s1, n2, b2, a2, s2))
+                    sys.exit('annotations: alt %s (%02X:%04X, $%X bytes) and alt %s (%02X:%04X, $%X bytes) '
+                             'partially overlap' % (n1, b1, a1, s1, n2, b2, a2, s2))
 
     def emit_range(self, out, bank, a_lo, a_hi, for_kernel=False, in_alt=None):
         """Emite [a_lo, a_hi) do banco.  in_alt = offset do alt cujo ramo .else esta' sendo emitido
@@ -906,7 +906,7 @@ class Project:
                 out.append(''); out.append('.ifdef %s' % name)
                 out.append('%s:' % tag)
                 out.extend(lines)
-                out.append('    .assert * - %s <= $%X, error, "bloco alt %s em $%04X passou do tamanho"' % (tag, ln_, name, a0))
+                out.append('    .assert * - %s <= $%X, error, "alt block %s at $%04X exceeded its size"' % (tag, ln_, name, a0))
                 out.append('    .res $%X - (* - %s), $FF' % (ln_, tag))
                 out.append('.else')
                 self.emit_range(out, bank, a0, a0 + ln_, in_alt=o)
@@ -918,23 +918,23 @@ class Project:
             if o in self.struct_kind and in_alt is None:
                 sk = self.struct_kind[o]
                 out.append('')
-                first = sk[0] == 'quadro' and self.struct_kind.get(o - 7, ('',))[0] == 'estado'
-                note = '' if co in self.labels else ('   [1o quadro do estado acima: cabecalho+7]' if first
-                                                      else '   [$%04X, nenhum ponteiro conhecido aponta para ca]' % off2ba(o)[1])
-                if sk[0] == 'estado':
+                first = sk[0] == 'frame' and self.struct_kind.get(o - 7, ('',))[0] == 'state'
+                note = '' if co in self.labels else ('   [1st frame of the state above: header+7]' if first
+                                                      else '   [$%04X, no known pointer points here]' % off2ba(o)[1])
+                if sk[0] == 'state':
                     c = self.prg[o]
                     cs = 'cond=$%02X' % c
-                    if c >= 0x80: cs += ' sempre'
+                    if c >= 0x80: cs += ' always'
                     elif c in self.cond_names: cs += ' %s' % self.cond_names[c]
-                    summ = '   [%s | classe=$%02X | acertos=%d]' % (cs, self.prg[o + 5], self.prg[o + 6])
+                    summ = '   [%s | class=$%02X | hits=%d]' % (cs, self.prg[o + 5], self.prg[o + 6])
                 else:
                     p = self.prg
                     sg = lambda v: v - 256 if v >= 128 else v
-                    summ = '   [dur=%d efe=$%02X/$%02X fl=$%02X mov=$%02X vx=%d vy=%d rep=%d' % (
+                    summ = '   [dur=%d fx=$%02X/$%02X fl=$%02X mov=$%02X vx=%d vy=%d rep=%d' % (
                         p[o], p[o + 5], p[o + 6], p[o + 7], p[o + 8], sg(p[o + 9]), sg(p[o + 10]), p[o + 11])
                     if sk[1] == 16: summ += ' br=$%04X' % (p[o + 14] | (p[o + 15] << 8))
                     summ += ']'
-                out.append('; -- %s%s%s' % ('ESTADO (cabecalho, 7 bytes)' if sk[0] == 'estado' else 'quadro (%d bytes)' % sk[1], summ, note))
+                out.append('; -- %s%s%s' % ('STATE (header, 7 bytes)' if sk[0] == 'state' else 'frame (%d bytes)' % sk[1], summ, note))
             if co in self.labels:
                 if self.kind[o] == OPC and (o == base or self.is_entry(o) or co in self.xrefs) and co not in self.blocks: out.append('')
                 if self.kind[o] == OPC and (co in self.xrefs or (self.is_entry(o) and co in self.names)):
@@ -971,7 +971,7 @@ class Project:
                 notes = ' '.join(self.comments.get(co, []))
                 if ty[0] == 'word':
                     nm = self.sym_for(ty[1]); self.note_ref(o, ty[1], nm)
-                    if co in self.inferred: notes = ('(inferido) ' + notes).strip()
+                    if co in self.inferred: notes = ('(inferred) ' + notes).strip()
                     line('.word %s%s' % (nm, self.dl(ty[2])), o, 2, notes); o += 2; continue
                 if ty[0] in ('lo', 'hi'):
                     nm = self.sym_for(ty[1]); self.note_ref(o, ty[1], nm)
@@ -1047,7 +1047,7 @@ class Project:
             if r[2] in ('abs', 'rel') and org <= r[3] < org + ln_ and r[3] != org: local[r[3]] = 'FarCall_%04X' % r[3]
         for q, r in ins:
             a = org + q
-            if a == org: out.append('    .assert * = FarCall, error, "o trampolim precisa ficar em FarCall"')
+            if a == org: out.append('    .assert * = FarCall, error, "the trampoline must be at FarCall"')
             elif a in local: out.append(local[a] + ':')
             n, mn, mode, v = r
             m = mn.lower()
@@ -1085,7 +1085,7 @@ class Project:
             base = bank_base(b)
             if b in CODE_BANKS:
                 self.emit_range(out, b, base, KERNEL_LO)
-                out.append(''); out.append('.assert * = $%04X, error, "o kernel precisa comecar em $%04X"' % (KERNEL_LO, KERNEL_LO))
+                out.append(''); out.append('.assert * = $%04X, error, "the kernel must start at $%04X"' % (KERNEL_LO, KERNEL_LO))
                 out.append('.include "kernel.inc"')
                 out.append('')
                 self.emit_range(out, b, KERNEL_HI, base + 0x2000)
@@ -1102,13 +1102,13 @@ class Project:
         self.exports -= kexports
         globals_ = sorted(self.exports)
         # --- escreve arquivos
-        hdr = '; GERADO por tools/disasm.py — nao edite a mao enquanto estiver na fase de anotacao.\n' \
-              '; Edite annotations/sf2ne.ann e rode `make gen`.  (nt) = instrucao nao executada no trace.\n'
+        hdr = '; GENERATED by tools/disasm.py — do not edit by hand while in the annotation phase.\n' \
+              '; Edit annotations/sf2ne.ann and run `make gen`.  (nt) = instruction not executed in trace.\n'
         with open(os.path.join(SRC, 'kernel.inc'), 'w') as f:
             f.write(hdr)
-            f.write(';\n; KERNEL — codigo identico no fim dos tres bancos de codigo ($37, $3B, $3F): $%04X-$%04X.\n' % (KERNEL_LO, KERNEL_HI - 1))
-            f.write('; Contem os tratadores de IRQ (efeitos de raster via contador de scanline do MMC5) e de NMI.\n')
-            f.write('; Precisa existir em todo banco que for mapeado em $E000, pois os vetores ficam em $FFFA-$FFFF.\n;\n')
+            f.write(';\n; KERNEL — identical code at the end of the three code banks ($37, $3B, $3F): $%04X-$%04X.\n' % (KERNEL_LO, KERNEL_HI - 1))
+            f.write('; Contains the IRQ (raster effects via the MMC5 scanline counter) and NMI handlers.\n')
+            f.write('; Must exist in every bank mapped at $E000, because the vectors live at $FFFA-$FFFF.\n;\n')
             if kexports:
                 f.write('.ifdef KERNEL_EXPORT\n')
                 for nm in sorted(kexports): f.write('    .export %s\n' % nm)
@@ -1118,8 +1118,8 @@ class Project:
             if b in self.keepbanks: continue        # fonte mantida a mao: nao sobrescreve
             with open(os.path.join(SRC, 'bank_%02X.s' % b), 'w') as f:
                 f.write(hdr)
-                kindtxt = 'CODIGO' if b in CODE_BANKS else 'dados'
-                f.write(';\n; Banco de PRG $%02X (%s) — janela $%04X-$%04X — offset no arquivo $%06X\n;\n' %
+                kindtxt = 'CODE' if b in CODE_BANKS else 'data'
+                f.write(';\n; PRG bank $%02X (%s) — window $%04X-$%04X — file offset $%06X\n;\n' %
                         (b, kindtxt, bank_base(b), bank_base(b) + 0x1FFF, 16 + (b << 13)))
                 f.write('.include "defs.inc"\n')
                 if b not in CODE_BANKS:
@@ -1129,7 +1129,7 @@ class Project:
                 f.write('.segment "BANK%02X"\n' % b)
                 f.write('\n'.join(out) + '\n')
         with open(os.path.join(SRC, 'globals.inc'), 'w') as f:
-            f.write(hdr + '; Simbolos visiveis entre bancos (.global = exporta onde e\' definido, importa nos demais).\n')
+            f.write(hdr + '; Symbols visible across banks (.global = exports where defined, imports elsewhere).\n')
             for nm in globals_: f.write('.global %s\n' % nm)
         self.write_ram()
         self.write_static()
@@ -1145,9 +1145,9 @@ class Project:
         # tambem inclui enderecos nomeados nas anotacoes
         used = sorted(self.ram_used | set(self.ramnames))
         with open(os.path.join(SRC, 'ram.inc'), 'w') as f:
-            f.write('; GERADO por tools/disasm.py — simbolos de RAM ($0000-$07FF).\n')
-            f.write('; Para dar nome a uma variavel: linha `ram <endereco> <nome>` em annotations/sf2ne.ann.\n')
-            f.write('; r/w = numero de leituras/escritas observadas no trace.\n\n')
+            f.write('; GENERATED by tools/disasm.py — RAM symbols ($0000-$07FF).\n')
+            f.write('; To name a variable: `ram <address> <name>` line in annotations/sf2ne.ann.\n')
+            f.write('; r/w = number of reads/writes observed in the trace.\n\n')
             for a in used:
                 r, w = self.ramuse.get(a, (0, 0))
                 nm = self.ram_sym(a)
@@ -1157,23 +1157,23 @@ class Project:
 
     def write_static(self):
         with open(os.path.join(SRC, 'hw.inc'), 'w') as f:
-            f.write('; Registradores de hardware: PPU, APU/controles e MMC5.\n\n')
+            f.write('; Hardware registers: PPU, APU/controllers and MMC5.\n\n')
             for a in sorted(HW): f.write('%-18s := $%04X\n' % (HW[a], a))
         with open(os.path.join(SRC, 'macros.inc'), 'w') as f:
             f.write(MACROS)
         with open(os.path.join(SRC, 'defs.inc'), 'w') as f:
-            f.write('; Definicoes comuns a todos os modulos.\n.setcpu "6502X"     ; o jogo usa o opcode nao-oficial AXS #imm ($CB)\n.include "hw.inc"\n.include "ram.inc"\n.include "macros.inc"\n.include "globals.inc"\n')
+            f.write('; Definitions common to all modules.\n.setcpu "6502X"     ; the game uses the unofficial AXS #imm opcode ($CB)\n.include "hw.inc"\n.include "ram.inc"\n.include "macros.inc"\n.include "globals.inc"\n')
         with open(os.path.join(SRC, 'header.s'), 'w') as f:
             h = self.header
-            f.write('; Cabecalho NES 2.0: mapper 5 (MMC5), 512K PRG + 512K CHR, sem PRG-RAM.\n.segment "HEADER"\n')
+            f.write('; NES 2.0 header: mapper 5 (MMC5), 512K PRG + 512K CHR, no PRG-RAM.\n.segment "HEADER"\n')
             f.write('    .byte "NES", $1A\n')
             f.write('    .byte $%02X            ; PRG-ROM: %d x 16K\n' % (h[4], h[4]))
             f.write('    .byte $%02X            ; CHR-ROM: %d x 8K\n' % (h[5], h[5]))
-            f.write('    .byte $%02X            ; flags 6: mapper (nibble baixo) = %d, espelhamento vertical\n' % (h[6], h[6] >> 4))
+            f.write('    .byte $%02X            ; flags 6: mapper (low nibble) = %d, vertical mirroring\n' % (h[6], h[6] >> 4))
             f.write('    .byte $%02X            ; flags 7: NES 2.0\n' % h[7])
-            f.write('    .byte ' + ','.join('$%02X' % x for x in h[8:16]) + '   ; byte 12 = $02: multi-regiao\n')
+            f.write('    .byte ' + ','.join('$%02X' % x for x in h[8:16]) + '   ; byte 12 = $02: multi-region\n')
         with open(os.path.join(SRC, 'chr.s'), 'w') as f:
-            f.write('; CHR-ROM: 512K = 512 paginas de 1K (o jogo usa o MMC5 em modo CHR 2: paginas de 2K).\n.segment "CHR"\n    .incbin "assets/chr/chr.bin"\n')
+            f.write('; CHR-ROM: 512K = 512 pages of 1K (the game uses MMC5 CHR mode 2: 2K pages).\n.segment "CHR"\n    .incbin "assets/chr/chr.bin"\n')
         os.makedirs(os.path.join(ROOT, 'assets', 'chr'), exist_ok=True)
         open(os.path.join(ROOT, 'assets', 'chr', 'chr.bin'), 'wb').write(self.chr)
         # bancos de amostras DPCM
@@ -1183,14 +1183,14 @@ class Project:
             n = len(blk.rstrip(b'\xFF')) if b != 0x2A else 0x2000
             open(os.path.join(ROOT, 'assets', 'dpcm', 'bank_%02X.dmc' % b), 'wb').write(blk[:n])
             with open(os.path.join(SRC, 'bank_%02X.s' % b), 'w') as f:
-                f.write('; Banco de PRG $%02X — amostras DPCM (vozes), mapeado em $C000-$DFFF via $5116.\n' % b)
-                f.write('; Veja docs/AUDIO.md para a lista de amostras (endereco/tamanho) dentro do banco.\n')
+                f.write('; PRG bank $%02X — DPCM samples (voices), mapped at $C000-$DFFF via $5116.\n' % b)
+                f.write('; See docs/AUDIO.md for the list of samples (address/size) inside the bank.\n')
                 f.write('.segment "BANK%02X"\n    .incbin "assets/dpcm/bank_%02X.dmc"\n' % (b, b))
 
     def write_cfg(self):
         with open(os.path.join(ROOT, 'sf2ne.cfg'), 'w') as f:
-            f.write('# GERADO por tools/disasm.py — layout do ROM para o ld65.\n')
-            f.write('# 64 bancos de PRG de 8K; o banco n roda na janela (n mod 4). `bank` alimenta a funcao .bank() do ca65.\n')
+            f.write('# GENERATED by tools/disasm.py — ROM layout for ld65.\n')
+            f.write('# 64 PRG banks of 8K; bank n runs in window (n mod 4). `bank` feeds the ca65 .bank() function.\n')
             f.write('MEMORY {\n    HDR:   file = %O, start = $0000, size = $0010, fill = yes;\n')
             for b in range(64):
                 f.write('    PRG%02X: file = %%O, start = $%04X, size = $2000, fill = yes, fillval = $FF, bank = $%02X;\n' % (b, bank_base(b), b))
@@ -1209,31 +1209,31 @@ class Project:
             ninst = sum(1 for o in blk if self.kind[o] == OPC)
             ntr = sum(1 for o in blk if self.kind[o] == OPC and self.traced[o])
             data = sum(1 for o in blk if self.kind[o] == DAT and self.prg[o] != 0xFF)
-            if code: print('  banco %02X: %5d bytes de codigo (%4d instrucoes, %4d vistas no trace = %3.0f%%), %5d bytes de dados' %
+            if code: print('  bank %02X: %5d code bytes (%4d instructions, %4d seen in trace = %3.0f%%), %5d data bytes' %
                            (b, code, ninst, ntr, 100.0 * ntr / max(1, ninst), data))
-        print('  blocos aceitos so por analise estatica: %d ; rejeitados: %d ; chamadas distantes: %d ; rotulos: %d' %
+        print('  blocks accepted by static analysis only: %d ; rejected: %d ; far calls: %d ; labels: %d' %
               (len(self.review), len(self.rejected), len(self.farcalls), len(self.labels)))
-        print('  tabelas de salto (RTS-trick): %d ; ilhas de codigo nao referenciado: %d' % (len(self.rts_tables), len(self.islands)))
-        print('  ponteiros simbolizados a partir do trace: %d imediatos, %d bytes de dados ; conflitos: %d ; palavras inferidas em tabelas: %d' % (self.ptr_stats[0], self.ptr_stats[1], len(self.ptr_conflicts), len(self.inferred) - getattr(self, 'struct_new', 0)))
+        print('  jump tables (RTS trick): %d ; unreferenced code islands: %d' % (len(self.rts_tables), len(self.islands)))
+        print('  pointers symbolized from the trace: %d immediates, %d data bytes ; conflicts: %d ; inferred words in tables: %d' % (self.ptr_stats[0], self.ptr_stats[1], len(self.ptr_conflicts), len(self.inferred) - getattr(self, 'struct_new', 0)))
         if self.statebanks:
-            print('  bancos de estados: %d registros reconhecidos, %d ponteiros completados pela estrutura, %d trechos fora do formato'
+            print('  state banks: %d records recognized, %d pointers completed by structure, %d regions outside the format'
                   % (len(self.struct_kind), getattr(self, 'struct_new', 0), len(self.struct_fail)))
-        for o in sorted(self.odd_far): print('  AVISO: JMP FarCall fora do padrao em', fmt_off(o))
-        for w in sorted(self.warn): print('  AVISO:', w)
+        for o in sorted(self.odd_far): print('  WARNING: JMP FarCall outside the pattern at', fmt_off(o))
+        for w in sorted(self.warn): print('  WARNING:', w)
 
 
-MACROS = r'''; Macros do projeto.
+MACROS = r'''; Project macros.
 
-FarCall := $049E        ; trampolim de chamada distante (copiado do ROM para a RAM na inicializacao)
+FarCall := $049E        ; far-call trampoline (copied from ROM to RAM at startup)
 
 ; ---------------------------------------------------------------------------------------------------------
-; farcall <rotina>
-;   Chamada "distante": executa uma rotina que esta em OUTRO banco de codigo (todos rodam em $E000-$FFFF).
-;   Empilha o endereco de retorno e o banco atual e pula para o trampolim que fica na RAM (FarCall, $049E),
-;   que troca o banco em $5117, chama a rotina, restaura o banco e retorna.
-;   A, X e Y sao destruidos na ida (parametros vao por variaveis de pagina zero).
-;   O banco de destino e o banco atual sao resolvidos pelo linker (.bank), entao da para mover rotinas.
-;   Gera exatamente os mesmos 18 bytes do ROM original.
+; farcall <routine>
+;   "Far" call: runs a routine that lives in ANOTHER code bank (all run at $E000-$FFFF).
+;   Pushes the return address and the current bank, then jumps to the trampoline in RAM (FarCall, $049E),
+;   which switches the bank at $5117, calls the routine, restores the bank and returns.
+;   A, X and Y are destroyed on entry (parameters go through zero-page variables).
+;   The target bank and the current bank are resolved by the linker (.bank), so routines can be moved.
+;   Emits exactly the same 18 bytes as the original ROM.
 ; ---------------------------------------------------------------------------------------------------------
 .macro farcall target
     .local ret
@@ -1251,10 +1251,10 @@ ret:
 .endmacro
 
 ; ---------------------------------------------------------------------------------------------------------
-; farjmp <rotina>
-;   Salto distante (tail-call): igual ao farcall, mas sem empilhar endereco de retorno — quando a rotina
-;   de destino retornar, o trampolim restaura o banco atual e volta para QUEM CHAMOU a rotina atual.
-;   Gera exatamente os mesmos 12 bytes do ROM original.
+; farjmp <routine>
+;   Far jump (tail-call): like farcall, but without pushing a return address — when the target routine
+;   returns, the trampoline restores the current bank and returns to WHOEVER CALLED the current routine.
+;   Emits exactly the same 12 bytes as the original ROM.
 ; ---------------------------------------------------------------------------------------------------------
 .macro farjmp target
     .local here
@@ -1280,13 +1280,13 @@ def main():
     P.generate()
     P.report()
     with open(os.path.join(ROOT, 'scratch', 'static_blocks.txt'), 'w') as f:
-        f.write('# blocos de codigo aceitos apenas por analise estatica (nao executados no trace)\n')
+        f.write('# code blocks accepted by static analysis only (not executed in trace)\n')
         for a, b in sorted(P.review): f.write('%s-%04X\n' % (fmt_off(a), off2ba(b)[1]))
-        f.write('# entradas rejeitadas\n')
+        f.write('# rejected entries\n')
         for a, why in sorted(P.rejected): f.write('%s %s\n' % (fmt_off(a), why))
-        f.write('# tabelas de salto via RTS: local tipo lo hi n\n')
+        f.write('# jump tables via RTS: site kind lo hi n\n')
         for off, k, lo, hi, n in P.rts_tables: f.write('%s %s lo=%04X hi=%04X n=%d\n' % (fmt_off(off), k, lo, hi, n))
-        f.write('# ilhas de codigo nao referenciado\n')
+        f.write('# unreferenced code islands\n')
         for a, b in sorted(P.islands): f.write('%s-%04X\n' % (fmt_off(a), off2ba(b)[1]))
     return P
 

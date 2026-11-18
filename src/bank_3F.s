@@ -7,9 +7,9 @@
 .segment "BANK3F"
 
 ; <- jsr HitFreeze, jsr MoveGrabEscape
-; modos: luta
+; modes: fight
 HitFreeze_E000:
-    lda a:MoveMode,x                            ; E000  BD 2E 00    congela o lutador atingido: salva movimento/velocidades/timer em ram_0312-031C e para no quadro atual por $0E quadros
+    lda a:MoveMode,x                            ; E000  BD 2E 00    freezes the hit fighter: saves movement/velocities/timer in ram_0312-031C and stops at current frame for $0E frames
     sta ram_0312,x                              ; E003  9D 12 03
     lda a:FighterVelXSub,x                      ; E006  BD 30 00
     sta ram_0314,x                              ; E009  9D 14 03
@@ -34,9 +34,9 @@ HitFreeze_E000:
 
 
 ; <- jsr RyuAiAirDistX, jsr RyuAiOpponentJumpUp, jsr RyuAiOpponentDistX, jsr RyuAiState58Check, jsr RyuAiState69Dist, jsr RyuAiAntiAir ... (+1)
-; modos: luta
+; modes: fight
 DistanceX:
-    sec                                         ; E03D  38          A = |x do P2 - x do P1|
+    sec                                         ; E03D  38          A = |x of P2 - x of P1|
     lda FighterX+1                              ; E03E  A5 09
     sbc FighterX                                ; E040  E5 08
     bpl End                                     ; E042  10 04
@@ -47,7 +47,7 @@ End:
 
 
 ; <- jsr RyuAiAirDistY, jsr RyuAiOpponentDistX
-; modos: luta
+; modes: fight
 DistanceY:
     sec                                         ; E049  38
     lda FighterY+1                              ; E04A  A5 0D
@@ -59,13 +59,13 @@ End_E054:
     rts                                         ; E054  60          End
 
 HitSfxTbl:
-    .byte $05,$06,$07,$05,$06,$07               ; E055              sfx de impacto por classe do atacante (6 bytes; so 0..2 usados)
+    .byte $05,$06,$07,$05,$06,$07               ; E055              hit sfx by attacker class (6 bytes; only 0..2 used)
 ProjSpawnYOffsetTbl:
-    .byte $D9,$D9,$D9                           ; E05B              Y de nascimento do projetil: FloorY - $27 (2 bytes usados)
+    .byte $D9,$D9,$D9                           ; E05B              projectile birth Y: FloorY - $27 (2 bytes used)
 ProjSpeedStepTbl:
-    .byte $17,$25,$00,$00,$00,$00               ; E05E              passo do projetil por velocidade ($17/$25 para velocidade 0/1)
+    .byte $17,$25,$00,$00,$00,$00               ; E05E              projectile step by speed ($17/$25 for speed 0/1)
 ProjSpawnXOffsetTbl:
-    .byte $27,$27,$27                           ; E064              delta X de nascimento do projetil: FighterX +/- $27 (2 bytes usados)
+    .byte $27,$27,$27                           ; E064              projectile birth delta X: FighterX +/- $27 (2 bytes used)
 CmdMotionTbl:
     .byte $04                                   ; E067              sequencias dos golpes especiais, 4 bytes por chave $00-$11 (bits do controle: 04 baixo, 01 frente, 02 tras, 08 cima, 80 A, 40 B; $00 encerra)
 CmdMotionTblNext:
@@ -81,17 +81,17 @@ CmdKeyListRyu:
     .byte $02,$03,$06,$07,$04,$05,$FF,$0A,$0B,$08,$09,$0C,$0D,$FF; E0C0              lista de especiais do Ryu (chaves, $FF = fim): hadouken ch $02/$03 (chute), shoryuken $06/$07 (chute), tatsumaki $04/$05 (soco); a POSICAO na lista vira CmdMoveIdx
 
 ; ------------------------------------------------------------------------------------------------
-; MAQUINA DE ESTADOS DO LUTADOR (dirigida por dados; os dados ficam no banco FighterStateBank, em $A000).
-; Percorre a lista de transicoes: cada no' E' um cabecalho de estado de 7 bytes — +0 numero da condicao
-; (Cond* abaixo; >= $80 = incondicional), +1/+2 proxima alternativa (a lista encadeada), +3/+4 proximo
-; estado na cadeia natural, +5 classe, +6 acertos do golpe. A primeira condicao verdadeira aplica O
-; PROPRIO NO' como proximo estado (FighterNextPtr = endereco do no'; AnimAdvance entra nele).
-; zp_DD marca a origem da busca: $04 = GuardRedirect, $02 = golpe por botao, $01 = golpe especial.
-; Com zp_DD = $04 e classe $28/$30: pula o 1o no' quando ele e' o proprio estado atual.
-; Com zp_DD = $02 e classe $70-$98 e no' != estado atual: pula o 1o no'. E com o bit 2 da classe zerado
-; e CondOpponentFarBack: pula o 1o no' tambem (nao reage de costas).
+; FIGHTER STATE MACHINE (data-driven; data is in FighterStateBank at $A000).
+; Walks the transition list: each node is a 7-byte state header — +0 condition number
+; (Cond* below; >= $80 = unconditional), +1/+2 next alternative (chained list), +3/+4 next
+; state in natural chain, +5 class, +6 hit count. The first true condition applies THIS
+; NODE as next state (FighterNextPtr = node address; AnimAdvance enters it).
+; zp_DD marks search origin: $04 = GuardRedirect, $02 = button move, $01 = special move.
+; With zp_DD = $04 and class $28/$30: skips first node when it is the current state.
+; With zp_DD = $02 and class $70-$98 and node != current state: skips first node. And with bit 2 of class cleared
+; and CondOpponentFarBack: skips first node too (does not react from behind).
 ; <- jmp StateCondDispatchLoop, jmp SoundProc_EEB8, jmp GrabCheck, jmp TransViaTbl, jsr GuardRedirect
-; modos: intro do round, luta
+; modes: round intro, fight
 StateCheckTransitions:
     lda zp_DD                                   ; E0CE  A5 DD
     cmp #$04                                    ; E0D0  C9 04
@@ -111,9 +111,9 @@ StateCheckTransitions:
     jmp TransNextNode                           ; E0EF  4C 29 E1
 
 
-; modos: luta
+; modes: fight
 StateCondDispatchLoop:
-    cmp #$02                                    ; E0F2  C9 02       StateCondDispatchLoop — loop de despacho das condições de transição de estado
+    cmp #$02                                    ; E0F2  C9 02       StateCondDispatchLoop — state transition condition dispatch loop
     bne StateCondTableEntry                     ; E0F4  D0 1B
     lda a:FighterState,x                        ; E0F6  BD 26 00
     and #$F8                                    ; E0F9  29 F8
@@ -128,41 +128,41 @@ StateCondDispatchLoop:
     cmp a:FighterStatePtrLo,x                   ; E10C  DD 1E 00
     bne TransNextNode                           ; E10F  D0 18
 StateCondTableEntry:
-    lda a:FighterState,x                        ; E111  BD 26 00    StateCondTableEntry — entrada da tabela de condições de transição
+    lda a:FighterState,x                        ; E111  BD 26 00    StateCondTableEntry — state transition condition table entry
     and #$04                                    ; E114  29 04
     bne StateCondTableContinue                  ; E116  D0 05
     jsr CondOpponentFarBack                     ; E118  20 B1 E1
     bne TransNextNode                           ; E11B  D0 0C
 StateCondTableContinue:
-    ldy #$00                                    ; E11D  A0 00       StateCondTableContinue — continuação da tabela de condições
-    lda (zp_DB),y                               ; E11F  B1 DB       [le bancos $01]
+    ldy #$00                                    ; E11D  A0 00       StateCondTableContinue — continuation of condition table
+    lda (zp_DB),y                               ; E11F  B1 DB       [reads banks $01]
     bmi TransApply                              ; E121  30 18
     tay                                         ; E123  A8
     jsr StateCondDispatch                       ; E124  20 68 E1
     bne TransApply                              ; E127  D0 12
 
 ; <- jmp StateCheckTransitions
-; modos: intro do round, luta
+; modes: round intro, fight
 TransNextNode:
-    ldy #$02                                    ; E129  A0 02       condicao falsa: segue para o no' +1/+2 e repete a busca (ponteiro 0 = fim da lista, nada muda)
-    lda (zp_DB),y                               ; E12B  B1 DB       [le bancos $01]
+    ldy #$02                                    ; E129  A0 02       false condition: goes to node +1/+2 and repeats search (pointer 0 = end of list, nothing changes)
+    lda (zp_DB),y                               ; E12B  B1 DB       [reads banks $01]
     beq End_E167                                ; E12D  F0 38
     pha                                         ; E12F  48
     dey                                         ; E130  88
-    lda (zp_DB),y                               ; E131  B1 DB       [le bancos $01]
+    lda (zp_DB),y                               ; E131  B1 DB       [reads banks $01]
     sta zp_DB                                   ; E133  85 DB
     pla                                         ; E135  68
     sta zp_DC                                   ; E136  85 DC
     jmp StateCheckTransitions                   ; E138  4C CE E0
 
 
-; modos: luta
+; modes: fight
 TransApply:
-    lda a:FrameFlags,x                          ; E13B  BD 38 00    condicao verdadeira: o no' atual vira o proximo estado; AnimTimer=1 nas classes de golpe/reacao ($28-$40/$B0-$E0) a menos que o quadro tenha a flag bit 3
+    lda a:FrameFlags,x                          ; E13B  BD 38 00    true condition: current node becomes next state; AnimTimer=1 in hit/reaction classes ($28-$40/$B0-$E0) unless frame has flag bit 3
     and #$08                                    ; E13E  29 08
     bne TransAnimTimerSet                       ; E140  D0 16
     ldy #$05                                    ; E142  A0 05
-    lda (zp_DB),y                               ; E144  B1 DB       [le bancos $01]
+    lda (zp_DB),y                               ; E144  B1 DB       [reads banks $01]
     and #$F8                                    ; E146  29 F8
     cmp #$28                                    ; E148  C9 28
     bcc TransNextPtrSet                         ; E14A  90 11
@@ -173,10 +173,10 @@ TransApply:
     cmp #$E1                                    ; E154  C9 E1
     bcs TransNextPtrSet                         ; E156  B0 05
 TransAnimTimerSet:
-    lda #$01                                    ; E158  A9 01       TransAnimTimerSet — em TransApply: quadro de golpe/reacao -> FighterAnimTimer = 1
+    lda #$01                                    ; E158  A9 01       TransAnimTimerSet — in TransApply: hit/reaction frame -> FighterAnimTimer = 1
     sta a:FighterAnimTimer,x                    ; E15A  9D 42 00
 TransNextPtrSet:
-    lda zp_DB                                   ; E15D  A5 DB       TransNextPtrSet — em TransApply: grava o ponteiro do proximo estado (FighterNextPtrLo/Hi)
+    lda zp_DB                                   ; E15D  A5 DB       TransNextPtrSet — in TransApply: writes next state pointer (FighterNextPtrLo/Hi)
     sta a:FighterNextPtrLo,x                    ; E15F  9D 22 00
     lda zp_DC                                   ; E162  A5 DC
     sta a:FighterNextPtrHi,x                    ; E164  9D 24 00
@@ -185,7 +185,7 @@ End_E167:
 
 
 ; <- jsr StateCondDispatchLoop
-; modos: intro do round, luta
+; modes: round intro, fight
 StateCondDispatch:
     lda StateCondHi,y                           ; E168  B9 7D E1    [idx $00..$0B]
     pha                                         ; E16B  48
@@ -194,15 +194,15 @@ StateCondDispatch:
     rts                                         ; E170  60
 
 StateCondLo:
-    .byte <(CondOpponentAttacks-1)              ; E171  88          12 condicoes; cada entrada guarda endereco-1 (truque do RTS com pha/pha/rts)
+    .byte <(CondOpponentAttacks-1)              ; E171  88          12 conditions; each entry stores address-1 (RTS trick with pha/pha/rts)
     .byte <(CondOpponentFarBack-1)              ; E172  B0
     .byte <(CondOpponentNear-1)                 ; E173  D5
-    .byte <(CondEmPe-1)                         ; E174  EC
-    .byte <(CondAgachado-1)                     ; E175  F2
-    .byte <(CondNoAr-1)                         ; E176  F8
+    .byte <(CondStanding-1)                     ; E174  EC
+    .byte <(CondCrouching-1)                    ; E175  F2
+    .byte <(CondInAir-1)                        ; E176  F8
     .byte <(CondOnGroundOrVelX-1)               ; E177  03
-    .byte <(CondInputBaixo-1)                   ; E178  11
-    .byte <(CondProjetilLivre-1)                ; E179  23
+    .byte <(CondInputDown-1)                    ; E178  11
+    .byte <(CondProjectileFree-1)               ; E179  23
     .byte <(CondCanGrab-1)                      ; E17A  2D
     .byte <(CondVictory-1)                      ; E17B  70
     .byte <(CondRoundLost-1)                    ; E17C  95
@@ -210,28 +210,28 @@ StateCondHi:
     .byte >(CondOpponentAttacks-1)              ; E17D  E1
     .byte >(CondOpponentFarBack-1)              ; E17E  E1
     .byte >(CondOpponentNear-1)                 ; E17F  E1
-    .byte >(CondEmPe-1)                         ; E180  E1
-    .byte >(CondAgachado-1)                     ; E181  E1
-    .byte >(CondNoAr-1)                         ; E182  E1
+    .byte >(CondStanding-1)                     ; E180  E1
+    .byte >(CondCrouching-1)                    ; E181  E1
+    .byte >(CondInAir-1)                        ; E182  E1
     .byte >(CondOnGroundOrVelX-1)               ; E183  E2
-    .byte >(CondInputBaixo-1)                   ; E184  E2
-    .byte >(CondProjetilLivre-1)                ; E185  E2
+    .byte >(CondInputDown-1)                    ; E184  E2
+    .byte >(CondProjectileFree-1)               ; E185  E2
     .byte >(CondCanGrab-1)                      ; E186  E2
     .byte >(CondVictory-1)                      ; E187  E2
     .byte >(CondRoundLost-1)                    ; E188  E2
 
-; <- tabela StateCondLo
-; modos: luta
+; <- table StateCondLo
+; modes: fight
 CondOpponentAttacks:
-    lda a:FighterState,x                        ; E189  BD 26 00    verdadeiro se EU estou em pe/agachado (classe & 3) E o oponente esta em classe de reacao ($70-$98), de golpe ($B0-$E0) ou com projetil no ar (dele)
+    lda a:FighterState,x                        ; E189  BD 26 00    true if I am standing/crouching (class & 3) AND opponent is in reaction class ($70-$98), hit class ($B0-$E0) or has projectile in air (his)
     and #$03                                    ; E18C  29 03
     bne CondOpponentAttackClass                 ; E18E  D0 01
     rts                                         ; E190  60
 
 
-; modos: luta
+; modes: fight
 CondOpponentAttackClass:
-    txa                                         ; E191  8A          CondOpponentAttackClass — em CondOpponentAttacks: classe do oponente (reacao/golpe/projetil)
+    txa                                         ; E191  8A          CondOpponentAttackClass — in CondOpponentAttacks: opponent class (reaction/hit/projectile)
     eor #$01                                    ; E192  49 01
     tay                                         ; E194  A8
     lda a:FighterState,y                        ; E195  B9 26 00
@@ -249,16 +249,16 @@ End_E1AA:
     rts                                         ; E1AC  60
 
 
-; modos: luta
+; modes: fight
 End_E1AD:
     lda a:ProjX,y                               ; E1AD  B9 7B 00    End
     rts                                         ; E1B0  60
 
 
-; <- jsr StateCondDispatchLoop, tabela StateCondLo
-; modos: intro do round, luta
+; <- jsr StateCondDispatchLoop, table StateCondLo
+; modes: round intro, fight
 CondOpponentFarBack:
-    txa                                         ; E1B1  8A          verdadeiro se o oponente esta a |dx| >= $0F E eu de costas para ele: devolve $40 (e' o bit 6 de FighterFlip) para virar, 0 se esta encarando ou colado
+    txa                                         ; E1B1  8A          true if opponent is at |dx| >= $0F and I have my back to him: returns $40 (bit 6 of FighterFlip) to turn, 0 if facing or close
     eor #$01                                    ; E1B2  49 01
     tay                                         ; E1B4  A8
     sec                                         ; E1B5  38
@@ -275,9 +275,9 @@ End_E1C3:
     rts                                         ; E1C9  60
 
 
-; modos: intro do round, luta
+; modes: round intro, fight
 CondFarBackFacing:
-    lda FighterX,x                              ; E1CA  B5 08       CondFarBackFacing — em CondOpponentFarBack: devolve o bit de virada ($40)
+    lda FighterX,x                              ; E1CA  B5 08       CondFarBackFacing — in CondOpponentFarBack: returns turn bit ($40)
     cmp a:FighterX,y                            ; E1CC  D9 08 00
     lda FighterFlip,x                           ; E1CF  B5 04
     bcc End_E1D5                                ; E1D1  90 02
@@ -286,10 +286,10 @@ End_E1D5:
     rts                                         ; E1D5  60          End
 
 
-; <- tabela StateCondLo
-; modos: luta
+; <- table StateCondLo
+; modes: fight
 CondOpponentNear:
-    sec                                         ; E1D6  38          verdadeiro se |dx| < $21
+    sec                                         ; E1D6  38          true if |dx| < $21
     lda FighterX                                ; E1D7  A5 08
     sbc FighterX+1                              ; E1D9  E5 09
     bne CondNearAbsDiff                         ; E1DB  D0 03
@@ -297,39 +297,39 @@ CondOpponentNear:
     rts                                         ; E1DF  60          (nt)
 
 
-; modos: luta
+; modes: fight
 CondNearAbsDiff:
-    bpl CondNearLimit                           ; E1E0  10 04       CondNearAbsDiff — em CondOpponentNear: normaliza o sinal da diferenca de X
+    bpl CondNearLimit                           ; E1E0  10 04       CondNearAbsDiff — in CondOpponentNear: normalizes X difference sign
     eor #$FF                                    ; E1E2  49 FF
     adc #$01                                    ; E1E4  69 01
 CondNearLimit:
-    cmp #$21                                    ; E1E6  C9 21       CondNearLimit — em CondOpponentNear: compara |dx| com $21
+    cmp #$21                                    ; E1E6  C9 21       CondNearLimit — in CondOpponentNear: compares |dx| with $21
     bcc End_E1EC                                ; E1E8  90 02
     lda #$00                                    ; E1EA  A9 00
 End_E1EC:
     rts                                         ; E1EC  60          End
 
 
-; <- tabela StateCondLo
-; modos: luta
-CondEmPe:
-    lda a:FighterState,x                        ; E1ED  BD 26 00    bit 0 da classe = postura em pe
+; <- table StateCondLo
+; modes: fight
+CondStanding:
+    lda a:FighterState,x                        ; E1ED  BD 26 00    bit 0 of class = standing posture
     and #$01                                    ; E1F0  29 01
     rts                                         ; E1F2  60
 
 
-; <- tabela StateCondLo
-; modos: luta
-CondAgachado:
-    lda a:FighterState,x                        ; E1F3  BD 26 00    bit 1 da classe = postura agachado
+; <- table StateCondLo
+; modes: fight
+CondCrouching:
+    lda a:FighterState,x                        ; E1F3  BD 26 00    bit 1 of class = crouching posture
     and #$02                                    ; E1F6  29 02
     rts                                         ; E1F8  60
 
 
-; <- tabela StateCondLo
-; modos: luta
-CondNoAr:
-    lda FloorY                                  ; E1F9  AD BA 03    verdadeiro se FighterY < FloorY (acima do chao)
+; <- table StateCondLo
+; modes: fight
+CondInAir:
+    lda FloorY                                  ; E1F9  AD BA 03    true if FighterY < FloorY (above ground)
     sec                                         ; E1FC  38
     sbc FighterY,x                              ; E1FD  F5 0C
     bpl End_E203                                ; E1FF  10 02
@@ -338,10 +338,10 @@ End_E203:
     rts                                         ; E203  60          End
 
 
-; <- tabela StateCondLo
-; modos: luta
+; <- table StateCondLo
+; modes: fight
 CondOnGroundOrVelX:
-    lda FloorY                                  ; E204  AD BA 03    verdadeiro se FighterY = FloorY ou VelX/VelXSub != 0 (esta no chao ou deslizando)
+    lda FloorY                                  ; E204  AD BA 03    true if FighterY = FloorY or VelX/VelXSub != 0 (on ground or sliding)
     cmp FighterY,x                              ; E207  D5 0C
     beq End_E211                                ; E209  F0 06
     lda a:FighterVelX,x                         ; E20B  BD 32 00
@@ -350,10 +350,10 @@ End_E211:
     rts                                         ; E211  60          End
 
 
-; <- tabela StateCondLo
-; modos: luta
-CondInputBaixo:
-    lda InputDir,x                              ; E212  B5 86       verdadeiro se InputDir = $08/$0B/$0C (baixo reto ou diagonal-baixa); devolve o proprio InputDir
+; <- table StateCondLo
+; modes: fight
+CondInputDown:
+    lda InputDir,x                              ; E212  B5 86       true if InputDir = $08/$0B/$0C (straight down or diagonal-down); returns InputDir itself
     cmp #$08                                    ; E214  C9 08
     beq End_E222                                ; E216  F0 0A
     cmp #$0B                                    ; E218  C9 0B
@@ -366,32 +366,32 @@ End_E222:
     rts                                         ; E223  60
 
 
-; <- tabela StateCondLo
-; modos: luta
-CondProjetilLivre:
-    lda ProjX,x                                 ; E224  B5 7B       verdadeiro se a vaga de projetil deste lutador esta livre (zp_7B dele = 0)
+; <- table StateCondLo
+; modes: fight
+CondProjectileFree:
+    lda ProjX,x                                 ; E224  B5 7B       true if this fighter's projectile slot is free (his zp_7B = 0)
     beq End_E22B                                ; E226  F0 03
     lda #$00                                    ; E228  A9 00
     rts                                         ; E22A  60
 
 
-; modos: luta
+; modes: fight
 End_E22B:
     lda #$01                                    ; E22B  A9 01       End
     rts                                         ; E22D  60
 
 
-; <- tabela StateCondLo
-; modos: luta
+; <- table StateCondLo
+; modes: fight
 CondCanGrab:
-    sec                                         ; E22E  38          |dx| < $18, os dois no chao, InputDir = frente/tras ($05/$06) e classe do oponente < $30 ou $50-$9F (estados de virar $A0-$A9 nao contam, nt)
+    sec                                         ; E22E  38          |dx| < $18, both on ground, InputDir = forward/back ($05/$06) and opponent class < $30 or $50-$9F (turn states $A0-$A9 don't count, nt)
     lda FighterX                                ; E22F  A5 08
     sbc FighterX+1                              ; E231  E5 09
     bpl CondGrabAbsDiff                         ; E233  10 04
     eor #$FF                                    ; E235  49 FF
     adc #$01                                    ; E237  69 01
 CondGrabAbsDiff:
-    cmp #$18                                    ; E239  C9 18       CondGrabAbsDiff — em CondCanGrab: normaliza o sinal da diferenca de X
+    cmp #$18                                    ; E239  C9 18       CondGrabAbsDiff — in CondCanGrab: normalizes X difference sign
     bcs End_E26E                                ; E23B  B0 31
     lda FloorY                                  ; E23D  AD BA 03
     cmp FighterY                                ; E240  C5 0C
@@ -404,7 +404,7 @@ CondGrabAbsDiff:
     cmp #$06                                    ; E24E  C9 06
     bne End_E26E                                ; E250  D0 1C
 CondGrabOpponentClass:
-    txa                                         ; E252  8A          CondGrabOpponentClass — em CondCanGrab: classe do oponente ($30-$A8)
+    txa                                         ; E252  8A          CondGrabOpponentClass — in CondCanGrab: opponent class ($30-$A8)
     eor #$01                                    ; E253  49 01
     tay                                         ; E255  A8
     lda a:FighterState,y                        ; E256  B9 26 00
@@ -422,16 +422,16 @@ End_E26B:
     rts                                         ; E26D  60
 
 
-; modos: luta
+; modes: fight
 End_E26E:
     lda #$00                                    ; E26E  A9 00       End
     rts                                         ; E270  60
 
 
-; <- tabela StateCondLo
-; modos: intro do round, luta
+; <- table StateCondLo
+; modes: round intro, fight
 CondVictory:
-    cpx a:RoundResult                           ; E271  EC B9 00    verdadeiro se RoundResult = este lutador E o oponente esta caido (classe >= $F0) E nao ha projeteis no ar E o canal de voz esta livre
+    cpx a:RoundResult                           ; E271  EC B9 00    true if RoundResult = this fighter AND opponent is down (class >= $F0) AND no projectiles in air AND voice channel is free
     bne End_E293                                ; E274  D0 1D
     txa                                         ; E276  8A
     eor #$01                                    ; E277  49 01
@@ -450,16 +450,16 @@ CondVictory:
     rts                                         ; E292  60
 
 
-; modos: intro do round, luta
+; modes: round intro, fight
 End_E293:
     lda #$00                                    ; E293  A9 00       End
     rts                                         ; E295  60
 
 
-; <- tabela StateCondLo
-; modos: intro do round, luta
+; <- table StateCondLo
+; modes: round intro, fight
 CondRoundLost:
-    cpx a:RoundResult                           ; E296  EC B9 00    verdadeiro se RoundResult != este lutador E RoundResult != $FF (round encerrado; vale para empate)
+    cpx a:RoundResult                           ; E296  EC B9 00    true if RoundResult != this fighter AND RoundResult != $FF (round ended; applies to draw)
     beq CondRoundLostFalse                      ; E299  F0 08
     bit a:RoundResult                           ; E29B  2C B9 00
     bmi CondRoundLostFalse                      ; E29E  30 03
@@ -467,25 +467,25 @@ CondRoundLost:
     rts                                         ; E2A2  60
 
 
-; modos: intro do round, luta
+; modes: round intro, fight
 CondRoundLostFalse:
-    lda #$00                                    ; E2A3  A9 00       CondRoundLostFalse — em CondRoundLost: caminho falso (RoundResult = este lutador ou $FF)
+    lda #$00                                    ; E2A3  A9 00       CondRoundLostFalse — in CondRoundLost: false path (RoundResult = this fighter or $FF)
     rts                                         ; E2A5  60
 
 
 ; ------------------------------------------------------------------------------------------------
-; UM PASSO DA ANIMACAO (todo quadro, antes do teste de colisao):
-; - efeito $0B do quadro atual -> dispara o projetil (ProjLaunch, parametro = quadro +5)
-; - FighterNextPtr != 0 -> entra no novo estado escolhido por TransApply: grava classe (+5) e
-; acertos (+6), primeiro quadro = no' + 7. Caso especial: estado $49 com zp_62 != 0 usa a
-; alternativa +1/+2 do estado atual. Efeito $20 do quadro -> efeito sonoro (SfxPlay).
-; - sem proximo estado e ram_031C != 0 -> restaura o movimento congelado pelo hit-freeze.
-; - senao avanca os quadros: +11 (repeticoes do laco) > 0 -> decrementa e desvia para +14/+15;
-; zera -> +12/+13 (proximo quadro); +12/+13 = 0 -> StateAdvance (cadeia natural +3/+4;
-; classe $30 com HP <= dano pendente usa +1/+2, ou seja corta para o estado de dano).
-; - KO no ar (HP <= dano pendente, acima do chao): HitStop = $78 e vozes de KO.
+; ONE ANIMATION STEP (every frame, before collision test):
+; - current frame effect $0B -> fires projectile (ProjLaunch, param = frame +5)
+; - FighterNextPtr != 0 -> enters new state chosen by TransApply: writes class (+5) and
+; hits (+6), first frame = node + 7. Special case: state $49 with zp_62 != 0 uses the
+; alternative +1/+2 of current state. Frame effect $20 -> sound effect (SfxPlay).
+; - no next state and ram_031C != 0 -> restores movement frozen by hit-freeze.
+; - otherwise advances frames: +11 (loop repeats) > 0 -> decrements and branches to +14/+15;
+; zero -> +12/+13 (next frame); +12/+13 = 0 -> StateAdvance (natural chain +3/+4;
+; class $30 with HP <= pending damage uses +1/+2, i.e. cuts to damage state).
+; - air KO (HP <= pending damage, above ground): HitStop = $78 and KO voices.
 ; <- jsr AIBranch_EFCB
-; modos: intro do round, luta, fim do round
+; modes: round intro, fight, end of round
 AnimAdvance:
     lda a:EffectType,x                          ; E2A6  BD 3C 00
     cmp #$0B                                    ; E2A9  C9 0B
@@ -493,7 +493,7 @@ AnimAdvance:
     lda a:EffectParam,x                         ; E2AD  BD 3A 00
     jsr ProjLaunch                              ; E2B0  20 37 E8
 AnimNextStateCheck:
-    lda a:FighterNextPtrHi,x                    ; E2B3  BD 24 00    AnimNextStateCheck — em AnimAdvance: ha proximo estado escolhido? (FighterNextPtrHi)
+    lda a:FighterNextPtrHi,x                    ; E2B3  BD 24 00    AnimNextStateCheck — in AnimAdvance: is there a next state chosen? (FighterNextPtrHi)
     beq FreezeRestore                           ; E2B6  F0 49
     ldy a:FighterState,x                        ; E2B8  BC 26 00
     cpy #$49                                    ; E2BB  C0 49
@@ -505,12 +505,12 @@ AnimNextStateCheck:
     lda a:FighterStatePtrLo,x                   ; E2C9  BD 1E 00
     sta zp_D7                                   ; E2CC  85 D7
     ldy #$01                                    ; E2CE  A0 01
-    lda (zp_D7),y                               ; E2D0  B1 D7       [le bancos $01]
+    lda (zp_D7),y                               ; E2D0  B1 D7       [reads banks $01]
     sta a:FighterNextPtrLo,x                    ; E2D2  9D 22 00
     iny                                         ; E2D5  C8
-    lda (zp_D7),y                               ; E2D6  B1 D7       [le bancos $01]
+    lda (zp_D7),y                               ; E2D6  B1 D7       [reads banks $01]
 AnimStatePtrSet:
-    sta zp_DA                                   ; E2D8  85 DA       AnimStatePtrSet — em AnimAdvance: grava o ponteiro do novo estado e do novo quadro
+    sta zp_DA                                   ; E2D8  85 DA       AnimStatePtrSet — in AnimAdvance: writes new state and new frame pointers
     sta zp_D8                                   ; E2DA  85 D8
     sta a:FighterStatePtrHi,x                   ; E2DC  9D 20 00
     lda a:FighterNextPtrLo,x                    ; E2DF  BD 22 00
@@ -522,18 +522,18 @@ AnimStatePtrSet:
     bcc AnimStateClassSet                       ; E2EC  90 02
     inc zp_DA                                   ; E2EE  E6 DA
 AnimStateClassSet:
-    ldy #$05                                    ; E2F0  A0 05       AnimStateClassSet — em AnimAdvance: aplica a classe do novo quadro (StateSetByte)
-    lda (zp_D7),y                               ; E2F2  B1 D7       [le bancos $01]
+    ldy #$05                                    ; E2F0  A0 05       AnimStateClassSet — in AnimAdvance: applies new frame class (StateSetByte)
+    lda (zp_D7),y                               ; E2F2  B1 D7       [reads banks $01]
     jsr StateSetByte                            ; E2F4  20 7F E4
     ldy #$06                                    ; E2F7  A0 06
-    lda (zp_D7),y                               ; E2F9  B1 D7       [le bancos $01]
+    lda (zp_D7),y                               ; E2F9  B1 D7       [reads banks $01]
     sta a:AttackHitsLeft,x                      ; E2FB  9D 28 00
     jmp FrameEnter                              ; E2FE  4C B8 E3
 
 
-; modos: intro do round, luta, fim do round
+; modes: round intro, fight, end of round
 FreezeRestore:
-    lda ram_031C,x                              ; E301  BD 1C 03    devolve as velocidades/timer salvos pelo hit-freeze (ram_0312-031C)
+    lda ram_031C,x                              ; E301  BD 1C 03    returns velocities/timer saved by hit-freeze (ram_0312-031C)
     beq AnimLoop                                ; E304  F0 36
     sta a:FighterAnimTimer,x                    ; E306  9D 42 00
     lda ram_0312,x                              ; E309  BD 12 03
@@ -556,50 +556,50 @@ FreezeRestore:
     rts                                         ; E33B  60
 
 
-; modos: intro do round, luta, fim do round
+; modes: round intro, fight, end of round
 AnimLoop:
     lda a:LoopRepeat,x                          ; E33C  BD 44 00    AnimLoop
     beq AnimContinue                            ; E33F  F0 20
     ldy #$0B                                    ; E341  A0 0B
-    lda (zp_D5),y                               ; E343  B1 D5       [le bancos $01]
+    lda (zp_D5),y                               ; E343  B1 D5       [reads banks $01]
     bne AnimTransition                          ; E345  D0 07
     ldy #$0C                                    ; E347  A0 0C
-    lda (zp_D5),y                               ; E349  B1 D5       [le bancos $01]
+    lda (zp_D5),y                               ; E349  B1 D5       [reads banks $01]
     jmp AnimAdvanceEnter                        ; E34B  4C 57 E3
 
 
-; modos: luta
+; modes: fight
 AnimTransition:
     dec a:LoopRepeat,x                          ; E34E  DE 44 00    AnimTransition
     beq AnimContinue                            ; E351  F0 0E
     ldy #$0E                                    ; E353  A0 0E
-    lda (zp_D5),y                               ; E355  B1 D5       [le bancos $01]
+    lda (zp_D5),y                               ; E355  B1 D5       [reads banks $01]
 
 ; <- jmp AnimLoop
-; modos: luta
+; modes: fight
 AnimAdvanceEnter:
-    sta zp_D9                                   ; E357  85 D9       entra num quadro cujo ponteiro vem em A (lo) e no byte seguinte (hi), nos desvios do laco de AnimAdvance
+    sta zp_D9                                   ; E357  85 D9       enters a frame whose pointer comes in A (lo) and next byte (hi), in AnimAdvance loop branches
     iny                                         ; E359  C8
-    lda (zp_D5),y                               ; E35A  B1 D5       [le bancos $01]
+    lda (zp_D5),y                               ; E35A  B1 D5       [reads banks $01]
     sta zp_DA                                   ; E35C  85 DA
     jmp FrameEnterCommon                        ; E35E  4C BF E3
 
 
-; modos: intro do round, luta, fim do round
+; modes: round intro, fight, end of round
 AnimContinue:
     ldy #$0D                                    ; E361  A0 0D       AnimContinue
-    lda (zp_D5),y                               ; E363  B1 D5       [le bancos $01]
+    lda (zp_D5),y                               ; E363  B1 D5       [reads banks $01]
     beq StateAdvance                            ; E365  F0 0A
     sta zp_DA                                   ; E367  85 DA
     dey                                         ; E369  88
-    lda (zp_D5),y                               ; E36A  B1 D5       [le bancos $01]
+    lda (zp_D5),y                               ; E36A  B1 D5       [reads banks $01]
     sta zp_D9                                   ; E36C  85 D9
     jmp FrameEnter                              ; E36E  4C B8 E3
 
 
-; modos: luta
+; modes: fight
 StateAdvance:
-    lda a:FighterStatePtrLo,x                   ; E371  BD 1E 00    fim da animacao: passa para o estado +3/+4 do cabecalho (cadeia natural); classe $30 com HP <= dano pendente usa a alternativa +1/+2
+    lda a:FighterStatePtrLo,x                   ; E371  BD 1E 00    end of animation: passes to state +3/+4 of header (natural chain); class $30 with HP <= pending damage uses alternative +1/+2
     sta zp_D7                                   ; E374  85 D7
     lda a:FighterStatePtrHi,x                   ; E376  BD 20 00
     sta zp_D8                                   ; E379  85 D8
@@ -614,13 +614,13 @@ StateAdvance:
 AnimRotate:
     ldy #$01                                    ; E38D  A0 01       AnimRotate
 AnimEffect:
-    lda (zp_D7),y                               ; E38F  B1 D7       [le bancos $01] AnimEffect
+    lda (zp_D7),y                               ; E38F  B1 D7       [reads banks $01] AnimEffect
     sta a:FighterStatePtrLo,x                   ; E391  9D 1E 00
     clc                                         ; E394  18
     adc #$07                                    ; E395  69 07
     sta zp_D9                                   ; E397  85 D9
     iny                                         ; E399  C8
-    lda (zp_D7),y                               ; E39A  B1 D7       [le bancos $01]
+    lda (zp_D7),y                               ; E39A  B1 D7       [reads banks $01]
     sta a:FighterStatePtrHi,x                   ; E39C  9D 20 00
     sta zp_D8                                   ; E39F  85 D8
     adc #$00                                    ; E3A1  69 00
@@ -628,24 +628,24 @@ AnimEffect:
     lda a:FighterStatePtrLo,x                   ; E3A5  BD 1E 00
     sta zp_D7                                   ; E3A8  85 D7
     ldy #$05                                    ; E3AA  A0 05
-    lda (zp_D7),y                               ; E3AC  B1 D7       [le bancos $01]
+    lda (zp_D7),y                               ; E3AC  B1 D7       [reads banks $01]
     jsr StateSetByte                            ; E3AE  20 7F E4
-    ldy #$06                                    ; E3B1  A0 06       cabecalho +6 (acertos do golpe)
-    lda (zp_D7),y                               ; E3B3  B1 D7       [le bancos $01]
+    ldy #$06                                    ; E3B1  A0 06       header +6 (hit count)
+    lda (zp_D7),y                               ; E3B3  B1 D7       [reads banks $01]
     sta a:AttackHitsLeft,x                      ; E3B5  9D 28 00
 
 ; <- jmp AnimAdvance, jmp AnimContinue
-; modos: intro do round, luta, fim do round
+; modes: round intro, fight, end of round
 FrameEnter:
-    ldy #$0B                                    ; E3B8  A0 0B       entrada do 1o quadro do novo estado: carrega zp_44 com as repeticoes do laco (quadro +11)
-    lda (zp_D9),y                               ; E3BA  B1 D9       [le bancos $01]
+    ldy #$0B                                    ; E3B8  A0 0B       first frame entry of new state: loads zp_44 with loop repeats (frame +11)
+    lda (zp_D9),y                               ; E3BA  B1 D9       [reads banks $01]
     sta a:LoopRepeat,x                          ; E3BC  9D 44 00
 
 ; <- jmp AnimTransition
-; modos: intro do round, luta, fim do round
+; modes: round intro, fight, end of round
 FrameEnterCommon:
-    ldy #$08                                    ; E3BF  A0 08       entrada de qualquer quadro: movimento (+8), grava FramePtr, efeito (+5/+6), AnimTimer (+0), flags (+7)
-    lda (zp_D9),y                               ; E3C1  B1 D9       [le bancos $01]
+    ldy #$08                                    ; E3BF  A0 08       any frame entry: movement (+8), writes FramePtr, effect (+5/+6), AnimTimer (+0), flags (+7)
+    lda (zp_D9),y                               ; E3C1  B1 D9       [reads banks $01]
     sta a:MoveMode,x                            ; E3C3  9D 2E 00
     jsr MoveVelSetup                            ; E3C6  20 C2 E4
     lda zp_D9                                   ; E3C9  A5 D9
@@ -659,16 +659,16 @@ FrameEnterCommon:
     sta a:FighterNextPtrLo,x                    ; E3DC  9D 22 00
     sta a:FighterNextPtrHi,x                    ; E3DF  9D 24 00
     ldy #$05                                    ; E3E2  A0 05
-    lda (zp_D9),y                               ; E3E4  B1 D9       [le bancos $01]
+    lda (zp_D9),y                               ; E3E4  B1 D9       [reads banks $01]
     sta a:EffectParam,x                         ; E3E6  9D 3A 00
     ldy #$06                                    ; E3E9  A0 06
-    lda (zp_D9),y                               ; E3EB  B1 D9       [le bancos $01]
+    lda (zp_D9),y                               ; E3EB  B1 D9       [reads banks $01]
     sta a:EffectType,x                          ; E3ED  9D 3C 00
     ldy #$00                                    ; E3F0  A0 00
-    lda (zp_D9),y                               ; E3F2  B1 D9       [le bancos $01]
+    lda (zp_D9),y                               ; E3F2  B1 D9       [reads banks $01]
     sta a:FighterAnimTimer,x                    ; E3F4  9D 42 00
     ldy #$07                                    ; E3F7  A0 07
-    lda (zp_D9),y                               ; E3F9  B1 D9       [le bancos $01]
+    lda (zp_D9),y                               ; E3F9  B1 D9       [reads banks $01]
     sta a:FrameFlags,x                          ; E3FB  9D 38 00
     lda a:EffectType,x                          ; E3FE  BD 3C 00
     cmp #$20                                    ; E401  C9 20
@@ -722,10 +722,10 @@ End_E47E:
     rts                                         ; E47E  60          End
 
 
-; Grava o byte de estado (cabecalho +5) em FighterState e dispara o som da classe do estado:
-; classes $70-$98 -> efeito sonoro (banco $37), classes $A0-$E0 -> voz do lutador (VoicePlayFighter).
+; Writes state byte (header +5) to FighterState and triggers state class sound:
+; classes $70-$98 -> sound effect (bank $37), classes $A0-$E0 -> fighter voice (VoicePlayFighter).
 ; <- jsr AnimAdvance, jsr StateAdvance
-; modos: luta
+; modes: fight
 StateSetByte:
     sta a:FighterState,x                        ; E47F  9D 26 00
     and #$F8                                    ; E482  29 F8
@@ -742,7 +742,7 @@ StateSetByte:
     farjmp SfxPlayByState                       ; E495  A9 3F 48 A9 37 A2 E4 A0 .. -> 37:E40B
 
 
-; modos: luta
+; modes: fight
 ScreenConfig:
     cmp #$E1                                    ; E4A1  C9 E1       ScreenConfig
     bcs BankSwitch                              ; E4A3  B0 1C
@@ -759,15 +759,15 @@ ModeCheck:
     farjmp VoicePlayFighter                     ; E4B5  A9 3F 48 A9 37 A2 E4 A0 .. -> 37:E43C
 
 
-; modos: luta
+; modes: fight
 BankSwitch:
     rts                                         ; E4C1  60          BankSwitch
 
 
 ; <- jsr StateAdvance
-; modos: intro do round, luta, fim do round
+; modes: round intro, fight, end of round
 MoveVelSetup:
-    ldy a:MoveMode,x                            ; E4C2  BC 2E 00    despacha pelo modo de movimento do quadro (+8): 0/1 absoluta, 2/3 aceleracao, 4/5 subpixel
+    ldy a:MoveMode,x                            ; E4C2  BC 2E 00    dispatches by frame movement mode (+8): 0/1 absolute, 2/3 acceleration, 4/5 subpixel
     lda MoveVelDispatchHi,y                     ; E4C5  B9 D4 E4    [idx $00..$05]
     pha                                         ; E4C8  48
     lda MoveVelDispatchLo,y                     ; E4C9  B9 CE E4    [idx $00..$05]
@@ -775,7 +775,7 @@ MoveVelSetup:
     rts                                         ; E4CD  60
 
 MoveVelDispatchLo:
-    .byte <(MoveVelAbs-1)                       ; E4CE  D9          despacho do modo de movimento em MoveVelSetup: endereco-1 por MoveMode (absoluta/aceleracao/subpixel)
+    .byte <(MoveVelAbs-1)                       ; E4CE  D9          movement mode dispatch in MoveVelSetup: address-1 by MoveMode (absolute/acceleration/subpixel)
     .byte <(MoveVelAbs-1)                       ; E4CF  D9
     .byte <(MoveVelAccel-1)                     ; E4D0  96
     .byte <(MoveVelAccel-1)                     ; E4D1  96
@@ -789,29 +789,29 @@ MoveVelDispatchHi:
     .byte >(MoveVelSubpixel-1)                  ; E4D8  E4
     .byte >(MoveVelSubpixel-1)                  ; E4D9  E4
 
-; <- tabela MoveVelDispatchLo
-; modos: luta
+; <- table MoveVelDispatchLo
+; modes: fight
 MoveVelAbs:
-    lda #$00                                    ; E4DA  A9 00       modos 0/1: VelX/VelY do quadro (+9/+10) sao a velocidade nova, direto
+    lda #$00                                    ; E4DA  A9 00       modes 0/1: frame VelX/VelY (+9/+10) are the new velocity, directly
     sta a:FighterVelXSub,x                      ; E4DC  9D 30 00
     sta a:FighterVelYSub,x                      ; E4DF  9D 34 00
     ldy #$09                                    ; E4E2  A0 09
-    lda (zp_D9),y                               ; E4E4  B1 D9       [le bancos $01]
+    lda (zp_D9),y                               ; E4E4  B1 D9       [reads banks $01]
     sta a:FighterVelX,x                         ; E4E6  9D 32 00
     ldy #$0A                                    ; E4E9  A0 0A
-    lda (zp_D9),y                               ; E4EB  B1 D9       [le bancos $01]
+    lda (zp_D9),y                               ; E4EB  B1 D9       [reads banks $01]
     sta a:FighterVelY,x                         ; E4ED  9D 36 00
     rts                                         ; E4F0  60
 
 
-; <- jmp CharSelect, tabela MoveVelDispatchLo
-; modos: intro do round, luta, fim do round
+; <- jmp CharSelect, table MoveVelDispatchLo
+; modes: round intro, fight, end of round
 MoveVelSubpixel:
-    lda #$00                                    ; E4F1  A9 00       modos 4/5: velocidade do quadro dividida por 16 — inteiro em VelX e resto<<4 em VelXSub
+    lda #$00                                    ; E4F1  A9 00       modes 4/5: frame velocity divided by 16 — integer in VelX and remainder<<4 in VelXSub
     sta a:FighterVelXSub,x                      ; E4F3  9D 30 00
     sta a:FighterVelYSub,x                      ; E4F6  9D 34 00
     ldy #$09                                    ; E4F9  A0 09
-    lda (zp_D9),y                               ; E4FB  B1 D9       [le bancos $01]
+    lda (zp_D9),y                               ; E4FB  B1 D9       [reads banks $01]
     beq TimerUpdate                             ; E4FD  F0 18
     sta zp_DB                                   ; E4FF  85 DB
     lsr a                                       ; E501  4A
@@ -828,7 +828,7 @@ MoveVelSubpixel:
 TimerUpdate:
     sta a:FighterVelX,x                         ; E517  9D 32 00    TimerUpdate
     ldy #$0A                                    ; E51A  A0 0A
-    lda (zp_D9),y                               ; E51C  B1 D9       [le bancos $01]
+    lda (zp_D9),y                               ; E51C  B1 D9       [reads banks $01]
     beq End_E538                                ; E51E  F0 18
     sta zp_DB                                   ; E520  85 DB
     lsr a                                       ; E522  4A
@@ -848,13 +848,13 @@ End_E538:
 
 
 ; <- jmp MoveVelAccel, jmp RoundStart
-; modos: luta
+; modes: fight
 MoveVelAdd:
-    lda #$00                                    ; E53C  A9 00       soma com sinal vel/16 a velocidade atual (VelX, VelXSub e VelY)
+    lda #$00                                    ; E53C  A9 00       adds signed vel/16 to current velocity (VelX, VelXSub and VelY)
     sta zp_DC                                   ; E53E  85 DC
     sta zp_DE                                   ; E540  85 DE
     ldy #$09                                    ; E542  A0 09
-    lda (zp_D9),y                               ; E544  B1 D9       [le bancos $01]
+    lda (zp_D9),y                               ; E544  B1 D9       [reads banks $01]
     sta zp_DB                                   ; E546  85 DB
     lsr a                                       ; E548  4A
     ror zp_DC                                   ; E549  66 DC
@@ -876,7 +876,7 @@ RoundCond:
     adc a:FighterVelX,x                         ; E566  7D 32 00
     sta a:FighterVelX,x                         ; E569  9D 32 00
     ldy #$0A                                    ; E56C  A0 0A
-    lda (zp_D9),y                               ; E56E  B1 D9       [le bancos $01]
+    lda (zp_D9),y                               ; E56E  B1 D9       [reads banks $01]
     sta zp_DD                                   ; E570  85 DD
     lsr a                                       ; E572  4A
     ror zp_DE                                   ; E573  66 DE
@@ -900,30 +900,30 @@ AICheck:
     rts                                         ; E596  60
 
 
-; <- tabela MoveVelDispatchLo
-; modos: luta
+; <- table MoveVelDispatchLo
+; modes: fight
 MoveVelAccel:
-    ldy #$08                                    ; E597  A0 08       modos 2/3: acelera com MoveVelAdd (o bit 0 do modo nao muda o efeito)
-    lda (zp_D5),y                               ; E599  B1 D5       [le bancos $01]
+    ldy #$08                                    ; E597  A0 08       modes 2/3: accelerates with MoveVelAdd (mode bit 0 does not change effect)
+    lda (zp_D5),y                               ; E599  B1 D5       [reads banks $01]
     cmp #$02                                    ; E59B  C9 02
     bne RoundStart                              ; E59D  D0 03
     jmp MoveVelAdd                              ; E59F  4C 3C E5
 
 
-; modos: luta
+; modes: fight
 RoundStart:
     cmp #$03                                    ; E5A2  C9 03       RoundStart
     bne CharSelect                              ; E5A4  D0 03
     jmp MoveVelAdd                              ; E5A6  4C 3C E5    (nt)
 
 
-; modos: luta
+; modes: fight
 CharSelect:
     jmp MoveVelSubpixel                         ; E5A9  4C F1 E4    CharSelect
 
 
 ; <- jsr Main
-; modos: aviso/QR
+; modes: warning/QR
 RandomSeed:
     lda #$32                                    ; E5AC  A9 32
     sta RngState                                ; E5AE  85 66
@@ -935,7 +935,7 @@ RandomSeed:
 
 
 ; <- jsr RyuAiOpponentDistY, jsr RyuAiState58Random, jsr RyuAiState69Dist, jsr RyuAiState69DistDiv16, jsr RyuAiState69Random, jsr AiStartScriptCheck ... (+1)
-; modos: luta
+; modes: fight
 Random:
     ldy RngState+1                              ; E5B9  A4 67
     lda RngState+2                              ; E5BB  A5 68
@@ -964,8 +964,8 @@ Random:
     rts                                         ; E5DE  60
 
 
-; <- tabela AiOpLo
-; modos: luta
+; <- table AiOpLo
+; modes: fight
 AiOp00:
     lda zp_6D                                   ; E5DF  A5 6D
     sta InputDir,x                              ; E5E1  95 86
@@ -975,8 +975,8 @@ AiOp00:
     rts                                         ; E5E9  60
 
 
-; <- tabela AiOpLo
-; modos: luta
+; <- table AiOpLo
+; modes: fight
 AiOp01:
     lda zp_6D                                   ; E5EA  A5 6D
     sta InputDir,x                              ; E5EC  95 86
@@ -988,8 +988,8 @@ SoundUpdate_Input:
     rts                                         ; E5F6  60
 
 
-; <- tabela AiOpLo
-; modos: luta
+; <- table AiOpLo
+; modes: fight
 AiOp02:
     lda #$04                                    ; E5F7  A9 04
     sta InputDir,x                              ; E5F9  95 86
@@ -1000,8 +1000,8 @@ AiOp02:
     rts                                         ; E603  60
 
 
-; <- tabela AiOpLo
-; modos: luta
+; <- table AiOpLo
+; modes: fight
 AiOp03:
     lda #$FF                                    ; E604  A9 FF
     sta InputAttack,x                           ; E606  95 88
@@ -1017,15 +1017,15 @@ MoveDispatch:
     rts                                         ; E619  60          MoveDispatch
 
 
-; <- tabela AiOpLo
+; <- table AiOpLo
 AiOp04:
     lda zp_6D                                   ; E61A  A5 6D       (nt)
     sta zp_6F,x                                 ; E61C  95 6F       (nt)
     rts                                         ; E61E  60          (nt)
 
 
-; <- tabela AiOpLo
-; modos: luta
+; <- table AiOpLo
+; modes: fight
 AiOp05:
     lda #$00                                    ; E61F  A9 00
     sta zp_6E                                   ; E621  85 6E
@@ -1036,14 +1036,14 @@ AiOp05:
     rts                                         ; E629  60
 
 
-; <- tabela AiOpLo
+; <- table AiOpLo
 AiOp06:
     inc zp_6F                                   ; E62A  E6 6F       (nt)
     rts                                         ; E62C  60          (nt)
 
 
-; <- tabela AiOpLo
-; modos: luta
+; <- table AiOpLo
+; modes: fight
 AiOp07:
     lda a:FighterState,x                        ; E62D  BD 26 00
     lsr a                                       ; E630  4A
@@ -1053,8 +1053,8 @@ AiOp07:
     rts                                         ; E635  60
 
 
-; <- tabela AiOpLo
-; modos: luta
+; <- table AiOpLo
+; modes: fight
 AiOp08:
     lda a:FighterState,x                        ; E636  BD 26 00
     and zp_6D                                   ; E639  25 6D
@@ -1062,8 +1062,8 @@ AiOp08:
     rts                                         ; E63D  60
 
 
-; <- tabela AiOpLo
-; modos: luta
+; <- table AiOpLo
+; modes: fight
 AiOp09:
     lda a:FighterState,x                        ; E63E  BD 26 00
     and #$58                                    ; E641  29 58
@@ -1071,7 +1071,7 @@ AiOp09:
     rts                                         ; E645  60
 
 
-; <- tabela AiOpLo
+; <- table AiOpLo
 AiOp0A:
     lda a:FighterState,x                        ; E646  BD 26 00    (nt)
     and #$F8                                    ; E649  29 F8       (nt)
@@ -1088,15 +1088,15 @@ ColCheck:
     rts                                         ; E658  60          (nt)
 
 
-; <- tabela AiOpLo
-; modos: luta
+; <- table AiOpLo
+; modes: fight
 AiOp0B:
     lda ProjX,x                                 ; E659  B5 7B
     rts                                         ; E65B  60
 
 
-; <- tabela AiOpLo
-; modos: luta
+; <- table AiOpLo
+; modes: fight
 AiOp0C:
     lda FighterX,x                              ; E65C  B5 08
     cmp #$E0                                    ; E65E  C9 E0
@@ -1120,21 +1120,21 @@ EnvUpdate:
     rts                                         ; E67D  60
 
 
-; modos: luta
+; modes: fight
 EnvContinue:
     cmp zp_6D                                   ; E67E  C5 6D       EnvContinue
     bcs ModeFlag                                ; E680  B0 01
     rts                                         ; E682  60
 
 
-; modos: luta
+; modes: fight
 ModeFlag:
     lda #$00                                    ; E683  A9 00       ModeFlag
     rts                                         ; E685  60
 
 
-; <- tabela AiOpLo
-; modos: luta
+; <- table AiOpLo
+; modes: fight
 AiOp0E:
     sec                                         ; E686  38
     lda FighterX+1                              ; E687  A5 09
@@ -1149,14 +1149,14 @@ StateCmp:
     rts                                         ; E697  60
 
 
-; modos: luta
+; modes: fight
 BankChange:
     lda #$01                                    ; E698  A9 01       BankChange
     rts                                         ; E69A  60
 
 
-; <- tabela AiOpLo
-; modos: luta
+; <- table AiOpLo
+; modes: fight
 AiOp0F:
     sec                                         ; E69B  38
     lda FighterX+1                              ; E69C  A5 09
@@ -1176,14 +1176,14 @@ DamageProc:
     rts                                         ; E6AF  60
 
 
-; <- tabela AiOpLo
+; <- table AiOpLo
 AiOp0D:
     dec zp_6F,x                                 ; E6B0  D6 6F       (nt)
     rts                                         ; E6B2  60          (nt)
 
 
-; <- tabela AiOpLo
-; modos: luta
+; <- table AiOpLo
+; modes: fight
 AiOp10:
     ldy OtherFighter                            ; E6B3  A4 65
     lda a:FighterState,y                        ; E6B5  B9 26 00
@@ -1194,8 +1194,8 @@ AiOp10:
     rts                                         ; E6BD  60
 
 
-; <- tabela AiOpLo
-; modos: luta
+; <- table AiOpLo
+; modes: fight
 AiOp11:
     lda a:zp_73,x                               ; E6BE  BD 73 00
     rts                                         ; E6C1  60
@@ -1239,12 +1239,12 @@ AiOpHi:
     .byte >(AiOp10-1)                           ; E6E4  E6
     .byte >(AiOp11-1)                           ; E6E5  E6
 AiCharRoutine:
-    .word RyuAiThink-1                          ; E6E6  45 8F       uma entrada (endereco-1) por personagem; so o Ryu existe
+    .word RyuAiThink-1                          ; E6E6  45 8F       one entry (address-1) per character; only Ryu exists
 
 ; <- jmp RyuAiProjDistDiv32, jmp RyuAiOpponentJumpUp, jmp RyuAiJumpScriptMid, jmp RyuAiState58Random, jmp RyuAiState58Script, jmp RyuAiState69RandomNow ... (+3)
-; modos: luta
+; modes: fight
 AiStartScriptNow:
-    sta AiScriptPtrLo,x                         ; E6E8  95 69       A/Y = ponteiro do roteiro; inicia sempre
+    sta AiScriptPtrLo,x                         ; E6E8  95 69       A/Y = script pointer; always starts
     sty AiScriptPtrHi,x                         ; E6EA  94 6B
     lda #$40                                    ; E6EC  A9 40
     sta zp_DD                                   ; E6EE  85 DD
@@ -1252,9 +1252,9 @@ AiStartScriptNow:
 
 
 ; <- jmp RyuAiAirScriptPick, jmp RyuAiAirScriptDefault, jmp RyuAiProjCheck, jmp RyuAiProjScriptMid, jmp RyuAiOpponentDistX, jmp RyuAiOpponentDistY ... (+10)
-; modos: luta
+; modes: fight
 AiStartScript:
-    sta AiScriptPtrLo,x                         ; E6F3  95 69       A/Y = ponteiro do roteiro; so inicia se Random&7 < AiLevel (senao hesita)
+    sta AiScriptPtrLo,x                         ; E6F3  95 69       A/Y = script pointer; only starts if Random&7 < AiLevel (otherwise hesitates)
     sty AiScriptPtrHi,x                         ; E6F5  94 6B
     lda #$80                                    ; E6F7  A9 80
     sta zp_DD                                   ; E6F9  85 DD
@@ -1262,20 +1262,20 @@ AiStartScript:
 
 
 ; <- jmp RyuAiThink, jmp RyuAiAirDistY, jmp RyuAiAirDistX, jmp RyuAiAirVelCheck, jmp RyuAiProjDistDiv64, jmp RyuAiOpponentWalkCheck ... (+9)
-; modos: luta
+; modes: fight
 AiDoNothing:
     lda #$00                                    ; E6FE  A9 00
     rts                                         ; E700  60
 
 
 ; <- jmp AiStartScriptNow, jmp AiStartScript
-; modos: luta
+; modes: fight
 AiStartScriptCheck:
-    bit zp_DD                                   ; E701  24 DD       trecho comum de AiStartScript*: bit 6 de zp_DD inicia sempre; senao sorteia Random&7 contra AiLevel
+    bit zp_DD                                   ; E701  24 DD       common part of AiStartScript*: bit 6 of zp_DD always starts; otherwise draws Random&7 against AiLevel
     bvs AttackStart                             ; E703  70 3F
     jsr Random                                  ; E705  20 B9 E5
     and #$07                                    ; E708  29 07
-    cmp a:AiLevel                               ; E70A  CD B4 00    AiLevel = 7 (fixo em MainLoop): a CPU reage em 7 de cada 8 chances — por isso a IA parece "dificil demais"
+    cmp a:AiLevel                               ; E70A  CD B4 00    AiLevel = 7 (fixed in MainLoop): CPU reacts 7 out of 8 chances — that's why AI seems "too hard"
     bcc AttackStart                             ; E70D  90 35
     beq GuardCheck                              ; E70F  F0 21
     ldy OtherFighter                            ; E711  A4 65
@@ -1288,7 +1288,7 @@ AiStartScriptCheck:
     jmp AiDoNothing                             ; E722  4C FE E6
 
 
-; modos: luta
+; modes: fight
 AnimUpdate:
     lda #$49                                    ; E725  A9 49       AnimUpdate
     ldy #$E7                                    ; E727  A0 E7
@@ -1299,7 +1299,7 @@ AnimUpdate:
     rts                                         ; E731  60
 
 
-; modos: luta
+; modes: fight
 GuardCheck:
     ldy OtherFighter                            ; E732  A4 65       GuardCheck
     lda a:FighterState,y                        ; E734  B9 26 00
@@ -1311,7 +1311,7 @@ GuardCheck:
     rts                                         ; E743  60
 
 
-; modos: luta
+; modes: fight
 AttackStart:
     lda zp_DD                                   ; E744  A5 DD       AttackStart
     sta zp_71,x                                 ; E746  95 71
@@ -1320,9 +1320,9 @@ AttackStart:
     .byte $83,$91,$FF                           ; E749
 
 ; <- jsr AiUpdate
-; modos: luta
+; modes: fight
 AiDefaultGuard:
-    lda a:FighterState,x                        ; E74C  BD 26 00    passo da IA: em estado neutro segura tras (guarda) e sai; senao decide ou continua o roteiro
+    lda a:FighterState,x                        ; E74C  BD 26 00    AI step: in neutral state holds back (guard) and exits; otherwise decides or continues script
     cmp #$50                                    ; E74F  C9 50
     bcs Defend                                  ; E751  B0 27
     lda a:FrameFlags,x                          ; E753  BD 38 00
@@ -1346,7 +1346,7 @@ StateBranch:
     rts                                         ; E779  60
 
 
-; modos: luta
+; modes: fight
 Defend:
     lda a:zp_73,x                               ; E77A  BD 73 00    Defend
     beq PhaseTrans                              ; E77D  F0 14
@@ -1372,7 +1372,7 @@ PosChange:
 
 
 ; <- jsr Defend
-; modos: luta
+; modes: fight
 AiCallCharRoutine:
     ldy FighterChar,x                           ; E7A4  B4 00
     lda AiCharRoutine+1,y                       ; E7A6  B9 E7 E6    [idx $00..$00]
@@ -1382,7 +1382,7 @@ AiCallCharRoutine:
     rts                                         ; E7AE  60
 
 
-; modos: luta
+; modes: fight
 SoundEffect:
     lda zp_71,x                                 ; E7AF  B5 71       SoundEffect
     bne SoundProc                               ; E7B1  D0 1A
@@ -1394,10 +1394,10 @@ SoundEffect:
     and #$07                                    ; E7C0  29 07
     asl a                                       ; E7C2  0A
     tay                                         ; E7C3  A8
-    lda (zp_DA),y                               ; E7C4  B1 DA       [le bancos $00]
+    lda (zp_DA),y                               ; E7C4  B1 DA       [reads banks $00]
     sta AiScriptPtrLo,x                         ; E7C6  95 69
     iny                                         ; E7C8  C8
-    lda (zp_DA),y                               ; E7C9  B1 DA       [le bancos $00]
+    lda (zp_DA),y                               ; E7C9  B1 DA       [reads banks $00]
     sta AiScriptPtrHi,x                         ; E7CB  95 6B
 SoundProc:
     lda #$40                                    ; E7CD  A9 40       SoundProc
@@ -1406,11 +1406,11 @@ SoundProc:
 
 
 ; ------------------------------------------------------------------------------------------------
-; IA DA CPU. Dois niveis: (1) uma rotina "pensar" em codigo nativo, propria de cada personagem
-; (AiCharRoutine -> banco do personagem, ex. RyuAiThink em $00:8F46), que escolhe um roteiro;
-; (2) um interpretador de roteiros (bytecode, opcodes $80-$91 = AiOp00..AiOp11) que gera os comandos.
+; CPU AI. Two levels: (1) a native "think" routine, specific to each character
+; (AiCharRoutine -> character bank, ex. RyuAiThink at $00:8F46), which chooses a script;
+; (2) a script interpreter (bytecode, opcodes $80-$91 = AiOp00..AiOp11) that generates commands.
 ; <- jsr FightStart
-; modos: luta
+; modes: fight
 AiUpdate:
     lda a:FighterFrameBank,x                    ; E7D2  BD 18 00
     ora #$80                                    ; E7D5  09 80
@@ -1423,10 +1423,10 @@ AiUpdate:
     sta zp_D8                                   ; E7E5  85 D8
 
 ; <- jmp PlayerInputH
-; modos: luta
+; modes: fight
 AiScriptLoop:
-    ldy #$00                                    ; E7E7  A0 00       laco do roteiro: $FF encerra; senao decodifica o opcode e copia os operandos
-    lda (zp_D7),y                               ; E7E9  B1 D7       [le bancos $00,$3F]
+    ldy #$00                                    ; E7E7  A0 00       script loop: $FF ends; otherwise decodes opcode and copies operands
+    lda (zp_D7),y                               ; E7E9  B1 D7       [reads banks $00,$3F]
     cmp #$FF                                    ; E7EB  C9 FF
     bne SoundEnd                                ; E7ED  D0 05
     lda #$00                                    ; E7EF  A9 00
@@ -1434,7 +1434,7 @@ AiScriptLoop:
     rts                                         ; E7F3  60
 
 
-; modos: luta
+; modes: fight
 SoundEnd:
     and #$7F                                    ; E7F4  29 7F       SoundEnd
     sta zp_D9                                   ; E7F6  85 D9
@@ -1443,16 +1443,16 @@ SoundEnd:
     inc zp_D8                                   ; E7FC  E6 D8       (nt)
 
 ; <- jmp SoundEnd
-; modos: luta
+; modes: fight
 AiScriptCopyArgs:
-    lda (zp_D7),y                               ; E7FE  B1 D7       [le bancos $00,$3F] copia os operandos positivos para zp_6D.. ate o proximo opcode (negativo)
+    lda (zp_D7),y                               ; E7FE  B1 D7       [reads banks $00,$3F] copies positive operands to zp_6D.. until next opcode (negative)
     bmi PlayerInputH                            ; E800  30 07
     sta a:zp_6D,y                               ; E802  99 6D 00
     iny                                         ; E805  C8
     jmp AiScriptCopyArgs                        ; E806  4C FE E7
 
 
-; modos: luta
+; modes: fight
 PlayerInputH:
     tya                                         ; E809  98          PlayerInputH
     beq AILevelCheck                            ; E80A  F0 09
@@ -1476,9 +1476,9 @@ IntroState:
 
 
 ; <- jsr PlayerInputH
-; modos: luta
+; modes: fight
 AiOpRun:
-    ldy zp_D9                                   ; E82B  A4 D9       Y = opcode lido; cai no despacho AiOpDispatch
+    ldy zp_D9                                   ; E82B  A4 D9       Y = opcode read; falls into AiOpDispatch
 AiOpDispatch:
     lda AiOpHi,y                                ; E82D  B9 D4 E6    [idx $00..$11]
     pha                                         ; E830  48
@@ -1487,15 +1487,15 @@ AiOpDispatch:
     rts                                         ; E835  60
 
 
-; modos: luta
+; modes: fight
 IntroEnd:
     rts                                         ; E836  60          IntroEnd
 
 
 ; <- jsr AnimAdvance
-; modos: luta
+; modes: fight
 ProjLaunch:
-    sta ProjSpeed,x                             ; E837  95 77       A = velocidade ($00/$01/$02, passo em ProjSpeedStepTbl): nasce em FighterX +/- $27, direcao = FighterFlip (bit 6 de ProjFlags)
+    sta ProjSpeed,x                             ; E837  95 77       A = speed ($00/$01/$02, step in ProjSpeedStepTbl): born at FighterX +/- $27, direction = FighterFlip (bit 6 of ProjFlags)
     lsr a                                       ; E839  4A
     tay                                         ; E83A  A8
     lda ProjSpawnXOffsetTbl,y                   ; E83B  B9 64 E0    [idx $00..$00]
@@ -1515,9 +1515,9 @@ CamConfig:
 
 
 ; <- jsr AIBranch_EFCB
-; modos: intro do round, luta, fim do round
+; modes: round intro, fight, end of round
 ProjUpdate:
-    lda ProjX,x                                 ; E854  B5 7B       anda 1/16 do passo por subquadro; Y = FloorY - $27; morre fora de $0C-$FB
+    lda ProjX,x                                 ; E854  B5 7B       moves 1/16 of step per subframe; Y = FloorY - $27; dies outside $0C-$FB
     beq PalUpdate                               ; E856  F0 62
     lda ProjFlags,x                             ; E858  B5 81
     sta zp_D9                                   ; E85A  85 D9
@@ -1554,7 +1554,7 @@ ProjUpdate:
     jmp ProjUpdateStore                         ; E893  4C 9F E8
 
 
-; modos: luta, fim do round
+; modes: fight, end of round
 RoundCond_E896:
     sec                                         ; E896  38          RoundCond
     sbc zp_D7                                   ; E897  E5 D7
@@ -1563,9 +1563,9 @@ RoundCond_E896:
     sbc zp_D8                                   ; E89D  E5 D8
 
 ; <- jmp ProjUpdate
-; modos: luta, fim do round
+; modes: fight, end of round
 ProjUpdateStore:
-    cmp #$0C                                    ; E89F  C9 0C       grava ProjX se dentro de $0C-$FB e conta o passo; fora disso mata o projetil
+    cmp #$0C                                    ; E89F  C9 0C       writes ProjX if inside $0C-$FB and counts step; otherwise kills projectile
     bcc ScreenCheck                             ; E8A1  90 09
     cmp #$FC                                    ; E8A3  C9 FC
     bcs ScreenCheck                             ; E8A5  B0 05
@@ -1574,14 +1574,14 @@ ProjUpdateStore:
     rts                                         ; E8AB  60
 
 
-; modos: luta, fim do round
+; modes: fight, end of round
 ScreenCheck:
     lda #$00                                    ; E8AC  A9 00       ScreenCheck
     sta ProjX,x                                 ; E8AE  95 7B
     rts                                         ; E8B0  60
 
 
-; modos: luta
+; modes: fight
 AIBranch:
     ldy ProjStep,x                              ; E8B1  B4 7F       AIBranch
     iny                                         ; E8B3  C8
@@ -1593,9 +1593,9 @@ PalUpdate:
 
 
 ; <- jsr FightersUpdate
-; modos: intro do round, luta, fim do round
+; modes: round intro, fight, end of round
 ProjClash:
-    lda ProjFlags                               ; E8BB  A5 81       dois projeteis a |dx| < $18: os dois ganham bit 7 de ProjFlags e morrem apos 16 passos
+    lda ProjFlags                               ; E8BB  A5 81       two projectiles at |dx| < $18: both get bit 7 of ProjFlags and die after 16 steps
     ora ProjFlags+1                             ; E8BD  05 82
     and #$80                                    ; E8BF  29 80
     bne RoundEnd                                ; E8C1  D0 2A
@@ -1624,15 +1624,15 @@ PRGBank:
     rts                                         ; E8EC  60
 
 
-; modos: intro do round, luta, fim do round
+; modes: round intro, fight, end of round
 RoundEnd:
     ldx #$01                                    ; E8ED  A2 01       RoundEnd
     ldy #$00                                    ; E8EF  A0 00
 
 ; <- jmp RoundEnd
-; modos: intro do round, luta, fim do round
+; modes: round intro, fight, end of round
 ProjHitTest:
-    lda a:ProjX,y                               ; E8F1  B9 7B 00    AABB do projetil (ponto +/- $0C/$0B) contra as caixas de corpo do oponente
+    lda a:ProjX,y                               ; E8F1  B9 7B 00    projectile AABB (point +/- $0C/$0B) against opponent's body boxes
     beq DefeatCond                              ; E8F4  F0 64
     lda a:ProjFlags,y                           ; E8F6  B9 81 00
     bmi DefeatCond                              ; E8F9  30 5F
@@ -1668,7 +1668,7 @@ VictoryCond:
     cmp a:Body2B,x                              ; E93C  DD 54 00
     bcs DefeatCond                              ; E93F  B0 19
 ProjHit:
-    lda a:ProjFlags,y                           ; E941  B9 81 00    projetil acertou: morre, classe de reacao $CB, dano $6C e chama a rotina de dano
+    lda a:ProjFlags,y                           ; E941  B9 81 00    projectile hit: dies, reaction class $CB, damage $6C and calls damage routine
     ora #$80                                    ; E944  09 80
     sta a:ProjFlags,y                           ; E946  99 81 00
     lda #$00                                    ; E949  A9 00
@@ -1685,18 +1685,18 @@ DefeatCond:
     jmp ProjHitTest                             ; E95F  4C F1 E8
 
 
-; modos: intro do round, luta, fim do round
+; modes: round intro, fight, end of round
 ProjCheck_E962:
     rts                                         ; E962  60          ProjCheck
 
 DirCodeTbl:
-    .byte $04,$05,$06,$04,$08,$0B,$0C,$04,$07,$09,$0A,$04,$04,$04,$04,$04; E963              bits do controle -> codigo de direcao (bit 0 frente, 1 tras, 2 baixo, 3 cima): $04 neutro, $05 frente, $06 tras, $07 cima, $08 baixo, $09-$0A diagonais de cima, $0B-$0C diagonais de baixo
+    .byte $04,$05,$06,$04,$08,$0B,$0C,$04,$07,$09,$0A,$04,$04,$04,$04,$04; E963              controller bits -> direction code (bit 0 forward, 1 back, 2 down, 3 up): $04 neutral, $05 forward, $06 back, $07 up, $08 down, $09-$0A up diagonals, $0B-$0C down diagonals
     .byte $04                                   ; E973
 
 ; <- jsr FighterUpdate
-; modos: intro do round, luta, fim do round
+; modes: round intro, fight, end of round
 InputClear:
-    lda #$04                                    ; E974  A9 04       zera a entrada do lutador (direcao neutra, sem golpe/hold); roda todo quadro fora da luta ativa (ScreenMode != 5 ou round ja decidido)
+    lda #$04                                    ; E974  A9 04       zeroes fighter input (neutral direction, no attack/hold); runs every frame outside active fight (ScreenMode != 5 or round already decided)
     sta InputDir,x                              ; E976  95 86
     lda #$FF                                    ; E978  A9 FF
     sta InputAttack,x                           ; E97A  95 88
@@ -1704,18 +1704,18 @@ InputClear:
     lda #$00                                    ; E97E  A9 00
     sta BtnAHold,x                              ; E980  95 8A
     sta BtnBHold,x                              ; E982  95 8C
-    sta CmdMotionStep,x                         ; E984  95 90       zera o passo do comando 0 do reconhecedor (CmdMotionStep,x = entrada 0 da lista)
-    sta CmdMotionWin,x                          ; E986  95 9E       zera a janela do comando 0 (CmdMotionWin,x)
-    sta CmdMotionStep+1,x                       ; E988  95 91       estouro: CmdMotionStep+1,x NAO e' a entrada 1 (arrays intercalados) — atinge 1 byte do vizinho
-    sta CmdMotionWin+1,x                        ; E98A  95 9F       mesmo estouro na janela; entradas 1-5 nunca sao zeradas aqui, so expiram pela janela
+    sta CmdMotionStep,x                         ; E984  95 90       zeroes recognizer command 0 step (CmdMotionStep,x = list entry 0)
+    sta CmdMotionWin,x                          ; E986  95 9E       zeroes command 0 window (CmdMotionWin,x)
+    sta CmdMotionStep+1,x                       ; E988  95 91       overflow: CmdMotionStep+1,x is NOT entry 1 (interleaved arrays) — hits 1 byte of neighbor
+    sta CmdMotionWin+1,x                        ; E98A  95 9F       same overflow in window; entries 1-5 are never zeroed here, only expire by window
     rts                                         ; E98C  60
 
 
 ; ------------------------------------------------------------------------------------------------
-; ENTRADA DO JOGADOR HUMANO: le JoyState e alimenta o reconhecedor de comandos (golpes especiais).
-; E' aqui (e em CmdStep*) que mora o problema relatado de "hadouken dificil / comando atrasado".
+; HUMAN PLAYER INPUT: reads JoyState and feeds command recognizer (special moves).
+; This is where the reported "hard hadouken / delayed command" problem lives (and in CmdStep*).
 ; <- jsr AIBranch_EFCB
-; modos: luta
+; modes: fight
 InputUpdate:
     txa                                         ; E98D  8A
     jsr JoyPollSafe                             ; E98E  20 F1 F8
@@ -1727,70 +1727,70 @@ InputUpdate:
 .ifdef FIX_EDGE_ATTACK
 __alt_3F_E99A:
 InputButtons:
-    lda JoyState,x                              ; botao A (bit 7): segurado?
-    bpl EdgeARel                                ; soltou -> logica de soltura
+    lda JoyState,x                              ; button A (bit 7): held?
+    bpl EdgeARel                                ; released -> release logic
     ldy BtnAHold,x
     iny
-    beq EdgeBBtn                                ; wrap $FF->0 (marcador de forte): ignora
+    beq EdgeBBtn                                ; wrap $FF->0 (strong marker): ignores
     sty BtnAHold,x
-    cpy #$02                                     ; borda de subida: contador==1
-    bcc EdgeAWeak                                ; -> soco fraco AGORA
-    cpy #$07                                     ; 2..6: zona morta (fraco ja' saiu no aperto)
-    bcc EdgeBBtn                                 ; 7..20: forte segue armado enquanto segurar
+    cpy #$02                                     ; rising edge: counter==1
+    bcc EdgeAWeak                                ; -> weak punch NOW
+    cpy #$07                                     ; 2..6: dead zone (weak already came out on press)
+    bcc EdgeBBtn                                 ; 7..20: strong stays armed while holding
 EdgeAStrong:
-    lda #$01                                     ; soco forte
+    lda #$01                                     ; strong punch
     jmp InputSetAttack
 EdgeAWeak:
-    lda #$00                                     ; soco fraco na borda de subida
+    lda #$00                                     ; weak punch on rising edge
     jmp InputSetAttack
-EdgeARel:                                        ; A soltou
+EdgeARel:                                        ; A released
     ldy BtnAHold,x
     lda #$00
-    sta BtnAHold,x                               ; zera o contador do soco
-    cpy #$15                                     ; >=21 (marcador $FF ou segurou demais): nada
+    sta BtnAHold,x                               ; zeroes punch counter
+    cpy #$15                                     ; >=21 ($FF marker or held too long): nothing
     bcs EdgeBBtn
     cpy #$07
-    bcc EdgeBBtn                                ; <7: nada (o fraco ja' saiu no aperto)
-    bcs EdgeAStrong                              ; 7..20: forte uma ultima vez
-EdgeBBtn:                                        ; botao B (bit 6)
+    bcc EdgeBBtn                                ; <7: nothing (weak already came out on press)
+    bcs EdgeAStrong                              ; 7..20: strong one last time
+EdgeBBtn:                                        ; button B (bit 6)
     lda JoyState,x
     and #$40
-    beq EdgeBRel                                 ; soltou
+    beq EdgeBRel                                 ; released
     ldy BtnBHold,x
     iny
-    beq BtnNone                                  ; wrap $FF->0 (marcador de forte): nenhum golpe
+    beq BtnNone                                  ; wrap $FF->0 (strong marker): no hit
     sty BtnBHold,x
-    cpy #$02                                     ; borda de subida
-    bcc EdgeBWeak                                ; -> chute fraco AGORA
-    cpy #$07                                     ; 2..6: zona morta
-    bcc BtnNone                                  ; 7..20: forte segue armado
+    cpy #$02                                     ; rising edge
+    bcc EdgeBWeak                                ; -> weak kick NOW
+    cpy #$07                                     ; 2..6: dead zone
+    bcc BtnNone                                  ; 7..20: strong stays armed
 EdgeBStrong:
-    lda #$03                                     ; chute forte
+    lda #$03                                     ; strong kick
     jmp InputSetAttack
 EdgeBWeak:
-    lda #$02                                     ; chute fraco na borda de subida
+    lda #$02                                     ; weak kick on rising edge
     jmp InputSetAttack
-EdgeBRel:                                        ; B soltou
+EdgeBRel:                                        ; B released
     ldy BtnBHold,x
     lda #$00
-    sta BtnBHold,x                               ; zera o contador do chute
+    sta BtnBHold,x                               ; zeroes kick counter
     cpy #$15
     bcs BtnNone
     cpy #$07
-    bcc BtnNone                                  ; <7: nada
-    bcs EdgeBStrong                              ; 7..20: forte uma ultima vez
-    .assert * - __alt_3F_E99A <= $62, error, "bloco alt FIX_EDGE_ATTACK em $E99A passou do tamanho"
+    bcc BtnNone                                  ; <7: nothing
+    bcs EdgeBStrong                              ; 7..20: strong one last time
+    .assert * - __alt_3F_E99A <= $62, error, "alt block FIX_EDGE_ATTACK at $E99A exceeded its size"
     .res $62 - (* - __alt_3F_E99A), $FF
 .else
 
-; Botoes A (soco) e B (chute) com dois niveis de forca num botao so:
-; toque curto (soltou antes de 7 quadros)  -> golpe FRACO, emitido so QUANDO SOLTA
-; segurou 7 quadros ou mais                -> golpe FORTE, emitido a CADA quadro do 7o ao 20o, e de novo ao soltar
-; InputAttack,x recebe: 0 soco fraco, 1 soco forte, 2 chute fraco, 3 chute forte, $FF nada.
-; Consequencia: todo golpe sai atrasado (no minimo ate soltar o botao) e o forte se repete — ver docs/BUGS.md.
-; Ajuste FIX_EDGE_ATTACK (secao de ajustes no fim do arquivo): fraco na borda de subida + promocao para forte.
+; Buttons A (punch) and B (kick) with two strength levels on one button:
+; short press (released before 7 frames)  -> WEAK hit, emitted ONLY WHEN RELEASED
+; held 7 frames or more                -> STRONG hit, emitted EVERY frame from 7th to 20th, and again on release
+; InputAttack,x receives: 0 weak punch, 1 strong punch, 2 weak kick, 3 strong kick, $FF nothing.
+; Consequence: every hit comes out delayed (at least until button release) and strong repeats — see docs/BUGS.md.
+; FIX_EDGE_ATTACK adjustment (adjustment section at end of file): weak on rising edge + promotion to strong.
 ; <- jsr InputUpdate
-; modos: luta
+; modes: fight
 InputButtons:
     lda JoyState,x                              ; E99A  B5 F2
     and #$80                                    ; E99C  29 80
@@ -1799,40 +1799,40 @@ InputButtons:
     iny                                         ; E9A2  C8
     beq BtnBCheck                               ; E9A3  F0 26
     sty BtnAHold,x                              ; E9A5  94 8A
-    cpy #$15                                    ; E9A7  C0 15       passou de 20 quadros segurando: ignora
+    cpy #$15                                    ; E9A7  C0 15       passed 20 frames holding: ignores
     bcs BtnBCheck                               ; E9A9  B0 20
-    cpy #$07                                    ; E9AB  C0 07       menos de 7 quadros: ainda nao decide (espera soltar)
+    cpy #$07                                    ; E9AB  C0 07       less than 7 frames: hasn't decided yet (waits for release)
 
 .ifdef FIX_HEAVY_ONCE
 __alt_3F_E9AD:
-    bne BtnBCheck                               ; era bcc: so quando o contador e' exatamente 7
-    .assert * - __alt_3F_E9AD <= $2, error, "bloco alt FIX_HEAVY_ONCE em $E9AD passou do tamanho"
+    bne BtnBCheck                               ; was bcc: only when counter is exactly 7
+    .assert * - __alt_3F_E9AD <= $2, error, "alt block FIX_HEAVY_ONCE at $E9AD exceeded its size"
     .res $2 - (* - __alt_3F_E9AD), $FF
 .else
-    bcc BtnBCheck                               ; E9AD  90 1C       contador < 7: segue para o botao B sem emitir nada
+    bcc BtnBCheck                               ; E9AD  90 1C       counter < 7: goes to button B without emitting anything
 .endif
 
-    lda #$01                                    ; E9AF  A9 01       7..20 quadros segurando: soco forte, todo quadro
+    lda #$01                                    ; E9AF  A9 01       7..20 frames holding: strong punch, every frame
     jmp InputSetAttack                          ; E9B1  4C FE E9
 
 
-; modos: luta
+; modes: fight
 BtnAReleased:
-    ldy BtnAHold,x                              ; E9B4  B4 8A       A soltou: zera o contador do soco e emite fraco (se segurou <7) ou forte de novo
+    ldy BtnAHold,x                              ; E9B4  B4 8A       A released: zeroes punch counter and emits weak (if held <7) or strong again
     beq BtnBCheck                               ; E9B6  F0 13
     lda #$00                                    ; E9B8  A9 00
     sta BtnAHold,x                              ; E9BA  95 8A
     cpy #$15                                    ; E9BC  C0 15
     bcs BtnBCheck                               ; E9BE  B0 0B
 EmitWeakPunch:
-    lda #$00                                    ; E9C0  A9 00       emissor do soco fraco (A=$00): saida da soltura rapida (<7 quadros)
-    cpy #$07                                    ; E9C2  C0 07       soltou: <7 quadros = fraco (0), senao forte (1)
+    lda #$00                                    ; E9C0  A9 00       weak punch emitter (A=$00): output of quick release (<7 frames)
+    cpy #$07                                    ; E9C2  C0 07       released: <7 frames = weak (0), else strong (1)
     bcc InputSetAttack                          ; E9C4  90 38
 
 .ifdef FIX_HEAVY_ONCE
 __alt_3F_E9C6:
-    lda #$FF                                    ; era lda #$01: soltar depois de 7 quadros nao repete o golpe
-    .assert * - __alt_3F_E9C6 <= $2, error, "bloco alt FIX_HEAVY_ONCE em $E9C6 passou do tamanho"
+    lda #$FF                                    ; was lda #$01: releasing after 7 frames does not repeat hit
+    .assert * - __alt_3F_E9C6 <= $2, error, "alt block FIX_HEAVY_ONCE at $E9C6 exceeded its size"
     .res $2 - (* - __alt_3F_E9C6), $FF
 .else
     lda #$01                                    ; E9C6  A9 01
@@ -1841,9 +1841,9 @@ __alt_3F_E9C6:
     jmp InputSetAttack                          ; E9C8  4C FE E9
 
 
-; modos: luta
+; modes: fight
 BtnBCheck:
-    lda JoyState,x                              ; E9CB  B5 F2       processamento do botao B (chute); os casos "nada a fazer" do A caem aqui
+    lda JoyState,x                              ; E9CB  B5 F2       button B (kick) processing; A's "nothing to do" cases fall here
     and #$40                                    ; E9CD  29 40
     beq BtnBReleased                            ; E9CF  F0 14
     ldy BtnBHold,x                              ; E9D1  B4 8C
@@ -1857,7 +1857,7 @@ BtnBCheck:
 .ifdef FIX_HEAVY_ONCE
 __alt_3F_E9DE:
     bne BtnNone
-    .assert * - __alt_3F_E9DE <= $2, error, "bloco alt FIX_HEAVY_ONCE em $E9DE passou do tamanho"
+    .assert * - __alt_3F_E9DE <= $2, error, "alt block FIX_HEAVY_ONCE at $E9DE exceeded its size"
     .res $2 - (* - __alt_3F_E9DE), $FF
 .else
     bcc BtnNone                                 ; E9DE  90 1C
@@ -1867,23 +1867,23 @@ __alt_3F_E9DE:
     jmp InputSetAttack                          ; E9E2  4C FE E9
 
 
-; modos: luta
+; modes: fight
 BtnBReleased:
-    ldy BtnBHold,x                              ; E9E5  B4 8C       B soltou: zera o contador do chute e emite fraco/forte
+    ldy BtnBHold,x                              ; E9E5  B4 8C       B released: zeroes kick counter and emits weak/strong
     beq BtnNone                                 ; E9E7  F0 13
     lda #$00                                    ; E9E9  A9 00
     sta BtnBHold,x                              ; E9EB  95 8C
     cpy #$15                                    ; E9ED  C0 15
     bcs BtnNone                                 ; E9EF  B0 0B
 EmitWeakKick:
-    lda #$02                                    ; E9F1  A9 02       emissor do chute fraco (A=$02): saida da soltura rapida (<7 quadros)
+    lda #$02                                    ; E9F1  A9 02       weak kick emitter (A=$02): output of quick release (<7 frames)
     cpy #$07                                    ; E9F3  C0 07
     bcc InputSetAttack                          ; E9F5  90 07
 
 .ifdef FIX_HEAVY_ONCE
 __alt_3F_E9F7:
     lda #$FF
-    .assert * - __alt_3F_E9F7 <= $2, error, "bloco alt FIX_HEAVY_ONCE em $E9F7 passou do tamanho"
+    .assert * - __alt_3F_E9F7 <= $2, error, "alt block FIX_HEAVY_ONCE at $E9F7 exceeded its size"
     .res $2 - (* - __alt_3F_E9F7), $FF
 .else
     lda #$03                                    ; E9F7  A9 03
@@ -1894,21 +1894,21 @@ __alt_3F_E9F7:
 .endif
 
 
-; modos: luta
+; modes: fight
 BtnNone:
-    lda #$FF                                    ; E9FC  A9 FF       nenhum botao ativo: InputAttack = $FF
+    lda #$FF                                    ; E9FC  A9 FF       no active button: InputAttack = $FF
 
 ; <- jmp InputButtons, jmp BtnAReleased, jmp BtnBCheck, jmp BtnBReleased
-; modos: luta
+; modes: fight
 InputSetAttack:
     sta InputAttack,x                           ; E9FE  95 88
     rts                                         ; EA00  60
 
 
 ; <- jsr InputUpdate
-; modos: luta
+; modes: fight
 InputDirection:
-    ldy OtherFighter                            ; EA01  A4 65       direcional -> codigo de direcao relativo ao lado que o lutador olha (tabela DirCodeTbl)
+    ldy OtherFighter                            ; EA01  A4 65       d-pad -> direction code relative to side fighter faces (table DirCodeTbl)
     lda FighterX,x                              ; EA03  B5 08
     cmp a:FighterX,y                            ; EA05  D9 08 00
     bne SelInput                                ; EA08  D0 05
@@ -1933,9 +1933,9 @@ FighterSwap:
 
 
 ; <- jmp InputUpdate
-; modos: luta
+; modes: fight
 InputCommands:
-    lda ram_033E,x                              ; EA24  BD 3E 03    reconhecedor: zp_D7/D8 = lista de especiais do personagem (slot 8 da ficha, ram_033E/0340), zp_DA/zp_DB = JoyState/JoyPrev espelhados por FighterFlip, zp_DC = lutador, zp_D9 = posicao na lista
+    lda ram_033E,x                              ; EA24  BD 3E 03    recognizer: zp_D7/D8 = character special list (fiche slot 8, ram_033E/0340), zp_DA/zp_DB = JoyState/JoyPrev mirrored by FighterFlip, zp_DC = fighter, zp_D9 = list position
     sta zp_D7                                   ; EA27  85 D7
     lda ram_0340,x                              ; EA29  BD 40 03
     sta zp_D8                                   ; EA2C  85 D8
@@ -1964,13 +1964,13 @@ ButtonCheck:
     sty zp_D9                                   ; EA56  84 D9
 
 ; <- jmp InputCommands
-; modos: luta
+; modes: fight
 CmdWalkLoop:
-    lda (zp_D7),y                               ; EA58  B1 D7       [le bancos $3F] chave = lista[zp_D9], bit 7 = fim da lista ($FF); despacha CmdStep[chave] com Y = chave
+    lda (zp_D7),y                               ; EA58  B1 D7       [reads banks $3F] key = list[zp_D9], bit 7 = end of list ($FF); dispatches CmdStep[key] with Y = key
     bmi CmdWalkEnd                              ; EA5A  30 17
     tay                                         ; EA5C  A8
     jsr CmdStepDispatch                         ; EA5D  20 6A EA
-    inx                                         ; EA60  E8          x += 2 por entrada da lista: x = lutador + 2*posicao indexa os arrays intercalados CmdMotionStep/CmdMotionWin (par = P1, impar = P2)
+    inx                                         ; EA60  E8          x += 2 per list entry: x = fighter + 2*position indexes interleaved CmdMotionStep/CmdMotionWin arrays (even = P1, odd = P2)
     inx                                         ; EA61  E8
     ldy zp_D9                                   ; EA62  A4 D9
     iny                                         ; EA64  C8
@@ -1979,18 +1979,18 @@ CmdWalkLoop:
 
 
 ; <- jsr InputCommands
-; modos: luta
+; modes: fight
 CmdStepDispatch:
-    lda CmdStepHi,y                             ; EA6A  B9 89 EA    [idx $02..$07] salta para CmdStep[chave] via CmdStepLo/CmdStepHi (endereco-1 + RTS), Y = chave $00-$12
+    lda CmdStepHi,y                             ; EA6A  B9 89 EA    [idx $02..$07] jumps to CmdStep[key] via CmdStepLo/CmdStepHi (address-1 + RTS), Y = key $00-$12
     pha                                         ; EA6D  48
     lda CmdStepLo,y                             ; EA6E  B9 76 EA    [idx $02..$07]
     pha                                         ; EA71  48
     rts                                         ; EA72  60
 
 
-; modos: luta
+; modes: fight
 CmdWalkEnd:
-    ldx zp_DC                                   ; EA73  A6 DC       fim da lista: recupera x = lutador (zp_DC) e retorna
+    ldx zp_DC                                   ; EA73  A6 DC       end of list: recovers x = fighter (zp_DC) and returns
     rts                                         ; EA75  60
 
 CmdStepLo:
@@ -2014,7 +2014,7 @@ CmdStepLo:
     .byte <(CmdStepBothBtn-1)                   ; EA87  31
     .byte <(CmdStepNone-1)                      ; EA88  49
 CmdStepHi:
-    .byte >(CmdStepMotion-1)                    ; EA89  EB          19 chaves: $00-$07 e $10 movimento (EB4B), $08-$0D carga (EA9C), $0E/$0F 3x botao (EAFD), $11 A+B juntos (EB32), $12 vazio (EB4A)
+    .byte >(CmdStepMotion-1)                    ; EA89  EB          19 keys: $00-$07 and $10 motion (EB4B), $08-$0D charge (EA9C), $0E/$0F 3x button (EAFD), $11 A+B together (EB32), $12 empty (EB4A)
     .byte >(CmdStepMotion-1)                    ; EA8A  EB
     .byte >(CmdStepMotion-1)                    ; EA8B  EB
     .byte >(CmdStepMotion-1)                    ; EA8C  EB
@@ -2035,9 +2035,9 @@ CmdStepHi:
     .byte >(CmdStepNone-1)                      ; EA9B  EB
 
 ; ------------------------------------------------------------------------------------------------
-; CARGA, 3 fases: segurar a direcao por $3C (60) quadros, soltar apertando a direcao de liberacao
-; (byte seguinte da sequencia) numa janela de 8 quadros, entao o botao exigido na mesma janela. (nt)
-; <- tabela CmdStepLo
+; CHARGE, 3 phases: hold direction for $3C (60) frames, release pressing release direction
+; (next sequence byte) in an 8-frame window, then required button in same window. (nt)
+; <- table CmdStepLo
 CmdStepCharge:
     tya                                         ; EA9C  98          (nt)
     asl a                                       ; EA9D  0A          (nt)
@@ -2052,7 +2052,7 @@ CmdStepCharge:
 
 
 CmdChargeHold:
-    lda CmdMotionTbl,y                          ; EAAD  B9 67 E0    fase 0: direcao de carga apertada -> conta quadros (satura em $3C); soltou antes de 60 -> zera (nt)
+    lda CmdMotionTbl,y                          ; EAAD  B9 67 E0    phase 0: charge direction pressed -> counts frames (saturates at $3C); released before 60 -> zeroes (nt)
     and zp_DA                                   ; EAB0  25 DA       (nt)
     bne CmdChargeTick                           ; EAB2  D0 17       (nt)
     lda CmdMotionWin,x                          ; EAB4  B5 9E       (nt)
@@ -2067,14 +2067,14 @@ CmdChargeHold:
 
 ; <- jmp CmdChargeRelease
 CmdChargeReset:
-    lda #$00                                    ; EAC4  A9 00       zera o passo e a janela do comando corrente (nt)
+    lda #$00                                    ; EAC4  A9 00       zeroes step and window of current command (nt)
     sta CmdMotionStep,x                         ; EAC6  95 90       (nt)
     sta CmdMotionWin,x                          ; EAC8  95 9E       (nt)
     rts                                         ; EACA  60          (nt)
 
 
 CmdChargeTick:
-    inc CmdMotionWin,x                          ; EACB  F6 9E       segurando: contador de quadros, satura em $3C (60) (nt)
+    inc CmdMotionWin,x                          ; EACB  F6 9E       holding: frame counter, saturates at $3C (60) (nt)
     bne CritDamage                              ; EACD  D0 04       (nt)
     lda #$3C                                    ; EACF  A9 3C       (nt)
     sta CmdMotionWin,x                          ; EAD1  95 9E       (nt)
@@ -2084,7 +2084,7 @@ CritDamage:
 
 ; <- jmp CmdChargeHold
 CmdChargeRelease:
-    lda CmdMotionTbl,y                          ; EAD4  B9 67 E0    fase 1: direcao de liberacao apertada numa janela de 8 quadros (EAF8 desconta a cada erro) (nt)
+    lda CmdMotionTbl,y                          ; EAD4  B9 67 E0    phase 1: release direction pressed in 8-frame window (EAF8 decrements on each error) (nt)
     and zp_DA                                   ; EAD7  25 DA       (nt)
     beq CmdChargeWinTick                        ; EAD9  F0 1D       (nt)
     lda #$08                                    ; EADB  A9 08       (nt)
@@ -2093,7 +2093,7 @@ CmdChargeRelease:
 
 ; <- jmp CmdStepCharge
 CmdChargeButton:
-    ldy zp_D9                                   ; EAE1  A4 D9       fase 2: botao exigido (CmdKeyAttackTbl[chave] == InputAttack) -> CmdMoveIdx[lutador] = posicao na lista (nt)
+    ldy zp_D9                                   ; EAE1  A4 D9       phase 2: required button (CmdKeyAttackTbl[key] == InputAttack) -> CmdMoveIdx[fighter] = list position (nt)
     lda (zp_D7),y                               ; EAE3  B1 D7       (nt)
     tay                                         ; EAE5  A8          (nt)
     lda CmdKeyAttackTbl,y                       ; EAE6  B9 AF E0    (nt)
@@ -2106,14 +2106,14 @@ CmdChargeButton:
 
 
 CmdChargeWinTick:
-    dec CmdMotionWin,x                          ; EAF8  D6 9E       janela expirou (< 0) -> zera o comando (nt)
+    dec CmdMotionWin,x                          ; EAF8  D6 9E       window expired (< 0) -> zeroes command (nt)
     bmi CmdChargeReset                          ; EAFA  30 C8       (nt)
     rts                                         ; EAFC  60          (nt)
 
 
-; <- tabela CmdStepLo
+; <- table CmdStepLo
 CmdStepMash:
-    lda CmdKeyAttackTbl,y                       ; EAFD  B9 AF E0    3x o MESMO botao (CmdKeyAttackTbl[chave] == InputAttack), intervalos de ate 8 quadros. (nt) (nt)
+    lda CmdKeyAttackTbl,y                       ; EAFD  B9 AF E0    3x the SAME button (CmdKeyAttackTbl[key] == InputAttack), intervals up to 8 frames. (nt) (nt)
     ldy zp_DC                                   ; EB00  A4 DC       (nt)
     cmp a:InputAttack,y                         ; EB02  D9 88 00    (nt)
     beq CmdMashCount                            ; EB05  F0 05       (nt)
@@ -2123,7 +2123,7 @@ CmdStepMash:
 
 
 CmdMashCount:
-    ldy CmdMotionStep,x                         ; EB0C  B4 90       aperto certo: conta (1..2), zera o intervalo (nt)
+    ldy CmdMotionStep,x                         ; EB0C  B4 90       correct press: counts (1..2), zeroes interval (nt)
     iny                                         ; EB0E  C8          (nt)
     cpy #$03                                    ; EB0F  C0 03       (nt)
     bcs CmdMashDone                             ; EB11  B0 07       (nt)
@@ -2134,7 +2134,7 @@ CmdMashCount:
 
 
 CmdMashDone:
-    lda zp_D9                                   ; EB1A  A5 D9       3o aperto -> CmdMoveIdx[lutador] = posicao na lista (nt)
+    lda zp_D9                                   ; EB1A  A5 D9       3rd press -> CmdMoveIdx[fighter] = list position (nt)
     ldy zp_DC                                   ; EB1C  A4 DC       (nt)
     sta a:CmdMoveIdx,y                          ; EB1E  99 8E 00    (nt)
 CmdMashReset:
@@ -2145,7 +2145,7 @@ CmdMashReset:
 
 
 CmdMashGap:
-    ldy CmdMotionWin,x                          ; EB28  B4 9E       intervalo entre apertos passou de 8 -> zera (nt)
+    ldy CmdMotionWin,x                          ; EB28  B4 9E       interval between presses passed 8 -> zeroes (nt)
     iny                                         ; EB2A  C8          (nt)
     cpy #$08                                    ; EB2B  C0 08       (nt)
     bcs CmdMashReset                            ; EB2D  B0 F2       (nt)
@@ -2153,9 +2153,9 @@ CmdMashGap:
     rts                                         ; EB31  60          (nt)
 
 
-; <- tabela CmdStepLo
+; <- table CmdStepLo
 CmdStepBothBtn:
-    lda zp_DA                                   ; EB32  A5 DA       A+B apertados juntos na borda de subida (agora $C0, antes nao) -> CmdMoveIdx[lutador] = posicao na lista. (nt) (nt)
+    lda zp_DA                                   ; EB32  A5 DA       A+B pressed together on rising edge (now $C0, before not) -> CmdMoveIdx[fighter] = list position. (nt) (nt)
     and #$C0                                    ; EB34  29 C0       (nt)
     cmp #$C0                                    ; EB36  C9 C0       (nt)
     bne SoundCall                               ; EB38  D0 0F       (nt)
@@ -2170,17 +2170,17 @@ SoundCall:
     rts                                         ; EB49  60          SoundCall (nt)
 
 
-; <- tabela CmdStepLo
+; <- table CmdStepLo
 CmdStepNone:
-    rts                                         ; EB4A  60          chave $12: lugar vago; seus 4 bytes de sequencia (E0AF-E0B2) sao a CmdKeyAttackTbl — inofensivo (nt)
+    rts                                         ; EB4A  60          key $12: empty slot; its 4 sequence bytes (E0AF-E0B2) are CmdKeyAttackTbl — harmless (nt)
 
 
 ; ------------------------------------------------------------------------------------------------
-; SEQUENCIA DE DIRECOES: Y = chave*4 + passo. Um passo vale quando o bit exigido esta apertado E
-; alguma direcao e' NOVA (apertada agora, ausente no quadro anterior) — segurando parado nao avanca.
-; Janela de $0C (12) quadros entre passos; byte $00 encerra a sequencia -> fase do botao (outras 12).
-; <- tabela CmdStepLo
-; modos: luta
+; DIRECTION SEQUENCE: Y = key*4 + step. A step counts when required bit is pressed AND
+; some direction is NEW (pressed now, absent in previous frame) — holding still does not advance.
+; $0C (12) frame window between steps; byte $00 ends sequence -> button phase (another 12).
+; <- table CmdStepLo
+; modes: fight
 CmdStepMotion:
     tya                                         ; EB4B  98
     asl a                                       ; EB4C  0A
@@ -2199,7 +2199,7 @@ CmdStepMotion:
     and CmdMotionTbl,y                          ; EB64  39 67 E0    [idx $08..$1E]
     bne CmdMotionAdvance                        ; EB67  D0 0A
 CmdMotionWinTick:
-    ldy CmdMotionWin,x                          ; EB69  B4 9E       nenhuma direcao nova / bit exigido solto: conta a janela; passou de 12 -> zera o comando
+    ldy CmdMotionWin,x                          ; EB69  B4 9E       no new direction / required bit released: counts window; passed 12 -> zeroes command
     iny                                         ; EB6B  C8
     cpy #$0C                                    ; EB6C  C0 0C
     bcs CmdMotionReset                          ; EB6E  B0 2C
@@ -2207,9 +2207,9 @@ CmdMotionWinTick:
     rts                                         ; EB72  60
 
 
-; modos: luta
+; modes: fight
 CmdMotionAdvance:
-    lda #$00                                    ; EB73  A9 00       passo cumprido: zera a janela, avanca o passo; CmdMotionTblNext,y (MESMO y) le o byte SEGUINTE — $0 cai ja na fase do botao
+    lda #$00                                    ; EB73  A9 00       step done: zeroes window, advances step; CmdMotionTblNext,y (SAME y) reads NEXT byte — $0 falls into button phase already
     sta CmdMotionWin,x                          ; EB75  95 9E
     inc CmdMotionStep,x                         ; EB77  F6 90
     lda CmdMotionTblNext,y                      ; EB79  B9 68 E0    [idx $08..$1E]
@@ -2217,16 +2217,16 @@ CmdMotionAdvance:
     rts                                         ; EB7E  60
 
 
-; modos: luta
+; modes: fight
 CmdMotionBtnWin:
-    ldy CmdMotionWin,x                          ; EB7F  B4 9E       fase do botao: mesma janela de 12 quadros
+    ldy CmdMotionWin,x                          ; EB7F  B4 9E       button phase: same 12-frame window
     iny                                         ; EB81  C8
     cpy #$0C                                    ; EB82  C0 0C
     bcs CmdMotionReset                          ; EB84  B0 16
     sty CmdMotionWin,x                          ; EB86  94 9E
 CmdMotionButton:
-    ldy zp_D9                                   ; EB88  A4 D9       botao exigido (CmdKeyAttackTbl[chave] == InputAttack) -> CmdMoveIdx[lutador] = posicao na lista; zera o comando
-    lda (zp_D7),y                               ; EB8A  B1 D7       [le bancos $3F]
+    ldy zp_D9                                   ; EB88  A4 D9       required button (CmdKeyAttackTbl[key] == InputAttack) -> CmdMoveIdx[fighter] = list position; zeroes command
+    lda (zp_D7),y                               ; EB8A  B1 D7       [reads banks $3F]
     tay                                         ; EB8C  A8
     lda CmdKeyAttackTbl,y                       ; EB8D  B9 AF E0    [idx $02..$07]
     ldy zp_DC                                   ; EB90  A4 DC
@@ -2243,14 +2243,14 @@ FighterConfig:
 
 
 ; <- jsr FightersUpdate
-; modos: intro do round, luta, fim do round
+; modes: round intro, fight, end of round
 LoadHitBoxesBoth:
-    ldx #$01                                    ; EBA3  A2 01       processa o lutador 1 e depois o 0 (chamado por FightersUpdate)
+    ldx #$01                                    ; EBA3  A2 01       processes fighter 1 then 0 (called by FightersUpdate)
 
 ; <- jmp AnimChange_ECD4
-; modos: intro do round, luta, fim do round
+; modes: round intro, fight, end of round
 LoadHitBoxes:
-    lda a:zp_1C,x                               ; EBA5  BD 1C 00    mapeia o banco de colisao em $8000; registro do quadro +3/+4: caixas de corpo 1/2 e de ataque (h = 0 ausenta), espelhadas por FighterFlip, ataque clampado em $20/$E0
+    lda a:zp_1C,x                               ; EBA5  BD 1C 00    maps collision bank at $8000; frame record +3/+4: body boxes 1/2 and attack box (h = 0 absent), mirrored by FighterFlip, attack clamped at $20/$E0
     ora #$80                                    ; EBA8  09 80
     sta MMC5_PRG_8000                           ; EBAA  8D 14 51
     lda a:FighterStateBank,x                    ; EBAD  BD 1A 00
@@ -2261,7 +2261,7 @@ LoadHitBoxes:
     lda a:FighterFramePtrLo,x                   ; EBBA  BD 2A 00
     sta zp_D7                                   ; EBBD  85 D7
     ldy #$04                                    ; EBBF  A0 04
-    lda (zp_D7),y                               ; EBC1  B1 D7       [le bancos $01]
+    lda (zp_D7),y                               ; EBC1  B1 D7       [reads banks $01]
     bne EffectEnd                               ; EBC3  D0 27
     sta a:Body1L,x                              ; EBC5  9D 46 00
     sta a:Body1R,x                              ; EBC8  9D 4A 00
@@ -2278,16 +2278,16 @@ LoadHitBoxes:
     jmp LoadBoxesNext                           ; EBE9  4C E7 EC
 
 
-; modos: intro do round, luta
+; modes: round intro, fight
 EffectEnd:
     sta zp_D9                                   ; EBEC  85 D9       EffectEnd
     dey                                         ; EBEE  88
-    lda (zp_D7),y                               ; EBEF  B1 D7       [le bancos $01]
+    lda (zp_D7),y                               ; EBEF  B1 D7       [reads banks $01]
     sta zp_D7                                   ; EBF1  85 D7
     lda zp_D9                                   ; EBF3  A5 D9
     sta zp_D8                                   ; EBF5  85 D8
     ldy #$00                                    ; EBF7  A0 00
-    lda (zp_D7),y                               ; EBF9  B1 D7       [le bancos $00]
+    lda (zp_D7),y                               ; EBF9  B1 D7       [reads banks $00]
     bne TransState                              ; EBFB  D0 0F
     sta a:Body1L,x                              ; EBFD  9D 46 00
     sta a:Body1R,x                              ; EC00  9D 4A 00
@@ -2296,13 +2296,13 @@ EffectEnd:
     jmp LoadBoxBody2                            ; EC09  4C 45 EC
 
 
-; modos: intro do round, luta
+; modes: round intro, fight
 TransState:
     sta a:Body1B,x                              ; EC0C  9D 4C 00    TransState
     iny                                         ; EC0F  C8
     clc                                         ; EC10  18
     lda FighterY,x                              ; EC11  B5 0C
-    adc (zp_D7),y                               ; EC13  71 D7       [le bancos $00]
+    adc (zp_D7),y                               ; EC13  71 D7       [reads banks $00]
     sta a:Body1T,x                              ; EC15  9D 48 00
     clc                                         ; EC18  18
     adc a:Body1B,x                              ; EC19  7D 4C 00
@@ -2312,31 +2312,31 @@ TransState:
     bne RoundCond_EC36                          ; EC22  D0 12
     clc                                         ; EC24  18
     lda FighterX,x                              ; EC25  B5 08
-    adc (zp_D7),y                               ; EC27  71 D7       [le bancos $00]
+    adc (zp_D7),y                               ; EC27  71 D7       [reads banks $00]
     sta a:Body1L,x                              ; EC29  9D 46 00
     iny                                         ; EC2C  C8
     clc                                         ; EC2D  18
-    adc (zp_D7),y                               ; EC2E  71 D7       [le bancos $00]
+    adc (zp_D7),y                               ; EC2E  71 D7       [reads banks $00]
     sta a:Body1R,x                              ; EC30  9D 4A 00
     jmp LoadBoxBody2                            ; EC33  4C 45 EC
 
 
-; modos: intro do round, luta
+; modes: round intro, fight
 RoundCond_EC36:
     sec                                         ; EC36  38          RoundCond
     lda FighterX,x                              ; EC37  B5 08
-    sbc (zp_D7),y                               ; EC39  F1 D7       [le bancos $00]
+    sbc (zp_D7),y                               ; EC39  F1 D7       [reads banks $00]
     sta a:Body1R,x                              ; EC3B  9D 4A 00
     iny                                         ; EC3E  C8
     sec                                         ; EC3F  38
-    sbc (zp_D7),y                               ; EC40  F1 D7       [le bancos $00]
+    sbc (zp_D7),y                               ; EC40  F1 D7       [reads banks $00]
     sta a:Body1L,x                              ; EC42  9D 46 00
 
 ; <- jmp EffectEnd, jmp TransState
-; modos: intro do round, luta
+; modes: round intro, fight
 LoadBoxBody2:
-    iny                                         ; EC45  C8          le a caixa de corpo 2 (altura 0 = ausente), espelhada por FighterFlip
-    lda (zp_D7),y                               ; EC46  B1 D7       [le bancos $00]
+    iny                                         ; EC45  C8          reads body box 2 (height 0 = absent), mirrored by FighterFlip
+    lda (zp_D7),y                               ; EC46  B1 D7       [reads banks $00]
     bne CondCheck                               ; EC48  D0 0F
     sta a:Body2L,x                              ; EC4A  9D 4E 00
     sta a:Body2R,x                              ; EC4D  9D 52 00
@@ -2345,13 +2345,13 @@ LoadBoxBody2:
     jmp LoadBoxAttack                           ; EC56  4C 92 EC
 
 
-; modos: intro do round, luta
+; modes: round intro, fight
 CondCheck:
     sta a:Body2B,x                              ; EC59  9D 54 00    CondCheck
     iny                                         ; EC5C  C8
     clc                                         ; EC5D  18
     lda FighterY,x                              ; EC5E  B5 0C
-    adc (zp_D7),y                               ; EC60  71 D7       [le bancos $00]
+    adc (zp_D7),y                               ; EC60  71 D7       [reads banks $00]
     sta a:Body2T,x                              ; EC62  9D 50 00
     clc                                         ; EC65  18
     adc a:Body2B,x                              ; EC66  7D 54 00
@@ -2361,31 +2361,31 @@ CondCheck:
     bne SfxStart                                ; EC6F  D0 12
     clc                                         ; EC71  18
     lda FighterX,x                              ; EC72  B5 08
-    adc (zp_D7),y                               ; EC74  71 D7       [le bancos $00]
+    adc (zp_D7),y                               ; EC74  71 D7       [reads banks $00]
     sta a:Body2L,x                              ; EC76  9D 4E 00
     iny                                         ; EC79  C8
     clc                                         ; EC7A  18
-    adc (zp_D7),y                               ; EC7B  71 D7       [le bancos $00]
+    adc (zp_D7),y                               ; EC7B  71 D7       [reads banks $00]
     sta a:Body2R,x                              ; EC7D  9D 52 00
     jmp LoadBoxAttack                           ; EC80  4C 92 EC
 
 
-; modos: intro do round, luta
+; modes: round intro, fight
 SfxStart:
     sec                                         ; EC83  38          SfxStart
     lda FighterX,x                              ; EC84  B5 08
-    sbc (zp_D7),y                               ; EC86  F1 D7       [le bancos $00]
+    sbc (zp_D7),y                               ; EC86  F1 D7       [reads banks $00]
     sta a:Body2R,x                              ; EC88  9D 52 00
     iny                                         ; EC8B  C8
     sec                                         ; EC8C  38
-    sbc (zp_D7),y                               ; EC8D  F1 D7       [le bancos $00]
+    sbc (zp_D7),y                               ; EC8D  F1 D7       [reads banks $00]
     sta a:Body2L,x                              ; EC8F  9D 4E 00
 
 ; <- jmp RoundCond_EC36, jmp CondCheck
-; modos: intro do round, luta
+; modes: round intro, fight
 LoadBoxAttack:
-    iny                                         ; EC92  C8          le a caixa de ataque (altura 0 = ausente), travada em $20-$E0
-    lda (zp_D7),y                               ; EC93  B1 D7       [le bancos $00]
+    iny                                         ; EC92  C8          reads attack box (height 0 = absent), clamped at $20-$E0
+    lda (zp_D7),y                               ; EC93  B1 D7       [reads banks $00]
     bne StateBranch_ECA6                        ; EC95  D0 0F
     sta a:AtkL,x                                ; EC97  9D 56 00
     sta a:AtkR,x                                ; EC9A  9D 5A 00
@@ -2394,13 +2394,13 @@ LoadBoxAttack:
     jmp LoadBoxesNext                           ; ECA3  4C E7 EC
 
 
-; modos: luta
+; modes: fight
 StateBranch_ECA6:
     sta a:AtkB,x                                ; ECA6  9D 5C 00    StateBranch
     iny                                         ; ECA9  C8
     clc                                         ; ECAA  18
     lda FighterY,x                              ; ECAB  B5 0C
-    adc (zp_D7),y                               ; ECAD  71 D7       [le bancos $00]
+    adc (zp_D7),y                               ; ECAD  71 D7       [reads banks $00]
     sta a:AtkT,x                                ; ECAF  9D 58 00
     clc                                         ; ECB2  18
     adc a:AtkB,x                                ; ECB3  7D 5C 00
@@ -2410,11 +2410,11 @@ StateBranch_ECA6:
     bne AnimChange_ECD4                         ; ECBC  D0 16
     clc                                         ; ECBE  18
     lda FighterX,x                              ; ECBF  B5 08
-    adc (zp_D7),y                               ; ECC1  71 D7       [le bancos $00]
+    adc (zp_D7),y                               ; ECC1  71 D7       [reads banks $00]
     sta a:AtkL,x                                ; ECC3  9D 56 00
     iny                                         ; ECC6  C8
     clc                                         ; ECC7  18
-    adc (zp_D7),y                               ; ECC8  71 D7       [le bancos $00]
+    adc (zp_D7),y                               ; ECC8  71 D7       [reads banks $00]
     bcc DamageProc_ECCE                         ; ECCA  90 02
     lda #$E0                                    ; ECCC  A9 E0
 DamageProc_ECCE:
@@ -2422,42 +2422,42 @@ DamageProc_ECCE:
     jmp LoadBoxesNext                           ; ECD1  4C E7 EC
 
 
-; modos: luta
+; modes: fight
 AnimChange_ECD4:
     sec                                         ; ECD4  38          AnimChange
     lda FighterX,x                              ; ECD5  B5 08
-    sbc (zp_D7),y                               ; ECD7  F1 D7       [le bancos $00]
+    sbc (zp_D7),y                               ; ECD7  F1 D7       [reads banks $00]
     sta a:AtkR,x                                ; ECD9  9D 5A 00
     iny                                         ; ECDC  C8
     sec                                         ; ECDD  38
-    sbc (zp_D7),y                               ; ECDE  F1 D7       [le bancos $00]
+    sbc (zp_D7),y                               ; ECDE  F1 D7       [reads banks $00]
     bcs EffectCont                              ; ECE0  B0 02
     lda #$20                                    ; ECE2  A9 20
 EffectCont:
     sta a:AtkL,x                                ; ECE4  9D 56 00    EffectCont
 
 ; <- jmp LoadHitBoxesBoth, jmp SfxStart, jmp StateBranch_ECA6
-; modos: intro do round, luta, fim do round
+; modes: round intro, fight, end of round
 LoadBoxesNext:
-    dex                                         ; ECE7  CA          fim das caixas: recarrega para o lutador 0 ou arma o HitTest (x=1 ataca y=0)
+    dex                                         ; ECE7  CA          end of boxes: reloads for fighter 0 or arms HitTest (x=1 attacks y=0)
     bne AnimEnd                                 ; ECE8  D0 03
     jmp LoadHitBoxes                            ; ECEA  4C A5 EB
 
 
-; modos: intro do round, luta, fim do round
+; modes: round intro, fight, end of round
 AnimEnd:
     ldx #$01                                    ; ECED  A2 01       AnimEnd
     ldy #$00                                    ; ECEF  A0 00
 
 ; <- jmp HitFreeze
-; modos: intro do round, luta, fim do round
+; modes: round intro, fight, end of round
 HitTest:
-    lda a:HitThisFrame,x                        ; ECF1  BD 3E 00    caixa de ataque de X contra corpo 1/2 de Y: um acerto por quadro (zp_3E), esgota AttackHitsLeft
+    lda a:HitThisFrame,x                        ; ECF1  BD 3E 00    attack box of X vs body 1/2 of Y: one hit per frame (zp_3E), exhausts AttackHitsLeft
     beq OpponentSwap                            ; ECF4  F0 03
     jmp HitTestNext                             ; ECF6  4C 7A ED
 
 
-; modos: intro do round, luta, fim do round
+; modes: round intro, fight, end of round
 OpponentSwap:
     lda a:AttackHitsLeft,x                      ; ECF9  BD 28 00    OpponentSwap
     beq HitTestNext                             ; ECFC  F0 7C
@@ -2505,16 +2505,16 @@ LifeCheck:
     jmp HitTestApply                            ; ED61  4C 6C ED    (nt)
 
 
-; modos: luta
+; modes: fight
 HitFreeze:
     lda a:FighterNextPtrHi,x                    ; ED64  BD 24 00    HitFreeze
     bne HitTestApply                            ; ED67  D0 03
     jsr HitFreeze_E000                          ; ED69  20 00 E0
 
 ; <- jmp OpponentSwap
-; modos: luta
+; modes: fight
 HitTestApply:
-    lda a:EffectParam,x                         ; ED6C  BD 3A 00    acerto: passa EffectParam e o lutador atingido (Y) para a rotina de dano
+    lda a:EffectParam,x                         ; ED6C  BD 3A 00    hit: passes EffectParam and hit fighter (Y) to damage routine
     sta zp_D8                                   ; ED6F  85 D8
     stx zp_D7                                   ; ED71  86 D7
     tya                                         ; ED73  98
@@ -2523,23 +2523,23 @@ HitTestApply:
     ldx zp_D7                                   ; ED78  A6 D7
 
 ; <- jmp AnimEnd
-; modos: intro do round, luta, fim do round
+; modes: round intro, fight, end of round
 HitTestNext:
-    dex                                         ; ED7A  CA          troca os papeis (0 ataca 1) e repete o HitTest; senao encerra
+    dex                                         ; ED7A  CA          swaps roles (0 attacks 1) and repeats HitTest; otherwise ends
     bne DamageBranch                            ; ED7B  D0 05
     ldy #$01                                    ; ED7D  A0 01
     jmp HitTest                                 ; ED7F  4C F1 EC
 
 
-; modos: intro do round, luta, fim do round
+; modes: round intro, fight, end of round
 DamageBranch:
     rts                                         ; ED82  60          DamageBranch
 
 
 ; <- jsr RoundEnd, jsr HitFreeze
-; modos: luta
+; modes: fight
 HitDamageApply:
-    lda a:FighterState,x                        ; ED83  BD 26 00    aplica o dano: se o alvo esta em guarda compativel, bloqueia; senao soma o dano pendente
+    lda a:FighterState,x                        ; ED83  BD 26 00    applies damage: if target is in compatible guard, blocks; otherwise adds pending damage
     and #$F8                                    ; ED86  29 F8
     cmp #$28                                    ; ED88  C9 28
     bne StateBranch_EDC2                        ; ED8A  D0 36
@@ -2567,7 +2567,7 @@ HitDamageApply:
     jmp HitDamageKO                             ; EDB2  4C F7 EE
 
 
-; modos: luta
+; modes: fight
 DmgApply:
     lda ram_032A,x                              ; EDB5  BD 2A 03    DmgApply
     sta zp_D9                                   ; EDB8  85 D9
@@ -2576,7 +2576,7 @@ DmgApply:
     jmp HitDamageSfx                            ; EDBF  4C C2 EE
 
 
-; modos: luta
+; modes: fight
 StateBranch_EDC2:
     lda zp_D8                                   ; EDC2  A5 D8       StateBranch
     and #$1F                                    ; EDC4  29 1F
@@ -2589,7 +2589,7 @@ StateBranch_EDC2:
     jmp HitDamageKO                             ; EDD3  4C F7 EE
 
 
-; modos: luta
+; modes: fight
 KOCond_EDD6:
     lda a:zp_62,x                               ; EDD6  BD 62 00    KOCond
     beq PostProc                                ; EDD9  F0 0E
@@ -2600,7 +2600,7 @@ KOCond_EDD6:
     jmp HitDamageReact                          ; EDE6  4C 4E EE
 
 
-; modos: luta
+; modes: fight
 PostProc:
     lda a:HitReactClass,x                       ; EDE9  BD 16 00    PostProc
     and #$3F                                    ; EDEC  29 3F
@@ -2623,7 +2623,7 @@ FadeOut:
     jmp HitDamageHeavy                          ; EE12  4C 27 EE
 
 
-; modos: luta
+; modes: fight
 RoundStart2:
     lda KnockbackYAirTbl,y                      ; EE15  B9 2D EF    [idx $00..$0B] RoundStart2
     adc a:zp_60,x                               ; EE18  7D 60 00
@@ -2633,9 +2633,9 @@ RoundStart2:
     sta a:zp_5E,x                               ; EE24  9D 5E 00
 
 ; <- jmp PostProc
-; modos: luta
+; modes: fight
 HitDamageHeavy:
-    cmp #$20                                    ; EE27  C9 20       dano >= $20: zera o estado, arma HitStop=$78 e escolhe a reacao pesada
+    cmp #$20                                    ; EE27  C9 20       damage >= $20: zeroes state, arms HitStop=$78 and chooses heavy reaction
     bcc HitDamageReact                          ; EE29  90 23
     lda #$00                                    ; EE2B  A9 00
     sta a:zp_60,x                               ; EE2D  9D 60 00
@@ -2654,9 +2654,9 @@ DmgReaction:
     sta a:HitReactClass,x                       ; EE4B  9D 16 00    DmgReaction
 
 ; <- jmp KOCond_EDD6, jmp HitDamageKO
-; modos: luta
+; modes: fight
 HitDamageReact:
-    lda a:HitReactClass,x                       ; EE4E  BD 16 00    escolhe a reacao de dano (HitReactClass) e o estado correspondente
+    lda a:HitReactClass,x                       ; EE4E  BD 16 00    chooses damage reaction (HitReactClass) and corresponding state
     cmp #$0C                                    ; EE51  C9 0C
     bne AnimUpdate_EE78                         ; EE53  D0 23
     lda ram_033A,x                              ; EE55  BD 3A 03
@@ -2681,7 +2681,7 @@ HitDamageReact:
     jmp HitDamageTrans                          ; EE75  4C DF EE
 
 
-; modos: luta
+; modes: fight
 AnimUpdate_EE78:
     txa                                         ; EE78  8A          AnimUpdate
     eor #$01                                    ; EE79  49 01
@@ -2710,7 +2710,7 @@ TimerCheck:
     jmp HitDamageSfx                            ; EEA4  4C C2 EE
 
 
-; modos: luta
+; modes: fight
 PhaseChange:
     cmp #$02                                    ; EEA7  C9 02       PhaseChange
     bne SoundProc_EEB8                          ; EEA9  D0 0D
@@ -2721,7 +2721,7 @@ PhaseChange:
     jmp HitDamageSfx                            ; EEB5  4C C2 EE
 
 
-; modos: luta
+; modes: fight
 SoundProc_EEB8:
     lda ram_0332,x                              ; EEB8  BD 32 03    SoundProc
     sta zp_D9                                   ; EEBB  85 D9
@@ -2729,9 +2729,9 @@ SoundProc_EEB8:
     sta zp_DA                                   ; EEC0  85 DA
 
 ; <- jmp DmgApply, jmp AnimUpdate_EE78, jmp PhaseChange
-; modos: luta
+; modes: fight
 HitDamageSfx:
-    stx zp_DC                                   ; EEC2  86 DC       toca o efeito sonoro do dano e indexa a tabela de reacao
+    stx zp_DC                                   ; EEC2  86 DC       plays damage sound effect and indexes reaction table
     farcall SfxPlay_Select                      ; EEC4  A9 EE 48 A9 D5 48 A9 3F .. -> 37:E401
     ldx zp_DC                                   ; EED6  A6 DC
     lda a:HitReactClass,x                       ; EED8  BD 16 00
@@ -2740,15 +2740,15 @@ HitDamageSfx:
     tay                                         ; EEDE  A8
 
 ; <- jmp RoundStart2
-; modos: luta
+; modes: fight
 HitDamageTrans:
-    lda a:FighterStateBank,x                    ; EEDF  BD 1A 00    carrega o banco de estados e aplica a transicao de dano (zp_DD=4)
+    lda a:FighterStateBank,x                    ; EEDF  BD 1A 00    loads state bank and applies damage transition (zp_DD=4)
     ora #$80                                    ; EEE2  09 80
     sta MMC5_PRG_A000                           ; EEE4  8D 15 51
-    lda (zp_D9),y                               ; EEE7  B1 D9       [le bancos $01]
+    lda (zp_D9),y                               ; EEE7  B1 D9       [reads banks $01]
     sta zp_DB                                   ; EEE9  85 DB
     iny                                         ; EEEB  C8
-    lda (zp_D9),y                               ; EEEC  B1 D9       [le bancos $01]
+    lda (zp_D9),y                               ; EEEC  B1 D9       [reads banks $01]
     sta zp_DC                                   ; EEEE  85 DC
     lda #$04                                    ; EEF0  A9 04
     sta zp_DD                                   ; EEF2  85 DD
@@ -2756,9 +2756,9 @@ HitDamageTrans:
 
 
 ; <- jmp HitDamageApply, jmp StateBranch_EDC2
-; modos: luta
+; modes: fight
 HitDamageKO:
-    lda a:HitReactClass,x                       ; EEF7  BD 16 00    dano mata: converte a classe de reacao para o estado de KO
+    lda a:HitReactClass,x                       ; EEF7  BD 16 00    damage kills: converts reaction class to KO state
     and #$1F                                    ; EEFA  29 1F
     tay                                         ; EEFC  A8
     lda KOReactTbl,y                            ; EEFD  B9 47 EF    [idx $00..$0C]
@@ -2766,23 +2766,23 @@ HitDamageKO:
     jmp HitDamageReact                          ; EF03  4C 4E EE
 
 KnockbackXGroundTbl:
-    .byte $07,$0B,$0F,$07,$0B,$0F,$08,$0F,$10,$10,$10,$10,$0B; EF06              knockback X por classe de reacao, vitima em pe/agachada (PostProc)
+    .byte $07,$0B,$0F,$07,$0B,$0F,$08,$0F,$10,$10,$10,$10,$0B; EF06              knockback X by reaction class, victim standing/crouching (PostProc)
 KnockbackXAirTbl:
-    .byte $07,$0A,$0D,$07,$0A,$0D,$08,$0D,$0E,$0E,$0E,$0E,$0A; EF13              knockback X por classe de reacao, vitima neutra/no ar (RoundStart2)
+    .byte $07,$0A,$0D,$07,$0A,$0D,$08,$0D,$0E,$0E,$0E,$0E,$0A; EF13              knockback X by reaction class, victim neutral/in air (RoundStart2)
 KnockbackYGroundTbl:
-    .byte $28,$3C,$50,$28,$3C,$50,$82,$50,$78,$78,$78,$78,$64; EF20              knockback Y por classe de reacao, vitima em pe/agachada (PostProc)
+    .byte $28,$3C,$50,$28,$3C,$50,$82,$50,$78,$78,$78,$78,$64; EF20              knockback Y by reaction class, victim standing/crouching (PostProc)
 KnockbackYAirTbl:
-    .byte $28,$32,$3C,$28,$32,$3C,$82,$3C,$50,$50,$50,$50,$64; EF2D              knockback Y por classe de reacao, vitima neutra/no ar (RoundStart2)
+    .byte $28,$32,$3C,$28,$32,$3C,$82,$3C,$50,$50,$50,$50,$64; EF2D              knockback Y by reaction class, victim neutral/in air (RoundStart2)
 KnockdownReactTbl:
-    .byte $07,$07,$07,$07,$07,$07,$06,$07,$07,$09,$0A,$07,$0C; EF3A              nova classe de reacao quando o knockback acumulado derruba a vitima
+    .byte $07,$07,$07,$07,$07,$07,$06,$07,$07,$09,$0A,$07,$0C; EF3A              new reaction class when accumulated knockback knocks victim down
 KOReactTbl:
-    .byte $07,$07,$07,$07,$07,$07,$07,$07,$07,$09,$0A,$07,$0C,$03,$02,$02; EF47              nova classe de reacao no KO (indexada por classe & $1F)
+    .byte $07,$07,$07,$07,$07,$07,$07,$07,$07,$09,$0A,$07,$0C,$03,$02,$02; EF47              new reaction class on KO (indexed by class & $1F)
     .byte $02,$02,$01,$01,$01,$01,$01,$00,$00,$00,$00,$00,$00,$00,$00,$00; EF57
     .byte $00,$00,$00,$FF,$FF,$FF,$FF,$FF,$FE,$FE,$FE,$FE,$FD; EF67
 
 ; Um quadro de logica da luta: atualiza os dois lutadores (alternando a ordem a cada quadro) e desenha.
 ; <- farcall FadeOut_RoundEndPath, farcall FadeIn, farcall FightFrame
-; modos: intro do round, luta, fim do round
+; modes: round intro, fight, end of round
 FightersUpdate:
     jsr LoadHitBoxesBoth                        ; EF74  20 A3 EB
     jsr ProjClash                               ; EF77  20 BB E8
@@ -2798,7 +2798,7 @@ FightersUpdate:
 
 
 ; <- jsr FightersUpdate
-; modos: intro do round, luta, fim do round
+; modes: round intro, fight, end of round
 FighterUpdate:
     ldx CurFighter                              ; EF99  A6 64
     lda a:FighterFramePtrLo,x                   ; EF9B  BD 2A 00
@@ -2819,22 +2819,22 @@ ModeChange:
     jmp FighterUpdateExec                       ; EFBE  4C CE EF
 
 
-; modos: luta
+; modes: fight
 FightStart:
-    lda FighterIsCpu,x                          ; EFC1  B5 02       FightStart CPU ou humano?
+    lda FighterIsCpu,x                          ; EFC1  B5 02       FightStart CPU or human?
     beq AIBranch_EFCB                           ; EFC3  F0 06
-    jsr AiUpdate                                ; EFC5  20 D2 E7    CPU -> IA
+    jsr AiUpdate                                ; EFC5  20 D2 E7    CPU -> AI
     jmp FighterUpdateExec                       ; EFC8  4C CE EF
 
 
-; modos: luta
+; modes: fight
 AIBranch_EFCB:
-    jsr InputUpdate                             ; EFCB  20 8D E9    AIBranch humano -> controle
+    jsr InputUpdate                             ; EFCB  20 8D E9    AIBranch human -> control
 
 ; <- jmp FighterUpdate, jmp FightStart
-; modos: intro do round, luta, fim do round
+; modes: round intro, fight, end of round
 FighterUpdateExec:
-    jsr InputDispatch_F671                      ; EFCE  20 71 F6    executa a entrada e a animacao do lutador X (InputDispatch + AnimAdvance)
+    jsr InputDispatch_F671                      ; EFCE  20 71 F6    executes fighter X entry and animation (InputDispatch + AnimAdvance)
     dec a:FighterAnimTimer,x                    ; EFD1  DE 42 00
     bne PostAnim                                ; EFD4  D0 03
     jsr AnimAdvance                             ; EFD6  20 A6 E2
@@ -2852,15 +2852,15 @@ PostAnim:
     bcs TimerUpdateFlip                         ; EFF1  B0 02
     lda #$00                                    ; EFF3  A9 00
 TimerUpdateFlip:
-    sta FighterFlip,x                           ; EFF5  95 04       TimerUpdateFlip — define FighterFlip no loop do temporizador (chamado por FightFrame)
+    sta FighterFlip,x                           ; EFF5  95 04       TimerUpdateFlip — sets FighterFlip in timer loop (called by FightFrame)
 TimerUpdateContinue:
-    rts                                         ; EFF7  60          TimerUpdateContinue — continuação do loop do temporizador
+    rts                                         ; EFF7  60          TimerUpdateContinue — continuation of timer loop
 
 
 ; <- jsr FighterUpdate
-; modos: intro do round, luta, fim do round
+; modes: round intro, fight, end of round
 HitRecoverTick:
-    ldy a:zp_62,x                               ; EFF8  BC 62 00    conta o HitStop e, ao terminar, restaura o proximo estado do lutador
+    ldy a:zp_62,x                               ; EFF8  BC 62 00    counts HitStop and, when done, restores fighter's next state
     beq Recover                                 ; EFFB  F0 29
     lda a:FighterState,x                        ; EFFD  BD 26 00
     cmp #$51                                    ; F000  C9 51
@@ -2873,17 +2873,17 @@ HitRecoverTick:
     lda a:FighterStatePtrHi,x                   ; F00E  BD 20 00
     sta zp_D8                                   ; F011  85 D8
     ldy #$03                                    ; F013  A0 03
-    lda (zp_D7),y                               ; F015  B1 D7       [le bancos $01]
+    lda (zp_D7),y                               ; F015  B1 D7       [reads banks $01]
     sta a:FighterNextPtrLo,x                    ; F017  9D 22 00
     iny                                         ; F01A  C8
-    lda (zp_D7),y                               ; F01B  B1 D7       [le bancos $01]
+    lda (zp_D7),y                               ; F01B  B1 D7       [reads banks $01]
     sta a:FighterNextPtrHi,x                    ; F01D  9D 24 00
     lda #$01                                    ; F020  A9 01
     sta a:FighterAnimTimer,x                    ; F022  9D 42 00
     rts                                         ; F025  60
 
 
-; modos: intro do round, luta, fim do round
+; modes: round intro, fight, end of round
 Recover:
     ldy a:zp_60,x                               ; F026  BC 60 00    Recover
     beq AnimState                               ; F029  F0 07
@@ -2896,15 +2896,15 @@ AnimState:
 
 
 ; <- jsr FightersUpdate
-; modos: intro do round, luta, fim do round
+; modes: round intro, fight, end of round
 GrabCheck:
-    ldx CurFighter                              ; F033  A6 64       verifica agarrao: lutador X agarra Y se estiver no estado $A0-$A8 e alinhado
+    ldx CurFighter                              ; F033  A6 64       checks grab: fighter X grabs Y if in state $A0-$A8 and aligned
     ldy OtherFighter                            ; F035  A4 65
 
 ; <- jmp SelInput_F08F
-; modos: intro do round, luta, fim do round
+; modes: round intro, fight, end of round
 GrabCheckOne:
-    lda a:FighterState,x                        ; F037  BD 26 00    testa o agarrao de X em Y e aplica o deslocamento/estado
+    lda a:FighterState,x                        ; F037  BD 26 00    tests X's grab on Y and applies displacement/state
     and #$F8                                    ; F03A  29 F8
     cmp #$A0                                    ; F03C  C9 A0
     bcc SelInput_F08F                           ; F03E  90 4F
@@ -2946,7 +2946,7 @@ CondBranch:
     jmp StateCheckTransitions                   ; F08C  4C CE E0    (nt)
 
 
-; modos: intro do round, luta, fim do round
+; modes: round intro, fight, end of round
 SelInput_F08F:
     cpx OtherFighter                            ; F08F  E4 65       SelInput
     beq FighterSwap_F09A                        ; F091  F0 07
@@ -2955,24 +2955,24 @@ SelInput_F08F:
     jmp GrabCheckOne                            ; F097  4C 37 F0
 
 
-; modos: intro do round, luta, fim do round
+; modes: round intro, fight, end of round
 FighterSwap_F09A:
     rts                                         ; F09A  60          FighterSwap
 
 
 ; <- farcall SelectReadInput
-; modos: selecao
+; modes: selection
 JoyPollBothSel:
-    lda #$00                                    ; F09B  A9 00       le os dois controles na selecao (JoyPollSafe 0 e 1)
+    lda #$00                                    ; F09B  A9 00       reads both controllers in selection (JoyPollSafe 0 and 1)
     jsr JoyPollSafe                             ; F09D  20 F1 F8
     lda #$01                                    ; F0A0  A9 01
     jmp JoyPollSafe                             ; F0A2  4C F1 F8
 
 
 ; <- jsr AIBranch_EFCB
-; modos: intro do round, luta, fim do round
+; modes: round intro, fight, end of round
 MoveDispatch_F0A5:
-    ldy a:MoveMode,x                            ; F0A5  BC 2E 00    despacha a aplicacao do movimento pelo MoveMode (tabela MoveApplyDispatchLo/Hi)
+    ldy a:MoveMode,x                            ; F0A5  BC 2E 00    dispatches movement application by MoveMode (table MoveApplyDispatchLo/Hi)
     lda MoveApplyDispatchHi,y                   ; F0A8  B9 B7 F0    [idx $00..$05]
     pha                                         ; F0AB  48
     lda MoveApplyDispatchLo,y                   ; F0AC  B9 B1 F0    [idx $00..$05]
@@ -2980,7 +2980,7 @@ MoveDispatch_F0A5:
     rts                                         ; F0B0  60
 
 MoveApplyDispatchLo:
-    .byte <(MoveOpponentRel-1)                  ; F0B1  BC          despacho da aplicacao do movimento: endereco-1 por MoveMode (relativo/absoluto/ar/horizontal)
+    .byte <(MoveOpponentRel-1)                  ; F0B1  BC          movement application dispatch: address-1 by MoveMode (relative/absolute/air/horizontal)
     .byte <(MoveAbsolute-1)                     ; F0B2  F1
     .byte <(MoveAir-1)                          ; F0B3  35
     .byte <(MoveAir-1)                          ; F0B4  35
@@ -2994,10 +2994,10 @@ MoveApplyDispatchHi:
     .byte >(MoveHorizontal-1)                   ; F0BB  F3
     .byte >(MoveHorizontal-1)                   ; F0BC  F3
 
-; <- tabela MoveApplyDispatchLo
-; modos: luta
+; <- table MoveApplyDispatchLo
+; modes: fight
 MoveOpponentRel:
-    ldy OtherFighter                            ; F0BD  A4 65       modo $00: posiciona X relativo ao oponente (X = X do oponente +/- VelX)
+    ldy OtherFighter                            ; F0BD  A4 65       mode $00: positions X relative to opponent (X = opponent X +/- VelX)
     clc                                         ; F0BF  18
     lda a:FighterVelY,x                         ; F0C0  BD 36 00
     beq FighterDraw                             ; F0C3  F0 0A
@@ -3026,10 +3026,10 @@ TimerUpdate_F0ED:
     jmp MoveClampEdges                          ; F0EF  4C C5 F5
 
 
-; <- tabela MoveApplyDispatchLo
-; modos: luta
+; <- table MoveApplyDispatchLo
+; modes: fight
 MoveAbsolute:
-    lda a:FighterVelY,x                         ; F0F2  BD 36 00    modo $01: aplica VelY e VelX direto (movimento absoluto)
+    lda a:FighterVelY,x                         ; F0F2  BD 36 00    mode $01: applies VelY and VelX directly (absolute movement)
     beq MoveDispatch_F101                       ; F0F5  F0 0A
     clc                                         ; F0F7  18
     adc FighterY,x                              ; F0F8  75 0C
@@ -3043,14 +3043,14 @@ MoveDispatch_F101:
     jmp MoveClampEdges                          ; F108  4C C5 F5
 
 
-; modos: luta
+; modes: fight
 InputCheck:
     sta zp_D7                                   ; F10B  85 D7       InputCheck
     bpl SeqContinue                             ; F10D  10 03
     jmp MoveAbsLeft                             ; F10F  4C 56 F1
 
 
-; modos: luta
+; modes: fight
 SeqContinue:
     ldy OtherFighter                            ; F112  A4 65       SeqContinue
     lda FighterFlip,x                           ; F114  B5 04
@@ -3063,7 +3063,7 @@ SeqContinue:
     jmp MoveApplyX                              ; F122  4C 25 F2
 
 
-; modos: luta
+; modes: fight
 IntroState_F125:
     lda zp_D7                                   ; F125  A5 D7       IntroState
     lsr a                                       ; F127  4A
@@ -3072,7 +3072,7 @@ IntroState_F125:
     jmp MoveScrollCamera                        ; F12C  4C C0 F1
 
 
-; modos: luta
+; modes: fight
 SeqEnd:
     lda #$41                                    ; F12F  A9 41       SeqEnd
     cmp FighterX                                ; F131  C5 08
@@ -3088,7 +3088,7 @@ SeqEnd:
     jmp MoveApplyX                              ; F144  4C 25 F2
 
 
-; modos: luta
+; modes: fight
 AttackStart_F147:
     lda zp_D7                                   ; F147  A5 D7       AttackStart
     lsr a                                       ; F149  4A
@@ -3101,15 +3101,15 @@ AttackStart_F147:
 
 
 ; <- jmp InputCheck
-; modos: luta
+; modes: fight
 MoveAbsLeft:
-    ldy OtherFighter                            ; F156  A4 65       modo absoluto: aplica o deslocamento para a esquerda
+    ldy OtherFighter                            ; F156  A4 65       absolute mode: applies displacement to the left
     lda FighterFlip,x                           ; F158  B5 04
     beq AttackEnd                               ; F15A  F0 03
     jmp MoveAbsLeftFwd                          ; F15C  4C 94 F1
 
 
-; modos: luta
+; modes: fight
 AttackEnd:
     lda FighterX,x                              ; F15F  B5 08       AttackEnd
     cmp #$40                                    ; F161  C9 40
@@ -3145,9 +3145,9 @@ GuardCond:
 
 
 ; <- jmp MoveAbsLeft
-; modos: luta
+; modes: fight
 MoveAbsLeftFwd:
-    lda zp_D7                                   ; F194  A5 D7       modo absoluto para a esquerda com avanco/recuo de camera
+    lda zp_D7                                   ; F194  A5 D7       absolute mode to the left with camera advance/retreat
     clc                                         ; F196  18
     eor #$FF                                    ; F197  49 FF
     adc #$01                                    ; F199  69 01
@@ -3158,7 +3158,7 @@ MoveAbsLeftFwd:
     jmp MoveApplyX                              ; F1A3  4C 25 F2
 
 
-; modos: luta
+; modes: fight
 InputCheck_F1A6:
     lda zp_D7                                   ; F1A6  A5 D7       InputCheck
     lsr a                                       ; F1A8  4A
@@ -3177,9 +3177,9 @@ FighterSwap_F1B7:
     sta zp_D7                                   ; F1BE  85 D7
 
 ; <- jmp IntroState_F125, jmp AttackStart_F147, jmp PosChange_F16C
-; modos: luta
+; modes: fight
 MoveScrollCamera:
-    clc                                         ; F1C0  18          aplica o deslocamento de camera e o repassa aos outros objetos
+    clc                                         ; F1C0  18          applies camera displacement and passes it to other objects
     lda CameraX                                 ; F1C1  AD B7 03
     sta zp_DA                                   ; F1C4  85 DA
     adc zp_D8                                   ; F1C6  65 D8
@@ -3200,7 +3200,7 @@ MoveScrollCamera:
     jmp MoveScrollOthers                        ; F1E5  4C 04 F2
 
 
-; modos: luta
+; modes: fight
 RoundEnd_F1E8:
     cmp #$58                                    ; F1E8  C9 58       RoundEnd
     bcs MoveScrollOthers                        ; F1EA  B0 18
@@ -3219,9 +3219,9 @@ RoundEnd_F1E8:
     sta zp_D7                                   ; F202  85 D7
 
 ; <- jmp InputCheck_F1A6
-; modos: luta
+; modes: fight
 MoveScrollOthers:
-    sec                                         ; F204  38          move o oponente e o projetil junto com a camera
+    sec                                         ; F204  38          moves opponent and projectile along with camera
     lda zp_DA                                   ; F205  A5 DA
     sbc CameraX                                 ; F207  ED B7 03
     sta zp_D9                                   ; F20A  85 D9
@@ -3241,9 +3241,9 @@ MoveDispatch_F21C:
     sta ProjX+1                                 ; F223  85 7C
 
 ; <- jmp SeqContinue, jmp SeqEnd, jmp AttackEnd, jmp MoveAbsLeftFwd
-; modos: luta
+; modes: fight
 MoveApplyX:
-    clc                                         ; F225  18          aplica o deslocamento em FighterX e zera VelX
+    clc                                         ; F225  18          applies displacement to FighterX and zeroes VelX
     lda zp_D7                                   ; F226  A5 D7
     adc FighterX,x                              ; F228  75 08
     sta FighterX,x                              ; F22A  95 08
@@ -3253,10 +3253,10 @@ MoveApplyX:
     jmp MoveClampEdges                          ; F233  4C C5 F5
 
 
-; <- tabela MoveApplyDispatchLo
-; modos: luta
+; <- table MoveApplyDispatchLo
+; modes: fight
 MoveAir:
-    lda a:FighterVelYSub,x                      ; F236  BD 34 00    modo $02/$03: integra VelY com gravidade e chao
+    lda a:FighterVelYSub,x                      ; F236  BD 34 00    mode $02/$03: integrates VelY with gravity and ground
     sta zp_D7                                   ; F239  85 D7
     lda a:FighterVelY,x                         ; F23B  BD 36 00
     sta zp_D8                                   ; F23E  85 D8
@@ -3268,12 +3268,12 @@ MoveAir:
     jmp MoveAirGravity                          ; F24B  4C 17 F3
 
 
-; modos: luta
+; modes: fight
 ColCheck_F24E:
     jmp MoveAirGround                           ; F24E  4C 32 F3    ColCheck
 
 
-; modos: luta
+; modes: fight
 StateChange:
     clc                                         ; F251  18          StateChange
     lda zp_D7                                   ; F252  A5 D7
@@ -3295,14 +3295,14 @@ SoundEffect_F26E:
     jmp MoveAirScroll                           ; F274  4C 79 F2
 
 
-; modos: luta
+; modes: fight
 AnimEffect_F277:
     bpl EffectEnd_F2DA                          ; F277  10 61       AnimEffect
 
 ; <- jmp StateChange
-; modos: luta
+; modes: fight
 MoveAirScroll:
-    lda zp_D8                                   ; F279  A5 D8       integra o subpixel de VelY (deslocamento aereo)
+    lda zp_D8                                   ; F279  A5 D8       integrates VelY subpixel (air displacement)
     lsr a                                       ; F27B  4A
     ror zp_D7                                   ; F27C  66 D7
     lsr a                                       ; F27E  4A
@@ -3332,7 +3332,7 @@ BranchCond:
     jmp MoveAirScrollApply                      ; F2AF  4C C0 F2
 
 
-; modos: luta
+; modes: fight
 LoopCont:
     cmp #$10                                    ; F2B2  C9 10       LoopCont
     bcc MoveAirScrollApply                      ; F2B4  90 0A
@@ -3342,9 +3342,9 @@ LoopCont:
     sta ram_03B8                                ; F2BD  8D B8 03
 
 ; <- jmp AnimEffect_F277
-; modos: luta
+; modes: fight
 MoveAirScrollApply:
-    sec                                         ; F2C0  38          aplica o deslocamento aereo e ajusta o chao/oponente
+    sec                                         ; F2C0  38          applies air displacement and adjusts ground/opponent
     lda zp_DC                                   ; F2C1  A5 DC
     sbc ram_03B9                                ; F2C3  ED B9 03
     sta zp_D8                                   ; F2C6  85 D8
@@ -3374,10 +3374,10 @@ EffectEnd_F2DA:
     lda a:FighterStatePtrHi,x                   ; F2FD  BD 20 00
     sta zp_DA                                   ; F300  85 DA
     ldy #$03                                    ; F302  A0 03
-    lda (zp_D9),y                               ; F304  B1 D9       [le bancos $01]
+    lda (zp_D9),y                               ; F304  B1 D9       [reads banks $01]
     sta a:FighterNextPtrLo,x                    ; F306  9D 22 00
     iny                                         ; F309  C8
-    lda (zp_D9),y                               ; F30A  B1 D9       [le bancos $01]
+    lda (zp_D9),y                               ; F30A  B1 D9       [reads banks $01]
     sta a:FighterNextPtrHi,x                    ; F30C  9D 24 00
     lda #$01                                    ; F30F  A9 01
     sta a:FighterAnimTimer,x                    ; F311  9D 42 00
@@ -3385,9 +3385,9 @@ EffectEnd_F2DA:
 
 
 ; <- jmp MoveAir
-; modos: luta
+; modes: fight
 MoveAirGravity:
-    clc                                         ; F317  18          aplica a gravidade ($30 por quadro) e testa o chao
+    clc                                         ; F317  18          applies gravity ($30 per frame) and tests ground
     lda a:FighterVelYSub,x                      ; F318  BD 34 00
     adc #$30                                    ; F31B  69 30
     sta a:FighterVelYSub,x                      ; F31D  9D 34 00
@@ -3401,9 +3401,9 @@ MoveAirGravity:
 
 
 ; <- jmp ColCheck_F24E, jmp LoopCont
-; modos: luta
+; modes: fight
 MoveAirGround:
-    jsr MoveHorizontal                          ; F332  20 77 F3    no ar: move horizontalmente e aplica atrito ao pousar
+    jsr MoveHorizontal                          ; F332  20 77 F3    in air: moves horizontally and applies friction on landing
     lda FighterY,x                              ; F335  B5 0C
     cmp FloorY                                  ; F337  CD BA 03
     bcc MetaSpriteDraw                          ; F33A  90 3A
@@ -3422,7 +3422,7 @@ MoveAirGround:
     rts                                         ; F359  60
 
 
-; modos: luta
+; modes: fight
 PosChange_F35A:
     clc                                         ; F35A  18          PosChange
     lda a:FighterVelXSub,x                      ; F35B  BD 30 00
@@ -3435,7 +3435,7 @@ PosChange_F35A:
     rts                                         ; F36D  60
 
 
-; modos: luta
+; modes: fight
 SoundEffect_F36E:
     lda #$00                                    ; F36E  A9 00       SoundEffect
     sta a:FighterVelXSub,x                      ; F370  9D 30 00
@@ -3444,10 +3444,10 @@ MetaSpriteDraw:
     rts                                         ; F376  60          MetaSpriteDraw
 
 
-; <- jsr MoveAirGround, tabela MoveApplyDispatchLo
-; modos: intro do round, luta, fim do round
+; <- jsr MoveAirGround, table MoveApplyDispatchLo
+; modes: round intro, fight, end of round
 MoveHorizontal:
-    lda a:FighterVelXSub,x                      ; F377  BD 30 00    modo $04/$05: aplica VelX com regras de canto
+    lda a:FighterVelXSub,x                      ; F377  BD 30 00    mode $04/$05: applies VelX with corner rules
     sta zp_D7                                   ; F37A  85 D7
     lda a:FighterVelX,x                         ; F37C  BD 32 00
     sta zp_D8                                   ; F37F  85 D8
@@ -3456,14 +3456,14 @@ MoveHorizontal:
     jmp MovePushApart                           ; F385  4C 43 F5
 
 
-; modos: luta
+; modes: fight
 BlockEnd:
     bit zp_D8                                   ; F388  24 D8       BlockEnd
     bpl AnimChange_F38F                         ; F38A  10 03
     jmp MoveHorizLeft                           ; F38C  4C FB F3
 
 
-; modos: luta
+; modes: fight
 AnimChange_F38F:
     ldy OtherFighter                            ; F38F  A4 65       AnimChange
     lda FighterFlip,x                           ; F391  B5 04
@@ -3480,7 +3480,7 @@ StateChange_F3A6:
     jmp MoveHorizApply                          ; F3A6  4C 33 F5    StateChange
 
 
-; modos: luta
+; modes: fight
 CharSelect_F3A9:
     lda zp_D8                                   ; F3A9  A5 D8       CharSelect
     lsr a                                       ; F3AB  4A
@@ -3492,7 +3492,7 @@ CharSelect_F3A9:
     jmp MoveScrollStage                         ; F3B6  4C 9A F4
 
 
-; modos: luta
+; modes: fight
 RoundEnd_F3B9:
     lda a:FrameFlags,x                          ; F3B9  BD 38 00    RoundEnd
     and #$20                                    ; F3BC  29 20
@@ -3513,7 +3513,7 @@ StateChange_F3CA:
     jmp MoveHorizApply                          ; F3D7  4C 33 F5
 
 
-; modos: luta
+; modes: fight
 RoundTrans:
     lda zp_D8                                   ; F3DA  A5 D8       RoundTrans
     lsr a                                       ; F3DC  4A
@@ -3535,15 +3535,15 @@ RoundTrans:
 
 
 ; <- jmp BlockEnd
-; modos: luta
+; modes: fight
 MoveHorizLeft:
-    ldy OtherFighter                            ; F3FB  A4 65       movimento horizontal para a esquerda (conforme FighterFlip)
+    ldy OtherFighter                            ; F3FB  A4 65       horizontal movement to the left (per FighterFlip)
     lda FighterFlip,x                           ; F3FD  B5 04
     beq AnimState_F404                          ; F3FF  F0 03
     jmp MoveHorizLeftFwd                        ; F401  4C 53 F4
 
 
-; modos: luta
+; modes: fight
 AnimState_F404:
     lda a:FrameFlags,x                          ; F404  BD 38 00    AnimState
     and #$20                                    ; F407  29 20
@@ -3555,7 +3555,7 @@ PalConfig_F411:
     jmp MoveHorizApply                          ; F411  4C 33 F5    PalConfig
 
 
-; modos: luta
+; modes: fight
 StateChange_F414:
     sec                                         ; F414  38          StateChange
     lda #$00                                    ; F415  A9 00
@@ -3595,9 +3595,9 @@ InputProc:
 
 
 ; <- jmp MoveHorizLeft
-; modos: luta
+; modes: fight
 MoveHorizLeftFwd:
-    sec                                         ; F453  38          movimento horizontal para a esquerda com avanco de camera
+    sec                                         ; F453  38          horizontal movement to the left with camera advance
     lda #$00                                    ; F454  A9 00
     sbc zp_D7                                   ; F456  E5 D7
     sta zp_D7                                   ; F458  85 D7
@@ -3614,7 +3614,7 @@ ColCheck_F46D:
     jmp MoveHorizApply                          ; F46D  4C 33 F5    ColCheck
 
 
-; modos: luta
+; modes: fight
 SfxPlay_F470:
     lda zp_D7                                   ; F470  A5 D7       SfxPlay_F470
     sta zp_D9                                   ; F472  85 D9
@@ -3642,9 +3642,9 @@ SoundConfig:
     sta zp_D8                                   ; F498  85 D8
 
 ; <- jmp CharSelect_F3A9, jmp RoundTrans, jmp StateChange_F414
-; modos: luta
+; modes: fight
 MoveScrollStage:
-    clc                                         ; F49A  18          aplica o deslocamento do cenario e move a camera
+    clc                                         ; F49A  18          applies stage displacement and moves camera
     lda ram_03B6                                ; F49B  AD B6 03
     sta zp_E5                                   ; F49E  85 E5
     adc zp_D9                                   ; F4A0  65 D9
@@ -3679,7 +3679,7 @@ MoveScrollStage:
     jmp MoveScrollStageOthers                   ; F4DE  4C 12 F5
 
 
-; modos: luta
+; modes: fight
 FrameUpdate:
     cmp #$58                                    ; F4E1  C9 58       FrameUpdate
     bcs MoveScrollStageOthers                   ; F4E3  B0 2D
@@ -3708,9 +3708,9 @@ FrameUpdate:
     sta zp_D8                                   ; F510  85 D8
 
 ; <- jmp SfxPlay_F470
-; modos: luta
+; modes: fight
 MoveScrollStageOthers:
-    sec                                         ; F512  38          move o oponente e o projetil junto com o cenario
+    sec                                         ; F512  38          moves opponent and projectile along with stage
     lda zp_E6                                   ; F513  A5 E6
     sbc CameraX                                 ; F515  ED B7 03
     sta zp_E7                                   ; F518  85 E7
@@ -3730,9 +3730,9 @@ StateChange_F52A:
     sta ProjX+1                                 ; F531  85 7C
 
 ; <- jmp AnimChange_F38F, jmp RoundEnd_F3B9, jmp AnimState_F404, jmp MoveHorizLeftFwd
-; modos: luta
+; modes: fight
 MoveHorizApply:
-    clc                                         ; F533  18          aplica o deslocamento horizontal em FighterXSub/FighterX
+    clc                                         ; F533  18          applies horizontal displacement to FighterXSub/FighterX
     lda zp_D7                                   ; F534  A5 D7
     adc FighterXSub,x                           ; F536  75 06
     sta FighterXSub,x                           ; F538  95 06
@@ -3743,9 +3743,9 @@ MoveHorizApply:
 
 
 ; <- jmp MoveAirGravity, jmp MoveHorizontal, jmp FrameUpdate
-; modos: intro do round, luta, fim do round
+; modes: round intro, fight, end of round
 MovePushApart:
-    lda #$01                                    ; F543  A9 01       se os lutadores se sobrepoem, empurra cada um metade da invasao
+    lda #$01                                    ; F543  A9 01       if fighters overlap, pushes each half of invasion
     sta zp_E0                                   ; F545  85 E0
     ldy OtherFighter                            ; F547  A4 65
     lda a:MoveMode,y                            ; F549  B9 2E 00
@@ -3753,7 +3753,7 @@ MovePushApart:
     jmp MoveClampEdges                          ; F54E  4C C5 F5    (nt)
 
 
-; modos: intro do round, luta, fim do round
+; modes: round intro, fight, end of round
 RoundEnd_F551:
     ora a:MoveMode,x                            ; F551  1D 2E 00    RoundEnd
     and #$01                                    ; F554  29 01
@@ -3761,7 +3761,7 @@ RoundEnd_F551:
     jmp MoveClampEdges                          ; F558  4C C5 F5
 
 
-; modos: intro do round, luta, fim do round
+; modes: round intro, fight, end of round
 RoundEnd_F55B:
     sec                                         ; F55B  38          RoundEnd
     lda FighterY+1                              ; F55C  A5 0D
@@ -3775,7 +3775,7 @@ InputProc_F566:
     jmp MoveClampEdges                          ; F56A  4C C5 F5
 
 
-; modos: intro do round, luta, fim do round
+; modes: round intro, fight, end of round
 SfxPlay_F56D:
     jsr MoveClampEdges                          ; F56D  20 C5 F5    SfxPlay
     sec                                         ; F570  38
@@ -3790,14 +3790,14 @@ SfxPlay_F56D:
     jmp MovePushApply                           ; F580  4C B5 F5
 
 
-; modos: intro do round, luta, fim do round
+; modes: round intro, fight, end of round
 AICheck_F583:
     sbc #$10                                    ; F583  E9 10       AICheck
     bcc AILevelCheck_F58A                       ; F585  90 03
     jmp MoveClampEdges                          ; F587  4C C5 F5
 
 
-; modos: luta, fim do round
+; modes: fight, end of round
 AILevelCheck_F58A:
     eor #$FF                                    ; F58A  49 FF       AILevelCheck
     adc #$01                                    ; F58C  69 01
@@ -3817,14 +3817,14 @@ EffectStart_F596:
     jmp MoveClampEdges                          ; F5A3  4C C5 F5
 
 
-; modos: luta, fim do round
+; modes: fight, end of round
 StateChange_F5A6:
     adc #$10                                    ; F5A6  69 10       StateChange
     bcs SoundProc_F5AD                          ; F5A8  B0 03
     jmp MoveClampEdges                          ; F5AA  4C C5 F5
 
 
-; modos: luta
+; modes: fight
 SoundProc_F5AD:
     lsr a                                       ; F5AD  4A          SoundProc
     cmp #$03                                    ; F5AE  C9 03
@@ -3833,9 +3833,9 @@ SoundProc_F5AD:
     clc                                         ; F5B4  18
 
 ; <- jmp SfxPlay_F56D
-; modos: luta
+; modes: fight
 MovePushApply:
-    sta zp_E3                                   ; F5B5  85 E3       aplica o empurrao em FighterX
+    sta zp_E3                                   ; F5B5  85 E3       applies push to FighterX
     adc FighterX                                ; F5B7  65 08
     sta FighterX                                ; F5B9  85 08
     sec                                         ; F5BB  38
@@ -3846,17 +3846,17 @@ MovePushApply:
 
 
 ; <- jmp MoveOpponentRel, jmp MoveAbsolute, jmp RoundEnd_F1E8, jmp MovePushApart, jmp RoundEnd_F551, jmp RoundEnd_F55B ... (+5)
-; modos: intro do round, luta, fim do round
+; modes: round intro, fight, end of round
 MoveClampEdges:
-    lda #$00                                    ; F5C5  A9 00       inicia o clamp de X nas bordas da tela
+    lda #$00                                    ; F5C5  A9 00       starts X clamp at screen edges
     sta zp_E1                                   ; F5C7  85 E1
     sta zp_E2                                   ; F5C9  85 E2
     ldy OtherFighter                            ; F5CB  A4 65
 
 ; <- jmp SfxEnd
-; modos: intro do round, luta, fim do round
+; modes: round intro, fight, end of round
 MoveClampX:
-    lda a:FrameFlags,x                          ; F5CD  BD 38 00    trava o X em $20-$E0 e guarda o transbordo
+    lda a:FrameFlags,x                          ; F5CD  BD 38 00    locks X at $20-$E0 and saves overflow
     and #$20                                    ; F5D0  29 20
     bne MoveClampNext                           ; F5D2  D0 4D
     lda #$20                                    ; F5D4  A9 20
@@ -3879,7 +3879,7 @@ MoveClampX:
     jmp MoveClampNext                           ; F5F9  4C 21 F6
 
 
-; modos: intro do round, luta, fim do round
+; modes: round intro, fight, end of round
 SfxEnd:
     lda #$E0                                    ; F5FC  A9 E0       SfxEnd
     sec                                         ; F5FE  38
@@ -3900,9 +3900,9 @@ SfxEnd:
     jsr MoveGrabEscape                          ; F61E  20 48 F6
 
 ; <- jmp MoveClampEdges
-; modos: intro do round, luta, fim do round
+; modes: round intro, fight, end of round
 MoveClampNext:
-    cpx OtherFighter                            ; F621  E4 65       passa ao outro lutador para o clamp
+    cpx OtherFighter                            ; F621  E4 65       passes to other fighter for clamp
     beq MoveClampPush                           ; F623  F0 07
     ldx OtherFighter                            ; F625  A6 65
     ldy CurFighter                              ; F627  A4 64
@@ -3910,9 +3910,9 @@ MoveClampNext:
 
 
 ; <- jmp MoveClampPush
-; modos: intro do round, luta, fim do round
+; modes: round intro, fight, end of round
 MoveClampPush:
-    lda a:FrameFlags,y                          ; F62C  B9 38 00    soma o transbordo do clamp ao X do oponente (empurrao atraves da vitima)
+    lda a:FrameFlags,y                          ; F62C  B9 38 00    adds clamp overflow to opponent's X (push through victim)
     and #$40                                    ; F62F  29 40
     beq ClampCheck                              ; F631  F0 09
     lda zp_E1,x                                 ; F633  B5 E1
@@ -3928,15 +3928,15 @@ ClampCheck:
     jmp MoveClampPush                           ; F644  4C 2C F6
 
 
-; modos: intro do round, luta, fim do round
+; modes: round intro, fight, end of round
 MoveEnd:
     rts                                         ; F647  60          MoveEnd
 
 
 ; <- jsr MoveClampEdges, jsr SfxEnd
-; modos: luta
+; modes: fight
 MoveGrabEscape:
-    jsr HitFreeze_E000                          ; F648  20 00 E0    escapa do agarrao: hit-freeze, zera a classe de reacao e toca o som
+    jsr HitFreeze_E000                          ; F648  20 00 E0    escape grab: hit-freeze, zeroes reaction class and plays sound
     lda #$00                                    ; F64B  A9 00
     sta a:HitReactClass,x                       ; F64D  9D 16 00
     stx zp_DE                                   ; F650  86 DE
@@ -3951,22 +3951,22 @@ MoveGrabEscape:
 
 
 ; <- jsr AIBranch_EFCB
-; modos: intro do round, luta, fim do round
+; modes: round intro, fight, end of round
 InputDispatch_F671:
-    lda a:FighterNextPtrHi,x                    ; F671  BD 24 00    entrada do jogador: vira transicao de estado — direcao (flag de quadro bit 2), botao (bit 1) ou especial (bit 0); a classe do proximo estado ($58-$68 aceita direcao) decide o que passa
+    lda a:FighterNextPtrHi,x                    ; F671  BD 24 00    player input: triggers state transition — direction (frame flag bit 2), button (bit 1) or special (bit 0); next state class ($58-$68 accepts direction) decides what passes
     beq InputDispatch                           ; F674  F0 1F
     sta zp_D8                                   ; F676  85 D8
     lda a:FighterNextPtrLo,x                    ; F678  BD 22 00
     sta zp_D7                                   ; F67B  85 D7
     ldy #$05                                    ; F67D  A0 05
-    lda (zp_D7),y                               ; F67F  B1 D7       [le bancos $01]
+    lda (zp_D7),y                               ; F67F  B1 D7       [reads banks $01]
     and #$F8                                    ; F681  29 F8
     cmp #$58                                    ; F683  C9 58
     bcs ScreenStart                             ; F685  B0 03
     jmp GuardRedirect                           ; F687  4C 04 F7
 
 
-; modos: luta
+; modes: fight
 ScreenStart:
     cmp #$69                                    ; F68A  C9 69       ScreenStart
     bcc InputDispatch                           ; F68C  90 07
@@ -3975,7 +3975,7 @@ ScreenStart:
     jmp GuardRedirect                           ; F692  4C 04 F7    (nt)
 
 
-; modos: intro do round, luta, fim do round
+; modes: round intro, fight, end of round
 InputDispatch:
     lda a:FrameFlags,x                          ; F695  BD 38 00    InputDispatch
     and #$04                                    ; F698  29 04
@@ -4006,7 +4006,7 @@ StateChange_F6B2:
 .ifdef FIX_EDGE_ATTACK
 __alt_3F_F6C9:
     jsr EdgeMarkHold
-    .assert * - __alt_3F_F6C9 <= $6, error, "bloco alt FIX_EDGE_ATTACK em $F6C9 passou do tamanho"
+    .assert * - __alt_3F_F6C9 <= $6, error, "alt block FIX_EDGE_ATTACK at $F6C9 exceeded its size"
     .res $6 - (* - __alt_3F_F6C9), $FF
 .else
     ldy #$15                                    ; F6C9  A0 15
@@ -4036,26 +4036,26 @@ FadeOut_F6D6:
     tay                                         ; F6F4  A8
 
 ; <- jsr InputDispatch
-; modos: intro do round, luta
+; modes: round intro, fight
 TransViaTbl:
-    lda (zp_D7),y                               ; F6F5  B1 D7       [le bancos $01] le o ponteiro da tabela de estados e chama o caminhador de transicoes
+    lda (zp_D7),y                               ; F6F5  B1 D7       [reads banks $01] reads state table pointer and calls transition walker
     sta zp_DB                                   ; F6F7  85 DB
     iny                                         ; F6F9  C8
-    lda (zp_D7),y                               ; F6FA  B1 D7       [le bancos $01]
+    lda (zp_D7),y                               ; F6FA  B1 D7       [reads banks $01]
     beq SelInput_F703                           ; F6FC  F0 05
     sta zp_DC                                   ; F6FE  85 DC
     jmp StateCheckTransitions                   ; F700  4C CE E0
 
 
-; modos: intro do round, luta, fim do round
+; modes: round intro, fight, end of round
 SelInput_F703:
     rts                                         ; F703  60          SelInput
 
 
 ; <- jmp InputDispatch_F671, jmp ScreenStart
-; modos: intro do round, luta, fim do round
+; modes: round intro, fight, end of round
 GuardRedirect:
-    lda a:FighterState,x                        ; F704  BD 26 00    em guarda ($28-$2F): troca para a defesa da direcao atual (GuardClassTbl) e do golpe recebido (tabela ram_032A), preservando o quadro e o timer
+    lda a:FighterState,x                        ; F704  BD 26 00    in guard ($28-$2F): switches to defense of current direction (GuardClassTbl) and received hit (table ram_032A), preserving frame and timer
     and #$F8                                    ; F707  29 F8
     cmp #$28                                    ; F709  C9 28
     bne SelInput_F703                           ; F70B  D0 F6
@@ -4080,10 +4080,10 @@ GuardRedirect:
     and #$3F                                    ; F737  29 3F
     asl a                                       ; F739  0A
     tay                                         ; F73A  A8
-    lda (zp_D7),y                               ; F73B  B1 D7       [le bancos $01]
+    lda (zp_D7),y                               ; F73B  B1 D7       [reads banks $01]
     sta zp_DB                                   ; F73D  85 DB
     iny                                         ; F73F  C8
-    lda (zp_D7),y                               ; F740  B1 D7       [le bancos $01]
+    lda (zp_D7),y                               ; F740  B1 D7       [reads banks $01]
     sta zp_DC                                   ; F742  85 DC
     lda #$04                                    ; F744  A9 04
     sta zp_DD                                   ; F746  85 DD
@@ -4110,10 +4110,10 @@ GuardRedirect:
     sta a:FighterFramePtrHi,x                   ; F778  9D 2C 00
     sta zp_D6                                   ; F77B  85 D6
     ldy #$07                                    ; F77D  A0 07
-    lda (zp_D5),y                               ; F77F  B1 D5       [le bancos $01]
+    lda (zp_D5),y                               ; F77F  B1 D5       [reads banks $01]
     sta a:FrameFlags,x                          ; F781  9D 38 00
     ldy #$05                                    ; F784  A0 05
-    lda (zp_DA),y                               ; F786  B1 DA       [le bancos $01]
+    lda (zp_DA),y                               ; F786  B1 DA       [reads banks $01]
     sta a:FighterState,x                        ; F788  9D 26 00
     lda #$00                                    ; F78B  A9 00
     sta a:FighterNextPtrLo,x                    ; F78D  9D 22 00
@@ -4123,13 +4123,13 @@ GuardRedirect:
     rts                                         ; F798  60
 
 GuardClassTbl:
-    .byte $29,$29,$29,$29,$2A,$29,$29,$2A,$2A   ; F799              byte de classe da guarda pela direcao (indice InputDir-$04): $29 em pe, $2A agachado
+    .byte $29,$29,$29,$29,$2A,$29,$29,$2A,$2A   ; F799              guard class byte by direction (index InputDir-$04): $29 standing, $2A crouching
 
 ; ------------------------------------------------------------------------------------------------
-; Inicializacao: configura o MMC5 (PRG modo 3 = 4 bancos de 8K; CHR modo 2 = paginas de 2K;
-; ExRAM modo 3; nametables $44), zera rolagem/paleta, instala o trampolim FarCall na RAM e semeia o RNG.
+; Initialization: configures MMC5 (PRG mode 3 = 4 banks of 8K; CHR mode 2 = 2K pages;
+; ExRAM mode 3; nametables $44), zeroes scroll/palette, installs FarCall trampoline in RAM and seeds RNG.
 ; <- jmp Reset
-; modos: aviso/QR
+; modes: warning/QR
 Main:
     lda #$03                                    ; F7A2  A9 03
     sta MMC5_PRG_MODE                           ; F7A4  8D 00 51
@@ -4191,9 +4191,9 @@ ModeChange_F81C:
     jsr InstallFarCall                          ; F822  20 B7 F8
     jsr RandomSeed                              ; F825  20 AC E5
 
-; Laco do jogo: aviso -> titulo -> selecao -> VS -> luta -> frase do vencedor -> volta ao comeco.
+; Game loop: warning -> title -> selection -> VS -> fight -> winner quote -> back to start.
 ; <- jmp Main
-; modos: aviso/QR, frase final
+; modes: warning/QR, quote
 MainLoop:
     nop                                         ; F828  EA          ScreenDisclaimer
     nop                                         ; F829  EA          (nt)
@@ -4214,7 +4214,7 @@ MainLoop:
     nop                                         ; F838  EA          (nt)
     nop                                         ; F839  EA          (nt)
     farcall ScreenTitle                         ; F83A  A9 F8 48 A9 4B 48 A9 3F .. -> 37:F4E5 ScreenTitle
-    lda #$07                                    ; F84C  A9 07       nivel da IA (0..7). E' o unico lugar que define a dificuldade
+    lda #$07                                    ; F84C  A9 07       AI level (0..7). It's the only place that sets difficulty
     sta a:AiLevel                               ; F84E  8D B4 00
     lda #$00                                    ; F851  A9 00
     sta a:TimerOff                              ; F853  8D B5 00
@@ -4222,15 +4222,15 @@ MainLoop:
     stx zp_B3                                   ; F858  86 B3
     stx zp_B2                                   ; F85A  86 B2
     lda #$FF                                    ; F85C  A9 FF
-    sta FighterChar                             ; F85E  85 00       nenhum personagem escolhido
+    sta FighterChar                             ; F85E  85 00       no character chosen
     lda #$FF                                    ; F860  A9 FF
     sta FighterChar+1                           ; F862  85 01
     lda #$00                                    ; F864  A9 00
-    sta FighterIsCpu                            ; F866  85 02       P1 = humano
+    sta FighterIsCpu                            ; F866  85 02       P1 = human
 
 .ifdef MODE_VERSUS
 __alt_3F_F868:
-    .assert * - __alt_3F_F868 <= $2, error, "bloco alt MODE_VERSUS em $F868 passou do tamanho"
+    .assert * - __alt_3F_F868 <= $2, error, "alt block MODE_VERSUS at $F868 exceeded its size"
     .res $2 - (* - __alt_3F_F868), $FF
 .else
     lda #$01                                    ; F868  A9 01
@@ -4245,9 +4245,9 @@ __alt_3F_F868:
 
 
 ; <- jsr Main
-; modos: aviso/QR
+; modes: warning/QR
 InstallFarCall:
-    lda #<FarCallRom                            ; F8B7  A9 35       copia 20 bytes de FarCallRom para $049E
+    lda #<FarCallRom                            ; F8B7  A9 35       copies 20 bytes of FarCallRom to $049E
     sta zp_D5                                   ; F8B9  85 D5
     lda #>FarCallRom                            ; F8BB  A9 F9
     sta zp_D6                                   ; F8BD  85 D6
@@ -4270,7 +4270,7 @@ PalConfig_F8CD:
 PRGBank_F8DB:
     cpy #$14                                    ; F8DB  C0 14       PRGBank
     beq PalRestore                              ; F8DD  F0 07
-    lda (zp_D5),y                               ; F8DF  B1 D5       [le bancos $3F]
+    lda (zp_D5),y                               ; F8DF  B1 D5       [reads banks $3F]
     sta (zp_D7),y                               ; F8E1  91 D7
     iny                                         ; F8E3  C8
     bne PRGBank_F8DB                            ; F8E4  D0 F5
@@ -4279,7 +4279,7 @@ PalRestore:
 
 
 ; <- farcall ScreenSupport, farcall TitleBlinkOn
-; modos: aviso/QR, titulo
+; modes: warning/QR, title
 JoyPollBoth:
     lda #$00                                    ; F8E7  A9 00
     jsr JoyPollSafe                             ; F8E9  20 F1 F8
@@ -4287,10 +4287,10 @@ JoyPollBoth:
     jmp JoyPollSafe                             ; F8EE  4C F1 F8
 
 
-; Le o controle A (0/1) ate duas leituras baterem — protege contra a corrupcao causada pelo canal DMC.
-; Resultado em JoyState,x ; JoyPrev,x recebe o estado anterior.  (mesma ideia do joy_poll_safe da familib)
+; Reads controller A (0/1) until two reads match — protects against DMC channel corruption.
+; Result in JoyState,x ; JoyPrev,x gets previous state.  (same idea as joy_poll_safe from familib)
 ; <- jsr InputUpdate, jsr JoyPollBothSel, jmp JoyPollBothSel, jsr JoyPollBoth, jmp JoyPollBoth
-; modos: aviso/QR, titulo, selecao, luta
+; modes: warning/QR, title, selection, fight
 JoyPollSafe:
     tax                                         ; F8F1  AA
     lda JoyState,x                              ; F8F2  B5 F2
@@ -4315,7 +4315,7 @@ JoyPollSafe:
     rts                                         ; F916  60
 
 
-; modos: aviso/QR, titulo, selecao, luta
+; modes: warning/QR, title, selection, fight
 RoundCond_F917:
     pla                                         ; F917  68          RoundCond
     pla                                         ; F918  68
@@ -4324,7 +4324,7 @@ RoundCond_F917:
 
 
 ; <- jsr JoyPollSafe
-; modos: aviso/QR, titulo, selecao, luta
+; modes: warning/QR, title, selection, fight
 JoyRead:
     lda #$01                                    ; F91C  A9 01
     sta JoyState,x                              ; F91E  95 F2
@@ -4332,7 +4332,7 @@ JoyRead:
     lsr a                                       ; F923  4A
     sta JOY1                                    ; F924  8D 16 40
 JoyReadLoop:
-    lda JOY1,x                                  ; F927  BD 16 40    JoyReadLoop — loop de leitura de bits do controle dentro de JoyRead
+    lda JOY1,x                                  ; F927  BD 16 40    JoyReadLoop — controller bit reading loop inside JoyRead
     and #$03                                    ; F92A  29 03
     cmp #$01                                    ; F92C  C9 01
     rol JoyState,x                              ; F92E  36 F2
@@ -4342,7 +4342,7 @@ JoyReadLoop:
 
 FarCallRom:
 .org $049E
-    .assert * = FarCall, error, "o trampolim precisa ficar em FarCall"
+    .assert * = FarCall, error, "the trampoline must be at FarCall"
     ora #$80                                    ; 049E  09 80
     sta MMC5_PRG_E000                           ; 04A0  8D 17 51
     jsr FarCall_04AD                            ; 04A3  20 AD 04
@@ -4362,7 +4362,7 @@ FarCall_04AD:
 .ifdef FIX_EDGE_ATTACK
 __alt_3F_F949:
 EdgeMarkHold:
-    lda InputAttack,x                           ; 0/1 soco, 2/3 chute ($FF nao chega: bmi em F6BD)
+    lda InputAttack,x                           ; 0/1 punch, 2/3 kick ($FF doesn't arrive: bmi at F6BD)
     cmp #$01
     beq EdgeMarkStrong
     cmp #$03
@@ -4373,19 +4373,19 @@ EdgeMarkHold:
     beq EdgeMarkB
     rts
 EdgeMarkStrong:
-    ldy #$FF                                     ; forte despachado: desarma os dois contadores
-    sty BtnAHold,x                               ; (segurando: wrap do iny; soltando: cpy #$15)
+    ldy #$FF                                     ; strong dispatched: disarms both counters
+    sty BtnAHold,x                               ; (holding: iny wrap; releasing: cpy #$15)
     sty BtnBHold,x
     rts
 EdgeMarkA:
-    ldy #$01                                     ; fraco despachado: segue contando (promocao aos 7)
+    ldy #$01                                     ; weak dispatched: keeps counting (promotion at 7)
     sty BtnAHold,x
     rts
 EdgeMarkB:
     ldy #$01
     sty BtnBHold,x
     rts
-    .assert * - __alt_3F_F949 <= $36, error, "bloco alt FIX_EDGE_ATTACK em $F949 passou do tamanho"
+    .assert * - __alt_3F_F949 <= $36, error, "alt block FIX_EDGE_ATTACK at $F949 exceeded its size"
     .res $36 - (* - __alt_3F_F949), $FF
 .else
     .res 54, $FF                                ; F949
@@ -4401,22 +4401,22 @@ ResetStub:
     lda #$BF
     sta MMC5_PRG_E000
     jmp $FF9F
-    .assert * - __alt_3F_FC6D <= $F, error, "bloco alt FIX_SOFT_RESET em $FC6D passou do tamanho"
+    .assert * - __alt_3F_FC6D <= $F, error, "alt block FIX_SOFT_RESET at $FC6D exceeded its size"
     .res $F - (* - __alt_3F_FC6D), $FF
 .else
     .byte $FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF; FC6D
 .endif
 
 
-.assert * = $FC7C, error, "o kernel precisa comecar em $FC7C"
+.assert * = $FC7C, error, "the kernel must start at $FC7C"
 .include "kernel.inc"
 
     .byte $FF,$FF,$FF,$FF                       ; FF9B
 
 ; ------------------------------------------------------------------------------------------------
-; RESET. Este codigo so existe no banco $3F (ver a correcao FIX_SOFT_RESET no fim de annotations/).
-; <- tabela NmiVector
-; modos: aviso/QR
+; RESET. This code only exists in bank $3F (see FIX_SOFT_RESET fix at end of annotations/).
+; <- table NmiVector
+; modes: warning/QR
 Reset:
     sei                                         ; FF9F  78
     cld                                         ; FFA0  D8
@@ -4433,11 +4433,11 @@ Reset:
     lda #$0F                                    ; FFB9  A9 0F
     sta SND_CHN                                 ; FFBB  8D 15 40
 ResetVector37:
-    bit PPUSTATUS                               ; FFBE  2C 02 20    ResetVector37 — vetor de reset do banco $37
+    bit PPUSTATUS                               ; FFBE  2C 02 20    ResetVector37 — bank $37 reset vector
     bpl ResetVector37                           ; FFC1  10 FB
     txa                                         ; FFC3  8A
 ResetVector3B:
-    sta FighterChar,x                           ; FFC4  95 00       ResetVector3B — vetor de reset do banco $3B
+    sta FighterChar,x                           ; FFC4  95 00       ResetVector3B — bank $3B reset vector
     sta ram_0100,x                              ; FFC6  9D 00 01
     sta ram_0300,x                              ; FFC9  9D 00 03
     sta ram_0400,x                              ; FFCC  9D 00 04
@@ -4448,14 +4448,14 @@ ResetVector3B:
     bne ResetVector3B                           ; FFD9  D0 E9
     lda #$EF                                    ; FFDB  A9 EF
 ResetVector3F:
-    sta OamBuf,x                                ; FFDD  9D 00 02    ResetVector3F — vetor de reset do banco $3F
+    sta OamBuf,x                                ; FFDD  9D 00 02    ResetVector3F — bank $3F reset vector
     inx                                         ; FFE0  E8
     inx                                         ; FFE1  E8
     inx                                         ; FFE2  E8
     inx                                         ; FFE3  E8
     bne ResetVector3F                           ; FFE4  D0 F7
 NmiVector:
-    bit PPUSTATUS                               ; FFE6  2C 02 20    NmiVector — vetor de NMI comum aos bancos de código
+    bit PPUSTATUS                               ; FFE6  2C 02 20    NmiVector — NMI vector common to code banks
     bpl NmiVector                               ; FFE9  10 FB
     stx OAMADDR                                 ; FFEB  8E 03 20
     lda #$02                                    ; FFEE  A9 02
@@ -4469,7 +4469,7 @@ NmiVector:
 .ifdef FIX_SOFT_RESET
 __alt_3F_FFFC:
     .word ResetStub
-    .assert * - __alt_3F_FFFC <= $2, error, "bloco alt FIX_SOFT_RESET em $FFFC passou do tamanho"
+    .assert * - __alt_3F_FFFC <= $2, error, "alt block FIX_SOFT_RESET at $FFFC exceeded its size"
     .res $2 - (* - __alt_3F_FFFC), $FF
 .else
     .word Reset                                 ; FFFC  9F FF

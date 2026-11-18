@@ -2,7 +2,7 @@
 
 **Date:** 2026-11-15 (code batches); updated 2026-11-16 (data batches and closing)  
 **Committed base:** `3ba99e3` (`$3B` batch; previous: `8108eb1` `$36`, `fa7c215`, `2df963c`, `64a29f8`, `92fbde1`)  
-**State:** Phase 3 concluded and verified; `$37` batch applied and awaiting commit authorization.  
+**State:** Phase 3 concluded and verified; `$37` batch committed as `cfc7d78` and pushed.  
 **Scope:** symbol and comment renaming; no code/data byte was altered.
 
 > Sections 1–9 preserve the 2026-11-15 record, when only code batches were in the diff. Section 10 consolidates data batches, final metrics, and phase acceptance.
@@ -120,7 +120,7 @@ Metrics in sections 4 and 7 are historical (before data batches). The metrics in
 | Data `$20` | 30 | HUD/effects, flags, projectiles, and M.Bison portrait | `2df963c` |
 | Data `$36` | 27 | stages: RLE backgrounds, CHR/split tables, attributes and palette | `fa7c215`* |
 | Data `$3B` | 35 | fight/VS/select HUD: fade bounds, projectile frames, HUD tiles, screen palettes/RLE, round-intro tables, stage banks, reset filler | `3ba99e3` |
-| Data `$37` | 17 | sound/select/title data: voice continuation, sfx dispatch/pointer list, FamiTone2 tables, select/title tables, reset filler | pending |
+| Data `$37` | 17 | sound/select/title data: voice continuation, sfx dispatch/pointer list, FamiTone2 tables, select/title tables, reset filler | `cfc7d78` |
 | **Total** | **157** | — | — |
 
 \* The `$36` batch was applied before `fa7c215` and entered the repository bundled with that English-translation commit; it has no separate commit.

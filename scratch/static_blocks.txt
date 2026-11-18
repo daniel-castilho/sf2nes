@@ -1,4 +1,4 @@
-# blocos de codigo aceitos apenas por analise estatica (nao executados no trace)
+# code blocks accepted by static analysis only (not executed in trace)
 00:90D2-90D3
 00:90D9-90EC
 37:E5AC-E5CF
@@ -358,8 +358,8 @@
 3F:FF95-FF96
 3F:FF97-FF99
 3F:FF9A-FF9A
-# entradas rejeitadas
-# tabelas de salto via RTS: local tipo lo hi n
+# rejected entries
+# jump tables via RTS: site kind lo hi n
 37:FE68 split lo=FE71 hi=FE79 n=8
 3B:FE68 split lo=FE71 hi=FE79 n=8
 3F:E168 split lo=E171 hi=E17D n=12
@@ -369,5 +369,5 @@
 3F:EA6A split lo=EA76 hi=EA89 n=19
 3F:F0A8 split lo=F0B1 hi=F0B7 n=6
 3F:FE68 split lo=FE71 hi=FE79 n=8
-# ilhas de codigo nao referenciado
+# unreferenced code islands
 37:E5AC-E5CF

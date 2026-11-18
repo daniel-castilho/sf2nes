@@ -8,7 +8,7 @@
 D2D_A000:
     .byte $01                                   ; A000
     .word D2D_A013                              ; A001  13 A0
-    .word D2D_A017+1                            ; A003  18 A0       (inferido)
+    .word D2D_A017+1                            ; A003  18 A0       (inferred)
     .word D2D_A021                              ; A005  21 A0
     .word D2D_A239                              ; A007  39 A2
     .word D2D_A6C3                              ; A009  C3 A6

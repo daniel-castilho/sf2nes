@@ -344,14 +344,16 @@ bytes, but exposed these reading pitfalls:
   actual sound identity (hit, block, projectile, …) needs audio/runtime confirmation. They stayed
   automatic (P3); naming them `SfxStream0..9` would only restate the index, and naming them by event
   would assert more than the static evidence supports.
-* **Translation can desynchronize the generator.** After `fa7c215`, `annotations/sf2ne.ann` is in English
-  while the committed `src/*.s` still carry the pre-translation Portuguese comments. `make gen` rewrites
-  the file headers back to Portuguese (the strings are hardcoded in `tools/disasm.py`) and translates the
-  whole comment body, producing a ~1,000-line diff that mixes translation with naming. The `$3B` batch was
-  therefore applied mechanically to `src/*.s` (rename plus comment re-alignment), keeping the diff to
-  labels only; a dedicated regeneration/translation commit is still pending.
+* **Translation can desynchronize the generator.** After `fa7c215`, `annotations/sf2ne.ann` was in English
+  while the committed `src/*.s` still carried the pre-translation Portuguese comments and `tools/disasm.py`
+  still emitted Portuguese headers/auto-comments. Running `make gen` mixed translation with naming. This
+  was resolved in the regeneration commit: the generator strings were translated to English, `make gen` was
+  rerun, and the diff was reviewed as comments/assert messages only plus five condition-label renames
+  (`CondEmPe`→`CondStanding`, `CondAgachado`→`CondCrouching`, `CondNoAr`→`CondInAir`,
+  `CondInputBaixo`→`CondInputDown`, `CondProjetilLivre`→`CondProjectileFree`). SHA-1 stayed
+  `3ad177a0…` and `src/bank_05.s` (hand-written) was untouched.
 
 **Practical rule:** for each batch, (1) read the consumer, (2) propose name + confidence, (3) apply only
-labels/comments, (4) validate `make gen` in a scratch copy while the translation is pending, then run
+labels/comments, (4) run `make gen` from the canonical `.ann` (or validate in a scratch copy), then run
 `make` and compare the SHA-1, (5) confirm that no `.byte`/`.word` operand changed. The SHA-1 is the proof
 that naming is cosmetic.

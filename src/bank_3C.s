@@ -7,10 +7,10 @@
 .segment "BANK3C"
 
 ; ------------------------------------------------------------------------------------------------
-; FICHAS DOS PERSONAGENS: 23 tabelas de 10 bytes (uma coluna por personagem), lidas por FighterLoadChar.
-; Ordem das colunas: 0 RYU, 1 KEN, 2 CHUN LI, 3 GUILE, 4 BLANKA, 5 EHONDA, 6 BALROG, 7 SAGAT, 8 M.BISON, 9 ZANGIEF.
-; Colunas 0 (Ryu) e 1 (Ken) preenchidas nas tabelas de ponteiros. A coluna 1 aponta para o banco de
-; estados $05 (janela $A000) e para os frames/colisoes do banco $04.
+; CHARACTER FICHES: 23 tables of 10 bytes (one column per character), read by FighterLoadChar.
+; Column order: 0 RYU, 1 KEN, 2 CHUN LI, 3 GUILE, 4 BLANKA, 5 EHONDA, 6 BALROG, 7 SAGAT, 8 M.BISON, 9 ZANGIEF.
+; Columns 0 (Ryu) and 1 (Ken) filled in pointer tables. Column 1 points to state bank
+; states $05 (window $A000) and to frames/collisions of bank $04.
 CharDirTransLoTbl:
     .byte <(D01_A000)                           ; 8000  00
     .byte $00,$00,$00,$00,$00,$00,$00,$00,$00   ; 8001
@@ -67,19 +67,19 @@ CharCmdListHiTbl:
     .byte $E0,$00,$00,$00,$00,$00,$00,$00,$00   ; 80AB              Ken: >CmdKeyListRyu
 CharAiScriptLoTbl:
     .byte <(D00_8E72)                           ; 80B4  72
-    .byte $E0,$00,$00,$00,$00,$00,$00,$00,$00   ; 80B5              Ken: <D04_90E0 (stub de IA)
+    .byte $E0,$00,$00,$00,$00,$00,$00,$00,$00   ; 80B5              Ken: <D04_90E0 (AI stub)
 CharAiScriptHiTbl:
     .byte >(D00_8E72)                           ; 80BE  8E
-    .byte $90,$00,$00,$00,$00,$00,$00,$00,$00   ; 80BF              Ken: >D04_90E0 (stub de IA)
+    .byte $90,$00,$00,$00,$00,$00,$00,$00,$00   ; 80BF              Ken: >D04_90E0 (AI stub)
 CharStateBankTbl:
-    .byte $01,$05,$01,$01,$01,$01,$01,$01,$00,$01; 80C8              coluna 1 (Ken) = banco de estados $05
+    .byte $01,$05,$01,$01,$01,$01,$01,$01,$00,$01; 80C8              column 1 (Ken) = state bank $05
 CharFrameBankTbl:
     .byte $00,$04,$08,$0C,$10,$00,$00,$1C,$20,$24; 80D2
 CharHitBoxBankTbl:
     .byte $00,$04,$00,$00,$00,$00,$00,$00,$20,$00; 80DC
 
-; Ken: tripla 0 = azul (B) e tripla 1 = vermelho (A). O motor grava em zp_12 o
-; botao de confirmacao (A -> 1, B -> 0) e usa esse indice como paleta do P1.
+; Ken: triple 0 = blue (B) and triple 1 = red (A). Engine writes confirmation button
+; to zp_12 (A -> 1, B -> 0) and uses that index as P1 palette.
 CharPal0FightTbl:
     .byte $0F,$36,$20,$0F,$36,$00,$0F,$36,$2D,$0F,$36,$31,$0F,$36,$02,$0F; 80E6
     .byte $36,$16,$0F,$36,$3D,$0F,$36,$12       ; 80F6
@@ -142,10 +142,10 @@ PortraitWinLayoutTbl:
     .word D24_8000                              ; 84B8  00 80
 PortraitLoseLayoutTbl:
     .word D00_8144                              ; 84BA  44 81
-    .byte $F1,$90,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00; 84BC              Ken: layout de derrota em $04:90F1
+    .byte $F1,$90,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00; 84BC              Ken: defeat layout at $04:90F1
     .byte $00,$00                               ; 84CC
 CharNameTbl:
-    .byte $52,$59,$55,$20,$20,$20,$20,$20,$4B,$45,$4E,$20,$20,$20,$20,$20; 84CE              nomes dos 10 personagens, 8 caracteres cada
+    .byte $52,$59,$55,$20,$20,$20,$20,$20,$4B,$45,$4E,$20,$20,$20,$20,$20; 84CE              names of 10 characters, 8 characters each
     .byte $43,$48,$55,$4E,$20,$4C,$49,$20,$47,$55,$49,$4C,$45,$20,$20,$20; 84DE
     .byte $42,$4C,$41,$4E,$4B,$41,$20,$20,$45,$48,$4F,$4E,$44,$41,$20,$20; 84EE
     .byte $42,$41,$4C,$52,$4F,$47,$20,$20,$53,$41,$47,$41,$54,$20,$20,$20; 84FE
@@ -153,7 +153,7 @@ CharNameTbl:
 CharNameLenTbl:
     .byte $03,$03,$07,$05,$06,$06,$06,$05,$07,$07; 851E
 WinQuoteLine1:
-    .byte $59,$4F,$55,$20,$4D,$55,$53,$54,$20,$44,$45,$46,$45,$41,$54,$20; 8528              frase do vencedor, 1a linha: 22 caracteres por personagem
+    .byte $59,$4F,$55,$20,$4D,$55,$53,$54,$20,$44,$45,$46,$45,$41,$54,$20; 8528              winner quote, 1st line: 22 characters per character
     .byte $53,$48,$45,$4E,$47,$20,$41,$54,$54,$41,$43,$4B,$20,$4D,$45,$20; 8538
     .byte $49,$46,$20,$59,$4F,$55,$20,$44,$41,$52,$45,$20,$49,$27,$4D,$20; 8548
     .byte $54,$48,$45,$20,$53,$54,$52,$4F,$4E,$47,$45,$53,$54,$20,$20,$20; 8558
@@ -168,7 +168,7 @@ WinQuoteLine1:
     .byte $45,$20,$20,$20,$20,$20,$4D,$59,$20,$53,$54,$52,$45,$4E,$47,$54; 85E8
     .byte $48,$20,$49,$53,$20,$4D,$55,$43,$48,$20,$20,$20; 85F8
 WinQuoteLine2:
-    .byte $4C,$4F,$4E,$47,$20,$54,$4F,$20,$53,$54,$41,$4E,$44,$20,$41,$20; 8604              frase do vencedor, 2a linha
+    .byte $4C,$4F,$4E,$47,$20,$54,$4F,$20,$53,$54,$41,$4E,$44,$20,$41,$20; 8604              winner quote, 2nd line
     .byte $43,$48,$41,$4E,$43,$45,$49,$20,$57,$49,$4C,$4C,$20,$43,$52,$55; 8614
     .byte $53,$48,$20,$59,$4F,$55,$20,$20,$20,$20,$20,$20,$57,$4F,$4D,$41; 8624
     .byte $4E,$20,$49,$4E,$20,$54,$48,$45,$20,$57,$4F,$52,$4C,$44,$20,$20; 8634

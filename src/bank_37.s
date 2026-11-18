@@ -7,8 +7,8 @@
 .segment "BANK37"
 
 ; ------------------------------------------------------------------------------------------------
-; DIRETORIO DE VOZES (DPCM): 32 amostras. VoiceBankTbl[i] = banco de PRG mapeado em $C000;
-; VoiceSampleTbl+3+3*i = endereco/64, (tamanho-1)/16, taxa  (tabela de amostras no formato FamiTone2).
+; VOICE DIRECTORY (DPCM): 32 samples. VoiceBankTbl[i] = PRG bank mapped at $C000;
+; VoiceSampleTbl+3+3*i = address/64, (size-1)/16, rate  (sample table in FamiTone2 format).
 VoiceBankTbl:
     .byte $16,$16,$16,$16,$00,$0A,$0A,$0A,$0A,$12,$22,$22,$26,$22,$2A,$2A; E000
     .byte $02,$1A,$1A,$06,$06,$06,$02,$02,$1E,$0E,$0E,$0E,$12; E010
@@ -28,11 +28,11 @@ VoiceSampleTbl:
     .byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00; E0DD
     .byte $00,$00                               ; E0ED
 CountryVoiceTbl:
-    .byte $0A,$0C,$0D,$0C,$0B,$0A,$0C,$0F,$0F,$0E; E0EF              voz (nome do pais) de cada um dos 10 personagens na tela de selecao
+    .byte $0A,$0C,$0D,$0C,$0B,$0A,$0C,$0F,$0F,$0E; E0EF              voice (country name) of each of the 10 characters on selection screen
 FighterVoiceTbl:
-    .byte $18                                   ; E0F9              16 bytes por personagem: pares (amostra, continuacao) para cada voz; $FF = nenhuma
+    .byte $18                                   ; E0F9              16 bytes per character: (sample, continuation) pairs for each voice; $FF = none
 FighterVoiceContTbl:
-    .byte $FF,$1B,$FF,$1B,$FF,$1C,$1D,$1C,$1D,$1E,$1F,$1E,$1F,$FF,$FF,$18; E0FA
+    .byte $FF,$1B,$FF,$1B,$FF,$1C,$1D,$1C,$1D,$1E,$1F,$1E,$1F,$FF,$FF,$18; E0FA              continuation byte of each (sample, continuation) pair; offset +1 of FighterVoiceTbl (same 16-byte records)
     .byte $FF,$1B,$FF,$1B,$FF,$1C,$1D,$1C,$1D,$1E,$1F,$1E,$1F,$FF,$FF,$19; E10A
     .res 47, $FF                                ; E11A
     .byte $18                                   ; E149
@@ -41,22 +41,22 @@ FighterVoiceContTbl:
     .res 31, $FF                                ; E16A
     .byte $18,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF; E189
 StateClassSfxTbl:
-    .byte $02,$03,$04,$02,$03,$04               ; E199
+    .byte $02,$03,$04,$02,$03,$04               ; E199              state class 0-5 -> sfx number for FamiToneSfxPlay; stream offset comes from SfxChannelOfs
 SfxChannelOfs:
     .byte $00,$0F,$1E,$2D                       ; E19F
 SfxData:
-    .word SfxStreamPtrTbl                       ; E1A3  A7 E1       efeitos sonoros no formato FamiTone2 (lista de ponteiros + fluxos de escrita na APU)
-    .word SfxStreamPtrTbl                       ; E1A5  A7 E1       (inferido)
+    .word SfxStreamPtrTbl                       ; E1A3  A7 E1       sound effects in FamiTone2 format (pointer list + APU write streams)
+    .word SfxStreamPtrTbl                       ; E1A5  A7 E1       (inferred)
 SfxStreamPtrTbl:
-    .word D37_E1BD                              ; E1A7  BD E1
+    .word D37_E1BD                              ; E1A7  BD E1       sfx number -> stream pointer (11 words); entry 10 shares the tail at E375
     .word D37_E1EC                              ; E1A9  EC E1
     .word D37_E20C                              ; E1AB  0C E2
-    .word D37_E212                              ; E1AD  12 E2       (inferido)
+    .word D37_E212                              ; E1AD  12 E2       (inferred)
     .word D37_E244                              ; E1AF  44 E2
     .word D37_E289                              ; E1B1  89 E2
-    .word D37_E2A3                              ; E1B3  A3 E2       (inferido)
+    .word D37_E2A3                              ; E1B3  A3 E2       (inferred)
     .word D37_E2B1                              ; E1B5  B1 E2
-    .word D37_E2FC                              ; E1B7  FC E2       (inferido)
+    .word D37_E2FC                              ; E1B7  FC E2       (inferred)
     .word D37_E328                              ; E1B9  28 E3
     .byte $75,$E3                               ; E1BB
 D37_E1BD:
@@ -104,7 +104,7 @@ D37_E328:
     .byte $CB,$88,$01,$89,$3F,$8A,$0E,$06,$89,$30,$02,$00; E388
 
 ; <- jmp K_FE93
-; modos: titulo
+; modes: title
 TitleDrawPushStart:
     lda #$2A                                    ; E394  A9 2A       restaura as 11 cores do PRESS START no PPU ($2ACB) durante o fade do titulo
     sta PPUADDR                                 ; E396  8D 06 20
@@ -135,9 +135,9 @@ TitleDrawPushStart:
     rts                                         ; E3DF  60
 
 
-; Carrega musica: MusicBank = banco (mapeado em $A000), zp_D5/zp_D6 = ponteiro dos dados (FamiTone2).
+; Loads music: MusicBank = bank (mapped at $A000), zp_D5/zp_D6 = data pointer (FamiTone2).
 ; <- farcall SelectInit, farcall ScreenTitle, farcall VersusDraw, farcall ScreenWinQuote, farcall Match
-; modos: titulo, selecao, VS, intro do round, frase final
+; modes: title, selection, VS, round intro, quote
 SoundLoadSong:
     lda MusicBank                               ; E3E0  AD 5F 04
     ora #$80                                    ; E3E3  09 80
@@ -152,7 +152,7 @@ SoundLoadSong:
 
 
 ; <- jsr SoundLoadSong
-; modos: titulo, selecao, VS, intro do round, frase final
+; modes: title, selection, VS, round intro, quote
 SoundInitSfx:
     ldx #<SfxData                               ; E3FA  A2 A3
     ldy #>SfxData                               ; E3FC  A0 E1
@@ -160,7 +160,7 @@ SoundInitSfx:
 
 
 ; <- farcall StateAdvance, farcall SoundProc_EEB8, farcall MoveGrabEscape
-; modos: luta
+; modes: fight
 SfxPlay_Select:
     ldy zp_DC                                   ; E401  A4 DC
     ldx SfxChannelOfs,y                         ; E403  BE 9F E1    [idx $00..$01]
@@ -169,9 +169,9 @@ SfxPlay_Select:
 
 
 ; <- farjmp StateSetByte
-; modos: luta
+; modes: fight
 SfxPlayByState:
-    ldx zp_DC                                   ; E40B  A6 DC       efeito sonoro por classe de estado: sfx em StateClassSfxTbl[classe], canal em SfxChannelOfs[slot]
+    ldx zp_DC                                   ; E40B  A6 DC       sound effect by state class: sfx number from StateClassSfxTbl[class], stream offset from SfxChannelOfs[slot]
     lda StateClassSfxTbl,x                      ; E40D  BD 99 E1    [idx $00..$05]
     ldy zp_DB                                   ; E410  A4 DB
     ldx SfxChannelOfs,y                         ; E412  BE 9F E1    [idx $00..$01]
@@ -181,7 +181,7 @@ SfxPlayByState:
 
 
 ; <- jsr SoundLoadSong
-; modos: titulo, selecao, VS, intro do round, frase final
+; modes: title, selection, VS, round intro, quote
 SoundInitVoices:
     lda #$FF                                    ; E41B  A9 FF
     sta VoiceQueued                             ; E41D  8D 5E 04
@@ -191,9 +191,9 @@ SoundInitVoices:
 
 
 ; <- jsr VoicePlayFighter, jsr SoundUpdate, farcall SelectConfirmVoice, farjmp SelectEndVoice, farcall StateAdvance
-; modos: titulo, selecao, intro do round, luta, fim do round
+; modes: title, selection, round intro, fight, end of round
 VoicePlay:
-    ldx VoiceQueued                             ; E427  AE 5E 04    troca o banco em $C000 para o da amostra e dispara o canal DMC
+    ldx VoiceQueued                             ; E427  AE 5E 04    switches bank at $C000 to sample's and triggers DMC channel
     lda VoiceBankTbl,x                          ; E42A  BD 00 E0    [idx $00..$1F]
     ora #$80                                    ; E42D  09 80
     sta MMC5_PRG_C000                           ; E42F  8D 16 51
@@ -205,7 +205,7 @@ VoicePlay:
 
 
 ; <- farjmp ScreenConfig
-; modos: luta
+; modes: fight
 VoicePlayFighter:
     ldx zp_DB                                   ; E43C  A6 DB
     lda FighterChar,x                           ; E43E  B5 00
@@ -225,12 +225,12 @@ VoicePlayFighter:
     lda FighterVoiceContTbl,y                   ; E458  B9 FA E0    [idx $00..$0C]
     sta VoiceQueued                             ; E45B  8D 5E 04
 VoicePlayFighterEnd:
-    rts                                         ; E45E  60          VoicePlayFighterEnd — FamiTone2/vozes: termina a voz do lutador apos encadear a continuacao
+    rts                                         ; E45E  60          VoicePlayFighterEnd — FamiTone2/voices: ends fighter voice after chaining continuation
 
 
 ; Chamado uma vez por quadro em todas as telas: encadeia a 2a metade de uma voz, mapeia a musica e roda o FamiTone2.
 ; <- jmp SoundStopMusic, farcall SelectWaitFlagClear, farcall SelectFighterIntro, farcall ScreenTitle, farcall VersusDraw, farcall WinQuoteWinnerText ... (+2)
-; modos: titulo, selecao, VS, intro do round, luta, fim do round, frase final
+; modes: title, selection, VS, round intro, fight, end of round, quote
 SoundUpdate:
     lda VoiceQueued                             ; E45F  AD 5E 04
     bmi SoundUpdateMusic                        ; E462  30 0A
@@ -239,21 +239,21 @@ SoundUpdate:
     bne SoundUpdateMusic                        ; E469  D0 03
     jsr VoicePlay                               ; E46B  20 27 E4
 SoundUpdateMusic:
-    lda MusicBank                               ; E46E  AD 5F 04    SoundUpdateMusic — som: mapeia o banco da musica e atualiza o FamiTone2
+    lda MusicBank                               ; E46E  AD 5F 04    SoundUpdateMusic — sound: maps music bank and updates FamiTone2
     ora #$80                                    ; E471  09 80
     sta MMC5_PRG_A000                           ; E473  8D 15 51
     jmp FamiToneUpdate                          ; E476  4C D0 E5
 
 
 ; <- farcall SelectWaitEnd, farcall TitleExit, farcall VersusDraw, farcall WinQuoteWinnerText, farcall FightFrame
-; modos: titulo, selecao, VS, fim do round, frase final
+; modes: title, selection, VS, end of round, quote
 SoundStopMusic:
     jsr FamiToneMusicStop                       ; E479  20 DB E4
     jmp SoundUpdate                             ; E47C  4C 5F E4
 
 
 ; <- jmp SoundInitVoices
-; modos: titulo, selecao, VS, intro do round, frase final
+; modes: title, selection, VS, round intro, quote
 FtSetSampleTable:
     stx FT_DPCM_LIST_L                          ; E47F  8E 7C 01
     sty FT_DPCM_LIST_H                          ; E482  8C 7D 01
@@ -261,10 +261,10 @@ FtSetSampleTable:
 
 
 ; ------------------------------------------------------------------------------------------------
-; FamiTone2 (Shiru), versao do autor (familib/src/ft2) com extensoes (slides de afinacao).
-; Variaveis em $0100-$018B (FT_BASE_ADR = $0100) + $046B-$047E.
+; FamiTone2 (Shiru), author's version (familib/src/ft2) with extensions (pitch slides).
+; Variables at $0100-$018B (FT_BASE_ADR = $0100) + $046B-$047E.
 ; <- jsr SoundLoadSong
-; modos: titulo, selecao, VS, intro do round, frase final
+; modes: title, selection, VS, round intro, quote
 FamiToneInit:
     stx FT_SONG_LIST_L                          ; E486  8E 74 01
     sty FT_SONG_LIST_H                          ; E489  8C 75 01
@@ -272,16 +272,16 @@ FamiToneInit:
     sty FT_TEMP_PTR_H                           ; E48E  84 84
     jsr FamiToneMusicStop                       ; E490  20 DB E4
     ldy #$01                                    ; E493  A0 01
-    lda (FT_TEMP_PTR_L),y                       ; E495  B1 83       [le bancos $29,$2D]
+    lda (FT_TEMP_PTR_L),y                       ; E495  B1 83       [reads banks $29,$2D]
     sta FT_INSTRUMENT_L                         ; E497  8D 76 01
     iny                                         ; E49A  C8
-    lda (FT_TEMP_PTR_L),y                       ; E49B  B1 83       [le bancos $29,$2D]
+    lda (FT_TEMP_PTR_L),y                       ; E49B  B1 83       [reads banks $29,$2D]
     sta FT_INSTRUMENT_H                         ; E49D  8D 77 01
     iny                                         ; E4A0  C8
-    lda (FT_TEMP_PTR_L),y                       ; E4A1  B1 83       [le bancos $29,$2D]
+    lda (FT_TEMP_PTR_L),y                       ; E4A1  B1 83       [reads banks $29,$2D]
     sta FT_DPCM_LIST_L                          ; E4A3  8D 7C 01
     iny                                         ; E4A6  C8
-    lda (FT_TEMP_PTR_L),y                       ; E4A7  B1 83       [le bancos $29,$2D]
+    lda (FT_TEMP_PTR_L),y                       ; E4A7  B1 83       [reads banks $29,$2D]
     sta FT_DPCM_LIST_H                          ; E4A9  8D 7D 01
     lda #$FF                                    ; E4AC  A9 FF
     sta ram_0170                                ; E4AE  8D 70 01
@@ -303,14 +303,14 @@ FamiToneInit:
     sta SQ2_SWEEP                               ; E4D8  8D 05 40
 
 ; <- jsr SoundStopMusic, jsr FamiToneInit, jsr FamiToneMusicPlay
-; modos: titulo, selecao, VS, intro do round, fim do round, frase final
+; modes: title, selection, VS, round intro, end of round, quote
 FamiToneMusicStop:
     lda #$00                                    ; E4DB  A9 00
     sta ram_0159                                ; E4DD  8D 59 01
     sta FT_DPCM_EFFECT                          ; E4E0  8D 7E 01
     ldx #$46                                    ; E4E3  A2 46
 _FT2MusicStopChannels:
-    lda #$00                                    ; E4E5  A9 00       _FT2MusicStopChannels — FamiTone2: zera os campos das canais ao parar a musica
+    lda #$00                                    ; E4E5  A9 00       _FT2MusicStopChannels — FamiTone2: zeroes channel fields when stopping music
     sta ram_0114,x                              ; E4E7  9D 14 01
     sta ram_010F,x                              ; E4EA  9D 0F 01
     sta ram_010A,x                              ; E4ED  9D 0A 01
@@ -322,7 +322,7 @@ _FT2MusicStopChannels:
     bne _FT2MusicStopChannels                   ; E4FB  D0 E8
     ldx #$00                                    ; E4FD  A2 00
 _FT2MusicStopEnvelopes:
-    lda #<_FT2DummyEnvelope                     ; E4FF  A9 74       _FT2MusicStopEnvelopes — FamiTone2: aponta todos os envelopes para o envelope mudo
+    lda #<_FT2DummyEnvelope                     ; E4FF  A9 74       _FT2MusicStopEnvelopes — FamiTone2: points all envelopes to mute envelope
     sta ram_011C,x                              ; E501  9D 1C 01
     lda #>_FT2DummyEnvelope                     ; E504  A9 EE
     sta ram_012A,x                              ; E506  9D 2A 01
@@ -336,7 +336,7 @@ _FT2MusicStopEnvelopes:
 
 
 ; <- jmp SoundLoadSong
-; modos: titulo, selecao, VS, intro do round, frase final
+; modes: title, selection, VS, round intro, quote
 FamiToneMusicPlay:
     ldx #$0F                                    ; E519  A2 0F
     stx ram_0461                                ; E51B  8E 61 04
@@ -358,7 +358,7 @@ FamiToneMusicPlay:
     ldx FT_SONG_LIST_H                          ; E549  AE 75 01
     stx FT_TEMP_PTR_H                           ; E54C  86 84
     ldy #$00                                    ; E54E  A0 00
-    cmp (FT_TEMP_PTR_L),y                       ; E550  D1 83       [le bancos $29,$2D]
+    cmp (FT_TEMP_PTR_L),y                       ; E550  D1 83       [reads banks $29,$2D]
     bcs _FT2MusicPlayDone                       ; E552  B0 57
     asl a                                       ; E554  0A
     sta FT_TEMP_PTR_L                           ; E555  85 83
@@ -375,10 +375,10 @@ FamiToneMusicPlay:
     jsr FamiToneMusicStop                       ; E568  20 DB E4
     ldx #$46                                    ; E56B  A2 46
 _FT2MusicPlayChannels:
-    lda (FT_TEMP_PTR_L),y                       ; E56D  B1 83       [le bancos $29,$2D] _FT2MusicPlayChannels — FamiTone2: inicializa os ponteiros e os campos das canais da musica
+    lda (FT_TEMP_PTR_L),y                       ; E56D  B1 83       [reads banks $29,$2D] _FT2MusicPlayChannels — FamiTone2: initializes pointers and channel fields of music
     sta ram_0100,x                              ; E56F  9D 00 01
     iny                                         ; E572  C8
-    lda (FT_TEMP_PTR_L),y                       ; E573  B1 83       [le bancos $29,$2D]
+    lda (FT_TEMP_PTR_L),y                       ; E573  B1 83       [reads banks $29,$2D]
     sta ram_0105,x                              ; E575  9D 05 01
     iny                                         ; E578  C8
     lda #$00                                    ; E579  A9 00
@@ -393,10 +393,10 @@ _FT2MusicPlayChannels:
     bne _FT2MusicPlayChannels                   ; E58F  D0 DC
     iny                                         ; E591  C8
     iny                                         ; E592  C8
-    lda (FT_TEMP_PTR_L),y                       ; E593  B1 83       [le bancos $29,$2D]
+    lda (FT_TEMP_PTR_L),y                       ; E593  B1 83       [reads banks $29,$2D]
     sta ram_0178                                ; E595  8D 78 01
     iny                                         ; E598  C8
-    lda (FT_TEMP_PTR_L),y                       ; E599  B1 83       [le bancos $29,$2D]
+    lda (FT_TEMP_PTR_L),y                       ; E599  B1 83       [reads banks $29,$2D]
     sta ram_0179                                ; E59B  8D 79 01
     lda #$00                                    ; E59E  A9 00
     sta ram_017A                                ; E5A0  8D 7A 01
@@ -404,11 +404,11 @@ _FT2MusicPlayChannels:
     sta ram_017B                                ; E5A5  8D 7B 01
     sta ram_0159                                ; E5A8  8D 59 01
 _FT2MusicPlayDone:
-    rts                                         ; E5AB  60          _FT2MusicPlayDone — FamiTone2: musica invalida ou musica iniciada; fim do carregamento
+    rts                                         ; E5AB  60          _FT2MusicPlayDone — FamiTone2: invalid music or music started; end of loading
 
 
 FamiToneMusicPause:
-    tax                                         ; E5AC  AA          nunca chamada no demo (nt)
+    tax                                         ; E5AC  AA          never called in the demo (nt)
     beq _FT2MusicPauseUnpause                   ; E5AD  F0 18       (nt)
     jsr FamiToneSampleStop                      ; E5AF  20 21 ED    (nt)
     lda #$00                                    ; E5B2  A9 00       (nt)
@@ -420,26 +420,26 @@ FamiToneMusicPause:
     ora #$80                                    ; E5C3  09 80       (nt)
     bne _FT2MusicPauseDone                      ; E5C5  D0 05       (nt)
 _FT2MusicPauseUnpause:
-    lda ram_0159                                ; E5C7  AD 59 01    _FT2MusicPauseUnpause — FamiTone2: remove a marca de pausa da musica (nt)
+    lda ram_0159                                ; E5C7  AD 59 01    _FT2MusicPauseUnpause — FamiTone2: removes music pause mark (nt)
     and #$7F                                    ; E5CA  29 7F       (nt)
 _FT2MusicPauseDone:
-    sta ram_0159                                ; E5CC  8D 59 01    _FT2MusicPauseDone — FamiTone2: grava o novo estado de pausa da musica (nt)
+    sta ram_0159                                ; E5CC  8D 59 01    _FT2MusicPauseDone — FamiTone2: writes new music pause state (nt)
     rts                                         ; E5CF  60          (nt)
 
 
 ; <- jmp SoundUpdate
-; modos: titulo, selecao, VS, intro do round, luta, fim do round, frase final
+; modes: title, selection, VS, round intro, fight, end of round, quote
 FamiToneUpdate:
     lda ram_0159                                ; E5D0  AD 59 01
     bmi _FT2UpdateSoundPaused                   ; E5D3  30 02
     bne _FT2UpdateTempo                         ; E5D5  D0 03
 _FT2UpdateSoundPaused:
-    jmp _FT2UpdateSound                         ; E5D7  4C 19 E7    _FT2UpdateSoundPaused — FamiTone2: atualiza os sons mesmo com a musica pausada
+    jmp _FT2UpdateSound                         ; E5D7  4C 19 E7    _FT2UpdateSoundPaused — FamiTone2: updates sounds even with music paused
 
 
-; modos: titulo, selecao, VS, intro do round, luta, fim do round, frase final
+; modes: title, selection, VS, round intro, fight, end of round, quote
 _FT2UpdateTempo:
-    clc                                         ; E5DA  18          _FT2UpdateTempo — FamiTone2: soma o passo de tempo e decide se atualiza uma linha
+    clc                                         ; E5DA  18          _FT2UpdateTempo — FamiTone2: adds time step and decides whether to update a line
     lda ram_017A                                ; E5DB  AD 7A 01
     adc ram_0178                                ; E5DE  6D 78 01
     sta ram_017A                                ; E5E1  8D 7A 01
@@ -451,9 +451,9 @@ _FT2UpdateTempo:
     jmp _FT2UpdateEnvelopes                     ; E5F2  4C DD E6    (nt)
 
 
-; modos: titulo, selecao, VS, intro do round, luta, fim do round, frase final
+; modes: title, selection, VS, round intro, fight, end of round, quote
 _FT2UpdateRow:
-    sec                                         ; E5F5  38          _FT2UpdateRow — FamiTone2: aplica uma nova linha da musica as cinco canais
+    sec                                         ; E5F5  38          _FT2UpdateRow — FamiTone2: applies a new music line to five channels
     sbc ram_0159                                ; E5F6  ED 59 01
     sta ram_017B                                ; E5F9  8D 7B 01
     ldx #$46                                    ; E5FC  A2 46
@@ -466,7 +466,7 @@ _FT2UpdateRow:
     bmi _FT2Channel1NewNote                     ; E60E  30 03
     sta ram_0461                                ; E610  8D 61 04
 _FT2Channel1NewNote:
-    bcc _FT2Channel2Update                      ; E613  90 23       _FT2Channel1NewNote — FamiTone2: a canal 1 recebeu uma nota nova
+    bcc _FT2Channel2Update                      ; E613  90 23       _FT2Channel1NewNote — FamiTone2: channel 1 received a new note
     lda ram_046B                                ; E615  AD 6B 04
     cmp #$03                                    ; E618  C9 03
     bcs _FT2Channel1Instrument                  ; E61A  B0 14
@@ -478,11 +478,11 @@ _FT2Channel1NewNote:
     lda _FT2NoteTableMSB,x                      ; E62A  BD CF EE    [idx $00..$36]
     sta ram_0474                                ; E62D  8D 74 04
 _FT2Channel1Instrument:
-    ldx #$00                                    ; E630  A2 00       _FT2Channel1Instrument — FamiTone2: instala o instrumento da canal 1
+    ldx #$00                                    ; E630  A2 00       _FT2Channel1Instrument — FamiTone2: installs channel 1 instrument
     lda ram_0155                                ; E632  AD 55 01
     jsr _FT2SetInstrument                       ; E635  20 A1 EA
 _FT2Channel2Update:
-    ldx #$47                                    ; E638  A2 47       _FT2Channel2Update — FamiTone2: processa a canal 2
+    ldx #$47                                    ; E638  A2 47       _FT2Channel2Update — FamiTone2: processes channel 2
     lda #$FF                                    ; E63A  A9 FF
     sta ram_0464                                ; E63C  8D 64 04
     ldy #$01                                    ; E63F  A0 01
@@ -492,7 +492,7 @@ _FT2Channel2Update:
     bmi _FT2Channel2NewNote                     ; E64A  30 03
     sta ram_0462                                ; E64C  8D 62 04
 _FT2Channel2NewNote:
-    bcc _FT2Channel3Update                      ; E64F  90 23       _FT2Channel2NewNote — FamiTone2: a canal 2 recebeu uma nota nova
+    bcc _FT2Channel3Update                      ; E64F  90 23       _FT2Channel2NewNote — FamiTone2: channel 2 received a new note
     lda ram_046C                                ; E651  AD 6C 04
     cmp #$03                                    ; E654  C9 03
     bcs _FT2Channel2Instrument                  ; E656  B0 14
@@ -504,11 +504,11 @@ _FT2Channel2NewNote:
     lda _FT2NoteTableMSB,x                      ; E666  BD CF EE    [idx $00..$33]
     sta ram_0475                                ; E669  8D 75 04
 _FT2Channel2Instrument:
-    ldx #$04                                    ; E66C  A2 04       _FT2Channel2Instrument — FamiTone2: instala o instrumento da canal 2
+    ldx #$04                                    ; E66C  A2 04       _FT2Channel2Instrument — FamiTone2: installs channel 2 instrument
     lda ram_0156                                ; E66E  AD 56 01
     jsr _FT2SetInstrument                       ; E671  20 A1 EA
 _FT2Channel3Update:
-    ldx #$48                                    ; E674  A2 48       _FT2Channel3Update — FamiTone2: processa a canal 3
+    ldx #$48                                    ; E674  A2 48       _FT2Channel3Update — FamiTone2: processes channel 3
     ldy #$02                                    ; E676  A0 02
     sty ram_0479                                ; E678  8C 79 04
     jsr _FT2ChannelUpdate                       ; E67B  20 0B EB
@@ -524,11 +524,11 @@ _FT2Channel3Update:
     lda _FT2NoteTableMSB,x                      ; E695  BD CF EE    [idx $00..$29]
     sta ram_0476                                ; E698  8D 76 04
 _FT2Channel3Instrument:
-    ldx #$08                                    ; E69B  A2 08       _FT2Channel3Instrument — FamiTone2: instala o instrumento da canal 3
+    ldx #$08                                    ; E69B  A2 08       _FT2Channel3Instrument — FamiTone2: installs channel 3 instrument
     lda ram_0157                                ; E69D  AD 57 01
     jsr _FT2SetInstrument                       ; E6A0  20 A1 EA
 _FT2Channel4Update:
-    ldx #$49                                    ; E6A3  A2 49       _FT2Channel4Update — FamiTone2: processa a canal 4
+    ldx #$49                                    ; E6A3  A2 49       _FT2Channel4Update — FamiTone2: processes channel 4
     lda #$FF                                    ; E6A5  A9 FF
     sta ram_0464                                ; E6A7  8D 64 04
     ldy #$03                                    ; E6AA  A0 03
@@ -538,12 +538,12 @@ _FT2Channel4Update:
     bmi _FT2Channel4Instrument                  ; E6B5  30 03
     sta ram_0463                                ; E6B7  8D 63 04
 _FT2Channel4Instrument:
-    bcc _FT2Channel5Update                      ; E6BA  90 08       _FT2Channel4Instrument — FamiTone2: instala o instrumento da canal 4
+    bcc _FT2Channel5Update                      ; E6BA  90 08       _FT2Channel4Instrument — FamiTone2: installs channel 4 instrument
     ldx #$0B                                    ; E6BC  A2 0B
     lda ram_0158                                ; E6BE  AD 58 01
     jsr _FT2SetInstrument                       ; E6C1  20 A1 EA
 _FT2Channel5Update:
-    ldx #$4A                                    ; E6C4  A2 4A       _FT2Channel5Update — FamiTone2: processa a canal 5 de amostras
+    ldx #$4A                                    ; E6C4  A2 4A       _FT2Channel5Update — FamiTone2: processes channel 5 samples
     ldy #$04                                    ; E6C6  A0 04
     sty ram_0479                                ; E6C8  8C 79 04
     jsr _FT2ChannelUpdate                       ; E6CB  20 0B EB
@@ -553,28 +553,28 @@ _FT2Channel5Update:
     jsr FamiToneSampleStop                      ; E6D5  20 21 ED    (nt)
     bne _FT2UpdateEnvelopes                     ; E6D8  D0 03       (nt)
 _FT2Channel5PlaySample:
-    jsr FamiToneSamplePlayM                     ; E6DA  20 27 ED    _FT2Channel5PlaySample — FamiTone2: inicia ou para a amostra da canal 5 (nt)
+    jsr FamiToneSamplePlayM                     ; E6DA  20 27 ED    _FT2Channel5PlaySample — FamiTone2: starts or stops channel 5 sample (nt)
 
 ; <- jmp _FT2UpdateTempo
-; modos: titulo, selecao, VS, intro do round, luta, fim do round, frase final
+; modes: title, selection, VS, round intro, fight, end of round, quote
 _FT2UpdateEnvelopes:
-    ldx #$00                                    ; E6DD  A2 00       laco das 5 vozes: atualiza os envelopes de volume (X=0)
+    ldx #$00                                    ; E6DD  A2 00       loop of 5 voices: updates volume envelopes (X=0)
 _FT2EnvProcess:
-    lda ram_010E,x                              ; E6DF  BD 0E 01    processa o envelope da voz X: contador ram_010E e ponteiro
+    lda ram_010E,x                              ; E6DF  BD 0E 01    processes voice X envelope: counter ram_010E and pointer
     beq _FT2EnvRead                             ; E6E2  F0 05
     dec ram_010E,x                              ; E6E4  DE 0E 01    (nt)
     bne _FT2EnvNext                             ; E6E7  D0 2B       (nt)
 _FT2EnvRead:
-    lda ram_011C,x                              ; E6E9  BD 1C 01    _FT2EnvRead — FamiTone2: le o ponteiro e o proximo valor do envelope
+    lda ram_011C,x                              ; E6E9  BD 1C 01    _FT2EnvRead — FamiTone2: reads envelope pointer and next value
     sta FT_TEMP_PTR_L                           ; E6EC  85 83
     lda ram_012A,x                              ; E6EE  BD 2A 01
     sta FT_TEMP_PTR_H                           ; E6F1  85 84
     ldy ram_0138,x                              ; E6F3  BC 38 01
 
 ; <- jmp _FT2UpdateRow
-; modos: titulo, selecao, VS, intro do round, luta, fim do round, frase final
+; modes: title, selection, VS, round intro, fight, end of round, quote
 _FT2EnvReadValue:
-    lda (FT_TEMP_PTR_L),y                       ; E6F6  B1 83       [le bancos $29,$2D,$37] le o valor do envelope; $80-$FF vira $40-$7F (offset no volume)
+    lda (FT_TEMP_PTR_L),y                       ; E6F6  B1 83       [reads banks $29,$2D,$37] reads envelope value; $80-$FF becomes $40-$7F (volume offset)
     bpl _FT2EnvSpecial                          ; E6F8  10 09
     clc                                         ; E6FA  18
     adc #$40                                    ; E6FB  69 40
@@ -582,35 +582,35 @@ _FT2EnvReadValue:
     iny                                         ; E700  C8
     bne _FT2EnvStorePtr                         ; E701  D0 0D
 _FT2EnvSpecial:
-    bne _FT2EnvSetRepeat                        ; E703  D0 07       _FT2EnvSpecial — FamiTone2: trata um codigo especial do envelope
+    bne _FT2EnvSetRepeat                        ; E703  D0 07       _FT2EnvSpecial — FamiTone2: handles envelope special code
     iny                                         ; E705  C8
-    lda (FT_TEMP_PTR_L),y                       ; E706  B1 83       [le bancos $29,$2D,$37]
+    lda (FT_TEMP_PTR_L),y                       ; E706  B1 83       [reads banks $29,$2D,$37]
     tay                                         ; E708  A8
     jmp _FT2EnvReadValue                        ; E709  4C F6 E6
 
 
 _FT2EnvSetRepeat:
-    iny                                         ; E70C  C8          _FT2EnvSetRepeat — FamiTone2: grava o contador de repeticao do envelope (nt)
+    iny                                         ; E70C  C8          _FT2EnvSetRepeat — FamiTone2: writes envelope repeat counter (nt)
     sta ram_010E,x                              ; E70D  9D 0E 01    (nt)
 _FT2EnvStorePtr:
-    tya                                         ; E710  98          _FT2EnvStorePtr — FamiTone2: salva o ponteiro corrente do envelope
+    tya                                         ; E710  98          _FT2EnvStorePtr — FamiTone2: saves current envelope pointer
     sta ram_0138,x                              ; E711  9D 38 01
 _FT2EnvNext:
-    inx                                         ; E714  E8          _FT2EnvNext — FamiTone2: passa para o proximo envelope
+    inx                                         ; E714  E8          _FT2EnvNext — FamiTone2: moves to next envelope
     cpx #$0E                                    ; E715  E0 0E
     bne _FT2EnvProcess                          ; E717  D0 C6
 
 ; <- jmp FamiToneUpdate
-; modos: titulo, selecao, VS, intro do round, luta, fim do round, frase final
+; modes: title, selection, VS, round intro, fight, end of round, quote
 _FT2UpdateSound:
-    inc ram_046A                                ; E719  EE 6A 04    avanca a fase do vibrato global (ram_046A, 0..10)
+    inc ram_046A                                ; E719  EE 6A 04    advances global vibrato phase (ram_046A, 0..10)
     lda ram_046A                                ; E71C  AD 6A 04
     cmp #$0B                                    ; E71F  C9 0B
     bcc _FT2UpdateSoundCh1Note                  ; E721  90 05
     lda #$00                                    ; E723  A9 00
     sta ram_046A                                ; E725  8D 6A 04
 _FT2UpdateSoundCh1Note:
-    lda ram_0103                                ; E728  AD 03 01    _FT2UpdateSoundCh1Note — FamiTone2: calcula o periodo da nota da canal 1
+    lda ram_0103                                ; E728  AD 03 01    _FT2UpdateSoundCh1Note — FamiTone2: calculates channel 1 note period
     and #$03                                    ; E72B  29 03
     tax                                         ; E72D  AA
     lda _FT2DutyTable,x                         ; E72E  BD AD E8    [idx $00..$00]
@@ -629,7 +629,7 @@ _FT2UpdateSoundCh1Note:
     bmi _FT2UpdateSoundCh1Sign                  ; E74B  30 02
     lda #$00                                    ; E74D  A9 00
 _FT2UpdateSoundCh1Sign:
-    adc _FT2NoteTableMSB,x                      ; E74F  7D CF EE    [idx $04..$36] _FT2UpdateSoundCh1Sign — FamiTone2: prolonga o sinal do periodo da canal 1
+    adc _FT2NoteTableMSB,x                      ; E74F  7D CF EE    [idx $04..$36] _FT2UpdateSoundCh1Sign — FamiTone2: extends channel 1 period sign
     sta ram_0478                                ; E752  8D 78 04
     ldy #$00                                    ; E755  A0 00
     jsr _FT2ChannelPitch                        ; E757  20 B5 E8
@@ -642,13 +642,13 @@ _FT2UpdateSoundCh1Sign:
     lda #$00                                    ; E76A  A9 00
     beq _FT2UpdateSoundCh1Volume                ; E76C  F0 0B
 _FT2UpdateSoundCh1ScaleLimit:
-    cpx ram_0460                                ; E76E  EC 60 04    _FT2UpdateSoundCh1ScaleLimit — FamiTone2: limita a atenuacao de volume da canal 1
+    cpx ram_0460                                ; E76E  EC 60 04    _FT2UpdateSoundCh1ScaleLimit — FamiTone2: limits channel 1 volume attenuation
     bcc _FT2UpdateSoundCh1ApplyScale            ; E771  90 03
     ldx ram_0460                                ; E773  AE 60 04
 _FT2UpdateSoundCh1ApplyScale:
-    jsr _FT2ScaleVolume                         ; E776  20 27 EF    _FT2UpdateSoundCh1ApplyScale — FamiTone2: aplica a atenuacao de volume da canal 1
+    jsr _FT2ScaleVolume                         ; E776  20 27 EF    _FT2UpdateSoundCh1ApplyScale — FamiTone2: applies channel 1 volume attenuation
 _FT2UpdateSoundCh1Volume:
-    ora ram_047A                                ; E779  0D 7A 04    _FT2UpdateSoundCh1Volume — FamiTone2: grava o volume final da canal 1
+    ora ram_047A                                ; E779  0D 7A 04    _FT2UpdateSoundCh1Volume — FamiTone2: writes channel 1 final volume
     sta ram_017F                                ; E77C  8D 7F 01
     lda ram_0107                                ; E77F  AD 07 01
     and #$03                                    ; E782  29 03
@@ -669,7 +669,7 @@ _FT2UpdateSoundCh1Volume:
     bmi _FT2UpdateSoundCh2Sign                  ; E7A2  30 02
     lda #$00                                    ; E7A4  A9 00
 _FT2UpdateSoundCh2Sign:
-    adc _FT2NoteTableMSB,x                      ; E7A6  7D CF EE    [idx $04..$33] _FT2UpdateSoundCh2Sign — FamiTone2: prolonga o sinal do periodo da canal 2
+    adc _FT2NoteTableMSB,x                      ; E7A6  7D CF EE    [idx $04..$33] _FT2UpdateSoundCh2Sign — FamiTone2: extends channel 2 period sign
     sta ram_0478                                ; E7A9  8D 78 04
     ldy #$01                                    ; E7AC  A0 01
     jsr _FT2ChannelPitch                        ; E7AE  20 B5 E8
@@ -682,13 +682,13 @@ _FT2UpdateSoundCh2Sign:
     lda #$00                                    ; E7C1  A9 00
     beq _FT2UpdateSoundCh2Volume                ; E7C3  F0 0B
 _FT2UpdateSoundCh2ScaleLimit:
-    cpx ram_0460                                ; E7C5  EC 60 04    _FT2UpdateSoundCh2ScaleLimit — FamiTone2: limita a atenuacao de volume da canal 2
+    cpx ram_0460                                ; E7C5  EC 60 04    _FT2UpdateSoundCh2ScaleLimit — FamiTone2: limits channel 2 volume attenuation
     bcc _FT2UpdateSoundCh2ApplyScale            ; E7C8  90 03
     ldx ram_0460                                ; E7CA  AE 60 04
 _FT2UpdateSoundCh2ApplyScale:
-    jsr _FT2ScaleVolume                         ; E7CD  20 27 EF    _FT2UpdateSoundCh2ApplyScale — FamiTone2: aplica a atenuacao de volume da canal 2
+    jsr _FT2ScaleVolume                         ; E7CD  20 27 EF    _FT2UpdateSoundCh2ApplyScale — FamiTone2: applies channel 2 volume attenuation
 _FT2UpdateSoundCh2Volume:
-    ora ram_047A                                ; E7D0  0D 7A 04    _FT2UpdateSoundCh2Volume — FamiTone2: grava o volume final da canal 2
+    ora ram_047A                                ; E7D0  0D 7A 04    _FT2UpdateSoundCh2Volume — FamiTone2: writes channel 2 final volume
     sta ram_0182                                ; E7D3  8D 82 01
     lda ram_0152                                ; E7D6  AD 52 01
     beq _FT2UpdateSoundCh3Control               ; E7D9  F0 33
@@ -704,7 +704,7 @@ _FT2UpdateSoundCh2Volume:
     bmi _FT2UpdateSoundCh3Sign                  ; E7ED  30 02
     lda #$00                                    ; E7EF  A9 00
 _FT2UpdateSoundCh3Sign:
-    adc _FT2NoteTableMSB,x                      ; E7F1  7D CF EE    [idx $04..$29] _FT2UpdateSoundCh3Sign — FamiTone2: prolonga o sinal do periodo da canal 3
+    adc _FT2NoteTableMSB,x                      ; E7F1  7D CF EE    [idx $04..$29] _FT2UpdateSoundCh3Sign — FamiTone2: extends channel 3 period sign
     sta ram_0478                                ; E7F4  8D 78 04
     ldy #$02                                    ; E7F7  A0 02
     jsr _FT2ChannelPitch                        ; E7F9  20 B5 E8
@@ -716,7 +716,7 @@ _FT2UpdateSoundCh3Sign:
     bcs _FT2UpdateSoundCh3Control               ; E80A  B0 02
     lda #$00                                    ; E80C  A9 00
 _FT2UpdateSoundCh3Control:
-    ora #$80                                    ; E80E  09 80       _FT2UpdateSoundCh3Control — FamiTone2: prepara o controle linear do triangulo da canal 3
+    ora #$80                                    ; E80E  09 80       _FT2UpdateSoundCh3Control — FamiTone2: prepares channel 3 triangle linear control
     sta ram_0185                                ; E810  8D 85 01
     lda ram_010D                                ; E813  AD 0D 01
     and #$03                                    ; E816  29 03
@@ -738,13 +738,13 @@ _FT2UpdateSoundCh3Control:
     lda #$00                                    ; E83C  A9 00
     beq _FT2UpdateSoundCh4Volume                ; E83E  F0 0B
 _FT2UpdateSoundCh4ScaleLimit:
-    cpx ram_0460                                ; E840  EC 60 04    _FT2UpdateSoundCh4ScaleLimit — FamiTone2: limita a atenuacao de volume da canal 4
+    cpx ram_0460                                ; E840  EC 60 04    _FT2UpdateSoundCh4ScaleLimit — FamiTone2: limits channel 4 volume attenuation
     bcc _FT2UpdateSoundCh4ApplyScale            ; E843  90 03
     ldx ram_0460                                ; E845  AE 60 04
 _FT2UpdateSoundCh4ApplyScale:
-    jsr _FT2ScaleVolume                         ; E848  20 27 EF    _FT2UpdateSoundCh4ApplyScale — FamiTone2: aplica a atenuacao de volume da canal 4
+    jsr _FT2ScaleVolume                         ; E848  20 27 EF    _FT2UpdateSoundCh4ApplyScale — FamiTone2: applies channel 4 volume attenuation
 _FT2UpdateSoundCh4Volume:
-    ora #$F0                                    ; E84B  09 F0       _FT2UpdateSoundCh4Volume — FamiTone2: grava o volume final do ruido da canal 4
+    ora #$F0                                    ; E84B  09 F0       _FT2UpdateSoundCh4Volume — FamiTone2: writes channel 4 noise final volume
     sta ram_0188                                ; E84D  8D 88 01
     ldx #$00                                    ; E850  A2 00
     jsr _FT2SfxUpdate                           ; E852  20 CB ED
@@ -760,7 +760,7 @@ _FT2UpdateSoundCh4Volume:
     sta ram_0170                                ; E86E  8D 70 01
     sta SQ1_HI                                  ; E871  8D 03 40
 _FT2UpdateSoundPulse2:
-    lda ram_0182                                ; E874  AD 82 01    _FT2UpdateSoundPulse2 — FamiTone2: envia volume e periodo da canal 2 aos registradores da APU
+    lda ram_0182                                ; E874  AD 82 01    _FT2UpdateSoundPulse2 — FamiTone2: sends channel 2 volume and period to APU registers
     sta SQ2_VOL                                 ; E877  8D 04 40
     lda ram_0183                                ; E87A  AD 83 01
     sta SQ2_LO                                  ; E87D  8D 06 40
@@ -770,7 +770,7 @@ _FT2UpdateSoundPulse2:
     sta ram_0172                                ; E888  8D 72 01
     sta SQ2_HI                                  ; E88B  8D 07 40
 _FT2UpdateSoundTriangle:
-    lda ram_0185                                ; E88E  AD 85 01    _FT2UpdateSoundTriangle — FamiTone2: envia volume e periodo do triangulo aos registradores da APU
+    lda ram_0185                                ; E88E  AD 85 01    _FT2UpdateSoundTriangle — FamiTone2: sends triangle volume and period to APU registers
     sta TRI_LINEAR                              ; E891  8D 08 40
     lda ram_0186                                ; E894  AD 86 01
     sta TRI_LO                                  ; E897  8D 0A 40
@@ -783,14 +783,14 @@ _FT2UpdateSoundTriangle:
     rts                                         ; E8AC  60
 
 _FT2DutyTable:
-    .byte $30,$70,$B0,$F0                       ; E8AD
+    .byte $30,$70,$B0,$F0                       ; E8AD              pulse duty values (FamiTone2 duty_table)
 _FT2NoiseDutyTable:
-    .byte $00,$80,$00,$80                       ; E8B1
+    .byte $00,$80,$00,$80                       ; E8B1              noise duty values (FamiTone2 duty_table_nz)
 
 ; <- jsr _FT2EnvSetRepeat
-; modos: titulo, selecao, VS, intro do round, luta, fim do round, frase final
+; modes: title, selection, VS, round intro, fight, end of round, quote
 _FT2ChannelPitch:
-    lda ram_0150,y                              ; E8B5  B9 50 01    calcula o tom da voz: se nao ha slide, carrega a nota atual de _FT2NoteTable
+    lda ram_0150,y                              ; E8B5  B9 50 01    calculates voice pitch: if no slide, loads current note from _FT2NoteTable
     bne _FT2ChannelPitchVibrato                 ; E8B8  D0 08
     sta ram_0471,y                              ; E8BA  99 71 04    (nt)
     sta ram_0474,y                              ; E8BD  99 74 04    (nt)
@@ -798,9 +798,9 @@ _FT2ChannelPitch:
     rts                                         ; E8C1  60          (nt)
 
 
-; modos: titulo, selecao, VS, intro do round, luta, fim do round, frase final
+; modes: title, selection, VS, round intro, fight, end of round, quote
 _FT2ChannelPitchVibrato:
-    lda ram_047E,y                              ; E8C2  B9 7E 04    _FT2ChannelPitchVibrato — FamiTone2: recompoe o tom antes de aplicar o vibrato
+    lda ram_047E,y                              ; E8C2  B9 7E 04    _FT2ChannelPitchVibrato — FamiTone2: recomposes pitch before applying vibrato
     beq _FT2ChannelPitchSlideMode               ; E8C5  F0 0F
     lda ram_0474,y                              ; E8C7  B9 74 04    (nt)
     sta ram_0478                                ; E8CA  8D 78 04    (nt)
@@ -809,15 +809,15 @@ _FT2ChannelPitchVibrato:
     jmp _FT2Vibrato                             ; E8D3  4C F9 E9    (nt)
 
 
-; modos: titulo, selecao, VS, intro do round, luta, fim do round, frase final
+; modes: title, selection, VS, round intro, fight, end of round, quote
 _FT2ChannelPitchSlideMode:
-    lda ram_046B,y                              ; E8D6  B9 6B 04    _FT2ChannelPitchSlideMode — FamiTone2: le o modo de slide da canal
+    lda ram_046B,y                              ; E8D6  B9 6B 04    _FT2ChannelPitchSlideMode — FamiTone2: reads channel slide mode
     bne _FT2ChannelPitchSlideType               ; E8D9  D0 03
     jmp _FT2Vibrato                             ; E8DB  4C F9 E9
 
 
 _FT2ChannelPitchSlideType:
-    cmp #$01                                    ; E8DE  C9 01       _FT2ChannelPitchSlideType — FamiTone2: distingue slide para cima, para baixo e portamento (nt)
+    cmp #$01                                    ; E8DE  C9 01       _FT2ChannelPitchSlideType — FamiTone2: distinguishes slide up, slide down and portamento (nt)
     beq _FT2ChannelPitchSlideDown               ; E8E0  F0 32       (nt)
     cmp #$02                                    ; E8E2  C9 02       (nt)
     beq _FT2ChannelPitchSlideUp                 ; E8E4  F0 03       (nt)
@@ -825,14 +825,14 @@ _FT2ChannelPitchSlideType:
 
 
 _FT2ChannelPitchSlideUp:
-    ldx ram_0474,y                              ; E8E9  BE 74 04    _FT2ChannelPitchSlideUp — FamiTone2: soma o deslocamento de slide para cima (nt)
+    ldx ram_0474,y                              ; E8E9  BE 74 04    _FT2ChannelPitchSlideUp — FamiTone2: adds slide up displacement (nt)
     lda ram_0471,y                              ; E8EC  B9 71 04    (nt)
     clc                                         ; E8EF  18          (nt)
     adc ram_046E,y                              ; E8F0  79 6E 04    (nt)
     bcc _FT2ChannelPitchSlideUpStore            ; E8F3  90 01       (nt)
     inx                                         ; E8F5  E8          (nt)
 _FT2ChannelPitchSlideUpStore:
-    sta ram_0471,y                              ; E8F6  99 71 04    _FT2ChannelPitchSlideUpStore — FamiTone2: grava a parte baixa do tom apos o slide para cima (nt)
+    sta ram_0471,y                              ; E8F6  99 71 04    _FT2ChannelPitchSlideUpStore — FamiTone2: writes low part of pitch after slide up (nt)
     txa                                         ; E8F9  8A          (nt)
     cmp #$08                                    ; E8FA  C9 08       (nt)
     bcc _FT2ChannelPitchSlideUpLimit            ; E8FC  90 07       (nt)
@@ -840,7 +840,7 @@ _FT2ChannelPitchSlideUpStore:
     sta ram_0471,y                              ; E900  99 71 04    (nt)
     lda #$07                                    ; E903  A9 07       (nt)
 _FT2ChannelPitchSlideUpLimit:
-    sta ram_0474,y                              ; E905  99 74 04    _FT2ChannelPitchSlideUpLimit — FamiTone2: limita a parte alta do tom apos o slide para cima (nt)
+    sta ram_0474,y                              ; E905  99 74 04    _FT2ChannelPitchSlideUpLimit — FamiTone2: limits high part of pitch after slide up (nt)
     sta ram_0478                                ; E908  8D 78 04    (nt)
     lda ram_0471,y                              ; E90B  B9 71 04    (nt)
     sta ram_0477                                ; E90E  8D 77 04    (nt)
@@ -848,7 +848,7 @@ _FT2ChannelPitchSlideUpLimit:
 
 
 _FT2ChannelPitchSlideDown:
-    ldx ram_0474,y                              ; E914  BE 74 04    _FT2ChannelPitchSlideDown — FamiTone2: subtrai o deslocamento de slide para baixo (nt)
+    ldx ram_0474,y                              ; E914  BE 74 04    _FT2ChannelPitchSlideDown — FamiTone2: subtracts slide down displacement (nt)
     lda ram_0471,y                              ; E917  B9 71 04    (nt)
     sec                                         ; E91A  38          (nt)
     sbc ram_046E,y                              ; E91B  F9 6E 04    (nt)
@@ -856,7 +856,7 @@ _FT2ChannelPitchSlideDown:
     dex                                         ; E920  CA          (nt)
     bmi _FT2ChannelPitchSlideEnd                ; E921  30 10       (nt)
 _FT2ChannelPitchSlideDownStore:
-    sta ram_0471,y                              ; E923  99 71 04    _FT2ChannelPitchSlideDownStore — FamiTone2: grava o tom apos o slide para baixo (nt)
+    sta ram_0471,y                              ; E923  99 71 04    _FT2ChannelPitchSlideDownStore — FamiTone2: writes pitch after slide down (nt)
     sta ram_0477                                ; E926  8D 77 04    (nt)
     txa                                         ; E929  8A          (nt)
     sta ram_0474,y                              ; E92A  99 74 04    (nt)
@@ -865,7 +865,7 @@ _FT2ChannelPitchSlideDownStore:
 
 
 _FT2ChannelPitchSlideEnd:
-    lda #$00                                    ; E933  A9 00       _FT2ChannelPitchSlideEnd — FamiTone2: encerra o slide quando o tom ultrapassa o limite (nt)
+    lda #$00                                    ; E933  A9 00       _FT2ChannelPitchSlideEnd — FamiTone2: ends slide when pitch exceeds limit (nt)
     sta ram_0150,y                              ; E935  99 50 01    (nt)
     sta ram_0471,y                              ; E938  99 71 04    (nt)
     sta ram_0474,y                              ; E93B  99 74 04    (nt)
@@ -875,7 +875,7 @@ _FT2ChannelPitchSlideEnd:
 
 ; <- jmp _FT2ChannelPitchSlideType
 _FT2SlideToNote:
-    lda ram_0471,y                              ; E940  B9 71 04    slide/portamento: carrega o tom alvo quando o deslocamento zera (nt)
+    lda ram_0471,y                              ; E940  B9 71 04    slide/portamento: loads target pitch when displacement zeroes (nt)
     ora ram_0474,y                              ; E943  19 74 04    (nt)
     bne _FT2SlideToNoteLoad                     ; E946  D0 0F       (nt)
     ldx ram_0150,y                              ; E948  BE 50 01    (nt)
@@ -884,7 +884,7 @@ _FT2SlideToNote:
     lda _FT2NoteTableMSB,x                      ; E951  BD CF EE    (nt)
     sta ram_0474,y                              ; E954  99 74 04    (nt)
 _FT2SlideToNoteLoad:
-    jsr _FT2LoadNotePitch                       ; E957  20 E8 E9    _FT2SlideToNoteLoad — FamiTone2: compara o tom corrente com o tom alvo (nt)
+    jsr _FT2LoadNotePitch                       ; E957  20 E8 E9    _FT2SlideToNoteLoad — FamiTone2: compares current pitch with target pitch (nt)
     jsr _FT2PitchCompare                        ; E95A  20 CA E9    (nt)
     beq _FT2SlideToNoteDown                     ; E95D  F0 06       (nt)
     dex                                         ; E95F  CA          (nt)
@@ -893,7 +893,7 @@ _FT2SlideToNoteLoad:
 
 
 _FT2SlideToNoteDown:
-    ldx ram_0474,y                              ; E965  BE 74 04    _FT2SlideToNoteDown — FamiTone2: reduz o tom enquanto ele esta acima do alvo (nt)
+    ldx ram_0474,y                              ; E965  BE 74 04    _FT2SlideToNoteDown — FamiTone2: reduces pitch while it is above target (nt)
     lda ram_0471,y                              ; E968  B9 71 04    (nt)
     sec                                         ; E96B  38          (nt)
     sbc ram_046E,y                              ; E96C  F9 6E 04    (nt)
@@ -901,14 +901,14 @@ _FT2SlideToNoteDown:
     dex                                         ; E971  CA          (nt)
     bmi _FT2SlideToNoteReached                  ; E972  30 1D       (nt)
 _FT2SlideToNoteDownStore:
-    sta ram_0471,y                              ; E974  99 71 04    _FT2SlideToNoteDownStore — FamiTone2: grava o tom reduzido durante o slide (nt)
+    sta ram_0471,y                              ; E974  99 71 04    _FT2SlideToNoteDownStore — FamiTone2: writes reduced pitch during slide (nt)
     txa                                         ; E977  8A          (nt)
     sta ram_0474,y                              ; E978  99 74 04    (nt)
     jsr _FT2PitchCompare                        ; E97B  20 CA E9    (nt)
     cpx #$01                                    ; E97E  E0 01       (nt)
     beq _FT2SlideToNoteReached                  ; E980  F0 0F       (nt)
 _FT2SlideToNoteApply:
-    lda ram_0471,y                              ; E982  B9 71 04    _FT2SlideToNoteApply — FamiTone2: aplica o tom corrente ao registrador da voz (nt)
+    lda ram_0471,y                              ; E982  B9 71 04    _FT2SlideToNoteApply — FamiTone2: applies current pitch to voice register (nt)
     sta ram_0477                                ; E985  8D 77 04    (nt)
     lda ram_0474,y                              ; E988  B9 74 04    (nt)
     sta ram_0478                                ; E98B  8D 78 04    (nt)
@@ -916,7 +916,7 @@ _FT2SlideToNoteApply:
 
 
 _FT2SlideToNoteReached:
-    jsr _FT2LoadNotePitch                       ; E991  20 E8 E9    _FT2SlideToNoteReached — FamiTone2: alcancou o tom alvo e substitui o tom corrente (nt)
+    jsr _FT2LoadNotePitch                       ; E991  20 E8 E9    _FT2SlideToNoteReached — FamiTone2: reached target pitch and replaces current pitch (nt)
     lda ram_0477                                ; E994  AD 77 04    (nt)
     sta ram_0471,y                              ; E997  99 71 04    (nt)
     lda ram_0478                                ; E99A  AD 78 04    (nt)
@@ -927,18 +927,18 @@ _FT2SlideToNoteReached:
     lda #$00                                    ; E9A7  A9 00       (nt)
     sta ram_046B,y                              ; E9A9  99 6B 04    (nt)
 _FT2SlideToNoteDone:
-    jmp _FT2Vibrato                             ; E9AC  4C F9 E9    _FT2SlideToNoteDone — FamiTone2: termina o slide e segue para o vibrato (nt)
+    jmp _FT2Vibrato                             ; E9AC  4C F9 E9    _FT2SlideToNoteDone — FamiTone2: ends slide and proceeds to vibrato (nt)
 
 
 _FT2SlideToNoteUp:
-    ldx ram_0474,y                              ; E9AF  BE 74 04    _FT2SlideToNoteUp — FamiTone2: aumenta o tom enquanto ele esta abaixo do alvo (nt)
+    ldx ram_0474,y                              ; E9AF  BE 74 04    _FT2SlideToNoteUp — FamiTone2: increases pitch while it is below target (nt)
     lda ram_0471,y                              ; E9B2  B9 71 04    (nt)
     clc                                         ; E9B5  18          (nt)
     adc ram_046E,y                              ; E9B6  79 6E 04    (nt)
     bcc _FT2SlideToNoteUpStore                  ; E9B9  90 01       (nt)
     inx                                         ; E9BB  E8          (nt)
 _FT2SlideToNoteUpStore:
-    sta ram_0471,y                              ; E9BC  99 71 04    _FT2SlideToNoteUpStore — FamiTone2: grava o tom aumentado durante o slide (nt)
+    sta ram_0471,y                              ; E9BC  99 71 04    _FT2SlideToNoteUpStore — FamiTone2: writes increased pitch during slide (nt)
     txa                                         ; E9BF  8A          (nt)
     sta ram_0474,y                              ; E9C0  99 74 04    (nt)
     jsr _FT2PitchCompare                        ; E9C3  20 CA E9    (nt)
@@ -947,7 +947,7 @@ _FT2SlideToNoteUpStore:
 
 ; <- jsr _FT2SlideToNote, jsr _FT2SlideToNoteDown, jsr _FT2SlideToNoteUp
 _FT2PitchCompare:
-    lda ram_0474,y                              ; E9CA  B9 74 04    compara o tom atual com o alvo: devolve 2 se igual, 0/1 se abaixo/acima (nt)
+    lda ram_0474,y                              ; E9CA  B9 74 04    compares current pitch with target: returns 2 if equal, 0/1 if below/above (nt)
     tax                                         ; E9CD  AA          (nt)
     cmp ram_0478                                ; E9CE  CD 78 04    (nt)
     bcc _FT2PitchCompareBelow                   ; E9D1  90 12       (nt)
@@ -961,18 +961,18 @@ _FT2PitchCompare:
 
 
 _FT2PitchCompareAbove:
-    ldx #$00                                    ; E9E2  A2 00       _FT2PitchCompareAbove — FamiTone2: indica que o tom corrente esta acima do alvo (nt)
+    ldx #$00                                    ; E9E2  A2 00       _FT2PitchCompareAbove — FamiTone2: indicates current pitch is above target (nt)
     rts                                         ; E9E4  60          (nt)
 
 
 _FT2PitchCompareBelow:
-    ldx #$01                                    ; E9E5  A2 01       _FT2PitchCompareBelow — FamiTone2: indica que o tom corrente esta abaixo do alvo (nt)
+    ldx #$01                                    ; E9E5  A2 01       _FT2PitchCompareBelow — FamiTone2: indicates current pitch is below target (nt)
     rts                                         ; E9E7  60          (nt)
 
 
 ; <- jsr _FT2SlideToNote, jsr _FT2SlideToNoteReached
 _FT2LoadNotePitch:
-    lda ram_0150,y                              ; E9E8  B9 50 01    carrega o tom alvo da nota atual em ram_0477/0478 (nt)
+    lda ram_0150,y                              ; E9E8  B9 50 01    loads current note target pitch into ram_0477/0478 (nt)
     tax                                         ; E9EB  AA          (nt)
     lda _FT2NoteTableLSB,x                      ; E9EC  BD 77 EE    (nt)
     sta ram_0477                                ; E9EF  8D 77 04    (nt)
@@ -982,9 +982,9 @@ _FT2LoadNotePitch:
 
 
 ; <- jmp _FT2ChannelPitchVibrato, jmp _FT2ChannelPitchSlideMode, jmp _FT2ChannelPitchSlideUp, jmp _FT2ChannelPitchSlideDown, jmp _FT2SlideToNote, jmp _FT2SlideToNoteDown ... (+1)
-; modos: titulo, selecao, VS, intro do round, luta, fim do round, frase final
+; modes: title, selection, VS, round intro, fight, end of round, quote
 _FT2Vibrato:
-    ldx ram_0467,y                              ; E9F9  BE 67 04    aplica o vibrato: profundidade ram_0467 e fase ram_046A somam ao tom
+    ldx ram_0467,y                              ; E9F9  BE 67 04    applies vibrato: depth ram_0467 and phase ram_046A add to pitch
     beq _FT2VibratoReturn                       ; E9FC  F0 22
     lda _FT2VibratoOffsetTable,x                ; E9FE  BD 27 EA    (nt)
     clc                                         ; EA01  18          (nt)
@@ -998,21 +998,21 @@ _FT2Vibrato:
     lda #$FF                                    ; EA11  A9 FF       (nt)
     bne _FT2VibratoStore                        ; EA13  D0 08       (nt)
 _FT2VibratoClampLow:
-    clc                                         ; EA15  18          _FT2VibratoClampLow — FamiTone2: limita o tom ao minimo quando o vibrato e negativo (nt)
+    clc                                         ; EA15  18          _FT2VibratoClampLow — FamiTone2: limits pitch to minimum when vibrato is negative (nt)
     adc ram_0477                                ; EA16  6D 77 04    (nt)
     bcs _FT2VibratoStore                        ; EA19  B0 02       (nt)
     lda #$00                                    ; EA1B  A9 00       (nt)
 _FT2VibratoStore:
-    sta ram_0477                                ; EA1D  8D 77 04    _FT2VibratoStore — FamiTone2: grava o tom corrigido pelo vibrato (nt)
+    sta ram_0477                                ; EA1D  8D 77 04    _FT2VibratoStore — FamiTone2: writes vibrato-corrected pitch (nt)
 _FT2VibratoReturn:
-    lda ram_0477                                ; EA20  AD 77 04    _FT2VibratoReturn — FamiTone2: devolve o tom final da voz
+    lda ram_0477                                ; EA20  AD 77 04    _FT2VibratoReturn — FamiTone2: returns final voice pitch
     ldx ram_0478                                ; EA23  AE 78 04
     rts                                         ; EA26  60
 
 _FT2VibratoOffsetTable:
-    .byte $00,$00,$0B,$16,$21,$2C,$37,$42,$4D,$58,$63,$6E; EA27
+    .byte $00,$00,$0B,$16,$21,$2C,$37,$42,$4D,$58,$63,$6E; EA27              vibrato depth -> row offset in _FT2VibratoTable (FamiTone2 Vib_Offset)
 _FT2VibratoTable:
-    .byte $00,$01,$01,$01,$01,$00,$00,$FF,$FF,$FF,$FF,$00,$01,$02,$02,$01; EA33
+    .byte $00,$01,$01,$01,$01,$00,$00,$FF,$FF,$FF,$FF,$00,$01,$02,$02,$01; EA33              10x11 signed vibrato offsets (FamiTone2 Vib_Table)
     .byte $00,$00,$FF,$FE,$FE,$FF,$00,$02,$03,$03,$02,$01,$FF,$FD,$FC,$FC; EA43
     .byte $FE,$00,$03,$05,$06,$05,$02,$FE,$FB,$FA,$FB,$FD,$00,$03,$06,$06; EA53
     .byte $05,$02,$FE,$FB,$FA,$FA,$FD,$00,$05,$08,$09,$07,$03,$FD,$F9,$F7; EA63
@@ -1021,7 +1021,7 @@ _FT2VibratoTable:
     .byte $F0,$F1,$F7,$00,$0A,$11,$13,$0E,$05,$FB,$F2,$ED,$EF,$F6; EA93
 
 ; <- jsr _FT2UpdateRow
-; modos: titulo, selecao, VS, intro do round, luta, fim do round, frase final
+; modes: title, selection, VS, round intro, fight, end of round, quote
 _FT2SetInstrument:
     asl a                                       ; EAA1  0A
     tay                                         ; EAA2  A8
@@ -1030,17 +1030,17 @@ _FT2SetInstrument:
     sta FT_TEMP_PTR_H                           ; EAA8  85 84
     lda FT_INSTRUMENT_L                         ; EAAA  AD 76 01
     sta FT_TEMP_PTR_L                           ; EAAD  85 83
-    lda (FT_TEMP_PTR_L),y                       ; EAAF  B1 83       [le bancos $29,$2D]
+    lda (FT_TEMP_PTR_L),y                       ; EAAF  B1 83       [reads banks $29,$2D]
     sta ram_011C,x                              ; EAB1  9D 1C 01
     iny                                         ; EAB4  C8
-    lda (FT_TEMP_PTR_L),y                       ; EAB5  B1 83       [le bancos $29,$2D]
+    lda (FT_TEMP_PTR_L),y                       ; EAB5  B1 83       [reads banks $29,$2D]
     sta ram_012A,x                              ; EAB7  9D 2A 01
     iny                                         ; EABA  C8
     inx                                         ; EABB  E8
-    lda (FT_TEMP_PTR_L),y                       ; EABC  B1 83       [le bancos $29,$2D]
+    lda (FT_TEMP_PTR_L),y                       ; EABC  B1 83       [reads banks $29,$2D]
     sta ram_011C,x                              ; EABE  9D 1C 01
     iny                                         ; EAC1  C8
-    lda (FT_TEMP_PTR_L),y                       ; EAC2  B1 83       [le bancos $29,$2D]
+    lda (FT_TEMP_PTR_L),y                       ; EAC2  B1 83       [reads banks $29,$2D]
     sta ram_012A,x                              ; EAC4  9D 2A 01
     iny                                         ; EAC7  C8
     inx                                         ; EAC8  E8
@@ -1056,12 +1056,12 @@ _FT2SetInstrument:
     sta ram_010F,x                              ; EAE1  9D 0F 01
     sta ram_0139,x                              ; EAE4  9D 39 01
 _FT2SetInstrumentNoThirdEnv:
-    cpx #$0B                                    ; EAE7  E0 0B       _FT2SetInstrumentNoThirdEnv — FamiTone2: encerra a parte opcional do instrumento sem terceiro envelope
+    cpx #$0B                                    ; EAE7  E0 0B       _FT2SetInstrumentNoThirdEnv — FamiTone2: ends optional instrument part without third envelope
     bcs _FT2SetInstrumentSkipExtra              ; EAE9  B0 12
-    lda (FT_TEMP_PTR_L),y                       ; EAEB  B1 83       [le bancos $29,$2D]
+    lda (FT_TEMP_PTR_L),y                       ; EAEB  B1 83       [reads banks $29,$2D]
     sta ram_011C,x                              ; EAED  9D 1C 01
     iny                                         ; EAF0  C8
-    lda (FT_TEMP_PTR_L),y                       ; EAF1  B1 83       [le bancos $29,$2D]
+    lda (FT_TEMP_PTR_L),y                       ; EAF1  B1 83       [reads banks $29,$2D]
     sta ram_012A,x                              ; EAF3  9D 2A 01
     iny                                         ; EAF6  C8
     inx                                         ; EAF7  E8
@@ -1070,21 +1070,21 @@ _FT2SetInstrumentNoThirdEnv:
     rts                                         ; EAFC  60
 
 
-; modos: titulo, selecao, VS, intro do round, luta, fim do round, frase final
+; modes: title, selection, VS, round intro, fight, end of round, quote
 _FT2SetInstrumentSkipExtra:
-    iny                                         ; EAFD  C8          _FT2SetInstrumentSkipExtra — FamiTone2: avanca os dados extras do instrumento
+    iny                                         ; EAFD  C8          _FT2SetInstrumentSkipExtra — FamiTone2: advances instrument extra data
     iny                                         ; EAFE  C8
 _FT2SetInstrumentLoadEnvelopes:
-    lda (FT_TEMP_PTR_L),y                       ; EAFF  B1 83       [le bancos $29,$2D] _FT2SetInstrumentLoadEnvelopes — FamiTone2: carrega os ponteiros de envelope restantes do instrumento
+    lda (FT_TEMP_PTR_L),y                       ; EAFF  B1 83       [reads banks $29,$2D] _FT2SetInstrumentLoadEnvelopes — FamiTone2: loads remaining instrument envelope pointers
     sta ram_011C,x                              ; EB01  9D 1C 01
     iny                                         ; EB04  C8
-    lda (FT_TEMP_PTR_L),y                       ; EB05  B1 83       [le bancos $29,$2D]
+    lda (FT_TEMP_PTR_L),y                       ; EB05  B1 83       [reads banks $29,$2D]
     sta ram_012A,x                              ; EB07  9D 2A 01
     rts                                         ; EB0A  60
 
 
 ; <- jsr _FT2UpdateRow
-; modos: titulo, selecao, VS, intro do round, luta, fim do round, frase final
+; modes: title, selection, VS, round intro, fight, end of round, quote
 _FT2ChannelUpdate:
     lda #$00                                    ; EB0B  A9 00
     sta ram_047B                                ; EB0D  8D 7B 04
@@ -1095,62 +1095,62 @@ _FT2ChannelUpdate:
     rts                                         ; EB19  60
 
 
-; modos: titulo, selecao, VS, intro do round, luta, fim do round, frase final
+; modes: title, selection, VS, round intro, fight, end of round, quote
 _FT2ChannelNoRepeat:
-    lda ram_0100,x                              ; EB1A  BD 00 01    _FT2ChannelNoRepeat — FamiTone2: o contador de repeticao terminou; le a proxima nota
+    lda ram_0100,x                              ; EB1A  BD 00 01    _FT2ChannelNoRepeat — FamiTone2: repeat counter finished; reads next note
     sta FT_TEMP_PTR_L                           ; EB1D  85 83
     lda ram_0105,x                              ; EB1F  BD 05 01
     sta FT_TEMP_PTR_H                           ; EB22  85 84
     ldy #$00                                    ; EB24  A0 00
 
 ; <- jmp _FT2ReadVolumeCommand, jmp _FT2ReadSlideCommand, jmp _FT2ReadSlideStop, jmp _FT2ReadSlideDownMode, jmp _FT2ReadSlideUpMode, jmp _FT2ReadPortamentoMode ... (+8)
-; modos: titulo, selecao, VS, intro do round, luta, fim do round, frase final
+; modes: title, selection, VS, round intro, fight, end of round, quote
 _FT2ReadByte:
-    lda (FT_TEMP_PTR_L),y                       ; EB26  B1 83       [le bancos $29,$2D] le um byte do ponteiro do canal e avanca o ponteiro de 16 bits
+    lda (FT_TEMP_PTR_L),y                       ; EB26  B1 83       [reads banks $29,$2D] reads a byte from channel pointer and advances 16-bit pointer
     inc FT_TEMP_PTR_L                           ; EB28  E6 83
     bne _FT2ReadByteAdvance                     ; EB2A  D0 02
     inc FT_TEMP_PTR_H                           ; EB2C  E6 84
 _FT2ReadByteAdvance:
-    ora #$00                                    ; EB2E  09 00       _FT2ReadByteAdvance — FamiTone2: terminou de avancar o ponteiro do canal
+    ora #$00                                    ; EB2E  09 00       _FT2ReadByteAdvance — FamiTone2: finished advancing channel pointer
     bpl _FT2ReadVolumeCommand                   ; EB30  10 03
     jmp _FT2SpecialCode                         ; EB32  4C 91 EC
 
 
-; modos: titulo, selecao, VS, intro do round, luta, fim do round, frase final
+; modes: title, selection, VS, round intro, fight, end of round, quote
 _FT2ReadVolumeCommand:
-    cmp #$70                                    ; EB35  C9 70       _FT2ReadVolumeCommand — FamiTone2: le um comando de volume
+    cmp #$70                                    ; EB35  C9 70       _FT2ReadVolumeCommand — FamiTone2: reads a volume command
     bcc _FT2ReadCommand                         ; EB37  90 10
     and #$0F                                    ; EB39  29 0F
     cmp ram_0460                                ; EB3B  CD 60 04
     bcc _FT2ReadVolumeClamp                     ; EB3E  90 03
     lda ram_0460                                ; EB40  AD 60 04
 _FT2ReadVolumeClamp:
-    sta ram_0464                                ; EB43  8D 64 04    _FT2ReadVolumeClamp — FamiTone2: limita e grava o volume solicitado
+    sta ram_0464                                ; EB43  8D 64 04    _FT2ReadVolumeClamp — FamiTone2: limits and writes requested volume
     jmp _FT2ReadByte                            ; EB46  4C 26 EB
 
 
-; modos: titulo, selecao, VS, intro do round, luta, fim do round, frase final
+; modes: title, selection, VS, round intro, fight, end of round, quote
 _FT2ReadCommand:
-    cmp #$5F                                    ; EB49  C9 5F       _FT2ReadCommand — FamiTone2: distingue nota comum de comando do canal
+    cmp #$5F                                    ; EB49  C9 5F       _FT2ReadCommand — FamiTone2: distinguishes normal note from channel command
     bcs _FT2ReadStopSlide                       ; EB4B  B0 03
     jmp _FT2PlainNote                           ; EB4D  4C 65 EC
 
 
 _FT2ReadStopSlide:
-    beq _FT2ReadSlideStop                       ; EB50  F0 27       _FT2ReadStopSlide — FamiTone2: comando $5F encerra o slide (nt)
+    beq _FT2ReadSlideStop                       ; EB50  F0 27       _FT2ReadStopSlide — FamiTone2: command $5F ends slide (nt)
     cmp #$6E                                    ; EB52  C9 6E       (nt)
     bne _FT2ReadShiftDown                       ; EB54  D0 03       (nt)
     jmp _FT2NoteShiftUp                         ; EB56  4C CA EB    (nt)
 
 
 _FT2ReadShiftDown:
-    cmp #$6F                                    ; EB59  C9 6F       _FT2ReadShiftDown — FamiTone2: comando $6F desloca a nota para baixo (nt)
+    cmp #$6F                                    ; EB59  C9 6F       _FT2ReadShiftDown — FamiTone2: command $6F shifts note down (nt)
     bne _FT2ReadSlideCommand                    ; EB5B  D0 03       (nt)
     jmp _FT2NoteShiftDown                       ; EB5D  4C 20 EC    (nt)
 
 
 _FT2ReadSlideCommand:
-    cmp #$6B                                    ; EB60  C9 6B       _FT2ReadSlideCommand — FamiTone2: seleciona os modos de slide ou a profundidade do vibrato (nt)
+    cmp #$6B                                    ; EB60  C9 6B       _FT2ReadSlideCommand — FamiTone2: selects slide modes or vibrato depth (nt)
     beq _FT2ReadSlideDownMode                   ; EB62  F0 2D       (nt)
     cmp #$6C                                    ; EB64  C9 6C       (nt)
     beq _FT2ReadSlideUpMode                     ; EB66  F0 3C       (nt)
@@ -1164,7 +1164,7 @@ _FT2ReadSlideCommand:
 
 
 _FT2ReadSlideStop:
-    lda #$00                                    ; EB79  A9 00       _FT2ReadSlideStop — FamiTone2: zera o deslocamento e habilita o tom fixo (nt)
+    lda #$00                                    ; EB79  A9 00       _FT2ReadSlideStop — FamiTone2: zeroes displacement and enables fixed pitch (nt)
     sta ram_047B                                ; EB7B  8D 7B 04    (nt)
     ldy ram_0479                                ; EB7E  AC 79 04    (nt)
     sta ram_046E,y                              ; EB81  99 6E 04    (nt)
@@ -1176,7 +1176,7 @@ _FT2ReadSlideStop:
 
 
 _FT2ReadSlideDownMode:
-    jsr _FT2ReadParam                           ; EB91  20 18 ED    _FT2ReadSlideDownMode — FamiTone2: comando $6B habilita o slide para baixo (nt)
+    jsr _FT2ReadParam                           ; EB91  20 18 ED    _FT2ReadSlideDownMode — FamiTone2: command $6B enables slide down (nt)
     ldy ram_0479                                ; EB94  AC 79 04    (nt)
     sta ram_046E,y                              ; EB97  99 6E 04    (nt)
     lda #$01                                    ; EB9A  A9 01       (nt)
@@ -1186,7 +1186,7 @@ _FT2ReadSlideDownMode:
 
 
 _FT2ReadSlideUpMode:
-    jsr _FT2ReadParam                           ; EBA4  20 18 ED    _FT2ReadSlideUpMode — FamiTone2: comando $6C habilita o slide para cima (nt)
+    jsr _FT2ReadParam                           ; EBA4  20 18 ED    _FT2ReadSlideUpMode — FamiTone2: command $6C enables slide up (nt)
     ldy ram_0479                                ; EBA7  AC 79 04    (nt)
     sta ram_046E,y                              ; EBAA  99 6E 04    (nt)
     lda #$02                                    ; EBAD  A9 02       (nt)
@@ -1196,7 +1196,7 @@ _FT2ReadSlideUpMode:
 
 
 _FT2ReadPortamentoMode:
-    jsr _FT2ReadParam                           ; EBB7  20 18 ED    _FT2ReadPortamentoMode — FamiTone2: comando $6D habilita o portamento ate a nota (nt)
+    jsr _FT2ReadParam                           ; EBB7  20 18 ED    _FT2ReadPortamentoMode — FamiTone2: command $6D enables portamento to note (nt)
     ldy ram_0479                                ; EBBA  AC 79 04    (nt)
     sta ram_046E,y                              ; EBBD  99 6E 04    (nt)
     lda #$03                                    ; EBC0  A9 03       (nt)
@@ -1207,13 +1207,13 @@ _FT2ReadPortamentoMode:
 
 ; <- jmp _FT2ReadStopSlide
 _FT2NoteShiftUp:
-    jsr _FT2ReadShift                           ; EBCA  20 4C EC    comando $6E: sobe a nota em N semitons (le o deslocamento) (nt)
+    jsr _FT2ReadShift                           ; EBCA  20 4C EC    command $6E: raises note by N semitons (reads displacement) (nt)
 
 ; <- jmp _FT2NoteShiftUp
 _FT2ShiftUpReadNote:
-    lda (FT_TEMP_PTR_L),y                       ; EBCD  B1 83       le o proximo byte nao-comando da sequencia (nota) (nt)
+    lda (FT_TEMP_PTR_L),y                       ; EBCD  B1 83       reads next non-command byte of sequence (note) (nt)
 _FT2ShiftUpNext:
-    beq _FT2ReadSlideStop                       ; EBCF  F0 A8       decodifica o byte: $00 encerra, >= $58 e comando, senao nota (nt)
+    beq _FT2ReadSlideStop                       ; EBCF  F0 A8       decodes byte: $00 ends, >= $58 is command, otherwise note (nt)
     cmp #$58                                    ; EBD1  C9 58       (nt)
     bcc _FT2ShiftUpNote                         ; EBD3  90 0A       (nt)
     and #$81                                    ; EBD5  29 81       (nt)
@@ -1224,13 +1224,13 @@ _FT2ShiftUpNext:
 
 
 _FT2ShiftUpNote:
-    pha                                         ; EBDF  48          _FT2ShiftUpNote — FamiTone2: soma o deslocamento a uma nota da sequencia (nt)
+    pha                                         ; EBDF  48          _FT2ShiftUpNote — FamiTone2: adds displacement to a sequence note (nt)
     clc                                         ; EBE0  18          (nt)
     adc ram_047C                                ; EBE1  6D 7C 04    (nt)
 
 ; <- jmp _FT2ShiftDownNote
 _FT2NoteShiftApply:
-    sta ram_010A,x                              ; EBE4  9D 0A 01    aplica o deslocamento de nota: grava a nova nota e o modo de slide 4 (nt)
+    sta ram_010A,x                              ; EBE4  9D 0A 01    applies note displacement: writes new note and slide mode 4 (nt)
     stx zp_85                                   ; EBE7  86 85       (nt)
     pla                                         ; EBE9  68          (nt)
     tax                                         ; EBEA  AA          (nt)
@@ -1251,7 +1251,7 @@ _FT2NoteShiftApply:
 
 
 _FT2ShiftCurrentUp:
-    lda ram_010A,x                              ; EC11  BD 0A 01    _FT2ShiftCurrentUp — FamiTone2: soma o deslocamento a nota corrente (nt)
+    lda ram_010A,x                              ; EC11  BD 0A 01    _FT2ShiftCurrentUp — FamiTone2: adds displacement to current note (nt)
     clc                                         ; EC14  18          (nt)
     adc ram_047C                                ; EC15  6D 7C 04    (nt)
     sta ram_010A,x                              ; EC18  9D 0A 01    (nt)
@@ -1261,11 +1261,11 @@ _FT2ShiftCurrentUp:
 
 ; <- jmp _FT2ReadShiftDown
 _FT2NoteShiftDown:
-    jsr _FT2ReadShift                           ; EC20  20 4C EC    comando $6F: desce a nota em N semitons (nt)
+    jsr _FT2ReadShift                           ; EC20  20 4C EC    command $6F: lowers note by N semitons (nt)
 
 ; <- jmp _FT2NoteShiftDown
 _FT2ShiftDownReadNote:
-    lda (FT_TEMP_PTR_L),y                       ; EC23  B1 83       le o proximo byte nao-comando da sequencia (nota) (nt)
+    lda (FT_TEMP_PTR_L),y                       ; EC23  B1 83       reads next non-command byte of sequence (note) (nt)
     beq _FT2ShiftUpNext                         ; EC25  F0 A8       (nt)
     cmp #$58                                    ; EC27  C9 58       (nt)
     bcc _FT2ShiftDownNote                       ; EC29  90 0A       (nt)
@@ -1277,14 +1277,14 @@ _FT2ShiftDownReadNote:
 
 
 _FT2ShiftDownNote:
-    pha                                         ; EC35  48          _FT2ShiftDownNote — FamiTone2: subtrai o deslocamento de uma nota da sequencia (nt)
+    pha                                         ; EC35  48          _FT2ShiftDownNote — FamiTone2: subtracts displacement from a sequence note (nt)
     sec                                         ; EC36  38          (nt)
     sbc ram_047C                                ; EC37  ED 7C 04    (nt)
     jmp _FT2NoteShiftApply                      ; EC3A  4C E4 EB    (nt)
 
 
 _FT2ShiftCurrentDown:
-    lda ram_010A,x                              ; EC3D  BD 0A 01    _FT2ShiftCurrentDown — FamiTone2: subtrai o deslocamento da nota corrente (nt)
+    lda ram_010A,x                              ; EC3D  BD 0A 01    _FT2ShiftCurrentDown — FamiTone2: subtracts displacement from current note (nt)
     sec                                         ; EC40  38          (nt)
     sbc ram_047C                                ; EC41  ED 7C 04    (nt)
     sta ram_010A,x                              ; EC44  9D 0A 01    (nt)
@@ -1294,7 +1294,7 @@ _FT2ShiftCurrentDown:
 
 ; <- jsr _FT2NoteShiftUp, jsr _FT2NoteShiftDown
 _FT2ReadShift:
-    inc ram_047B                                ; EC4C  EE 7B 04    le o deslocamento de nota ($6E/$6F): parte baixa = passos, alta = modo (nt)
+    inc ram_047B                                ; EC4C  EE 7B 04    reads note displacement ($6E/$6F): low = steps, high = mode (nt)
     jsr _FT2ReadParam                           ; EC4F  20 18 ED    (nt)
     pha                                         ; EC52  48          (nt)
     and #$0F                                    ; EC53  29 0F       (nt)
@@ -1311,9 +1311,9 @@ _FT2ReadShift:
 
 
 ; <- jmp _FT2ReadCommand
-; modos: titulo, selecao, VS, intro do round, luta, fim do round, frase final
+; modes: title, selection, VS, round intro, fight, end of round, quote
 _FT2PlainNote:
-    ldy ram_0479                                ; EC65  AC 79 04    nota simples: grava o indice em ram_010A e desliga o modo de afinacao fixa
+    ldy ram_0479                                ; EC65  AC 79 04    simple note: writes index to ram_010A and turns off fixed tuning mode
     cpy #$03                                    ; EC68  C0 03
     bcs _FT2PlainNoteStoreOnly                  ; EC6A  B0 1F
     ldy ram_047B                                ; EC6C  AC 7B 04
@@ -1326,19 +1326,19 @@ _FT2PlainNote:
     lda #$00                                    ; EC7E  A9 00       (nt)
     sta ram_046B,y                              ; EC80  99 6B 04    (nt)
 _FT2PlainNoteClearPitch:
-    lda #$00                                    ; EC83  A9 00       _FT2PlainNoteClearPitch — FamiTone2: nota comum e desativacao do tom fixo
+    lda #$00                                    ; EC83  A9 00       _FT2PlainNoteClearPitch — FamiTone2: normal note and fixed pitch deactivation
     sta ram_047E,y                              ; EC85  99 7E 04
     sec                                         ; EC88  38
     bcs _FT2SpecialDone                         ; EC89  B0 6B
 _FT2PlainNoteStoreOnly:
-    sta ram_010A,x                              ; EC8B  9D 0A 01    _FT2PlainNoteStoreOnly — FamiTone2: grava a nota sem alterar o estado de tom fixo
+    sta ram_010A,x                              ; EC8B  9D 0A 01    _FT2PlainNoteStoreOnly — FamiTone2: writes note without changing fixed pitch state
     sec                                         ; EC8E  38
     bcs _FT2SpecialDone                         ; EC8F  B0 65
 
 ; <- jmp _FT2ChannelNoRepeat
-; modos: titulo, selecao, VS, intro do round, luta, fim do round, frase final
+; modes: title, selection, VS, round intro, fight, end of round, quote
 _FT2SpecialCode:
-    and #$7F                                    ; EC91  29 7F       comandos $70-$7F: instrumento/volume (bit 0 = volume, senao instrumento)
+    and #$7F                                    ; EC91  29 7F       commands $70-$7F: instrument/volume (bit 0 = volume, otherwise instrument)
     lsr a                                       ; EC93  4A
     bcs _FT2SpecialEmptyRows                    ; EC94  B0 08
     asl a                                       ; EC96  0A
@@ -1347,9 +1347,9 @@ _FT2SpecialCode:
     jmp _FT2ReadByte                            ; EC9B  4C 26 EB
 
 
-; modos: titulo, selecao, VS, intro do round, luta, fim do round, frase final
+; modes: title, selection, VS, round intro, fight, end of round, quote
 _FT2SpecialEmptyRows:
-    cmp #$3D                                    ; EC9E  C9 3D       _FT2SpecialEmptyRows — FamiTone2: tratta linhas vazias e comandos de referencia do canal
+    cmp #$3D                                    ; EC9E  C9 3D       _FT2SpecialEmptyRows — FamiTone2: handles empty rows and channel reference commands
     bcc _FT2SpecialRepeat                       ; ECA0  90 51
     beq _FT2SpecialSpeed                        ; ECA2  F0 2B
     cmp #$3E                                    ; ECA4  C9 3E
@@ -1361,13 +1361,13 @@ _FT2SpecialEmptyRows:
     lda FT_TEMP_PTR_H                           ; ECB0  A5 84
     adc #$00                                    ; ECB2  69 00
     sta ram_011E,x                              ; ECB4  9D 1E 01
-    lda (FT_TEMP_PTR_L),y                       ; ECB7  B1 83       [le bancos $29,$2D]
+    lda (FT_TEMP_PTR_L),y                       ; ECB7  B1 83       [reads banks $29,$2D]
     sta ram_0123,x                              ; ECB9  9D 23 01
     iny                                         ; ECBC  C8
-    lda (FT_TEMP_PTR_L),y                       ; ECBD  B1 83       [le bancos $29,$2D]
+    lda (FT_TEMP_PTR_L),y                       ; ECBD  B1 83       [reads banks $29,$2D]
     sta zp_85                                   ; ECBF  85 85
     iny                                         ; ECC1  C8
-    lda (FT_TEMP_PTR_L),y                       ; ECC2  B1 83       [le bancos $29,$2D]
+    lda (FT_TEMP_PTR_L),y                       ; ECC2  B1 83       [reads banks $29,$2D]
     sta FT_TEMP_PTR_H                           ; ECC4  85 84
     lda zp_85                                   ; ECC6  A5 85
     sta FT_TEMP_PTR_L                           ; ECC8  85 83
@@ -1375,9 +1375,9 @@ _FT2SpecialEmptyRows:
     jmp _FT2ReadByte                            ; ECCC  4C 26 EB
 
 
-; modos: titulo, selecao, VS, intro do round, frase final
+; modes: title, selection, VS, round intro, quote
 _FT2SpecialSpeed:
-    lda (FT_TEMP_PTR_L),y                       ; ECCF  B1 83       [le bancos $29,$2D] _FT2SpecialSpeed — FamiTone2: le e grava a velocidade da musica
+    lda (FT_TEMP_PTR_L),y                       ; ECCF  B1 83       [reads banks $29,$2D] _FT2SpecialSpeed — FamiTone2: reads and writes music speed
     sta ram_0159                                ; ECD1  8D 59 01
     inc FT_TEMP_PTR_L                           ; ECD4  E6 83
     beq _FT2SpecialSpeedAdvance                 ; ECD6  F0 03
@@ -1385,17 +1385,17 @@ _FT2SpecialSpeed:
 
 
 _FT2SpecialSpeedAdvance:
-    inc FT_TEMP_PTR_H                           ; ECDB  E6 84       _FT2SpecialSpeedAdvance — FamiTone2: avanca o ponteiro apos ler a velocidade (nt)
+    inc FT_TEMP_PTR_H                           ; ECDB  E6 84       _FT2SpecialSpeedAdvance — FamiTone2: advances pointer after reading speed (nt)
     beq _FT2SpecialLoop                         ; ECDD  F0 03       (nt)
     jmp _FT2ReadByte                            ; ECDF  4C 26 EB    (nt)
 
 
-; modos: selecao, luta, frase final
+; modes: selection, fight, quote
 _FT2SpecialLoop:
-    lda (FT_TEMP_PTR_L),y                       ; ECE2  B1 83       [le bancos $29,$2D] _FT2SpecialLoop — FamiTone2: troca o ponteiro do canal pelo destino do loop
+    lda (FT_TEMP_PTR_L),y                       ; ECE2  B1 83       [reads banks $29,$2D] _FT2SpecialLoop — FamiTone2: swaps channel pointer with loop destination
     sta zp_85                                   ; ECE4  85 85
     iny                                         ; ECE6  C8
-    lda (FT_TEMP_PTR_L),y                       ; ECE7  B1 83       [le bancos $29,$2D]
+    lda (FT_TEMP_PTR_L),y                       ; ECE7  B1 83       [reads banks $29,$2D]
     sta FT_TEMP_PTR_H                           ; ECE9  85 84
     lda zp_85                                   ; ECEB  A5 85
     sta FT_TEMP_PTR_L                           ; ECED  85 83
@@ -1403,11 +1403,11 @@ _FT2SpecialLoop:
     jmp _FT2ReadByte                            ; ECF0  4C 26 EB
 
 
-; modos: titulo, selecao, VS, intro do round, luta, fim do round, frase final
+; modes: title, selection, VS, round intro, fight, end of round, quote
 _FT2SpecialRepeat:
-    sta ram_0114,x                              ; ECF3  9D 14 01    _FT2SpecialRepeat — FamiTone2: grava o contador de repeticao do canal
+    sta ram_0114,x                              ; ECF3  9D 14 01    _FT2SpecialRepeat — FamiTone2: writes channel repeat counter
 _FT2SpecialDone:
-    lda ram_0123,x                              ; ECF6  BD 23 01    _FT2SpecialDone — FamiTone2: finaliza o comando e trata a referencia ativa
+    lda ram_0123,x                              ; ECF6  BD 23 01    _FT2SpecialDone — FamiTone2: finalizes command and handles active reference
     beq _FT2SpecialContinue                     ; ECF9  F0 12
     dec ram_0123,x                              ; ECFB  DE 23 01
     bne _FT2SpecialContinue                     ; ECFE  D0 0D
@@ -1418,9 +1418,9 @@ _FT2SpecialDone:
     rts                                         ; ED0C  60
 
 
-; modos: titulo, selecao, VS, intro do round, luta, fim do round, frase final
+; modes: title, selection, VS, round intro, fight, end of round, quote
 _FT2SpecialContinue:
-    lda FT_TEMP_PTR_L                           ; ED0D  A5 83       _FT2SpecialContinue — FamiTone2: mantem o ponteiro corrente do canal
+    lda FT_TEMP_PTR_L                           ; ED0D  A5 83       _FT2SpecialContinue — FamiTone2: keeps current channel pointer
     sta ram_0100,x                              ; ED0F  9D 00 01
     lda FT_TEMP_PTR_H                           ; ED12  A5 84
     sta ram_0105,x                              ; ED14  9D 05 01
@@ -1429,16 +1429,16 @@ _FT2SpecialContinue:
 
 ; <- jsr _FT2ReadSlideDownMode, jsr _FT2ReadSlideUpMode, jsr _FT2ReadPortamentoMode, jsr _FT2ReadShift
 _FT2ReadParam:
-    lda (FT_TEMP_PTR_L),y                       ; ED18  B1 83       le um byte do ponteiro e avanca (parametro de comando) (nt)
+    lda (FT_TEMP_PTR_L),y                       ; ED18  B1 83       reads a byte from pointer and advances (command parameter) (nt)
     inc FT_TEMP_PTR_L                           ; ED1A  E6 83       (nt)
     bne _FT2ReadParamDone                       ; ED1C  D0 02       (nt)
     inc FT_TEMP_PTR_H                           ; ED1E  E6 84       (nt)
 _FT2ReadParamDone:
-    rts                                         ; ED20  60          _FT2ReadParamDone — FamiTone2: devolve o parametro apos avancar o ponteiro (nt)
+    rts                                         ; ED20  60          _FT2ReadParamDone — FamiTone2: returns parameter after advancing pointer (nt)
 
 
 ; <- jmp FamiToneMusicStop, jsr FamiToneMusicPause, jsr _FT2UpdateRow
-; modos: titulo, selecao, VS, intro do round, fim do round, frase final
+; modes: title, selection, VS, round intro, end of round, quote
 FamiToneSampleStop:
     lda #$0F                                    ; ED21  A9 0F
     sta SND_CHN                                 ; ED23  8D 15 40
@@ -1457,19 +1457,19 @@ FamiToneSamplePlayM:
 
 
 _FT2SamplePlayMNotBusy:
-    sta FT_DPCM_EFFECT                          ; ED35  8D 7E 01    _FT2SamplePlayMNotBusy — FamiTone2: o canal DMC esta livre; inicia a amostra de musica (nt)
+    sta FT_DPCM_EFFECT                          ; ED35  8D 7E 01    _FT2SamplePlayMNotBusy — FamiTone2: DMC channel is free; starts music sample (nt)
     txa                                         ; ED38  8A          (nt)
     jmp _FT2SamplePlay                          ; ED39  4C 41 ED    (nt)
 
 
 ; <- jmp VoicePlay
-; modos: titulo, selecao, intro do round, luta, fim do round
+; modes: title, selection, round intro, fight, end of round
 FamiToneSamplePlay:
     ldx #$01                                    ; ED3C  A2 01
     stx FT_DPCM_EFFECT                          ; ED3E  8E 7E 01
 
 ; <- jmp _FT2SamplePlayMNotBusy
-; modos: titulo, selecao, intro do round, luta, fim do round
+; modes: title, selection, round intro, fight, end of round
 _FT2SamplePlay:
     sta FT_TEMP_PTR_L                           ; ED41  85 83
     asl a                                       ; ED43  0A
@@ -1483,13 +1483,13 @@ _FT2SamplePlay:
     lda #$0F                                    ; ED53  A9 0F
     sta SND_CHN                                 ; ED55  8D 15 40
     ldy #$00                                    ; ED58  A0 00
-    lda (FT_TEMP_PTR_L),y                       ; ED5A  B1 83       [le bancos $37]
+    lda (FT_TEMP_PTR_L),y                       ; ED5A  B1 83       [reads banks $37]
     sta DMC_START                               ; ED5C  8D 12 40
     iny                                         ; ED5F  C8
-    lda (FT_TEMP_PTR_L),y                       ; ED60  B1 83       [le bancos $37]
+    lda (FT_TEMP_PTR_L),y                       ; ED60  B1 83       [reads banks $37]
     sta DMC_LEN                                 ; ED62  8D 13 40
     iny                                         ; ED65  C8
-    lda (FT_TEMP_PTR_L),y                       ; ED66  B1 83       [le bancos $37]
+    lda (FT_TEMP_PTR_L),y                       ; ED66  B1 83       [reads banks $37]
     sta DMC_FREQ                                ; ED68  8D 10 40
     lda #$20                                    ; ED6B  A9 20
     sta DMC_RAW                                 ; ED6D  8D 11 40
@@ -1499,19 +1499,19 @@ _FT2SamplePlay:
 
 
 ; <- jmp SoundInitSfx
-; modos: titulo, selecao, VS, intro do round, frase final
+; modes: title, selection, VS, round intro, quote
 FamiToneSfxInit:
     stx FT_TEMP_PTR_L                           ; ED76  86 83
     sty FT_TEMP_PTR_H                           ; ED78  84 84
     ldy #$00                                    ; ED7A  A0 00
-    lda (FT_TEMP_PTR_L),y                       ; ED7C  B1 83       [le bancos $37]
+    lda (FT_TEMP_PTR_L),y                       ; ED7C  B1 83       [reads banks $37]
     sta FT_SFX_ADR_L                            ; ED7E  8D 8A 01
     iny                                         ; ED81  C8
-    lda (FT_TEMP_PTR_L),y                       ; ED82  B1 83       [le bancos $37]
+    lda (FT_TEMP_PTR_L),y                       ; ED82  B1 83       [reads banks $37]
     sta FT_SFX_ADR_H                            ; ED84  8D 8B 01
     ldx #$00                                    ; ED87  A2 00
 _FT2SfxInitChannels:
-    jsr _FT2SfxClearChannel                     ; ED89  20 96 ED    _FT2SfxInitChannels — FamiTone2: inicializa todos os canais de efeito sonoro
+    jsr _FT2SfxClearChannel                     ; ED89  20 96 ED    _FT2SfxInitChannels — FamiTone2: initializes all sound effect channels
     txa                                         ; ED8C  8A
     clc                                         ; ED8D  18
     adc #$0F                                    ; ED8E  69 0F
@@ -1522,7 +1522,7 @@ _FT2SfxInitChannels:
 
 
 ; <- jsr FamiToneSfxInit, jsr FamiToneSfxPlay
-; modos: titulo, selecao, VS, intro do round, luta, frase final
+; modes: title, selection, VS, round intro, fight, quote
 _FT2SfxClearChannel:
     lda #$00                                    ; ED96  A9 00
     sta ram_018E,x                              ; ED98  9D 8E 01
@@ -1537,7 +1537,7 @@ _FT2SfxClearChannel:
 
 
 ; <- jmp SfxPlay_Select, jsr SfxPlayByState
-; modos: luta
+; modes: fight
 FamiToneSfxPlay:
     asl a                                       ; EDB0  0A
     tay                                         ; EDB1  A8
@@ -1546,39 +1546,39 @@ FamiToneSfxPlay:
     sta FT_TEMP_PTR_L                           ; EDB8  85 83
     lda FT_SFX_ADR_H                            ; EDBA  AD 8B 01
     sta FT_TEMP_PTR_H                           ; EDBD  85 84
-    lda (FT_TEMP_PTR_L),y                       ; EDBF  B1 83       [le bancos $37]
+    lda (FT_TEMP_PTR_L),y                       ; EDBF  B1 83       [reads banks $37]
     sta ram_018D,x                              ; EDC1  9D 8D 01
     iny                                         ; EDC4  C8
-    lda (FT_TEMP_PTR_L),y                       ; EDC5  B1 83       [le bancos $37]
+    lda (FT_TEMP_PTR_L),y                       ; EDC5  B1 83       [reads banks $37]
     sta ram_018E,x                              ; EDC7  9D 8E 01
     rts                                         ; EDCA  60
 
 
 ; <- jsr _FT2EnvSetRepeat
-; modos: titulo, selecao, VS, intro do round, luta, fim do round, frase final
+; modes: title, selection, VS, round intro, fight, end of round, quote
 _FT2SfxUpdate:
     lda ram_018C,x                              ; EDCB  BD 8C 01
     beq _FT2SfxUpdateNoRepeat                   ; EDCE  F0 05
     dec ram_018C,x                              ; EDD0  DE 8C 01
     bne _FT2SfxUpdateBuf                        ; EDD3  D0 45
 _FT2SfxUpdateNoRepeat:
-    lda ram_018E,x                              ; EDD5  BD 8E 01    _FT2SfxUpdateNoRepeat — FamiTone2: o contador de repeticao do efeito terminou
+    lda ram_018E,x                              ; EDD5  BD 8E 01    _FT2SfxUpdateNoRepeat — FamiTone2: effect repeat counter finished
     bne _FT2SfxUpdateActive                     ; EDD8  D0 01
     rts                                         ; EDDA  60
 
 
-; modos: luta, fim do round
+; modes: fight, end of round
 _FT2SfxUpdateActive:
-    sta FT_TEMP_PTR_H                           ; EDDB  85 84       _FT2SfxUpdateActive — FamiTone2: carrega o roteiro do efeito ativo
+    sta FT_TEMP_PTR_H                           ; EDDB  85 84       _FT2SfxUpdateActive — FamiTone2: loads active effect script
     lda ram_018D,x                              ; EDDD  BD 8D 01
     sta FT_TEMP_PTR_L                           ; EDE0  85 83
     ldy ram_018F,x                              ; EDE2  BC 8F 01
     clc                                         ; EDE5  18
 
 ; <- jmp _FT2SfxReadData
-; modos: luta, fim do round
+; modes: fight, end of round
 _FT2SfxReadByte:
-    lda (FT_TEMP_PTR_L),y                       ; EDE6  B1 83       [le bancos $37] le o byte do roteiro de sfx: $80+ = comando, $00 = fim
+    lda (FT_TEMP_PTR_L),y                       ; EDE6  B1 83       [reads banks $37] reads sfx script byte: $80+ = command, $00 = end
     bmi _FT2SfxReadData                         ; EDE8  30 0F
     beq _FT2SfxEnd                              ; EDEA  F0 2B
     jsr _FT2SfxAdvance                          ; EDEC  20 0E EE
@@ -1588,13 +1588,13 @@ _FT2SfxReadByte:
     jmp _FT2SfxUpdateBuf                        ; EDF6  4C 1A EE
 
 
-; modos: luta, fim do round
+; modes: fight, end of round
 _FT2SfxReadData:
-    jsr _FT2SfxAdvance                          ; EDF9  20 0E EE    _FT2SfxReadData — FamiTone2: le um comando de escrita de registrador do efeito
+    jsr _FT2SfxAdvance                          ; EDF9  20 0E EE    _FT2SfxReadData — FamiTone2: reads an effect register write command
     stx zp_85                                   ; EDFC  86 85
     adc zp_85                                   ; EDFE  65 85
     tax                                         ; EE00  AA
-    lda (FT_TEMP_PTR_L),y                       ; EE01  B1 83       [le bancos $37]
+    lda (FT_TEMP_PTR_L),y                       ; EE01  B1 83       [reads banks $37]
     sta ram_0110,x                              ; EE03  9D 10 01
     ldx zp_85                                   ; EE06  A6 85
     jsr _FT2SfxAdvance                          ; EE08  20 0E EE
@@ -1602,24 +1602,24 @@ _FT2SfxReadData:
 
 
 ; <- jsr _FT2SfxUpdateActive, jsr _FT2SfxReadData
-; modos: luta, fim do round
+; modes: fight, end of round
 _FT2SfxAdvance:
-    iny                                         ; EE0E  C8          avanca o ponteiro do sfx (Y e o offset corrente)
+    iny                                         ; EE0E  C8          advances sfx pointer (Y and current offset)
     bne _FT2SfxAdvanceDone                      ; EE0F  D0 05
     inc FT_TEMP_PTR_H                           ; EE11  E6 84       (nt)
     inc ram_018E,x                              ; EE13  FE 8E 01    (nt)
 _FT2SfxAdvanceDone:
-    rts                                         ; EE16  60          _FT2SfxAdvanceDone — FamiTone2: terminou de avancar o ponteiro do efeito
+    rts                                         ; EE16  60          _FT2SfxAdvanceDone — FamiTone2: finished advancing effect pointer
 
 
-; modos: luta, fim do round
+; modes: fight, end of round
 _FT2SfxEnd:
-    sta ram_018E,x                              ; EE17  9D 8E 01    _FT2SfxEnd — FamiTone2: marca o canal de efeito como inativo
+    sta ram_018E,x                              ; EE17  9D 8E 01    _FT2SfxEnd — FamiTone2: marks effect channel as inactive
 
 ; <- jmp _FT2SfxUpdateActive
-; modos: luta, fim do round
+; modes: fight, end of round
 _FT2SfxUpdateBuf:
-    lda ram_0190,x                              ; EE1A  BD 90 01    copia os parametros do sfx para as variaveis do canal (volume, etc.)
+    lda ram_0190,x                              ; EE1A  BD 90 01    copies sfx parameters to channel variables (volume, etc.)
     and #$0F                                    ; EE1D  29 0F
     beq _FT2SfxUpdatePulse1                     ; EE1F  F0 12
     lda ram_0190,x                              ; EE21  BD 90 01    (nt)
@@ -1629,7 +1629,7 @@ _FT2SfxUpdateBuf:
     lda ram_0192,x                              ; EE2D  BD 92 01    (nt)
     sta ram_0181                                ; EE30  8D 81 01    (nt)
 _FT2SfxUpdatePulse1:
-    lda ram_0193,x                              ; EE33  BD 93 01    _FT2SfxUpdatePulse1 — FamiTone2: mistura o volume e o periodo da canal 1 do efeito
+    lda ram_0193,x                              ; EE33  BD 93 01    _FT2SfxUpdatePulse1 — FamiTone2: mixes channel 1 effect volume and period
     and #$0F                                    ; EE36  29 0F
     beq _FT2SfxUpdatePulse2                     ; EE38  F0 12
     lda ram_0193,x                              ; EE3A  BD 93 01
@@ -1639,7 +1639,7 @@ _FT2SfxUpdatePulse1:
     lda ram_0195,x                              ; EE46  BD 95 01
     sta ram_0184                                ; EE49  8D 84 01
 _FT2SfxUpdatePulse2:
-    lda ram_0196,x                              ; EE4C  BD 96 01    _FT2SfxUpdatePulse2 — FamiTone2: mistura o volume e o periodo da canal 2 do efeito
+    lda ram_0196,x                              ; EE4C  BD 96 01    _FT2SfxUpdatePulse2 — FamiTone2: mixes channel 2 effect volume and period
     beq _FT2SfxUpdateTriangle                   ; EE4F  F0 0F
     sta ram_0185                                ; EE51  8D 85 01
     lda ram_0197,x                              ; EE54  BD 97 01
@@ -1647,7 +1647,7 @@ _FT2SfxUpdatePulse2:
     lda ram_0198,x                              ; EE5A  BD 98 01
     sta ram_0187                                ; EE5D  8D 87 01
 _FT2SfxUpdateTriangle:
-    lda ram_0199,x                              ; EE60  BD 99 01    _FT2SfxUpdateTriangle — FamiTone2: mistura o controle e o periodo do triangulo do efeito
+    lda ram_0199,x                              ; EE60  BD 99 01    _FT2SfxUpdateTriangle — FamiTone2: mixes effect triangle control and period
     and #$0F                                    ; EE63  29 0F
     beq _FT2SfxUpdateNoise                      ; EE65  F0 0C
     lda ram_0199,x                              ; EE67  BD 99 01
@@ -1655,10 +1655,10 @@ _FT2SfxUpdateTriangle:
     lda ram_019A,x                              ; EE6D  BD 9A 01
     sta ram_0189                                ; EE70  8D 89 01
 _FT2SfxUpdateNoise:
-    rts                                         ; EE73  60          _FT2SfxUpdateNoise — FamiTone2: mistura o volume e o periodo do ruido do efeito
+    rts                                         ; EE73  60          _FT2SfxUpdateNoise — FamiTone2: mixes effect noise volume and period
 
 _FT2DummyEnvelope:
-    .byte $C0,$00,$00                           ; EE74
+    .byte $C0,$00,$00                           ; EE74              silent envelope used when music stops (FamiTone2 _FT2DummyEnvelope)
 _FT2NoteTableLSB:
     .byte $00,$F1,$7E,$13,$AD,$4D,$F3,$9D,$4C,$00,$B8,$74,$34,$F8,$BF,$89; EE77
     .byte $56,$26,$F9,$CE,$A6,$80,$5C,$3A,$1A,$FB,$DF,$C4,$AB,$93,$7C,$67; EE87
@@ -1675,22 +1675,22 @@ _FT2NoteTableMSB:
     .byte $00,$00,$00,$00,$00,$00,$00,$00       ; EF1F
 
 ; <- jsr _FT2EnvSetRepeat
-; modos: titulo, selecao, VS, intro do round, luta, fim do round, frase final
+; modes: title, selection, VS, round intro, fight, end of round, quote
 _FT2ScaleVolume:
-    sta ram_0465                                ; EF27  8D 65 04    escala o volume (A) pela atenuacao da voz e devolve no minimo 1 (0 = mudo)
+    sta ram_0465                                ; EF27  8D 65 04    scales volume (A) by voice attenuation and returns minimum 1 (0 = mute)
     lda ram_0465                                ; EF2A  AD 65 04
     beq _FT2ScaleVolumeReturn                   ; EF2D  F0 19
     inx                                         ; EF2F  E8
     stx ram_0466                                ; EF30  8E 66 04
     ldx #$08                                    ; EF33  A2 08
 _FT2ScaleVolumeLoop:
-    asl a                                       ; EF35  0A          _FT2ScaleVolumeLoop — FamiTone2: laco de escala do volume pela atenuacao
+    asl a                                       ; EF35  0A          _FT2ScaleVolumeLoop — FamiTone2: volume scaling loop by attenuation
     asl ram_0465                                ; EF36  0E 65 04
     bcc _FT2ScaleVolumeNext                     ; EF39  90 04
     clc                                         ; EF3B  18
     adc ram_0466                                ; EF3C  6D 66 04
 _FT2ScaleVolumeNext:
-    dex                                         ; EF3F  CA          _FT2ScaleVolumeNext — FamiTone2: proximo passo da escala de volume
+    dex                                         ; EF3F  CA          _FT2ScaleVolumeNext — FamiTone2: next volume scale step
     bne _FT2ScaleVolumeLoop                     ; EF40  D0 F3
     lsr a                                       ; EF42  4A
     lsr a                                       ; EF43  4A
@@ -1698,17 +1698,17 @@ _FT2ScaleVolumeNext:
     lsr a                                       ; EF45  4A
     beq _FT2ScaleVolumeMinimum                  ; EF46  F0 01
 _FT2ScaleVolumeReturn:
-    rts                                         ; EF48  60          _FT2ScaleVolumeReturn — FamiTone2: devolve o volume ja escalado
+    rts                                         ; EF48  60          _FT2ScaleVolumeReturn — FamiTone2: returns already scaled volume
 
 
 ; modes: end of round
 _FT2ScaleVolumeMinimum:
-    lda #$01                                    ; EF49  A9 01       _FT2ScaleVolumeMinimum — FamiTone2: devolve volume minimo 1 quando o resultado seria zero
+    lda #$01                                    ; EF49  A9 01       _FT2ScaleVolumeMinimum — FamiTone2: returns minimum volume 1 when result would be zero
     rts                                         ; EF4B  60
 
 
 ; <- farcall Main
-; modos: titulo
+; modes: title
 ScreenPlayerSelect:
     lda #$02                                    ; EF4C  A9 02
     sta ScreenMode                              ; EF4E  85 B0
@@ -1730,7 +1730,7 @@ ScreenPlayerSelect:
 .ifdef DEST_FLAG_BLINK
 __alt_37_EF8F:
     jmp DestFlagRestore
-    .assert * - __alt_37_EF8F <= $3, error, "bloco alt DEST_FLAG_BLINK em $EF8F passou do tamanho"
+    .assert * - __alt_37_EF8F <= $3, error, "alt block DEST_FLAG_BLINK at $EF8F exceeded its size"
     .res $3 - (* - __alt_37_EF8F), $FF
 .else
     jmp SelectFighterIntro                      ; EF8F  4C CF F0
@@ -1740,11 +1740,11 @@ __alt_37_EF8F:
 
 .ifdef FIX_SELECT_DIFFICULTY
 __alt_37_EF92:
-    ; le bit $20 (SELECT) do JoyState do jogador corrente
+    ; reads bit $20 (SELECT) of current player's JoyState
     lda JoyState,x
     and #$20
     beq +
-    ; SELECT apertado: alterna AiLevel
+    ; SELECT pressed: toggles AiLevel
     lda AiLevel,x
     clc
     adc #$02
@@ -1756,12 +1756,12 @@ __alt_37_EF92:
     lda #$04
     sta AiLevel,x
 ++;
-    .assert * - __alt_37_EF92 <= $2, error, "bloco alt FIX_SELECT_DIFFICULTY em $EF92 passou do tamanho"
+    .assert * - __alt_37_EF92 <= $2, error, "alt block FIX_SELECT_DIFFICULTY at $EF92 exceeded its size"
     .res $2 - (* - __alt_37_EF92), $FF
 .else
 
 ; <- jsr ScreenPlayerSelect
-; modos: selecao
+; modes: selection
 SelectInit:
     lda #$29                                    ; EF92  A9 29       inicia a tela de selecao: carrega a musica $29 e zera a escolha
 .endif
@@ -1780,26 +1780,26 @@ SelectInit:
     lda #$00                                    ; EFBB  A9 00
     sta zp_12                                   ; EFBD  85 12
 SelectInitP2Char:
-    lda FighterChar+1                           ; EFBF  A5 01       SelectInitP2Char — selecao: carrega o lutador do P2 (zp_D8) e a paleta (zp_13)
+    lda FighterChar+1                           ; EFBF  A5 01       SelectInitP2Char — selection: loads P2 fighter (zp_D8) and palette (zp_13)
     sta zp_D8                                   ; EFC1  85 D8
     bpl SelectCheckDone                         ; EFC3  10 04
     lda #$00                                    ; EFC5  A9 00
     sta zp_13                                   ; EFC7  85 13
 
 ; <- jmp SelectLoopNext
-; modos: selecao
+; modes: selection
 SelectCheckDone:
     lda zp_D7                                   ; EFC9  A5 D7       se os dois jogadores ja escolheram, retorna; senao continua
     bmi SelectWaitFlagClear                     ; EFCB  30 03
     jmp SelectReturn                            ; EFCD  4C CE F0
 
 
-; modos: selecao
+; modes: selection
 SelectWaitFlagClear:
-    lda #$00                                    ; EFD0  A9 00       SelectWaitFlagClear — selecao: inicia a espera do proximo vblank
+    lda #$00                                    ; EFD0  A9 00       SelectWaitFlagClear — selection: starts waiting for next vblank
     sta VBlankFlag                              ; EFD2  85 AC
 SelectWaitVBlank:
-    lda VBlankFlag                              ; EFD4  A5 AC       SelectWaitVBlank — selecao: espera o vblank do laco
+    lda VBlankFlag                              ; EFD4  A5 AC       SelectWaitVBlank — selection: waits loop vblank
     beq SelectWaitVBlank                        ; EFD6  F0 FC
     lda ram_0390                                ; EFD8  AD 90 03
     sta ram_0391                                ; EFDB  8D 91 03
@@ -1808,7 +1808,7 @@ SelectWaitVBlank:
 .ifdef DEST_FLAG_BLINK
 __alt_37_EFF0:
     jsr DestFlagBlink
-    .assert * - __alt_37_EFF0 <= $3, error, "bloco alt DEST_FLAG_BLINK em $EFF0 passou do tamanho"
+    .assert * - __alt_37_EFF0 <= $3, error, "alt block DEST_FLAG_BLINK at $EFF0 exceeded its size"
     .res $3 - (* - __alt_37_EFF0), $FF
 .else
     jsr SelectReadInput                         ; EFF0  20 CC F1
@@ -1819,9 +1819,9 @@ __alt_37_EFF0:
     jmp SelectLoopNext                          ; EFF7  4C CB F0    (nt)
 
 
-; modos: selecao
+; modes: selection
 SelectDrawCursor:
-    lda #$20                                    ; EFFA  A9 20       SelectDrawCursor — selecao: desenha o cursor e a bandeira do pais na posicao atual
+    lda #$20                                    ; EFFA  A9 20       SelectDrawCursor — selection: draws cursor and country flag at current position
     ora #$80                                    ; EFFC  09 80
     sta MMC5_PRG_8000                           ; EFFE  8D 14 51
     lda #<SelectCursorMetasprite                ; F001  A9 76
@@ -1854,13 +1854,13 @@ SelectDrawCursor:
     bne SelectDrawFighterSprite                 ; F04E  D0 02
     inc zp_E1                                   ; F050  E6 E1
 SelectDrawFighterSprite:
-    farcall SelectDrawFighter                   ; F052  A9 F0 48 A9 63 48 A9 37 .. -> 3B:F36C SelectDrawFighterSprite — selecao: desenha o lutador sob o cursor
+    farcall SelectDrawFighter                   ; F052  A9 F0 48 A9 63 48 A9 37 .. -> 3B:F36C SelectDrawFighterSprite — selection: draws fighter under cursor
     ldx zp_E9                                   ; F064  A6 E9
 
 .ifdef DEST_FLAG_BLINK
 __alt_37_F066:
     jsr DestFlagOam
-    .assert * - __alt_37_F066 <= $3, error, "bloco alt DEST_FLAG_BLINK em $F066 passou do tamanho"
+    .assert * - __alt_37_F066 <= $3, error, "alt block DEST_FLAG_BLINK at $F066 exceeded its size"
     .res $3 - (* - __alt_37_F066), $FF
 .else
     lda SelectCursorFighterTbl,x                ; F066  BD 93 F2    [idx $00..$07]
@@ -1874,9 +1874,9 @@ __alt_37_F066:
     jmp SelectDrawCurrent                       ; F073  4C 93 F0
 
 
-; modos: selecao
+; modes: selection
 SelectConfirmVoice:
-    ldx zp_D7                                   ; F076  A6 D7       SelectConfirmVoice — selecao: P1 confirmou -> toca a voz do pais escolhido
+    ldx zp_D7                                   ; F076  A6 D7       SelectConfirmVoice — selection: P1 confirmed -> plays chosen country voice
     bmi SelectDrawCurrent                       ; F078  30 19
     stx zp_12                                   ; F07A  86 12
     lda #$12                                    ; F07C  A9 12
@@ -1884,7 +1884,7 @@ SelectConfirmVoice:
     farcall VoicePlay                           ; F081  A9 F0 48 A9 92 48 A9 37 .. -> 37:E427
 
 ; <- jmp SelectDrawCursor
-; modos: selecao
+; modes: selection
 SelectDrawCurrent:
     lda #$00                                    ; F093  A9 00       desenha o retrato e o nome do lutador atual na selecao
     sta zp_D5                                   ; F095  85 D5
@@ -1900,19 +1900,19 @@ SelectDrawCurrent:
     farcall PortraitDrawName                    ; F0B9  A9 F0 48 A9 CA 48 A9 37 .. -> 3B:EFD3
 
 ; <- jmp SelectWaitFlagClear
-; modos: selecao
+; modes: selection
 SelectLoopNext:
     jmp SelectCheckDone                         ; F0CB  4C C9 EF    proximo lutador: volta ao inicio do laco da selecao
 
 
 ; <- jmp SelectInit
-; modos: selecao
+; modes: selection
 SelectReturn:
     rts                                         ; F0CE  60          fim do laco da selecao: retorna
 
 
 ; <- jmp ScreenPlayerSelect
-; modos: selecao
+; modes: selection
 SelectFighterIntro:
     lda #$00                                    ; F0CF  A9 00       entrada do lutador escolhido: prepara paleta, sprite e som da selecao
     sta FighterChar+1                           ; F0D1  85 01
@@ -1943,14 +1943,14 @@ SelectFighterIntro:
     bne SelectIntroDrawFighter                  ; F10A  D0 02
     inc zp_E1                                   ; F10C  E6 E1       (nt)
 SelectIntroDrawFighter:
-    farcall SelectDrawFighter                   ; F10E  A9 F1 48 A9 1F 48 A9 37 .. -> 3B:F36C SelectIntroDrawFighter — entrada do lutador escolhido: desenha o lutador
+    farcall SelectDrawFighter                   ; F10E  A9 F1 48 A9 1F 48 A9 37 .. -> 3B:F36C SelectIntroDrawFighter — chosen fighter entry: draws fighter
     lda #$00                                    ; F120  A9 00
     sta FrameCounter                            ; F122  85 B1
 SelectIntroFlagClear:
-    lda #$00                                    ; F124  A9 00       SelectIntroFlagClear — entrada do lutador: inicia a espera do proximo vblank
+    lda #$00                                    ; F124  A9 00       SelectIntroFlagClear — fighter entry: starts waiting for next vblank
     sta VBlankFlag                              ; F126  85 AC
 SelectIntroWaitVBlank:
-    lda VBlankFlag                              ; F128  A5 AC       SelectIntroWaitVBlank — entrada do lutador: espera o vblank
+    lda VBlankFlag                              ; F128  A5 AC       SelectIntroWaitVBlank — fighter entry: waits vblank
     beq SelectIntroWaitVBlank                   ; F12A  F0 FC
     farcall SoundUpdate                         ; F12C  A9 F1 48 A9 3D 48 A9 37 .. -> 37:E45F
     lda FrameCounter                            ; F13E  A5 B1
@@ -1964,10 +1964,10 @@ SelectIntroWaitVBlank:
     lda #$01                                    ; F151  A9 01
     sta zp_EC                                   ; F153  85 EC
 SelectIntroFlagClear2:
-    lda #$00                                    ; F155  A9 00       SelectIntroFlagClear2 — entrada do lutador: 2o inicio de espera do vblank
+    lda #$00                                    ; F155  A9 00       SelectIntroFlagClear2 — fighter entry: 2nd wait start for vblank
     sta VBlankFlag                              ; F157  85 AC
 SelectIntroWaitVBlank2:
-    lda VBlankFlag                              ; F159  A5 AC       SelectIntroWaitVBlank2 — entrada do lutador: 2o vblank da animacao
+    lda VBlankFlag                              ; F159  A5 AC       SelectIntroWaitVBlank2 — fighter entry: 2nd vblank of animation
     beq SelectIntroWaitVBlank2                  ; F15B  F0 FC
     farcall SoundUpdate                         ; F15D  A9 F1 48 A9 6E 48 A9 37 .. -> 37:E45F
     lda #$00                                    ; F16F  A9 00
@@ -1978,12 +1978,12 @@ SelectIntroWaitVBlank2:
     jmp SelectWaitEnd                           ; F189  4C 9E F1
 
 
-; modos: selecao
+; modes: selection
 SelectIntroHideOam:
-    farcall OamHideRest                         ; F18C  A9 F1 48 A9 9D 48 A9 37 .. -> 3B:F2DF SelectIntroHideOam — entrada do lutador: esconde os sprites restantes da OAM
+    farcall OamHideRest                         ; F18C  A9 F1 48 A9 9D 48 A9 37 .. -> 3B:F2DF SelectIntroHideOam — fighter entry: hides remaining OAM sprites
 
 ; <- jmp SelectFighterIntro
-; modos: selecao
+; modes: selection
 SelectWaitEnd:
     lda FrameCounter                            ; F19E  A5 B1       espera o fim da animacao (contador zp_EB) e faz o fade para o VS
     and #$07                                    ; F1A0  29 07
@@ -1998,29 +1998,29 @@ SelectWaitEnd:
 
 
 ; <- jsr SelectWaitFlagClear
-; modos: selecao
+; modes: selection
 SelectReadInput:
     farcall JoyPollBothSel                      ; F1CC  A9 F1 48 A9 DD 48 A9 37 .. -> 3F:F09B le os dois controles (JoyPollSafe) e processa a escolha de cada jogador
     ldx #$01                                    ; F1DE  A2 01
 
 ; <- jmp SelectInputButtonB
-; modos: selecao
+; modes: selection
 SelectPlayerInput:
     lda FighterIsCpu,x                          ; F1E0  B5 02       processa a entrada do jogador X (pula se for CPU)
     beq SelectInputRead                         ; F1E2  F0 03
     jmp SelectNextPlayer                        ; F1E4  4C 7B F2
 
 
-; modos: selecao
+; modes: selection
 SelectInputRead:
-    lda zp_D7,x                                 ; F1E7  B5 D7       SelectInputRead — selecao: o jogador ainda nao confirmou -> le o controle
+    lda zp_D7,x                                 ; F1E7  B5 D7       SelectInputRead — selection: player hasn't confirmed -> reads controller
     bmi SelectInputUp                           ; F1E9  30 03
     jmp SelectNextPlayer                        ; F1EB  4C 7B F2    (nt)
 
 
-; modos: selecao
+; modes: selection
 SelectInputUp:
-    lda JoyState,x                              ; F1EE  B5 F2       SelectInputUp — selecao: botao CIMA (novo flanco) -> cursor 4 casas para tras
+    lda JoyState,x                              ; F1EE  B5 F2       SelectInputUp — selection: UP button (new edge) -> cursor 4 positions back
     and #$08                                    ; F1F0  29 08
     beq SelectInputDown                         ; F1F2  F0 18
     lda JoyPrev,x                               ; F1F4  B5 F6
@@ -2036,9 +2036,9 @@ SelectInputUp:
     jmp SelectMoveLeft                          ; F209  4C 27 F2
 
 
-; modos: selecao
+; modes: selection
 SelectInputDown:
-    lda JoyState,x                              ; F20C  B5 F2       SelectInputDown — selecao: botao BAIXO (novo flanco) -> cursor 4 casas para frente
+    lda JoyState,x                              ; F20C  B5 F2       SelectInputDown — selection: DOWN button (new edge) -> cursor 4 positions forward
     and #$04                                    ; F20E  29 04
     beq SelectMoveLeft                          ; F210  F0 15
     lda JoyPrev,x                               ; F212  B5 F6
@@ -2053,7 +2053,7 @@ SelectInputDown:
     sta VoiceQueued                             ; F224  8D 5E 04
 
 ; <- jmp SelectInputUp
-; modos: selecao
+; modes: selection
 SelectMoveLeft:
     lda JoyState,x                              ; F227  B5 F2       esquerda na borda: move o cursor para o lutador anterior
     and #$02                                    ; F229  29 02
@@ -2072,9 +2072,9 @@ SelectMoveLeft:
     jmp SelectConfirm                           ; F243  4C 64 F2
 
 
-; modos: selecao
+; modes: selection
 SelectInputRight:
-    lda JoyState,x                              ; F246  B5 F2       SelectInputRight — selecao: botao DIREITA (novo flanco) -> cursor 1 casa para frente
+    lda JoyState,x                              ; F246  B5 F2       SelectInputRight — selection: RIGHT button (new edge) -> cursor 1 position forward
     and #$01                                    ; F248  29 01
     beq SelectConfirm                           ; F24A  F0 18
     lda JoyPrev,x                               ; F24C  B5 F6
@@ -2091,7 +2091,7 @@ SelectInputRight:
     sta VoiceQueued                             ; F261  8D 5E 04
 
 ; <- jmp SelectInputDown
-; modos: selecao
+; modes: selection
 SelectConfirm:
     lda JoyState,x                              ; F264  B5 F2       A na borda: confirma o lutador atual (P1/P2)
     and #$80                                    ; F266  29 80
@@ -2101,37 +2101,37 @@ SelectConfirm:
     jmp SelectNextPlayer                        ; F26E  4C 7B F2
 
 
-; modos: selecao
+; modes: selection
 SelectInputButtonB:
-    lda JoyState,x                              ; F271  B5 F2       SelectInputButtonB — selecao: botao B -> zera a flag de confirmacao (zp_D7,x)
+    lda JoyState,x                              ; F271  B5 F2       SelectInputButtonB — selection: button B -> zeroes confirmation flag (zp_D7,x)
     and #$40                                    ; F273  29 40
     beq SelectNextPlayer                        ; F275  F0 04
     lda #$00                                    ; F277  A9 00
     sta zp_D7,x                                 ; F279  95 D7
 
 ; <- jmp SelectReadInput, jmp SelectInputRead, jmp SelectInputRight
-; modos: selecao
+; modes: selection
 SelectNextPlayer:
     dex                                         ; F27B  CA          passa ao outro jogador (X=1 -> 0) ou encerra
     bmi SelectEndVoice                          ; F27C  30 03
     jmp SelectPlayerInput                       ; F27E  4C E0 F1
 
 
-; modos: selecao
+; modes: selection
 SelectEndVoice:
-    bit VoiceQueued                             ; F281  2C 5E 04    SelectEndVoice — selecao: toca a voz enfileirada
+    bit VoiceQueued                             ; F281  2C 5E 04    SelectEndVoice — selection: plays queued voice
     bmi SelectEnd                               ; F284  30 0C
     farjmp VoicePlay                            ; F286  A9 37 48 A9 37 A2 E4 A0 .. -> 37:E427
 
 
-; modos: selecao
+; modes: selection
 SelectEnd:
-    rts                                         ; F292  60          SelectEnd — fim da tela de selecao
+    rts                                         ; F292  60          SelectEnd — end of selection screen
 
 SelectCursorFighterTbl:
-    .byte $00,$04,$03,$07,$01,$02,$09,$08       ; F293
+    .byte $00,$04,$03,$07,$01,$02,$09,$08       ; F293              cursor 0-7 -> fighter index used by FighterChar
 SelectFlagPtrLoTbl:
-    .byte <(FlagJapan)                          ; F29B  E5
+    .byte <(FlagJapan)                          ; F29B  E5          cursor -> flag metasprite pointer, low half
     .byte <(FlagBrazil)                         ; F29C  D3
     .byte <(FlagUsa)                            ; F29D  F7
     .byte <(FlagThailand)                       ; F29E  EE
@@ -2140,7 +2140,7 @@ SelectFlagPtrLoTbl:
     .byte <(FlagUssr)                           ; F2A1  00
     .byte <(FlagThailand)                       ; F2A2  EE
 SelectFlagPtrHiTbl:
-    .byte >(FlagJapan)                          ; F2A3  84
+    .byte >(FlagJapan)                          ; F2A3  84          cursor -> flag metasprite pointer, high half
     .byte >(FlagBrazil)                         ; F2A4  84
     .byte >(FlagUsa)                            ; F2A5  84
     .byte >(FlagThailand)                       ; F2A6  84
@@ -2149,15 +2149,15 @@ SelectFlagPtrHiTbl:
     .byte >(FlagUssr)                           ; F2A9  85
     .byte >(FlagThailand)                       ; F2AA  84
 SelectFlagXTbl:
-    .byte $80,$B0,$BC,$68,$B9,$6E,$4A,$68       ; F2AB
+    .byte $80,$B0,$BC,$68,$B9,$6E,$4A,$68       ; F2AB              cursor -> flag sprite base X
 SelectFlagYTbl:
-    .byte $5F,$6F,$54,$6B,$33,$3B,$3D,$6B       ; F2B3
+    .byte $5F,$6F,$54,$6B,$33,$3B,$3D,$6B       ; F2B3              cursor -> flag sprite base Y
 SelectCursorXTbl:
-    .byte $50,$68,$80,$98,$50,$68,$80,$98       ; F2BB
+    .byte $50,$68,$80,$98,$50,$68,$80,$98       ; F2BB              cursor -> cursor sprite X
 SelectCursorYTbl:
-    .byte $B8,$B8,$B8,$B8,$D8,$D8,$D8,$D8       ; F2C3
+    .byte $B8,$B8,$B8,$B8,$D8,$D8,$D8,$D8       ; F2C3              cursor -> cursor sprite Y
 
-; modos: aviso/QR, frase final
+; modes: warning/QR, quote
 ScreenDisclaimer:
     lda #$00                                    ; F2CB  A9 00
     sta ScreenMode                              ; F2CD  85 B0
@@ -2168,9 +2168,9 @@ ScreenDisclaimer:
     lda #$00                                    ; F2D9  A9 00
     ldy #$03                                    ; F2DB  A0 03
 DisclaimerClearRows:
-    ldx #$00                                    ; F2DD  A2 00       DisclaimerClearRows — aviso/QR: limpa 4 linhas de 256 tiles da nametable
+    ldx #$00                                    ; F2DD  A2 00       DisclaimerClearRows — warning/QR: clears 4 lines of 256 tiles from nametable
 DisclaimerClearCols:
-    sta PPUDATA                                 ; F2DF  8D 07 20    DisclaimerClearCols — aviso/QR: limpa as colunas da linha
+    sta PPUDATA                                 ; F2DF  8D 07 20    DisclaimerClearCols — warning/QR: clears line columns
     inx                                         ; F2E2  E8
     bne DisclaimerClearCols                     ; F2E3  D0 FA
     dey                                         ; F2E5  88
@@ -2203,10 +2203,10 @@ DisclaimerClearCols:
     sta zp_D8                                   ; F320  85 D8
     sta zp_D5                                   ; F322  85 D5
 DisclaimerTextFlagClear:
-    lda #$00                                    ; F324  A9 00       DisclaimerTextFlagClear — aviso/QR: inicia a espera do vblank do texto
+    lda #$00                                    ; F324  A9 00       DisclaimerTextFlagClear — warning/QR: starts waiting for text vblank
     sta VBlankFlag                              ; F326  85 AC
 DisclaimerTextWaitVBlank:
-    lda VBlankFlag                              ; F328  A5 AC       DisclaimerTextWaitVBlank — aviso/QR: espera o vblank do texto
+    lda VBlankFlag                              ; F328  A5 AC       DisclaimerTextWaitVBlank — warning/QR: waits text vblank
     beq DisclaimerTextWaitVBlank                ; F32A  F0 FC
     lda FrameCounter                            ; F32C  A5 B1
     and #$01                                    ; F32E  29 01
@@ -2218,7 +2218,7 @@ DisclaimerTextWaitVBlank:
     bcc DisclaimerTextAddr                      ; F339  90 01
     iny                                         ; F33B  C8          (nt)
 DisclaimerTextAddr:
-    sty PPUADDR                                 ; F33C  8C 06 20    DisclaimerTextAddr — aviso/QR: calcula o endereco da nametable do proximo caractere
+    sty PPUADDR                                 ; F33C  8C 06 20    DisclaimerTextAddr — warning/QR: calculates nametable address of next character
     sta PPUADDR                                 ; F33F  8D 06 20
     inc zp_D8                                   ; F342  E6 D8
     ldx zp_D5                                   ; F344  A6 D5
@@ -2231,10 +2231,10 @@ DisclaimerTextAddr:
     bcc DisclaimerTextLineReset                 ; F352  90 02
     inc zp_D7                                   ; F354  E6 D7
 DisclaimerTextLineReset:
-    lda #$00                                    ; F356  A9 00       DisclaimerTextLineReset — aviso/QR: fim de linha -> volta para a primeira coluna
+    lda #$00                                    ; F356  A9 00       DisclaimerTextLineReset — warning/QR: end of line -> back to first column
     sta zp_D8                                   ; F358  85 D8
 DisclaimerTextWrite:
-    sta PPUDATA                                 ; F35A  8D 07 20    DisclaimerTextWrite — aviso/QR: escreve o caractere na nametable
+    sta PPUDATA                                 ; F35A  8D 07 20    DisclaimerTextWrite — warning/QR: writes character to nametable
     lda #$00                                    ; F35D  A9 00
     sta PPUADDR                                 ; F35F  8D 06 20
     sta PPUADDR                                 ; F362  8D 06 20
@@ -2245,10 +2245,10 @@ DisclaimerTextWrite:
     lda #$BF                                    ; F36C  A9 BF
     sta FrameCounter                            ; F36E  85 B1
 DisclaimerEndFlagClear:
-    lda #$00                                    ; F370  A9 00       DisclaimerEndFlagClear — aviso/QR: espera o fim do texto
+    lda #$00                                    ; F370  A9 00       DisclaimerEndFlagClear — warning/QR: waits end of text
     sta VBlankFlag                              ; F372  85 AC
 DisclaimerEndWaitVBlank:
-    lda VBlankFlag                              ; F374  A5 AC       DisclaimerEndWaitVBlank — aviso/QR: espera o vblank do fim do texto
+    lda VBlankFlag                              ; F374  A5 AC       DisclaimerEndWaitVBlank — warning/QR: waits end-of-text vblank
     beq DisclaimerEndWaitVBlank                 ; F376  F0 FC
     lda FrameCounter                            ; F378  A5 B1
     bne DisclaimerEndFlagClear                  ; F37A  D0 F4
@@ -2271,7 +2271,7 @@ TextDisclaimer:
     .byte $41,$4D,$45,$20,$48,$49,$53,$54,$4F,$52,$59,$2E,$00; F451
 
 ; <- jmp ScreenDisclaimer
-; modos: aviso/QR
+; modes: warning/QR
 ScreenSupport:
     lda #$00                                    ; F45E  A9 00
     sta ScreenMode                              ; F460  85 B0
@@ -2300,18 +2300,18 @@ ScreenSupport:
     lda #$00                                    ; F4A5  A9 00
     sta FrameCounter                            ; F4A7  85 B1
 SupportWaitFlagClear:
-    lda #$00                                    ; F4A9  A9 00       SupportWaitFlagClear — tela de apoio: inicia a espera do vblank
+    lda #$00                                    ; F4A9  A9 00       SupportWaitFlagClear — support screen: starts waiting for vblank
     sta VBlankFlag                              ; F4AB  85 AC
 SupportWaitVBlank:
-    lda VBlankFlag                              ; F4AD  A5 AC       SupportWaitVBlank — tela de apoio: espera o vblank
+    lda VBlankFlag                              ; F4AD  A5 AC       SupportWaitVBlank — support screen: waits vblank
     beq SupportWaitVBlank                       ; F4AF  F0 FC
     lda FrameCounter                            ; F4B1  A5 B1
     bne SupportWaitFlagClear                    ; F4B3  D0 F4
 SupportInputFlagClear:
-    lda #$00                                    ; F4B5  A9 00       SupportInputFlagClear — tela de apoio: inicia a espera do vblank da leitura do controle
+    lda #$00                                    ; F4B5  A9 00       SupportInputFlagClear — support screen: starts waiting for vblank of controller read
     sta VBlankFlag                              ; F4B7  85 AC
 SupportInputWaitVBlank:
-    lda VBlankFlag                              ; F4B9  A5 AC       SupportInputWaitVBlank — tela de apoio: espera o vblank antes de ler o controle
+    lda VBlankFlag                              ; F4B9  A5 AC       SupportInputWaitVBlank — support screen: waits vblank before reading controller
     beq SupportInputWaitVBlank                  ; F4BB  F0 FC
     farcall JoyPollBoth                         ; F4BD  A9 F4 48 A9 CE 48 A9 37 .. -> 3F:F8E7
     lda JoyState                                ; F4CF  A5 F2
@@ -2320,11 +2320,11 @@ SupportInputWaitVBlank:
     lda FrameCounter                            ; F4D5  A5 B1
     bne SupportInputFlagClear                   ; F4D7  D0 DC
 SupportExit:
-    farjmp FadeOut_Bank3B                       ; F4D9  A9 37 48 A9 3B A2 E4 A0 .. -> 3B:E426 SupportExit — tela de apoio: sai com o fade
+    farjmp FadeOut_Bank3B                       ; F4D9  A9 37 48 A9 3B A2 E4 A0 .. -> 3B:E426 SupportExit — support screen: exits with fade
 
 
 ; <- farcall Main
-; modos: aviso/QR
+; modes: warning/QR
 ScreenTitle:
     lda #$01                                    ; F4E5  A9 01
     sta ScreenMode                              ; F4E7  85 B0
@@ -2341,7 +2341,7 @@ ScreenTitle:
     ldx #$0B                                    ; F51F  A2 0B
     stx a:PaletteDirty                          ; F521  8E D4 00
 TitlePaletteCopyLoop:
-    lda TitlePalette,x                          ; F524  BD 99 F6    [idx $00..$0B] TitlePaletteCopyLoop — titulo: copia 12 bytes de paleta
+    lda TitlePalette,x                          ; F524  BD 99 F6    [idx $00..$0B] TitlePaletteCopyLoop — title: copies 12 palette bytes
     sta a:PaletteBuf,x                          ; F527  9D BC 00
     sta a:PaletteBuf+12,x                       ; F52A  9D C8 00
     dex                                         ; F52D  CA
@@ -2363,9 +2363,9 @@ TitlePaletteCopyLoop:
     lda #$00                                    ; F553  A9 00
     ldy #$03                                    ; F555  A0 03
 TitleClearRows:
-    tax                                         ; F557  AA          TitleClearRows — titulo: limpa as linhas da nametable
+    tax                                         ; F557  AA          TitleClearRows — title: clears nametable lines
 TitleClearCols:
-    sta PPUDATA                                 ; F558  8D 07 20    TitleClearCols — titulo: limpa as colunas da linha
+    sta PPUDATA                                 ; F558  8D 07 20    TitleClearCols — title: clears line columns
     inx                                         ; F55B  E8
     bne TitleClearCols                          ; F55C  D0 FA
     dey                                         ; F55E  88
@@ -2386,7 +2386,7 @@ TitleClearCols:
     sta zp_EA                                   ; F57C  85 EA
 
 ; <- jmp TitleScrollStep, jmp TitleCheckStart, jmp TitleBlinkOn, jmp TitleStartPressed, jmp TitleCheckPalette
-; modos: titulo
+; modes: title
 TitleLoop:
     lda #$00                                    ; F57E  A9 00       laco do titulo: zera rolagem e espera o START
     sta a:ScrollX                               ; F580  8D EF 00
@@ -2398,7 +2398,7 @@ TitleLoop:
     lda #$00                                    ; F58E  A9 00
     sta VBlankFlag                              ; F590  85 AC
 TitleWaitVBlank:
-    lda VBlankFlag                              ; F592  A5 AC       TitleWaitVBlank — titulo: espera o vblank do laco
+    lda VBlankFlag                              ; F592  A5 AC       TitleWaitVBlank — title: waits loop vblank
     beq TitleWaitVBlank                         ; F594  F0 FC
     lda PpuMaskShadow                           ; F596  A5 EE
     ora #$18                                    ; F598  09 18
@@ -2410,16 +2410,16 @@ TitleWaitVBlank:
     sta MMC5_CHR_BG3                            ; F5A6  8D 2B 51
     farcall SoundUpdate                         ; F5A9  A9 F5 48 A9 BA 48 A9 37 .. -> 37:E45F
 
-; modos: titulo
+; modes: title
 TitleWaitOverflowClear:
-    bit PPUSTATUS                               ; F5BB  2C 02 20    TitleWaitOverflowClear — titulo: espera o flag de overflow de sprites do PPU
+    bit PPUSTATUS                               ; F5BB  2C 02 20    TitleWaitOverflowClear — title: waits PPU sprite overflow flag
     bvs TitleWaitOverflowClear                  ; F5BE  70 FB
 TitleWaitVBlankStart:
-    bit PPUSTATUS                               ; F5C0  2C 02 20    TitleWaitVBlankStart — titulo: espera o inicio do vblank
+    bit PPUSTATUS                               ; F5C0  2C 02 20    TitleWaitVBlankStart — title: waits vblank start
     bvc TitleWaitVBlankStart                    ; F5C3  50 FB
     ldx #$FF                                    ; F5C5  A2 FF
 TitleDelayLoop:
-    dex                                         ; F5C7  CA          TitleDelayLoop — titulo: espera de sincronizacao (256 voltas)
+    dex                                         ; F5C7  CA          TitleDelayLoop — title: sync wait (256 loops)
     bne TitleDelayLoop                          ; F5C8  D0 FD
     lda #$0D                                    ; F5CA  A9 0D
     sta MMC5_CHR_BG1                            ; F5CC  8D 29 51
@@ -2436,9 +2436,9 @@ TitleDelayLoop:
     jmp TitleScrollSet                          ; F5E3  4C F8 F5
 
 
-; modos: titulo
+; modes: title
 TitleScrollStep:
-    ldx zp_E9                                   ; F5E6  A6 E9       TitleScrollStep — titulo: avanca a rolagem horizontal do titulo
+    ldx zp_E9                                   ; F5E6  A6 E9       TitleScrollStep — title: advances title horizontal scroll
     beq TitleCheckStart                         ; F5E8  F0 17
     lda PpuCtrlShadow                           ; F5EA  A5 ED
     ora #$03                                    ; F5EC  09 03
@@ -2449,16 +2449,16 @@ TitleScrollStep:
     stx zp_E9                                   ; F5F6  86 E9
 
 ; <- jmp TitleWaitOverflowClear
-; modos: titulo
+; modes: title
 TitleScrollSet:
     stx PPUSCROLL                               ; F5F8  8E 05 20    grava X nas duas portas de rolagem e volta ao laco do titulo
     stx PPUSCROLL                               ; F5FB  8E 05 20
     jmp TitleLoop                               ; F5FE  4C 7E F5
 
 
-; modos: titulo
+; modes: title
 TitleCheckStart:
-    bit zp_EA                                   ; F601  24 EA       TitleCheckStart — titulo: o START ja foi apertado?
+    bit zp_EA                                   ; F601  24 EA       TitleCheckStart — title: has START been pressed?
     bmi TitleBlinkOn                            ; F603  30 11
     lda SND_CHN                                 ; F605  AD 15 40
     and #$10                                    ; F608  29 10
@@ -2469,14 +2469,14 @@ TitleCheckStart:
     jmp TitleLoop                               ; F613  4C 7E F5
 
 
-; modos: titulo
+; modes: title
 TitleBlinkOn:
-    lda #$01                                    ; F616  A9 01       TitleBlinkOn — titulo: acende o "PRESS START" e le os controles
+    lda #$01                                    ; F616  A9 01       TitleBlinkOn — title: lights 'PRESS START' and reads controllers
     jsr TitleBlinkPushStart                     ; F618  20 70 F6
     farcall JoyPollBoth                         ; F61B  A9 F6 48 A9 2C 48 A9 37 .. -> 3F:F8E7
     ldx #$00                                    ; F62D  A2 00
 TitleCheckButtons:
-    lda JoyState,x                              ; F62F  B5 F2       TitleCheckButtons — titulo: procura START/A/B nos dois controles
+    lda JoyState,x                              ; F62F  B5 F2       TitleCheckButtons — title: searches START/A/B on both controllers
     and #$90                                    ; F631  29 90
     bne TitleStartPressed                       ; F633  D0 06
     dex                                         ; F635  CA
@@ -2484,31 +2484,31 @@ TitleCheckButtons:
     jmp TitleLoop                               ; F638  4C 7E F5
 
 
-; modos: titulo
+; modes: title
 TitleStartPressed:
-    stx zp_EA                                   ; F63B  86 EA       TitleStartPressed — titulo: botao apertado -> guarda e toca a voz
+    stx zp_EA                                   ; F63B  86 EA       TitleStartPressed — title: button pressed -> saves and plays voice
     lda #$10                                    ; F63D  A9 10
     sta VoiceQueued                             ; F63F  8D 5E 04
     jmp TitleLoop                               ; F642  4C 7E F5
 
 
-; modos: titulo
+; modes: title
 TitleCheckPalette:
-    lda FadePalette+11                          ; F645  AD 90 04    TitleCheckPalette — titulo: apaga o "PRESS START" ou sai da tela
+    lda FadePalette+11                          ; F645  AD 90 04    TitleCheckPalette — title: erases 'PRESS START' or exits screen
     beq TitleExit                               ; F648  F0 08
     lda #$00                                    ; F64A  A9 00
     jsr TitleBlinkPushStart                     ; F64C  20 70 F6
     jmp TitleLoop                               ; F64F  4C 7E F5
 
 
-; modos: titulo
+; modes: title
 TitleExit:
-    farcall SoundStopMusic                      ; F652  A9 F6 48 A9 63 48 A9 37 .. -> 37:E479 TitleExit — titulo: para a musica e sai com o fade
+    farcall SoundStopMusic                      ; F652  A9 F6 48 A9 63 48 A9 37 .. -> 37:E479 TitleExit — title: stops music and exits with fade
     farjmp FadeOut_Bank3B                       ; F664  A9 37 48 A9 3B A2 E4 A0 .. -> 3B:E426
 
 
 ; <- jsr TitleCheckStart, jsr TitleBlinkOn, jsr TitleCheckPalette
-; modos: titulo
+; modes: title
 TitleBlinkPushStart:
     ldy #$09                                    ; F670  A0 09       pisca o PRESS START alternando a cor 10 da paleta
     sty FadePalette+10                          ; F672  8C 8F 04
@@ -2516,15 +2516,15 @@ TitleBlinkPushStart:
     beq TitleBlinkOnLoop                        ; F677  F0 09
     lda #$00                                    ; F679  A9 00
 TitleBlinkOffLoop:
-    sta FadePalette+11,y                        ; F67B  99 90 04    TitleBlinkOffLoop — titulo: apaga as 10 cores do "PRESS START"
+    sta FadePalette+11,y                        ; F67B  99 90 04    TitleBlinkOffLoop — title: erases the 10 'PRESS START' colors
     dey                                         ; F67E  88
     bpl TitleBlinkOffLoop                       ; F67F  10 FA
     rts                                         ; F681  60
 
 
-; modos: titulo
+; modes: title
 TitleBlinkOnLoop:
-    lda TextPushStart,y                         ; F682  B9 8F F6    [idx $00..$09] TitleBlinkOnLoop — titulo: escreve as 10 cores do "PRESS START"
+    lda TextPushStart,y                         ; F682  B9 8F F6    [idx $00..$09] TitleBlinkOnLoop — title: writes the 10 'PRESS START' colors
     clc                                         ; F685  18
     adc #$80                                    ; F686  69 80
     sta FadePalette+11,y                        ; F688  99 90 04
@@ -2535,17 +2535,17 @@ TitleBlinkOnLoop:
 TextPushStart:
     .byte $50,$55,$53,$48,$20,$53,$54,$41,$52,$54; F68F
 TitlePalette:
-    .byte $16,$27,$37,$21,$31,$01,$27,$37,$37,$0F,$0F,$0F; F699
+    .byte $16,$27,$37,$21,$31,$01,$27,$37,$37,$0F,$0F,$0F; F699              title 12-byte palette, copied to PaletteBuf and PaletteBuf+12
 
 .ifdef DEST_FLAG_BLINK
 __alt_37_F6A5:
 DestFlagBlink:
-    lda zp_D7                   ; P1 confirmou o lutador? (setado em SelectConfirm)
-    beq DestFlagFwd             ; nao confirmou ainda: comportamento normal (bandeira do cursor)
-    lda ram_03B5                ; pais de destino: 0 = Japao (Ryu)
+    lda zp_D7                   ; P1 confirmed fighter? (set in SelectConfirm)
+    beq DestFlagFwd             ; not confirmed yet: normal behavior (cursor flag)
+    lda ram_03B5                ; destination country: 0 = Japan (Ryu)
     cmp #$00
-    bne DestFlagFwd             ; so' o Japao esta' implementado por enquanto
-    ; prepara a paleta 3 com as cores do Japão (sol $16, campo $20)
+    bne DestFlagFwd             ; only Japan is implemented for now
+    ; prepares palette 3 with Japan colors (sun $16, field $20)
     lda #$11
     sta a:PaletteBuf+21
     lda #$16
@@ -2554,50 +2554,50 @@ DestFlagBlink:
     sta a:PaletteBuf+23
     lda #$01
     sta a:PaletteDirty
-    ; desenha a bandeira do Japão na paleta 3 (visível, sem pisca-pisca)
-    lda #$4E                    ; OAM 6/7 Y do Japao (tiles $8C/$8E)
+    ; draws Japan flag on palette 3 (visible, no blinking)
+    lda #$4E                    ; OAM 6/7 Y of Japan (tiles $8C/$8E)
     sta OamBuf+24               ; sprite 6 Y
     sta OamBuf+28               ; sprite 7 Y
     lda #$8C                    ; tile $8C
     sta OamBuf+25
     lda #$8E                    ; tile $8E
     sta OamBuf+29
-    lda #$03                    ; paleta 3, exclusiva da bandeira do destino
+    lda #$03                    ; palette 3, exclusive to destination flag
     sta OamBuf+26
     sta OamBuf+30
-    lda #$80                    ; posicao X do Japao no mapa
+    lda #$80                    ; Japan X position on map
     sta OamBuf+27
-    lda #$88                    ; posicao X+8 do Japao no mapa
+    lda #$88                    ; Japan X+8 position on map
     sta OamBuf+31
 DestFlagFwd:
     jmp SelectReadInput
 
 DestFlagOam:
     ldx zp_E9
-    cpx #$00                    ; no Japao, nao esconde a copia normal (paleta 2)
+    cpx #$00                    ; in Japan, does not hide normal copy (palette 2)
     bne DestFlagDraw
     lda #$FE
-    sta OamBuf+16               ; sprite 4 do pais do cursor
-    sta OamBuf+20               ; sprite 5 do pais do cursor
+    sta OamBuf+16               ; sprite 4 of cursor country
+    sta OamBuf+20               ; sprite 5 of cursor country
 DestFlagDraw:
     ldx zp_E9
-    lda SelectCursorFighterTbl,x; devolve o índice original para "sta FighterChar"
+    lda SelectCursorFighterTbl,x; returns original index for "sta FighterChar"
     rts
 
 DestFlagRestore:
-    lda #$1A                    ; restaura a paleta 3 original da tela
+    lda #$1A                    ; restores original screen palette 3
     sta a:PaletteBuf+21
     lda #$27
     sta a:PaletteBuf+22
     lda #$21
     sta a:PaletteBuf+23
-    lda #$FE                    ; remove a copia extra do destino
+    lda #$FE                    ; removes extra destination copy
     sta OamBuf+24
     sta OamBuf+28
     lda #$01
     sta a:PaletteDirty
     jmp SelectFighterIntro
-    .assert * - __alt_37_F6A5 <= $C0, error, "bloco alt DEST_FLAG_BLINK em $F6A5 passou do tamanho"
+    .assert * - __alt_37_F6A5 <= $C0, error, "alt block DEST_FLAG_BLINK at $F6A5 exceeded its size"
     .res $C0 - (* - __alt_37_F6A5), $FF
 .else
     .res 192, $FF                               ; F6A5
@@ -2609,29 +2609,29 @@ DestFlagRestore:
 __alt_37_FC6D:
 ResetStub:
     lda #$00
-    sta MMC5_IRQ_STATUS                         ; desliga o IRQ de scanline que pode ter ficado armado
+    sta MMC5_IRQ_STATUS                         ; turns off scanline IRQ that may have been left armed
     lda #$BF
-    sta MMC5_PRG_E000                           ; banco $3F em $E000 (a proxima instrucao ja vem dele)
-    jmp $FF9F                                   ; Reset original (so existe no banco $3F)
-    .assert * - __alt_37_FC6D <= $F, error, "bloco alt FIX_SOFT_RESET em $FC6D passou do tamanho"
+    sta MMC5_PRG_E000                           ; bank $3F at $E000 (next instruction already comes from it)
+    jmp $FF9F                                   ; original Reset (exists only in bank $3F)
+    .assert * - __alt_37_FC6D <= $F, error, "alt block FIX_SOFT_RESET at $FC6D exceeded its size"
     .res $F - (* - __alt_37_FC6D), $FF
 .else
     .byte $FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF; FC6D
 .endif
 
 
-.assert * = $FC7C, error, "o kernel precisa comecar em $FC7C"
+.assert * = $FC7C, error, "the kernel must start at $FC7C"
 .include "kernel.inc"
 
     .byte $FF,$FF,$FF,$FF                       ; FF9B
 ResetVectorFill:
-    .res 91, $FF                                ; FF9F
+    .res 91, $FF                                ; FF9F              91 bytes of $FF; the reset vector points here when bank $37 is mapped (docs/BUGS.md)
     .word NmiHandler                            ; FFFA  1E FE
 
 .ifdef FIX_SOFT_RESET
 __alt_37_FFFC:
     .word ResetStub
-    .assert * - __alt_37_FFFC <= $2, error, "bloco alt FIX_SOFT_RESET em $FFFC passou do tamanho"
+    .assert * - __alt_37_FFFC <= $2, error, "alt block FIX_SOFT_RESET at $FFFC exceeded its size"
     .res $2 - (* - __alt_37_FFFC), $FF
 .else
     .word ResetVectorFill                       ; FFFC  9F FF

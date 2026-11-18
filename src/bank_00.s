@@ -430,8 +430,8 @@ D00_8F3B:
 ; ------------------------------------------------------------------------------------------------
 ; IA do Ryu (codigo nativo dentro do banco de dados do personagem). Decide pelo estado e distancia do
 ; oponente e sorteia (Random) qual roteiro de IA disparar.
-; <- tabela AiCharRoutine
-; modos: luta
+; <- table AiCharRoutine
+; modes: fight
 RyuAiThink:
     ldy OtherFighter                            ; 8F46  A4 65
     lda a:FighterState,x                        ; 8F48  BD 26 00
@@ -445,25 +445,25 @@ RyuAiThink:
     jmp AiDoNothing                             ; 8F59  4C FE E6
 
 
-; modos: luta
+; modes: fight
 RyuAiAirDistY:
-    jsr DistanceY                               ; 8F5C  20 49 E0    RyuAiAirDistY — IA do Ryu: no ar, exige distancia vertical < $38
+    jsr DistanceY                               ; 8F5C  20 49 E0    RyuAiAirDistY — Ryu AI: in air, requires vertical distance < $38
     cmp #$38                                    ; 8F5F  C9 38
     bcc RyuAiAirDistX                           ; 8F61  90 03
     jmp AiDoNothing                             ; 8F63  4C FE E6
 
 
-; modos: luta
+; modes: fight
 RyuAiAirDistX:
-    jsr DistanceX                               ; 8F66  20 3D E0    RyuAiAirDistX — IA do Ryu: no ar, exige distancia horizontal < $38
+    jsr DistanceX                               ; 8F66  20 3D E0    RyuAiAirDistX — Ryu AI: in air, requires horizontal distance < $38
     cmp #$38                                    ; 8F69  C9 38
     bcc RyuAiAirVelCheck                        ; 8F6B  90 03
     jmp AiDoNothing                             ; 8F6D  4C FE E6
 
 
-; modos: luta
+; modes: fight
 RyuAiAirVelCheck:
-    lda a:FighterVelY,x                         ; 8F70  BD 36 00    RyuAiAirVelCheck — IA do Ryu: no ar, so age se o proprio pulo termina ou o oponente esta no ar
+    lda a:FighterVelY,x                         ; 8F70  BD 36 00    RyuAiAirVelCheck — Ryu AI: in air, only acts if own jump ends or opponent is in air
     bpl RyuAiAirScriptPick                      ; 8F73  10 0A
     lda a:FighterState,y                        ; 8F75  B9 26 00
     and #$04                                    ; 8F78  29 04
@@ -471,9 +471,9 @@ RyuAiAirVelCheck:
     jmp AiDoNothing                             ; 8F7C  4C FE E6
 
 
-; modos: luta
+; modes: fight
 RyuAiAirScriptPick:
-    lda a:FighterState,x                        ; 8F7F  BD 26 00    RyuAiAirScriptPick — IA do Ryu: no ar, escolhe o roteiro pela classe de estado
+    lda a:FighterState,x                        ; 8F7F  BD 26 00    RyuAiAirScriptPick — Ryu AI: in air, chooses script by state class
     and #$F8                                    ; 8F82  29 F8
     cmp #$60                                    ; 8F84  C9 60
     bne RyuAiAirScriptDefault                   ; 8F86  D0 07
@@ -482,16 +482,16 @@ RyuAiAirScriptPick:
     jmp AiStartScript                           ; 8F8C  4C F3 E6
 
 
-; modos: luta
+; modes: fight
 RyuAiAirScriptDefault:
-    lda #<D00_8EFB                              ; 8F8F  A9 FB       RyuAiAirScriptDefault — IA do Ryu: no ar, roteiro padrao ($00:8EFB)
+    lda #<D00_8EFB                              ; 8F8F  A9 FB       RyuAiAirScriptDefault — Ryu AI: in air, default script ($00:8EFB)
     ldy #>D00_8EFB                              ; 8F91  A0 8E
     jmp AiStartScript                           ; 8F93  4C F3 E6
 
 
-; modos: luta
+; modes: fight
 RyuAiProjCheck:
-    lda a:ProjX,y                               ; 8F96  B9 7B 00    RyuAiProjCheck — IA do Ryu: o oponente tem projetil no ar?
+    lda a:ProjX,y                               ; 8F96  B9 7B 00    RyuAiProjCheck — Ryu AI: does opponent have projectile in air?
     beq RyuAiOpponentHitState                   ; 8F99  F0 34
     sec                                         ; 8F9B  38
     sbc FighterX,x                              ; 8F9C  F5 08
@@ -500,11 +500,11 @@ RyuAiProjCheck:
     adc #$01                                    ; 8FA2  69 01
     sec                                         ; 8FA4  38
 RyuAiProjAbsDist:
-    sbc #$10                                    ; 8FA5  E9 10       RyuAiProjAbsDist — IA do Ryu: distancia horizontal ate o projetil
+    sbc #$10                                    ; 8FA5  E9 10       RyuAiProjAbsDist — Ryu AI: horizontal distance to projectile
     bpl RyuAiProjDistDiv16                      ; 8FA7  10 02
     lda #$00                                    ; 8FA9  A9 00
 RyuAiProjDistDiv16:
-    lsr a                                       ; 8FAB  4A          RyuAiProjDistDiv16 — IA do Ryu: distancia do projetil / 16
+    lsr a                                       ; 8FAB  4A          RyuAiProjDistDiv16 — Ryu AI: projectile distance / 16
     lsr a                                       ; 8FAC  4A
     lsr a                                       ; 8FAD  4A
     lsr a                                       ; 8FAE  4A
@@ -514,32 +514,32 @@ RyuAiProjDistDiv16:
     jmp AiStartScript                           ; 8FB5  4C F3 E6
 
 
-; modos: luta
+; modes: fight
 RyuAiProjDistDiv32:
-    lsr a                                       ; 8FB8  4A          RyuAiProjDistDiv32 — IA do Ryu: distancia do projetil / 32
+    lsr a                                       ; 8FB8  4A          RyuAiProjDistDiv32 — Ryu AI: projectile distance / 32
     bne RyuAiProjDistDiv64                      ; 8FB9  D0 07
     lda #<D00_8F03                              ; 8FBB  A9 03
     ldy #>D00_8F03                              ; 8FBD  A0 8F
     jmp AiStartScriptNow                        ; 8FBF  4C E8 E6
 
 
-; modos: luta
+; modes: fight
 RyuAiProjDistDiv64:
-    lsr a                                       ; 8FC2  4A          RyuAiProjDistDiv64 — IA do Ryu: distancia do projetil / 64 (longe demais: nao faz nada)
+    lsr a                                       ; 8FC2  4A          RyuAiProjDistDiv64 — Ryu AI: projectile distance / 64 (too far: does nothing)
     beq RyuAiProjScriptMid                      ; 8FC3  F0 03
     jmp AiDoNothing                             ; 8FC5  4C FE E6
 
 
-; modos: luta
+; modes: fight
 RyuAiProjScriptMid:
-    lda #<D00_8E82                              ; 8FC8  A9 82       RyuAiProjScriptMid — IA do Ryu: projetil a 32-64 px -> roteiro $00:8E82
+    lda #<D00_8E82                              ; 8FC8  A9 82       RyuAiProjScriptMid — Ryu AI: projectile at 32-64 px -> script $00:8E82
     ldy #>D00_8E82                              ; 8FCA  A0 8E
     jmp AiStartScript                           ; 8FCC  4C F3 E6
 
 
-; modos: luta
+; modes: fight
 RyuAiOpponentHitState:
-    lda a:FighterState,y                        ; 8FCF  B9 26 00    RyuAiOpponentHitState — IA do Ryu: sem projetil; o oponente esta em reacao de golpe?
+    lda a:FighterState,y                        ; 8FCF  B9 26 00    RyuAiOpponentHitState — Ryu AI: no projectile; is opponent in hit reaction?
     and #$F8                                    ; 8FD2  29 F8
     cmp #$B0                                    ; 8FD4  C9 B0
     bcc RyuAiOpponentWalkCheck                  ; 8FD6  90 11
@@ -547,16 +547,16 @@ RyuAiOpponentHitState:
     bcs RyuAiOpponentWalkCheck                  ; 8FDA  B0 0D
     lda a:FighterChar,y                         ; 8FDC  B9 00 00
     tay                                         ; 8FDF  A8
-    lda D00_9148+1                              ; 8FE0  AD 49 91    todos os oponentes usam RyuAiAntiAir (D00_9148 tem uma entrada so')
+    lda D00_9148+1                              ; 8FE0  AD 49 91    all opponents use RyuAiAntiAir (D00_9148 has a single entry)
     pha                                         ; 8FE3  48
-    lda D00_9148                                ; 8FE4  AD 48 91    idem: sem indexar por personagem, o RTS-trick nao cai em $A492 (JAM)
+    lda D00_9148                                ; 8FE4  AD 48 91    same: without indexing by character, RTS-trick doesn't fall on $A492 (JAM)
     pha                                         ; 8FE7  48
     rts                                         ; 8FE8  60
 
 
-; modos: luta
+; modes: fight
 RyuAiOpponentWalkCheck:
-    lda a:FighterState,y                        ; 8FE9  B9 26 00    RyuAiOpponentWalkCheck — IA do Ryu: o oponente esta andando (classe >= $54)?
+    lda a:FighterState,y                        ; 8FE9  B9 26 00    RyuAiOpponentWalkCheck — Ryu AI: is opponent walking (class >= $54)?
     cmp #$54                                    ; 8FEC  C9 54
     bcc RyuAiOpponentSpecial                    ; 8FEE  90 73
     and #$04                                    ; 8FF0  29 04
@@ -566,9 +566,9 @@ RyuAiOpponentWalkCheck:
     jmp AiDoNothing                             ; 8FF9  4C FE E6
 
 
-; modos: luta
+; modes: fight
 RyuAiOpponentJumpUp:
-    lda a:FighterVelY,y                         ; 8FFC  B9 36 00    RyuAiOpponentJumpUp — IA do Ryu: o oponente esta subindo
+    lda a:FighterVelY,y                         ; 8FFC  B9 36 00    RyuAiOpponentJumpUp — Ryu AI: opponent is jumping up
     bpl RyuAiOpponentGrounded                   ; 8FFF  10 1C
     jsr DistanceX                               ; 9001  20 3D E0
     cmp #$28                                    ; 9004  C9 28
@@ -578,31 +578,31 @@ RyuAiOpponentJumpUp:
     jmp AiStartScriptNow                        ; 900C  4C E8 E6
 
 
-; modos: luta
+; modes: fight
 RyuAiJumpDistCheck:
-    cmp #$60                                    ; 900F  C9 60       RyuAiJumpDistCheck — IA do Ryu: distancia horizontal do oponente que esta subindo
+    cmp #$60                                    ; 900F  C9 60       RyuAiJumpDistCheck — Ryu AI: horizontal distance of jumping up opponent
     bcc RyuAiJumpScriptMid                      ; 9011  90 03
     jmp AiDoNothing                             ; 9013  4C FE E6
 
 
-; modos: luta
+; modes: fight
 RyuAiJumpScriptMid:
-    lda #<D00_8F0A                              ; 9016  A9 0A       RyuAiJumpScriptMid — IA do Ryu: oponente subindo a 40-96 px -> roteiro $00:8F0A
+    lda #<D00_8F0A                              ; 9016  A9 0A       RyuAiJumpScriptMid — Ryu AI: opponent jumping up at 40-96 px -> script $00:8F0A
     ldy #>D00_8F0A                              ; 9018  A0 8F
     jmp AiStartScriptNow                        ; 901A  4C E8 E6
 
 
-; modos: luta
+; modes: fight
 RyuAiOpponentGrounded:
-    lda a:FighterY,y                            ; 901D  B9 0C 00    RyuAiOpponentGrounded — IA do Ryu: o oponente esta no chao
+    lda a:FighterY,y                            ; 901D  B9 0C 00    RyuAiOpponentGrounded — Ryu AI: opponent is on ground
     cmp FloorY                                  ; 9020  CD BA 03
     bcc RyuAiOpponentDistX                      ; 9023  90 03
     jmp AiDoNothing                             ; 9025  4C FE E6
 
 
-; modos: luta
+; modes: fight
 RyuAiOpponentDistX:
-    jsr DistanceX                               ; 9028  20 3D E0    RyuAiOpponentDistX — IA do Ryu: distancia horizontal ate o oponente que anda
+    jsr DistanceX                               ; 9028  20 3D E0    RyuAiOpponentDistX — Ryu AI: horizontal distance to walking opponent
     cmp #$20                                    ; 902B  C9 20
     bcs RyuAiOpponentTooFar                     ; 902D  B0 26
     jsr DistanceY                               ; 902F  20 49 E0
@@ -614,7 +614,7 @@ RyuAiOpponentDistX:
 
 
 RyuAiOpponentDistY:
-    jsr Random                                  ; 903D  20 B9 E5    RyuAiOpponentDistY — IA do Ryu: sorteia entre dois roteiros conforme a distancia vertical
+    jsr Random                                  ; 903D  20 B9 E5    RyuAiOpponentDistY — Ryu AI: draws between two scripts based on vertical distance
     and #$01                                    ; 9040  29 01
     tay                                         ; 9042  A8
     lda D00_9051,y                              ; 9043  B9 51 90    [idx $00..$00]
@@ -631,41 +631,41 @@ D00_9053:
     .byte >(D00_8F1B)                           ; 9053  8F
     .byte $8F                                   ; 9054
 
-; modos: luta
+; modes: fight
 RyuAiOpponentTooFar:
-    cmp #$30                                    ; 9055  C9 30       RyuAiOpponentTooFar — IA do Ryu: oponente longe demais -> nao faz nada
+    cmp #$30                                    ; 9055  C9 30       RyuAiOpponentTooFar — Ryu AI: opponent too far -> does nothing
     bcc RyuAiOpponentScript                     ; 9057  90 03
     jmp AiDoNothing                             ; 9059  4C FE E6
 
 
-; modos: luta
+; modes: fight
 RyuAiOpponentScript:
-    lda #<D00_8F1B                              ; 905C  A9 1B       RyuAiOpponentScript — IA do Ryu: oponente perto -> roteiro $00:8F1B
+    lda #<D00_8F1B                              ; 905C  A9 1B       RyuAiOpponentScript — Ryu AI: opponent near -> script $00:8F1B
     ldy #>D00_8F1B                              ; 905E  A0 8F
     jmp AiStartScript                           ; 9060  4C F3 E6
 
 
-; modos: luta
+; modes: fight
 RyuAiOpponentSpecial:
-    lda a:zp_62,y                               ; 9063  B9 62 00    RyuAiOpponentSpecial — IA do Ryu: oponente com estado especial (zp_62) -> roteiro $00:8ECA
+    lda a:zp_62,y                               ; 9063  B9 62 00    RyuAiOpponentSpecial — Ryu AI: opponent with special state (zp_62) -> script $00:8ECA
     beq RyuAiOpponentStateHigh                  ; 9066  F0 07
     lda #<D00_8ECA                              ; 9068  A9 CA
     ldy #>D00_8ECA                              ; 906A  A0 8E
     jmp AiStartScript                           ; 906C  4C F3 E6
 
 
-; modos: luta
+; modes: fight
 RyuAiOpponentStateHigh:
-    lda a:FighterState,y                        ; 906F  B9 26 00    RyuAiOpponentStateHigh — IA do Ryu: classe de estado do oponente >= $58?
+    lda a:FighterState,y                        ; 906F  B9 26 00    RyuAiOpponentStateHigh — Ryu AI: opponent state class >= $58?
     and #$F8                                    ; 9072  29 F8
     cmp #$58                                    ; 9074  C9 58
     bcs RyuAiState58Check                       ; 9076  B0 03
     jmp AiDoNothing                             ; 9078  4C FE E6
 
 
-; modos: luta
+; modes: fight
 RyuAiState58Check:
-    cmp #$69                                    ; 907B  C9 69       RyuAiState58Check — IA do Ryu: classe >= $69 tem outro tratamento
+    cmp #$69                                    ; 907B  C9 69       RyuAiState58Check — Ryu AI: class >= $69 has other handling
     bcs RyuAiState69Dist                        ; 907D  B0 4B
     jsr DistanceX                               ; 907F  20 3D E0
     sec                                         ; 9082  38
@@ -673,7 +673,7 @@ RyuAiState58Check:
     bpl RyuAiState58DistDiv8                    ; 9085  10 02
     lda #$00                                    ; 9087  A9 00
 RyuAiState58DistDiv8:
-    lsr a                                       ; 9089  4A          RyuAiState58DistDiv8 — IA do Ryu: distancia horizontal / 8
+    lsr a                                       ; 9089  4A          RyuAiState58DistDiv8 — Ryu AI: horizontal distance / 8
     lsr a                                       ; 908A  4A
     lsr a                                       ; 908B  4A
     bne RyuAiState58DistDiv16                   ; 908C  D0 07
@@ -682,26 +682,26 @@ RyuAiState58DistDiv8:
     jmp AiStartScript                           ; 9092  4C F3 E6
 
 
-; modos: luta
+; modes: fight
 RyuAiState58DistDiv16:
-    lsr a                                       ; 9095  4A          RyuAiState58DistDiv16 — IA do Ryu: distancia horizontal / 16
+    lsr a                                       ; 9095  4A          RyuAiState58DistDiv16 — Ryu AI: horizontal distance / 16
     bne RyuAiState58DistDiv32                   ; 9096  D0 07
 RyuAiState58Script32:
-    lda #<D00_8F32                              ; 9098  A9 32       RyuAiState58Script32 — IA do Ryu: roteiro $00:8F32
+    lda #<D00_8F32                              ; 9098  A9 32       RyuAiState58Script32 — Ryu AI: script $00:8F32
     ldy #>D00_8F32                              ; 909A  A0 8F
     jmp AiStartScript                           ; 909C  4C F3 E6
 
 
-; modos: luta
+; modes: fight
 RyuAiState58DistDiv32:
-    lsr a                                       ; 909F  4A          RyuAiState58DistDiv32 — IA do Ryu: distancia horizontal / 32 (longe: nao faz nada)
+    lsr a                                       ; 909F  4A          RyuAiState58DistDiv32 — Ryu AI: horizontal distance / 32 (far: does nothing)
     beq RyuAiState58Random                      ; 90A0  F0 03
     jmp AiDoNothing                             ; 90A2  4C FE E6
 
 
-; modos: luta
+; modes: fight
 RyuAiState58Random:
-    jsr Random                                  ; 90A5  20 B9 E5    RyuAiState58Random — IA do Ryu: sorteia o roteiro conforme a postura do oponente
+    jsr Random                                  ; 90A5  20 B9 E5    RyuAiState58Random — Ryu AI: draws script based on opponent posture
     and #$01                                    ; 90A8  29 01
     beq RyuAiState58Script32                    ; 90AA  F0 EC
     ldy OtherFighter                            ; 90AC  A4 65
@@ -716,22 +716,22 @@ RyuAiState58Random:
     jmp AiStartScriptNow                        ; 90C0  4C E8 E6
 
 
-; modos: luta
+; modes: fight
 RyuAiState58Script:
-    lda #<D00_8EAD                              ; 90C3  A9 AD       RyuAiState58Script — IA do Ryu: roteiro $00:8EAD
+    lda #<D00_8EAD                              ; 90C3  A9 AD       RyuAiState58Script — Ryu AI: script $00:8EAD
     ldy #>D00_8EAD                              ; 90C5  A0 8E
     jmp AiStartScriptNow                        ; 90C7  4C E8 E6
 
 
-; modos: luta
+; modes: fight
 RyuAiState69Dist:
-    jsr DistanceX                               ; 90CA  20 3D E0    RyuAiState69Dist — IA do Ryu: classe >= $69, calcula a distancia horizontal
+    jsr DistanceX                               ; 90CA  20 3D E0    RyuAiState69Dist — Ryu AI: class >= $69, calculates horizontal distance
     sec                                         ; 90CD  38
     sbc #$10                                    ; 90CE  E9 10
     bpl RyuAiState69DistDiv8                    ; 90D0  10 02
     lda #$00                                    ; 90D2  A9 00       (nt)
 RyuAiState69DistDiv8:
-    lsr a                                       ; 90D4  4A          RyuAiState69DistDiv8 — IA do Ryu: distancia horizontal / 8
+    lsr a                                       ; 90D4  4A          RyuAiState69DistDiv8 — Ryu AI: horizontal distance / 8
     lsr a                                       ; 90D5  4A
     lsr a                                       ; 90D6  4A
     bne RyuAiState69DistDiv16                   ; 90D7  D0 1C
@@ -754,9 +754,9 @@ D00_90F1:
 D00_90F2:
     .byte $8F,$8F,$8F                           ; 90F2
 
-; modos: luta
+; modes: fight
 RyuAiState69DistDiv16:
-    lsr a                                       ; 90F5  4A          RyuAiState69DistDiv16 — IA do Ryu: distancia horizontal / 16
+    lsr a                                       ; 90F5  4A          RyuAiState69DistDiv16 — Ryu AI: horizontal distance / 16
     bne RyuAiState69DistDiv32                   ; 90F6  D0 14
     jsr Random                                  ; 90F8  20 B9 E5
     and #$01                                    ; 90FB  29 01
@@ -769,17 +769,17 @@ RyuAiState69DistDiv16:
     jmp AiStartScript                           ; 9109  4C F3 E6
 
 
-; modos: luta
+; modes: fight
 RyuAiState69DistDiv32:
-    lsr a                                       ; 910C  4A          RyuAiState69DistDiv32 — IA do Ryu: distancia horizontal / 32 (longe: nao faz nada)
+    lsr a                                       ; 910C  4A          RyuAiState69DistDiv32 — Ryu AI: horizontal distance / 32 (far: does nothing)
     lsr a                                       ; 910D  4A
     beq RyuAiState69Random                      ; 910E  F0 03
     jmp AiDoNothing                             ; 9110  4C FE E6
 
 
-; modos: luta
+; modes: fight
 RyuAiState69Random:
-    jsr Random                                  ; 9113  20 B9 E5    RyuAiState69Random — IA do Ryu: sorteia entre 4 roteiros
+    jsr Random                                  ; 9113  20 B9 E5    RyuAiState69Random — Ryu AI: draws between 4 scripts
     and #$07                                    ; 9116  29 07
     lsr a                                       ; 9118  4A
     bcs RyuAiState69RandomNow                   ; 9119  B0 10
@@ -793,9 +793,9 @@ RyuAiState69Random:
     jmp AiStartScript                           ; 9128  4C F3 E6
 
 
-; modos: luta
+; modes: fight
 RyuAiState69RandomNow:
-    lsr a                                       ; 912B  4A          RyuAiState69RandomNow — IA do Ryu: sorteia entre 2 roteiros (execucao imediata)
+    lsr a                                       ; 912B  4A          RyuAiState69RandomNow — Ryu AI: draws between 2 scripts (immediate execution)
     lsr a                                       ; 912C  4A
     tay                                         ; 912D  A8
     lda D00_9144,y                              ; 912E  B9 44 91    [idx $00..$00]
@@ -822,10 +822,10 @@ D00_9146:
 D00_9148:
     .word RyuAiAntiAir-1                        ; 9148  49 91
 
-; <- tabela D00_9148
-; modos: luta
+; <- table D00_9148
+; modes: fight
 RyuAiAntiAir:
-    ldy OtherFighter                            ; 914A  A4 65       IA do Ryu contra oponente no ar ($C0/$C8): dispara o roteiro de anti-aereo (tabela D00_9148)
+    ldy OtherFighter                            ; 914A  A4 65       Ryu AI against opponent in air ($C0/$C8): fires anti-air script (table D00_9148)
     lda a:FighterState,y                        ; 914C  B9 26 00
     and #$F8                                    ; 914F  29 F8
     cmp #$C0                                    ; 9151  C9 C0
@@ -833,62 +833,62 @@ RyuAiAntiAir:
     cmp #$C8                                    ; 9155  C9 C8
     bne RyuAiAntiAirStateCheck                  ; 9157  D0 36
 RyuAiAntiAirDist:
-    jsr DistanceX                               ; 9159  20 3D E0    RyuAiAntiAirDist — IA anti-aereo: distancia horizontal ate o oponente no ar
+    jsr DistanceX                               ; 9159  20 3D E0    RyuAiAntiAirDist — anti-air AI: horizontal distance to opponent in air
     cmp #$40                                    ; 915C  C9 40
     bcc RyuAiAntiAirRange                       ; 915E  90 03
     jmp AiDoNothing                             ; 9160  4C FE E6
 
 
-; modos: luta
+; modes: fight
 RyuAiAntiAirRange:
-    cmp #$28                                    ; 9163  C9 28       RyuAiAntiAirRange — IA anti-aereo: distancia < $28?
+    cmp #$28                                    ; 9163  C9 28       RyuAiAntiAirRange — anti-air AI: distance < $28?
     bcc RyuAiAntiAirVelCheck2                   ; 9165  90 14
     lda a:FighterVelY,y                         ; 9167  B9 36 00
     bpl RyuAiAntiAirVelCheck                    ; 916A  10 03
     jmp RyuAiAirAttack                          ; 916C  4C BA 91
 
 
-; modos: luta
+; modes: fight
 RyuAiAntiAirVelCheck:
-    bne RyuAiAntiAirScript8E9F                  ; 916F  D0 03       RyuAiAntiAirVelCheck — IA anti-aereo: o oponente esta descendo?
+    bne RyuAiAntiAirScript8E9F                  ; 916F  D0 03       RyuAiAntiAirVelCheck — anti-air AI: is opponent descending?
     jmp RyuAiAirAttack                          ; 9171  4C BA 91
 
 
-; modos: luta
+; modes: fight
 RyuAiAntiAirScript8E9F:
-    lda #<D00_8E9F                              ; 9174  A9 9F       RyuAiAntiAirScript8E9F — IA anti-aereo: roteiro $00:8E9F
+    lda #<D00_8E9F                              ; 9174  A9 9F       RyuAiAntiAirScript8E9F — anti-air AI: script $00:8E9F
     ldy #>D00_8E9F                              ; 9176  A0 8E
     jmp AiStartScriptNow                        ; 9178  4C E8 E6
 
 
-; modos: luta
+; modes: fight
 RyuAiAntiAirVelCheck2:
-    lda a:FighterVelY,y                         ; 917B  B9 36 00    RyuAiAntiAirVelCheck2 — IA anti-aereo (perto): o oponente esta descendo?
+    lda a:FighterVelY,y                         ; 917B  B9 36 00    RyuAiAntiAirVelCheck2 — anti-air AI (near): is opponent descending?
     bpl RyuAiAntiAirVelCheck3                   ; 917E  10 03
     jmp RyuAiAirAttack                          ; 9180  4C BA 91
 
 
-; modos: luta
+; modes: fight
 RyuAiAntiAirVelCheck3:
-    bne RyuAiAntiAirScript8F11                  ; 9183  D0 03       RyuAiAntiAirVelCheck3 — IA anti-aereo (perto): o oponente esta parado?
+    bne RyuAiAntiAirScript8F11                  ; 9183  D0 03       RyuAiAntiAirVelCheck3 — anti-air AI (near): is opponent stopped?
     jmp RyuAiAirAttack                          ; 9185  4C BA 91
 
 
-; modos: luta
+; modes: fight
 RyuAiAntiAirScript8F11:
-    lda #<D00_8F11                              ; 9188  A9 11       RyuAiAntiAirScript8F11 — IA anti-aereo: roteiro $00:8F11
+    lda #<D00_8F11                              ; 9188  A9 11       RyuAiAntiAirScript8F11 — anti-air AI: script $00:8F11
     ldy #>D00_8F11                              ; 918A  A0 8F
     jmp AiStartScript                           ; 918C  4C F3 E6
 
 
-; modos: luta
+; modes: fight
 RyuAiAntiAirStateCheck:
-    cmp #$D0                                    ; 918F  C9 D0       RyuAiAntiAirStateCheck — IA anti-aereo: classes $D0/$D8 do oponente
+    cmp #$D0                                    ; 918F  C9 D0       RyuAiAntiAirStateCheck — anti-air AI: opponent classes $D0/$D8
     beq RyuAiAntiAirDist2                       ; 9191  F0 04
     cmp #$D8                                    ; 9193  C9 D8
     bne RyuAiAntiAirEnd                         ; 9195  D0 20
 RyuAiAntiAirDist2:
-    jsr DistanceX                               ; 9197  20 3D E0    RyuAiAntiAirDist2 — IA anti-aereo ($D0/$D8): distancia horizontal
+    jsr DistanceX                               ; 9197  20 3D E0    RyuAiAntiAirDist2 — anti-air AI ($D0/$D8): horizontal distance
     cmp #$38                                    ; 919A  C9 38
     bcc RyuAiAntiAirDist3                       ; 919C  90 07
     lda #<D00_8E82                              ; 919E  A9 82
@@ -896,31 +896,31 @@ RyuAiAntiAirDist2:
     jmp AiStartScript                           ; 91A2  4C F3 E6
 
 
-; modos: luta
+; modes: fight
 RyuAiAntiAirDist3:
-    cmp #$10                                    ; 91A5  C9 10       RyuAiAntiAirDist3 — IA anti-aereo ($D0/$D8): distancia < $10?
+    cmp #$10                                    ; 91A5  C9 10       RyuAiAntiAirDist3 — anti-air AI ($D0/$D8): distance < $10?
     bcc RyuAiAntiAirScript8F29                  ; 91A7  90 07
     lda #<D00_8F26                              ; 91A9  A9 26
     ldy #>D00_8F26                              ; 91AB  A0 8F
     jmp AiStartScriptNow                        ; 91AD  4C E8 E6
 
 
-; modos: luta
+; modes: fight
 RyuAiAntiAirScript8F29:
-    lda #<D00_8F29                              ; 91B0  A9 29       RyuAiAntiAirScript8F29 — IA anti-aereo ($D0/$D8): roteiro $00:8F29
+    lda #<D00_8F29                              ; 91B0  A9 29       RyuAiAntiAirScript8F29 — anti-air AI ($D0/$D8): script $00:8F29
     ldy #>D00_8F29                              ; 91B2  A0 8F
     jmp AiStartScript                           ; 91B4  4C F3 E6
 
 
-; modos: luta
+; modes: fight
 RyuAiAntiAirEnd:
-    jmp AiDoNothing                             ; 91B7  4C FE E6    RyuAiAntiAirEnd — IA anti-aereo: nenhuma acao
+    jmp AiDoNothing                             ; 91B7  4C FE E6    RyuAiAntiAirEnd — anti-air AI: no action
 
 
 ; <- jmp RyuAiAntiAirRange, jmp RyuAiAntiAirVelCheck, jmp RyuAiAntiAirVelCheck2, jmp RyuAiAntiAirVelCheck3
-; modos: luta
+; modes: fight
 RyuAiAirAttack:
-    lda #<D00_8F24                              ; 91BA  A9 24       IA do Ryu: inicia o roteiro D00_8F24 (ataque aereo) sempre
+    lda #<D00_8F24                              ; 91BA  A9 24       Ryu AI: starts script D00_8F24 (air attack) always
     ldy #>D00_8F24                              ; 91BC  A0 8F
     jmp AiStartScriptNow                        ; 91BE  4C E8 E6
 

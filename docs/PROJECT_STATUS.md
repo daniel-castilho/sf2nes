@@ -136,7 +136,7 @@ Inventoried by reading `tools/` and `tools/mesen/`. **No script was executed.** 
 | Tool/script | Declared purpose | Inferred inputs/outputs from reading | Scenario/claim covered | Audited status |
 |-------------|------------------|--------------------------------------|------------------------|----------------|
 | `tools/disasm.py` | Project generator (`make gen`) | ROM + trace + annotations → `src/*.s`, `sf2ne.cfg`, `assets/` | Source regeneration | EXISTS — not executed in this audit |
-| `tools/show.py` | Show a routine with who calls it and which screens it runs on | Routine address → routine text + `; <-` and `; modos:` lines | Individual routine inspection | EXISTS — not executed |
+| `tools/show.py` | Show a routine with who calls it and which screens it runs on | Routine address → routine text + `; <-` and `; modes:` lines | Individual routine inspection | EXISTS — not executed |
 | `tools/datamap.py` | List data ranges of a bank (read/typed/never touched) | Bank(s) → list of ranges | Data coverage per bank | EXISTS — not executed |
 | `tools/ptr_candidates.py` | List immediate pairs that look like pointers but trace didn't confirm | — → suspicious pairs for manual review | Discovery of pointers not covered by trace | EXISTS — not executed |
 | `tools/poke_prg.py` | Write swapped bytes in ROM copy (experiments) | Base ROM + bank/address/byte → modified ROM (copy) | Relocation experiments on copy | EXISTS — not executed |
@@ -228,7 +228,7 @@ None of these was resolved in this audit.
 
 - **Date:** 2026-11-17
 - **Base committed:** `3ba99e3` (`$3B` batch; previous: `8108eb1` `$36`, `fa7c215`, `2df963c`, `64a29f8`, `92fbde1`)
-- **Working tree:** `$37` batch applied (`annotations/sf2ne.ann`, `src/bank_37.s`, comments in `src/bank_20.s`/`src/kernel.inc`) and `tasks/DATA_NAMING_37.md`, pending commit. Phase 3 closed on 2026-11-16.
+- **Working tree:** clean; the `$37` batch (`annotations/sf2ne.ann`, `src/bank_37.s`, comments in `src/bank_20.s`/`src/kernel.inc`, docs and `tasks/DATA_NAMING_37.md`) is committed as `cfc7d78` and pushed. Phase 3 closed on 2026-11-16.
 
 ### 11.1 Reconciled metrics
 
@@ -282,7 +282,7 @@ No emulator execution was done in this phase; verification is static (flow, call
 
 ### 11.4 Pending
 
-- **Commit:** Phase 3 closed on 2026-11-16; `$3C`, `$3F` and `$20` batches committed (`64a29f8`, `92fbde1`, `2df963c`). The `$36` batch was applied before `fa7c215` and is recorded in `8108eb1`; the `$3B` batch is committed as `3ba99e3`; the `$37` batch is applied and awaits commit authorization. No push without explicit approval.
+- **Commit:** Phase 3 closed on 2026-11-16; `$3C`, `$3F` and `$20` batches committed (`64a29f8`, `92fbde1`, `2df963c`). The `$36` batch was applied before `fa7c215` and is recorded in `8108eb1`; the `$3B` batch is committed as `3ba99e3`; the `$37` batch is committed as `cfc7d78` and pushed.
 - **Decisions:** D-01 and D-03 resolved at close; D-02 remains `PROPOSED` (does not block naming); D-04…D-07 follow `PENDING` in `tasks/STABILIZATION_BACKLOG.md`.
 - **Data (`D<bb>_<aaaa>`, 1,056):** inventoried and prioritized in `tasks/DATA_LABEL_INVENTORY.tsv`; `$3C` (33), `$3F` (15), `$20` (30), `$36` (27), `$3B` (35) and `$37` (17) batches applied. Next candidate: music (`$29`/`$2D`, 173); large Ryu/Ken banks (`$00`/`$01`/`$05`, 862) may remain P3.
 - **`$36` write-only labels:** `D36_C005`, `D36_C00A` and `D36_C00F` remain automatic until a consumer appears (`MMC5_CHR_BG2` is never used).

@@ -8,7 +8,7 @@
 D29_A000:
     .byte $01                                   ; A000
     .word D29_A013                              ; A001  13 A0
-    .word D29_A017+1                            ; A003  18 A0       (inferido)
+    .word D29_A017+1                            ; A003  18 A0       (inferred)
     .word D29_A021                              ; A005  21 A0
     .word D29_A2ED                              ; A007  ED A2
     .word D29_A55D                              ; A009  5D A5
@@ -219,7 +219,7 @@ D29_AA18:
 D29_AAB6:
     .byte $01                                   ; AAB6
     .word D29_AAC9                              ; AAB7  C9 AA
-    .word D29_AACD+1                            ; AAB9  CE AA       (inferido)
+    .word D29_AACD+1                            ; AAB9  CE AA       (inferred)
     .word D29_AAD7                              ; AABB  D7 AA
     .word D29_ACDE                              ; AABD  DE AC
     .word D29_AEEF                              ; AABF  EF AE
@@ -817,7 +817,7 @@ D29_B2E6:
 D29_B34A:
     .byte $01                                   ; B34A
     .word D29_B35D                              ; B34B  5D B3
-    .word D29_B361+1                            ; B34D  62 B3       (inferido)
+    .word D29_B361+1                            ; B34D  62 B3       (inferred)
     .word D29_B36B                              ; B34F  6B B3
     .word D29_B3AE                              ; B351  AE B3
     .word D29_B410                              ; B353  10 B4
@@ -869,7 +869,7 @@ D29_B4B2:
 D29_B4BD:
     .byte $01                                   ; B4BD
     .word D29_B4D0                              ; B4BE  D0 B4
-    .word D29_B4D4+1                            ; B4C0  D5 B4       (inferido)
+    .word D29_B4D4+1                            ; B4C0  D5 B4       (inferred)
     .word D29_B4DE                              ; B4C2  DE B4
     .word D29_B524                              ; B4C4  24 B5
     .word D29_B560                              ; B4C6  60 B5

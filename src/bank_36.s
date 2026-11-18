@@ -6,7 +6,7 @@
 .include "defs.inc"
 .segment "BANK36"
 StageFloorLinesTbl:
-    .byte $18,$18,$18,$18,$18                   ; C000              linhas do chao em paralaxe (VersusLoadStage, 3B:E2A5)
+    .byte $18,$18,$18,$18,$18                   ; C000              parallax floor lines (VersusLoadStage, 3B:E2A5)
 D36_C005:
     .byte $17,$FF,$FF,$FF,$FF                   ; C005
 D36_C00A:
@@ -14,7 +14,7 @@ D36_C00A:
 D36_C00F:
     .byte $37,$FF,$FF,$FF,$FF                   ; C00F
 StageBg1ChrTopTbl:
-    .byte $37,$00,$00,$00,$00                   ; C014              paginas de CHR BG1/BG3 das tres faixas (ram_0406/0409, 0407/040A, 0408/040B)
+    .byte $37,$00,$00,$00,$00                   ; C014              CHR BG1/BG3 pages of three bands (ram_0406/0409, 0407/040A, 0408/040B)
 StageBg1ChrMidTbl:
     .byte $33,$00,$00,$00,$00                   ; C019
 StageBg1ChrFloorTbl:
@@ -26,11 +26,11 @@ StageBg3ChrMidTbl:
 StageBg3ChrFloorTbl:
     .byte $36,$00,$00,$00,$00                   ; C02D
 StageSplitMidTbl:
-    .byte $9F,$00,$00,$00,$00                   ; C032              linha do split que inicia a faixa media (ram_0404)
+    .byte $9F,$00,$00,$00,$00                   ; C032              line where middle band starts (ram_0404)
 StageSplitFloorTbl:
-    .byte $CF,$00,$00,$00,$00                   ; C037              linha do split que inicia o chao (ram_0405; tambem scroll inicial)
+    .byte $CF,$00,$00,$00,$00                   ; C037              line where floor starts (ram_0405; also initial scroll)
 StageBgLeftTopRleTbl:
-    .word StageBgLeftTopRle                     ; C03C  DF C0       ponteiros RLE para $2800 (esquerda) e $2C00 (direita): linhas 0-19, 20-25 e 26-29
+    .word StageBgLeftTopRle                     ; C03C  DF C0       RLE pointers to $2800 (left) and $2C00 (right): lines 0-19, 20-25 and 26-29
     .byte $00,$00,$00,$00,$00,$00,$00,$00       ; C03E
 StageBgRightTopRleTbl:
     .word StageBgRightTopRle                    ; C046  B6 C1
@@ -48,13 +48,13 @@ StageBgRightFloorRleTbl:
     .word StageBgRightFloorRle                  ; C06E  F5 C3
     .byte $00,$00,$00,$00,$00,$00,$00,$00       ; C070
 StageBgLeftAttrTbl:
-    .word StageBgLeftAttr                       ; C078  60 C4       64 bytes de atributos para $2BC0 (esquerda) e $2FC0 (direita)
+    .word StageBgLeftAttr                       ; C078  60 C4       64 attribute bytes for $2BC0 (left) and $2FC0 (right)
     .byte $00,$00,$00,$00,$00,$00,$00,$00       ; C07A
 StageBgRightAttrTbl:
     .word StageBgRightAttr                      ; C082  A0 C4
     .byte $00,$00,$00,$00,$00,$00,$00,$00       ; C084
 StagePaletteTbl:
-    .word StagePalette                          ; C08C  E0 C4       ponteiro para a paleta de 12 bytes copiada por RoundInitLoadStage
+    .word StagePalette                          ; C08C  E0 C4       pointer to 12-byte palette copied by RoundInitLoadStage
     .byte $00,$00,$00,$00,$00,$00,$00,$00,$04,$20,$04,$3F,$00,$04,$1F,$20; C08E
     .byte $31,$50,$20,$04,$16,$53,$54,$41,$52,$54,$20,$20,$03,$01,$02,$70; C09E
     .byte $04,$0A,$0C,$0D,$70,$04,$0A,$09,$0A,$08,$20,$20,$13,$11,$12,$78; C0AE
@@ -62,7 +62,7 @@ StagePaletteTbl:
     .byte $20,$04,$07,$39,$39,$20,$04,$07,$52,$59,$55,$20,$04,$22,$20,$04; C0CE
     .byte $00                                   ; C0DE
 StageBgLeftTopRle:
-    .byte $3B,$00,$3B,$FE,$00,$3B,$15,$01,$02,$03,$04,$05,$06,$07,$08,$09; C0DF              RLE do fundo (640/192/128 bytes por faixa; ver tasks/DATA_NAMING_36.md)
+    .byte $3B,$00,$3B,$FE,$00,$3B,$15,$01,$02,$03,$04,$05,$06,$07,$08,$09; C0DF              RLE background (640/192/128 bytes per band; see tasks/DATA_NAMING_36.md)
     .byte $0A,$0B,$00,$3B,$11,$11,$12,$13,$14,$15,$16,$17,$18,$19,$1A,$1B; C0EF
     .byte $3B,$02,$19,$00,$3B,$12,$25,$26,$27,$28,$29,$2A,$2A,$2B,$2C,$2D; C0FF
     .byte $2E,$2F,$30,$00,$3B,$14,$3D,$3E,$3F,$40,$41,$42,$43,$44,$45,$46; C10F
@@ -136,5 +136,5 @@ StageBgRightAttr:
     .byte $AA,$AA,$AA,$AA,$AA,$AA,$AA,$AA,$AA,$AA,$AA,$AA,$AA,$AA,$AA,$AA; C4C0
     .byte $FA,$FA,$FA,$FA,$FA,$FA,$FA,$FA,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF; C4D0
 StagePalette:
-    .byte $16,$28,$20,$0C,$11,$21,$0C,$0B,$39,$18,$28,$38; C4E0              12 bytes: 4 paletas de 3 cores do cenario
+    .byte $16,$28,$20,$0C,$11,$21,$0C,$0B,$39,$18,$28,$38; C4E0              12 bytes: 4 stage palettes of 3 colors
     .res 6932, $FF                              ; C4EC

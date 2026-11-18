@@ -203,19 +203,19 @@ The first animation frame of the state comes right after the header (header + 7)
 | +12, +13 | pointer to next frame (0 = end of state) |
 | +14, +15 | **only if +11 ≠ 0**: loop target pointer (where to repeat while loop not zero) |
 
-**The 12 conditions** (dispatched by `StateCondDispatch`, `3F:E168`; table at `3F:E171` holds address−1): `CondOponenteAtaca` (0), `CondOponenteLongeCostas` (1), `CondOponentePerto` (2), `CondEmPe` (3), `CondAgachado` (4), `CondNoAr` (5), `CondNoChaoOuVelX` (6), `CondInputBaixo` (7), `CondProjetilLivre` (8), `CondPodeAgarrar` (9), `CondVitoria` ($0A), `CondRoundPerdido` ($0B). Exact semantics of each are in `annotations/sf2ne.ann` comments and `docs/FORMATS.md`.
+**The 12 conditions** (dispatched by `StateCondDispatch`, `3F:E168`; table at `3F:E171` holds address−1): `CondOpponentAttacks` (0), `CondOpponentFarBack` (1), `CondOpponentNear` (2), `CondStanding` (3), `CondCrouching` (4), `CondInAir` (5), `CondOnGroundOrVelX` (6), `CondInputDown` (7), `CondProjectileFree` (8), `CondCanGrab` (9), `CondVictory` ($0A), `CondRoundLost` ($0B). Exact semantics of each are in `annotations/sf2ne.ann` comments and `docs/FORMATS.md`.
 
 `StateCheckTransitions` (`3F:E0CE`) walks the alternative list (+1) testing condition (+0) of each; first true becomes `FighterNextPtr`. In generated source each record is separate, with condition, class and hit count summarized in header, and frame fields decoded:
 
 ```
-; -- ESTADO (cabecalho, 7 bytes)   [cond=$0A CondVitoria | classe=$E9 | acertos=0]
+; -- STATE (header, 7 bytes)   [cond=$0A CondVictory | class=$E9 | hits=0]
 D01_A0B0:
     .byte $0A
     .word D01_A10B
     .word D01_A12E
     .byte $E9,$00
 
-; -- quadro (14 bytes)   [dur=8 efe=$00/$00 fl=$10 mov=$04 vx=0 vy=0 rep=0]   [1o quadro do estado acima: cabecalho+7]
+; -- frame (14 bytes)   [dur=8 fx=$00/$00 fl=$10 mov=$04 vx=0 vy=0 rep=0]   [1st frame of the state above: header+7]
     .byte $08
     .word D00_8D81
     ...

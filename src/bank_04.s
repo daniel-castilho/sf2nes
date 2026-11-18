@@ -278,9 +278,9 @@ D04_8A59:
     .byte $CC,$F5,$15,$00,$0C,$C0,$FA,$0D,$33,$CC,$F5,$15,$00,$0D,$C0,$FC; 90C9
     .byte $0C,$33,$CC,$F5,$15,$00,$FF           ; 90D9
 
-; Stub de IA do Ken (a CPU desta entrega continua sendo o Ryu).
-; A ficha do Ken aponta para ca ($90E0). Sao 8 roteiros, como a tabela do Ryu em $00:8E72,
-; e todos levam ao terminador $FF, para que nenhum ponteiro caia em dados de colisao.
+; Ken AI stub (this delivery's CPU remains Ryu).
+; Ken's fiche points here ($90E0). There are 8 scripts, like Ryu's table at $00:8E72,
+; and all lead to the $FF terminator, so that no pointer falls into collision data.
 D04_90E0:
     .word D04_90F0                              ; 90E0  F0 90
     .word D04_90F0                              ; 90E2  F0 90

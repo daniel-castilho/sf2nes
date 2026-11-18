@@ -82,8 +82,8 @@ Two `alt` overlapping only halfway are rejected by the generator (the `.else` wo
 Each routine in generated source brings two automatic lines:
 
 ```
-; <- jsr FightersUpdate, tabela StateCondLo          who calls (JSR, JMP, farcall, jump table)
-; modos: intro do round, luta                        screens where it executed (ScreenMode)
+; <- jsr FightersUpdate, table StateCondLo          who calls (JSR, JMP, farcall, jump table)
+; modes: round intro, fight                        screens where it executed (ScreenMode)
 ```
 
 and each code line brings original address and bytes; `(nt)` = never executed in traces.

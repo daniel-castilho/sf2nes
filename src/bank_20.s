@@ -64,7 +64,7 @@
     .byte $18,$1A,$1C,$1E,$20,$02,$E8,$EF,$22,$24,$03,$08,$EF,$26,$28,$2A; 8380
     .byte $80                                   ; 8390
 PortraitWinMBison:
-    .byte $09,$00,$06,$00,$AF,$44,$46,$48,$4A,$4C,$4E,$06,$00,$BF,$50,$52; 8391              retrato de vitoria do M.Bison (indice 8 de PortraitWinLayoutTbl)
+    .byte $09,$00,$06,$00,$AF,$44,$46,$48,$4A,$4C,$4E,$06,$00,$BF,$50,$52; 8391              M.Bison victory portrait (index 8 of PortraitWinLayoutTbl)
     .byte $54,$56,$58,$5A,$01,$20,$CF,$5C,$02,$20,$DF,$5E,$60,$02,$20,$EF; 83A1
     .byte $62,$64,$80,$00,$04,$00,$CF,$2C,$2E,$30,$32,$04,$00,$DF,$34,$36; 83B1
     .byte $38,$3A,$04,$00,$EF,$3C,$3E,$40,$42,$80,$0A,$FF,$00,$02,$F8,$AF; 83C1
@@ -79,23 +79,23 @@ PortraitWinMBison:
     .byte $CF,$0C,$0E,$10,$12,$14,$05,$F0,$DF,$16,$18,$1A,$1C,$1E,$01,$F8; 8451
     .byte $EF,$20,$02,$08,$EF,$22,$24,$80       ; 8461
 RoundIntroBattleText:
-    .byte $01,$FF,$00,$06,$00,$EF,$14,$16,$18,$18,$1A,$1C,$80; 8469              texto "BATTLE" desenhado por RoundIntroDraw
+    .byte $01,$FF,$00,$06,$00,$EF,$14,$16,$18,$18,$1A,$1C,$80; 8469              "BATTLE" text drawn by RoundIntroDraw
 SelectCursorMetasprite:
-    .byte $00,$40,$01,$10,$DF,$00,$01,$10,$EF,$02,$80,$00,$01,$00,$DF,$00; 8476              cursor da selecao (SelectDrawCursor/SelectDrawBlink)
+    .byte $00,$40,$01,$10,$DF,$00,$01,$10,$EF,$02,$80,$00,$01,$00,$DF,$00; 8476              selection cursor (SelectDrawCursor/SelectDrawBlink)
     .byte $01,$00,$EF,$02,$80                   ; 8486
 RoundEndDrawTieAltMetasprite:
-    .byte $03,$FF,$00,$06,$00,$DF,$2E,$30,$32,$34,$36,$38,$06,$00,$EF,$3A; 848B              variante do sprite de empate (relogio ainda no ar)
+    .byte $03,$FF,$00,$06,$00,$DF,$2E,$30,$32,$34,$36,$38,$06,$00,$EF,$3A; 848B              draw tie variant sprite (clock still in air)
     .byte $3C,$3E,$40,$42,$44,$80               ; 849B
 DrawGameText:
-    .byte $03,$FF,$00,$04,$00,$EF,$26,$28,$2A,$2C,$80; 84A1              texto "DRAW GAME" (empate com o relogio zerado)
+    .byte $03,$FF,$00,$04,$00,$EF,$26,$28,$2A,$2C,$80; 84A1              text "DRAW GAME" (draw with clock zeroed)
 FightTextZoomSmall:
-    .byte $01,$FF,$00,$06,$04,$EF,$48,$4A,$4C,$4E,$50,$52,$80; 84AC              "FIGHT!" em 3 tamanhos crescentes (RoundIntroMetaspriteTbl)
+    .byte $01,$FF,$00,$06,$04,$EF,$48,$4A,$4C,$4E,$50,$52,$80; 84AC              "FIGHT!" in 3 increasing sizes (RoundIntroMetaspriteTbl)
 FightTextZoomMedium:
     .byte $01,$FF,$00,$06,$04,$EF,$54,$56,$58,$5A,$5C,$5E,$80; 84B9
 FightTextZoomLarge:
     .byte $01,$FF,$00,$06,$04,$EF,$60,$62,$64,$66,$68,$6A,$80; 84C6
 FlagBrazil:
-    .byte $00,$FF,$00,$02,$00,$EF,$04,$06,$80   ; 84D3              bandeiras da selecao (SelectFlagPtrLoTbl); 84EE tambem usada por M.Bison
+    .byte $00,$FF,$00,$02,$00,$EF,$04,$06,$80   ; 84D3              selection flags (SelectFlagPtrLoTbl); 84EE also used by M.Bison
 FlagChina:
     .byte $00,$FF,$00,$02,$00,$EF,$08,$0A,$80   ; 84DC
 FlagJapan:
@@ -113,9 +113,9 @@ ProjectileFrame1:
     .byte $02,$80,$03,$F4,$FF,$06,$08,$0A,$80,$00,$03,$F4,$EF,$06,$08,$0A; 851A
     .byte $80                                   ; 852A
 PerfectText:
-    .byte $03,$FF,$00,$08,$00,$EF,$12,$10,$14,$16,$10,$18,$1A,$1C,$80; 852B              texto "PERFECT!"
+    .byte $03,$FF,$00,$08,$00,$EF,$12,$10,$14,$16,$10,$18,$1A,$1C,$80; 852B              text "PERFECT!"
 ProjectileClashFrame0:
-    .byte $02,$80,$02,$FC,$FF,$0C,$0E,$80,$00,$02,$FC,$EF,$0C,$0E,$80; 853A              quadros do choque de projeteis (ProjectileClashFrameTbl, ProjFlags bit 7)
+    .byte $02,$80,$02,$FC,$FF,$0C,$0E,$80,$00,$02,$FC,$EF,$0C,$0E,$80; 853A              projectile clash frames (ProjectileClashFrameTbl, ProjFlags bit 7)
 ProjectileClashFrame1:
     .byte $02,$80,$01,$04,$FF,$10,$80,$00,$01,$04,$EF,$10,$80; 8549
 ProjectileClashFrame2:
@@ -123,11 +123,11 @@ ProjectileClashFrame2:
 ProjectileClashFrame3:
     .byte $02,$80,$02,$FC,$FF,$16,$18,$80,$00,$02,$FC,$EF,$16,$18,$80; 8565
 FightText:
-    .byte $01,$FF,$00,$05,$08,$EF,$1E,$20,$22,$24,$26,$80; 8574              texto "FIGHT"
+    .byte $01,$FF,$00,$05,$08,$EF,$1E,$20,$22,$24,$26,$80; 8574              text "FIGHT"
 RoundTextFlash:
-    .byte $01,$FF,$00,$07,$00,$EF,$28,$2A,$2C,$2E,$30,$32,$34,$80; 8580              variante de flash do texto de round (passos 6 e 4)
+    .byte $01,$FF,$00,$07,$00,$EF,$28,$2A,$2C,$2E,$30,$32,$34,$80; 8580              flash variant of round text (steps 6 and 4)
 RoundText1:
-    .byte $01,$FF,$00,$05,$00,$EF,$36,$38,$3A,$3C,$3E,$01,$30,$EF,$40,$80; 858E              "ROUND 1".."ROUND 4"; 85BE desenha o digito antes de "ROUND"
+    .byte $01,$FF,$00,$05,$00,$EF,$36,$38,$3A,$3C,$3E,$01,$30,$EF,$40,$80; 858E              "ROUND 1".."ROUND 4"; 85BE draws digit before "ROUND"
 RoundText2:
     .byte $01,$FF,$00,$05,$00,$EF,$36,$38,$3A,$3C,$3E,$01,$30,$EF,$42,$80; 859E
 RoundText3:
@@ -135,12 +135,12 @@ RoundText3:
 RoundText4:
     .byte $01,$FF,$00,$01,$00,$EF,$46,$05,$10,$EF,$36,$38,$3A,$3C,$3E,$80; 85BE
 TimeOverText:
-    .byte $03,$FF,$00,$04,$00,$EF,$1E,$20,$22,$24,$80; 85CE              texto "TIME OVER"
+    .byte $03,$FF,$00,$04,$00,$EF,$1E,$20,$22,$24,$80; 85CE              text "TIME OVER"
 YouLoseText:
-    .byte $03,$FF,$00,$03,$00,$EF,$00,$02,$04,$04,$20,$EF,$0C,$02,$0E,$10; 85D9              texto "YOU LOSE"
+    .byte $03,$FF,$00,$03,$00,$EF,$00,$02,$04,$04,$20,$EF,$0C,$02,$0E,$10; 85D9              text "YOU LOSE"
     .byte $80                                   ; 85E9
 YouWinText:
-    .byte $03,$FF,$00,$03,$00,$EF,$00,$02,$04,$03,$20,$EF,$06,$08,$0A,$80; 85EA              texto "YOU WIN" (metasprite de 16 bytes; cauda ate 8630 sem consumidor)
+    .byte $03,$FF,$00,$03,$00,$EF,$00,$02,$04,$03,$20,$EF,$06,$08,$0A,$80; 85EA              text "YOU WIN" (16-byte metasprite; tail to 8630 without consumer)
     .byte $08,$BF,$F3,$13,$35,$C8,$ED,$1E,$00,$0D,$BA,$FE,$0F,$23,$C7,$F9; 85FA
     .byte $15,$00,$07,$C0,$FF,$0F,$22,$C6,$FA,$15,$00,$0B,$C0,$F5,$10,$33; 860A
     .byte $C9,$F0,$1F,$00,$0B,$BD,$F6,$10,$33,$C7,$F1,$1F,$00,$0B,$BB,$F6; 861A

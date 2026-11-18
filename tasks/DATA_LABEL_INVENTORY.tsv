@@ -260,7 +260,7 @@ id	bank	addr	label	data_bytes	res_bytes	unknown	xrefs	code_refs	data_refs	commen
 259	01	01:A342	D01_A342	14	0	no	1	0	1	0	Frame	P2	Ryu: states/animations	-- frame (14 bytes) [dur=6 efe=$00/$00 fl=$0A mov=$02 vx=0 vy=0 rep=0]	.word D01_A342 ; A340 42 A3
 260	01	01:A350	D01_A350	14	0	no	1	0	1	0	Frame	P2	Ryu: states/animations	-- frame (14 bytes) [dur=100 efe=$00/$00 fl=$0A mov=$02 vx=0 vy=0 rep=0]	.word D01_A350 ; A34E 50 A3
 261	01	01:A35E	D01_A35E	21	0	no	10	0	10	0	State	P1	Ryu: states/animations	-- STATE (header, 7 bytes) [cond=$FF always \| class=$59 \| hits=0]	.word D01_A35E ; A226 5E A3
-262	01	01:A373	D01_A373	42	0	no	3	0	3	0	State	P1	Ryu: states/animations	-- STATE (header, 7 bytes) [cond=$03 CondEmPe \| class=$5A \| hits=0]	.word D01_A373 ; A008 73 A3
+262	01	01:A373	D01_A373	42	0	no	3	0	3	0	State	P1	Ryu: states/animations	-- STATE (header, 7 bytes) [cond=$03 CondStanding \| class=$5A \| hits=0]	.word D01_A373 ; A008 73 A3
 263	01	01:A39D	D01_A39D	21	0	no	1	0	1	0	State	P2	Ryu: states/animations	-- STATE (header, 7 bytes) [cond=$01 CondOpponentFarBack \| class=$5A \| hits=0]	.word D01_A39D ; A374 9D A3
 264	01	01:A3B2	D01_A3B2	14	0	no	1	0	1	0	Frame	P2	Ryu: states/animations	-- frame (14 bytes) [dur=1 efe=$00/$00 fl=$07 mov=$04 vx=0 vy=0 rep=0]	.word D01_A3B2 ; A3B0 B2 A3
 265	01	01:A3C0	D01_A3C0	7	0	no	16	0	16	0	State	P1	Ryu: states/animations	-- STATE (header, 7 bytes) [cond=$FF always \| class=$5A \| hits=0]	.word D01_A3C0 ; A376 C0 A3 (inferred)
@@ -284,19 +284,19 @@ id	bank	addr	label	data_bytes	res_bytes	unknown	xrefs	code_refs	data_refs	commen
 283	01	01:A49F	D01_A49F	14	0	no	1	0	1	0	Frame	P2	Ryu: states/animations	-- frame (14 bytes) [dur=1 efe=$00/$00 fl=$30 mov=$04 vx=-32 vy=0 rep=0]	.word D01_A49F ; A4BB 9F A4
 284	01	01:A4AD	D01_A4AD	16	0	no	1	0	1	0	Frame	P2	Ryu: states/animations	-- frame (16 bytes) [dur=1 efe=$00/$00 fl=$30 mov=$04 vx=32 vy=0 rep=7 br=$A49F]	.word D01_A4AD ; A4AB AD A4
 285	01	01:A4BD	D01_A4BD	14	0	no	1	0	1	0	Frame	P2	Ryu: states/animations	-- frame (14 bytes) [dur=36 efe=$00/$00 fl=$00 mov=$02 vx=-55 vy=0 rep=0]	.word D01_A4BD ; A4B9 BD A4
-286	01	01:A4CB	D01_A4CB	7	0	no	2	0	2	0	State	P1	Ryu: states/animations	-- STATE (header, 7 bytes) [cond=$04 CondAgachado \| class=$2A \| hits=0]	.word D01_A4CB ; A026 CB A4
+286	01	01:A4CB	D01_A4CB	7	0	no	2	0	2	0	State	P1	Ryu: states/animations	-- STATE (header, 7 bytes) [cond=$04 CondCrouching \| class=$2A \| hits=0]	.word D01_A4CB ; A026 CB A4
 287	01	01:A4D2	D01_A4D2	14	0	no	1	0	1	0	Frame	P2	Ryu: states/animations	-- frame (14 bytes) [dur=1 efe=$00/$00 fl=$30 mov=$04 vx=-32 vy=0 rep=0]	.word D01_A4D2 ; A4EE D2 A4 (inferred)
 288	01	01:A4E0	D01_A4E0	16	0	no	1	0	1	0	Frame	P2	Ryu: states/animations	-- frame (16 bytes) [dur=1 efe=$00/$00 fl=$30 mov=$04 vx=32 vy=0 rep=7 br=$A4D2]	.word D01_A4E0 ; A4DE E0 A4 (inferred)
 289	01	01:A4F0	D01_A4F0	14	0	no	1	0	1	0	Frame	P2	Ryu: states/animations	-- frame (14 bytes) [dur=19 efe=$00/$00 fl=$40 mov=$02 vx=-32 vy=0 rep=0]	.word D01_A4F0 ; A4EC F0 A4 (inferred)
-290	01	01:A4FE	D01_A4FE	7	0	no	2	0	2	0	State	P1	Ryu: states/animations	-- STATE (header, 7 bytes) [cond=$04 CondAgachado \| class=$2A \| hits=0]	.word D01_A4FE ; A028 FE A4 (inferred)
+290	01	01:A4FE	D01_A4FE	7	0	no	2	0	2	0	State	P1	Ryu: states/animations	-- STATE (header, 7 bytes) [cond=$04 CondCrouching \| class=$2A \| hits=0]	.word D01_A4FE ; A028 FE A4 (inferred)
 291	01	01:A505	D01_A505	14	0	no	1	0	1	0	Frame	P2	Ryu: states/animations	-- frame (14 bytes) [dur=1 efe=$00/$00 fl=$30 mov=$04 vx=-32 vy=0 rep=0]	.word D01_A505 ; A521 05 A5 (inferred)
 292	01	01:A513	D01_A513	16	0	no	1	0	1	0	Frame	P2	Ryu: states/animations	-- frame (16 bytes) [dur=1 efe=$00/$00 fl=$30 mov=$04 vx=32 vy=0 rep=7 br=$A505]	.word D01_A513 ; A511 13 A5 (inferred)
 293	01	01:A523	D01_A523	14	0	no	1	0	1	0	Frame	P2	Ryu: states/animations	-- frame (14 bytes) [dur=36 efe=$00/$00 fl=$40 mov=$02 vx=-45 vy=0 rep=0]	.word D01_A523 ; A51F 23 A5 (inferred)
-294	01	01:A531	D01_A531	7	0	no	7	0	7	0	State	P1	Ryu: states/animations	-- STATE (header, 7 bytes) [cond=$04 CondAgachado \| class=$2A \| hits=0]	.word D01_A531 ; A02A 31 A5 (inferred)
+294	01	01:A531	D01_A531	7	0	no	7	0	7	0	State	P1	Ryu: states/animations	-- STATE (header, 7 bytes) [cond=$04 CondCrouching \| class=$2A \| hits=0]	.word D01_A531 ; A02A 31 A5 (inferred)
 295	01	01:A538	D01_A538	14	0	no	1	0	1	0	Frame	P2	Ryu: states/animations	-- frame (14 bytes) [dur=1 efe=$00/$00 fl=$30 mov=$04 vx=-32 vy=0 rep=0]	.word D01_A538 ; A554 38 A5
 296	01	01:A546	D01_A546	16	0	no	1	0	1	0	Frame	P2	Ryu: states/animations	-- frame (16 bytes) [dur=1 efe=$00/$00 fl=$30 mov=$04 vx=32 vy=0 rep=7 br=$A538]	.word D01_A546 ; A544 46 A5
 297	01	01:A556	D01_A556	14	0	no	1	0	1	0	Frame	P2	Ryu: states/animations	-- frame (14 bytes) [dur=36 efe=$00/$00 fl=$40 mov=$02 vx=-55 vy=0 rep=0]	.word D01_A556 ; A552 56 A5
-298	01	01:A564	D01_A564	7	0	no	1	0	1	0	State	P2	Ryu: states/animations	-- STATE (header, 7 bytes) [cond=$04 CondAgachado \| class=$2A \| hits=0]	.word D01_A564 ; A03C 64 A5
+298	01	01:A564	D01_A564	7	0	no	1	0	1	0	State	P2	Ryu: states/animations	-- STATE (header, 7 bytes) [cond=$04 CondCrouching \| class=$2A \| hits=0]	.word D01_A564 ; A03C 64 A5
 299	01	01:A56B	D01_A56B	14	0	no	1	0	1	0	Frame	P2	Ryu: states/animations	-- frame (14 bytes) [dur=1 efe=$00/$00 fl=$30 mov=$04 vx=-32 vy=0 rep=0]	.word D01_A56B ; A587 6B A5
 300	01	01:A579	D01_A579	16	0	no	1	0	1	0	Frame	P2	Ryu: states/animations	-- frame (16 bytes) [dur=1 efe=$00/$00 fl=$30 mov=$04 vx=32 vy=0 rep=7 br=$A56B]	.word D01_A579 ; A577 79 A5
 301	01	01:A589	D01_A589	14	0	no	1	0	1	0	Frame	P2	Ryu: states/animations	-- frame (14 bytes) [dur=36 efe=$00/$00 fl=$40 mov=$02 vx=-55 vy=0 rep=0]	.word D01_A589 ; A585 89 A5
@@ -407,10 +407,10 @@ id	bank	addr	label	data_bytes	res_bytes	unknown	xrefs	code_refs	data_refs	commen
 406	01	01:AB5D	D01_AB5D	21	0	no	1	0	1	0	State	P2	Ryu: states/animations	-- STATE (header, 7 bytes) [cond=$02 CondOpponentNear \| class=$71 \| hits=1]	.word D01_AB5D ; AB8F 5D AB
 407	01	01:AB72	D01_AB72	14	0	no	1	0	1	0	Frame	P2	Ryu: states/animations	-- frame (14 bytes) [dur=4 efe=$03/$C0 fl=$03 mov=$04 vx=0 vy=0 rep=0]	.word D01_AB72 ; AB70 72 AB
 408	01	01:AB80	D01_AB80	14	0	no	1	0	1	0	Frame	P2	Ryu: states/animations	-- frame (14 bytes) [dur=4 efe=$00/$00 fl=$03 mov=$04 vx=0 vy=0 rep=0]	.word D01_AB80 ; AB7E 80 AB
-409	01	01:AB8E	D01_AB8E	21	0	no	1	0	1	0	State	P2	Ryu: states/animations	-- STATE (header, 7 bytes) [cond=$07 CondInputBaixo \| class=$72 \| hits=1]	.word D01_AB8E ; ABC0 8E AB
+409	01	01:AB8E	D01_AB8E	21	0	no	1	0	1	0	State	P2	Ryu: states/animations	-- STATE (header, 7 bytes) [cond=$07 CondInputDown \| class=$72 \| hits=1]	.word D01_AB8E ; ABC0 8E AB
 410	01	01:ABA3	D01_ABA3	14	0	no	1	0	1	0	Frame	P2	Ryu: states/animations	-- frame (14 bytes) [dur=4 efe=$03/$C3 fl=$03 mov=$04 vx=0 vy=0 rep=0]	.word D01_ABA3 ; ABA1 A3 AB
 411	01	01:ABB1	D01_ABB1	14	0	no	1	0	1	0	Frame	P2	Ryu: states/animations	-- frame (14 bytes) [dur=4 efe=$00/$00 fl=$03 mov=$04 vx=0 vy=0 rep=0]	.word D01_ABB1 ; ABAF B1 AB
-412	01	01:ABBF	D01_ABBF	21	0	no	1	0	1	0	State	P2	Ryu: states/animations	-- STATE (header, 7 bytes) [cond=$05 CondNoAr \| class=$74 \| hits=1]	.word D01_ABBF ; A016 BF AB
+412	01	01:ABBF	D01_ABBF	21	0	no	1	0	1	0	State	P2	Ryu: states/animations	-- STATE (header, 7 bytes) [cond=$05 CondInAir \| class=$74 \| hits=1]	.word D01_ABBF ; A016 BF AB
 413	01	01:ABD4	D01_ABD4	14	0	no	1	0	1	0	Frame	P2	Ryu: states/animations	-- frame (14 bytes) [dur=100 efe=$08/$43 fl=$00 mov=$02 vx=0 vy=0 rep=0]	.word D01_ABD4 ; ABD2 D4 AB
 414	01	01:ABE2	D01_ABE2	21	0	no	1	0	1	0	State	P2	Ryu: states/animations	-- STATE (header, 7 bytes) [cond=$FF always \| class=$81 \| hits=1]	.word D01_ABE2 ; AC30 E2 AB
 415	01	01:ABF7	D01_ABF7	14	0	no	1	0	1	0	Frame	P2	Ryu: states/animations	-- frame (14 bytes) [dur=2 efe=$00/$00 fl=$00 mov=$04 vx=0 vy=0 rep=0]	.word D01_ABF7 ; ABF5 F7 AB
@@ -422,12 +422,12 @@ id	bank	addr	label	data_bytes	res_bytes	unknown	xrefs	code_refs	data_refs	commen
 421	01	01:AC52	D01_AC52	14	0	no	1	0	1	0	Frame	P2	Ryu: states/animations	-- frame (14 bytes) [dur=6 efe=$12/$C5 fl=$01 mov=$04 vx=0 vy=0 rep=0]	.word D01_AC52 ; AC50 52 AC
 422	01	01:AC60	D01_AC60	14	0	no	1	0	1	0	Frame	P2	Ryu: states/animations	-- frame (14 bytes) [dur=10 efe=$00/$00 fl=$00 mov=$04 vx=0 vy=0 rep=0]	.word D01_AC60 ; AC5E 60 AC
 423	01	01:AC6E	D01_AC6E	14	0	no	1	0	1	0	Frame	P2	Ryu: states/animations	-- frame (14 bytes) [dur=12 efe=$00/$00 fl=$00 mov=$04 vx=0 vy=0 rep=0]	.word D01_AC6E ; AC6C 6E AC
-424	01	01:AC7C	D01_AC7C	21	0	no	1	0	1	0	State	P2	Ryu: states/animations	-- STATE (header, 7 bytes) [cond=$07 CondInputBaixo \| class=$82 \| hits=1]	.word D01_AC7C ; ACCA 7C AC
+424	01	01:AC7C	D01_AC7C	21	0	no	1	0	1	0	State	P2	Ryu: states/animations	-- STATE (header, 7 bytes) [cond=$07 CondInputDown \| class=$82 \| hits=1]	.word D01_AC7C ; ACCA 7C AC
 425	01	01:AC91	D01_AC91	14	0	no	1	0	1	0	Frame	P2	Ryu: states/animations	-- frame (14 bytes) [dur=3 efe=$12/$C5 fl=$01 mov=$04 vx=0 vy=0 rep=0]	.word D01_AC91 ; AC8F 91 AC
 426	01	01:AC9F	D01_AC9F	14	0	no	1	0	1	0	Frame	P2	Ryu: states/animations	-- frame (14 bytes) [dur=8 efe=$12/$C5 fl=$01 mov=$04 vx=0 vy=0 rep=0]	.word D01_AC9F ; AC9D 9F AC
 427	01	01:ACAD	D01_ACAD	14	0	no	1	0	1	0	Frame	P2	Ryu: states/animations	-- frame (14 bytes) [dur=24 efe=$00/$00 fl=$00 mov=$04 vx=0 vy=0 rep=0]	.word D01_ACAD ; ACAB AD AC
 428	01	01:ACBB	D01_ACBB	14	0	no	1	0	1	0	Frame	P2	Ryu: states/animations	-- frame (14 bytes) [dur=3 efe=$00/$00 fl=$00 mov=$04 vx=0 vy=0 rep=0]	.word D01_ACBB ; ACB9 BB AC
-429	01	01:ACC9	D01_ACC9	21	0	no	1	0	1	0	State	P2	Ryu: states/animations	-- STATE (header, 7 bytes) [cond=$05 CondNoAr \| class=$84 \| hits=1]	.word D01_ACC9 ; AAE0 C9 AC
+429	01	01:ACC9	D01_ACC9	21	0	no	1	0	1	0	State	P2	Ryu: states/animations	-- STATE (header, 7 bytes) [cond=$05 CondInAir \| class=$84 \| hits=1]	.word D01_ACC9 ; AAE0 C9 AC
 430	01	01:ACDE	D01_ACDE	14	0	no	1	0	1	0	Frame	P2	Ryu: states/animations	-- frame (14 bytes) [dur=8 efe=$11/$43 fl=$00 mov=$02 vx=0 vy=0 rep=0]	.word D01_ACDE ; ACDC DE AC (inferred)
 431	01	01:ACEC	D01_ACEC	14	0	no	1	0	1	0	Frame	P2	Ryu: states/animations	-- frame (14 bytes) [dur=12 efe=$00/$01 fl=$00 mov=$02 vx=0 vy=0 rep=0]	.word D01_ACEC ; ACEA EC AC (inferred)
 432	01	01:ACFA	D01_ACFA	14	0	no	1	0	1	0	Frame	P2	Ryu: states/animations	-- frame (14 bytes) [dur=100 efe=$00/$00 fl=$00 mov=$02 vx=0 vy=0 rep=0]	.word D01_ACFA ; ACF8 FA AC (inferred)
@@ -436,10 +436,10 @@ id	bank	addr	label	data_bytes	res_bytes	unknown	xrefs	code_refs	data_refs	commen
 435	01	01:AD2B	D01_AD2B	14	0	no	1	0	1	0	Frame	P2	Ryu: states/animations	-- frame (14 bytes) [dur=6 efe=$08/$83 fl=$00 mov=$04 vx=0 vy=0 rep=0]	.word D01_AD2B ; AD29 2B AD
 436	01	01:AD39	D01_AD39	14	0	no	1	0	1	0	Frame	P2	Ryu: states/animations	-- frame (14 bytes) [dur=3 efe=$00/$00 fl=$00 mov=$04 vx=0 vy=0 rep=0]	.word D01_AD39 ; AD37 39 AD
 437	01	01:AD47	D01_AD47	14	0	no	1	0	1	0	Frame	P2	Ryu: states/animations	-- frame (14 bytes) [dur=1 efe=$00/$00 fl=$00 mov=$04 vx=0 vy=0 rep=0]	.word D01_AD47 ; AD45 47 AD
-438	01	01:AD55	D01_AD55	21	0	no	1	0	1	0	State	P2	Ryu: states/animations	-- STATE (header, 7 bytes) [cond=$07 CondInputBaixo \| class=$8A \| hits=1]	.word D01_AD55 ; AD87 55 AD
+438	01	01:AD55	D01_AD55	21	0	no	1	0	1	0	State	P2	Ryu: states/animations	-- STATE (header, 7 bytes) [cond=$07 CondInputDown \| class=$8A \| hits=1]	.word D01_AD55 ; AD87 55 AD
 439	01	01:AD6A	D01_AD6A	14	0	no	1	0	1	0	Frame	P2	Ryu: states/animations	-- frame (14 bytes) [dur=4 efe=$03/$83 fl=$03 mov=$04 vx=0 vy=0 rep=0]	.word D01_AD6A ; AD68 6A AD
 440	01	01:AD78	D01_AD78	14	0	no	1	0	1	0	Frame	P2	Ryu: states/animations	-- frame (14 bytes) [dur=4 efe=$00/$00 fl=$03 mov=$04 vx=0 vy=0 rep=0]	.word D01_AD78 ; AD76 78 AD
-441	01	01:AD86	D01_AD86	21	0	no	1	0	1	0	State	P2	Ryu: states/animations	-- STATE (header, 7 bytes) [cond=$05 CondNoAr \| class=$8C \| hits=1]	.word D01_AD86 ; A012 86 AD
+441	01	01:AD86	D01_AD86	21	0	no	1	0	1	0	State	P2	Ryu: states/animations	-- STATE (header, 7 bytes) [cond=$05 CondInAir \| class=$8C \| hits=1]	.word D01_AD86 ; A012 86 AD
 442	01	01:AD9B	D01_AD9B	14	0	no	1	0	1	0	Frame	P2	Ryu: states/animations	-- frame (14 bytes) [dur=100 efe=$08/$43 fl=$00 mov=$02 vx=0 vy=0 rep=0]	.word D01_AD9B ; AD99 9B AD
 443	01	01:ADA9	D01_ADA9	21	0	no	1	0	1	0	State	P2	Ryu: states/animations	-- STATE (header, 7 bytes) [cond=$FF always \| class=$99 \| hits=1]	.word D01_ADA9 ; ADF7 A9 AD
 444	01	01:ADBE	D01_ADBE	14	0	no	1	0	1	0	Frame	P2	Ryu: states/animations	-- frame (14 bytes) [dur=4 efe=$13/$C2 fl=$00 mov=$04 vx=0 vy=0 rep=0]	.word D01_ADBE ; ADBC BE AD
@@ -452,13 +452,13 @@ id	bank	addr	label	data_bytes	res_bytes	unknown	xrefs	code_refs	data_refs	commen
 451	01	01:AE27	D01_AE27	14	0	no	1	0	1	0	Frame	P2	Ryu: states/animations	-- frame (14 bytes) [dur=4 efe=$03/$C5 fl=$00 mov=$04 vx=0 vy=0 rep=0]	.word D01_AE27 ; AE25 27 AE
 452	01	01:AE35	D01_AE35	14	0	no	1	0	1	0	Frame	P2	Ryu: states/animations	-- frame (14 bytes) [dur=10 efe=$00/$00 fl=$00 mov=$04 vx=0 vy=0 rep=0]	.word D01_AE35 ; AE33 35 AE
 453	01	01:AE43	D01_AE43	14	0	no	1	0	1	0	Frame	P2	Ryu: states/animations	-- frame (14 bytes) [dur=1 efe=$00/$00 fl=$00 mov=$04 vx=0 vy=0 rep=0]	.word D01_AE43 ; AE41 43 AE
-454	01	01:AE51	D01_AE51	21	0	no	1	0	1	0	State	P2	Ryu: states/animations	-- STATE (header, 7 bytes) [cond=$07 CondInputBaixo \| class=$9A \| hits=1]	.word D01_AE51 ; AEAD 51 AE
+454	01	01:AE51	D01_AE51	21	0	no	1	0	1	0	State	P2	Ryu: states/animations	-- STATE (header, 7 bytes) [cond=$07 CondInputDown \| class=$9A \| hits=1]	.word D01_AE51 ; AEAD 51 AE
 455	01	01:AE66	D01_AE66	14	0	no	1	0	1	0	Frame	P2	Ryu: states/animations	-- frame (14 bytes) [dur=6 efe=$11/$86 fl=$01 mov=$04 vx=0 vy=0 rep=0]	.word D01_AE66 ; AE64 66 AE
 456	01	01:AE74	D01_AE74	14	0	no	1	0	1	0	Frame	P2	Ryu: states/animations	-- frame (14 bytes) [dur=6 efe=$00/$00 fl=$00 mov=$04 vx=0 vy=0 rep=0]	.word D01_AE74 ; AE72 74 AE
 457	01	01:AE82	D01_AE82	14	0	no	1	0	1	0	Frame	P2	Ryu: states/animations	-- frame (14 bytes) [dur=8 efe=$00/$00 fl=$00 mov=$04 vx=0 vy=0 rep=0]	.word D01_AE82 ; AE80 82 AE
 458	01	01:AE90	D01_AE90	14	0	no	1	0	1	0	Frame	P2	Ryu: states/animations	-- frame (14 bytes) [dur=10 efe=$00/$00 fl=$00 mov=$04 vx=0 vy=0 rep=0]	.word D01_AE90 ; AE8E 90 AE
 459	01	01:AE9E	D01_AE9E	14	0	no	1	0	1	0	Frame	P2	Ryu: states/animations	-- frame (14 bytes) [dur=3 efe=$00/$00 fl=$00 mov=$04 vx=0 vy=0 rep=0]	.word D01_AE9E ; AE9C 9E AE
-460	01	01:AEAC	D01_AEAC	21	0	no	1	0	1	0	State	P2	Ryu: states/animations	-- STATE (header, 7 bytes) [cond=$05 CondNoAr \| class=$9C \| hits=1]	.word D01_AEAC ; AF08 AC AE
+460	01	01:AEAC	D01_AEAC	21	0	no	1	0	1	0	State	P2	Ryu: states/animations	-- STATE (header, 7 bytes) [cond=$05 CondInAir \| class=$9C \| hits=1]	.word D01_AEAC ; AF08 AC AE
 461	01	01:AEC1	D01_AEC1	14	0	no	1	0	1	0	Frame	P2	Ryu: states/animations	-- frame (14 bytes) [dur=4 efe=$12/$43 fl=$00 mov=$02 vx=0 vy=0 rep=0]	.word D01_AEC1 ; AEBF C1 AE
 462	01	01:AECF	D01_AECF	14	0	no	1	0	1	0	Frame	P2	Ryu: states/animations	-- frame (14 bytes) [dur=6 efe=$12/$43 fl=$00 mov=$02 vx=0 vy=0 rep=0]	.word D01_AECF ; AECD CF AE
 463	01	01:AEDD	D01_AEDD	14	0	no	1	0	1	0	Frame	P2	Ryu: states/animations	-- frame (14 bytes) [dur=5 efe=$00/$00 fl=$00 mov=$02 vx=0 vy=0 rep=0]	.word D01_AEDD ; AEDB DD AE
@@ -469,12 +469,12 @@ id	bank	addr	label	data_bytes	res_bytes	unknown	xrefs	code_refs	data_refs	commen
 468	01	01:AF2A	D01_AF2A	14	0	no	1	0	1	0	Frame	P2	Ryu: states/animations	-- frame (14 bytes) [dur=5 efe=$00/$00 fl=$00 mov=$02 vx=0 vy=0 rep=0]	.word D01_AF2A ; AF28 2A AF
 469	01	01:AF38	D01_AF38	14	0	no	1	0	1	0	Frame	P2	Ryu: states/animations	-- frame (14 bytes) [dur=4 efe=$00/$00 fl=$00 mov=$02 vx=0 vy=0 rep=0]	.word D01_AF38 ; AF36 38 AF
 470	01	01:AF46	D01_AF46	14	0	no	1	0	1	0	Frame	P2	Ryu: states/animations	-- frame (14 bytes) [dur=100 efe=$00/$00 fl=$00 mov=$02 vx=0 vy=0 rep=0]	.word D01_AF46 ; AF44 46 AF
-471	01	01:AF54	D01_AF54	21	0	no	1	0	1	0	State	P2	Ryu: states/animations	-- STATE (header, 7 bytes) [cond=$08 CondProjetilLivre \| class=$B1 \| hits=0]	.word D01_AF54 ; A01A 54 AF 6 ponteiros de transicao dos especiais do Ryu (ram_0326 aponta para ca): indexados por CmdMo
+471	01	01:AF54	D01_AF54	21	0	no	1	0	1	0	State	P2	Ryu: states/animations	-- STATE (header, 7 bytes) [cond=$08 CondProjectileFree \| class=$B1 \| hits=0]	.word D01_AF54 ; A01A 54 AF 6 ponteiros de transicao dos especiais do Ryu (ram_0326 aponta para ca): indexados por CmdMo
 472	01	01:AF69	D01_AF69	14	0	no	1	0	1	0	Frame	P2	Ryu: states/animations	-- frame (14 bytes) [dur=6 efe=$00/$00 fl=$00 mov=$04 vx=0 vy=0 rep=0]	.word D01_AF69 ; AF67 69 AF
 473	01	01:AF77	D01_AF77	14	0	no	1	0	1	0	Frame	P2	Ryu: states/animations	-- frame (14 bytes) [dur=1 efe=$00/$00 fl=$00 mov=$04 vx=0 vy=0 rep=0]	.word D01_AF77 ; AF75 77 AF
 474	01	01:AF85	D01_AF85	14	0	no	1	0	1	0	Frame	P2	Ryu: states/animations	-- frame (14 bytes) [dur=1 efe=$00/$0B fl=$00 mov=$04 vx=0 vy=0 rep=0]	.word D01_AF85 ; AF83 85 AF
 475	01	01:AF93	D01_AF93	14	0	no	1	0	1	0	Frame	P2	Ryu: states/animations	-- frame (14 bytes) [dur=40 efe=$00/$00 fl=$00 mov=$04 vx=0 vy=0 rep=0]	.word D01_AF93 ; AF91 93 AF
-476	01	01:AFA1	D01_AFA1	21	0	no	1	0	1	0	State	P2	Ryu: states/animations	-- STATE (header, 7 bytes) [cond=$08 CondProjetilLivre \| class=$B9 \| hits=0]	.word D01_AFA1 ; A01C A1 AF
+476	01	01:AFA1	D01_AFA1	21	0	no	1	0	1	0	State	P2	Ryu: states/animations	-- STATE (header, 7 bytes) [cond=$08 CondProjectileFree \| class=$B9 \| hits=0]	.word D01_AFA1 ; A01C A1 AF
 477	01	01:AFB6	D01_AFB6	14	0	no	1	0	1	0	Frame	P2	Ryu: states/animations	-- frame (14 bytes) [dur=6 efe=$00/$00 fl=$00 mov=$04 vx=0 vy=0 rep=0]	.word D01_AFB6 ; AFB4 B6 AF
 478	01	01:AFC4	D01_AFC4	14	0	no	1	0	1	0	Frame	P2	Ryu: states/animations	-- frame (14 bytes) [dur=1 efe=$00/$00 fl=$00 mov=$04 vx=0 vy=0 rep=0]	.word D01_AFC4 ; AFC2 C4 AF
 479	01	01:AFD2	D01_AFD2	14	0	no	1	0	1	0	Frame	P2	Ryu: states/animations	-- frame (14 bytes) [dur=1 efe=$01/$0B fl=$00 mov=$04 vx=0 vy=0 rep=0]	.word D01_AFD2 ; AFD0 D2 AF

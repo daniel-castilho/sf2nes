@@ -75,7 +75,7 @@ Class families (+5) — high part chooses sound and behavior, low 3 bits are pos
 | `$70`–`$98` | plays sound effect on entry (`StateSetByte`); move in progress |
 | `$99`–`$9F` | same, no sound |
 | `$A0`–`$E0` | plays fighter voice on entry; `$A0`–`$A9` = turn (back input turns opponent = throw) |
-| `$F0`+ | fallen (`CondVitoria` checks `≥ $F0`) |
+| `$F0`+ | fallen (`CondVictory` checks `≥ $F0`) |
 
 Ryu special moves (reference): hadouken `$B1`/`$B9` (damage from projectile, 0 hits), shoryuken `$C4`/`$CC` (2 hits), tatsumaki `$D4`/`$DC` (6 hits).
 
@@ -84,7 +84,7 @@ Real census of 39 classes (71 states): `29`×5 `2A`×5 `30`×2 `31`×8 `32`×4 `
 Real example (1st state in bank, victory pose):
 
 ```
-D01_A0B0:   ; cond=$0A CondVitoria | class=$E9 | hits=0
+D01_A0B0:   ; cond=$0A CondVictory | class=$E9 | hits=0
     .byte $0A          ; +0  victory
     .word D01_A10B     ; +1/+2 alternative
     .word D01_A12E     ; +3/+4 natural chain
@@ -99,20 +99,20 @@ The +0 header byte dispatches via `StateCondDispatch` (`3F:E168`): table `3F:E17
 
 | # | Name (`3F:xxxx`) | True when |
 |---|------------------|-----------|
-| `$00` | CondOponenteAtaca (E189) | me standing/crouching AND opponent in reaction (`$70`–`$98`), attack (`$B0`–`$E0`) or projectile in air |
-| `$01` | CondOponenteLongeCostas (E1B1) | `\|ΔX\| ≥ $0F` and my back to opponent; returns `$40` (flip bit) |
-| `$02` | CondOponentePerto (E1D6) | `\|ΔX\| < $21` |
-| `$03` | CondEmPe (E1ED) | bit 0 of my class |
-| `$04` | CondAgachado (E1F3) | bit 1 of my class |
-| `$05` | CondNoAr (E1F9) | `FighterY < FloorY` |
-| `$06` | CondNoChaoOuVelX (E204) | on ground or sliding (`VelX`/`VelXSub` ≠ 0) |
-| `$07` | CondInputBaixo (E212) | `InputDir` = `$08`/`$0B`/`$0C`; returns own `InputDir` |
-| `$08` | CondProjetilLivre (E224) | my projectile slot free (`ProjX` = 0) |
-| `$09` | CondPodeAgarrar (E22E) | `\|ΔX\| < $18`, both on ground, direction forward/back and opponent class < `$30` or `$50`–`$9F` |
-| `$0A` | CondVitoria (E271) | round mine, opponent fallen (`≥ $F0`), no projectiles in air and voice channel free |
-| `$0B` | CondRoundPerdido (E296) | round ended not mine (works for draw) |
+| `$00` | CondOpponentAttacks (E189) | me standing/crouching AND opponent in reaction (`$70`–`$98`), attack (`$B0`–`$E0`) or projectile in air |
+| `$01` | CondOpponentFarBack (E1B1) | `\|ΔX\| ≥ $0F` and my back to opponent; returns `$40` (flip bit) |
+| `$02` | CondOpponentNear (E1D6) | `\|ΔX\| < $21` |
+| `$03` | CondStanding (E1ED) | bit 0 of my class |
+| `$04` | CondCrouching (E1F3) | bit 1 of my class |
+| `$05` | CondInAir (E1F9) | `FighterY < FloorY` |
+| `$06` | CondOnGroundOrVelX (E204) | on ground or sliding (`VelX`/`VelXSub` ≠ 0) |
+| `$07` | CondInputDown (E212) | `InputDir` = `$08`/`$0B`/`$0C`; returns own `InputDir` |
+| `$08` | CondProjectileFree (E224) | my projectile slot free (`ProjX` = 0) |
+| `$09` | CondCanGrab (E22E) | `\|ΔX\| < $18`, both on ground, direction forward/back and opponent class < `$30` or `$50`–`$9F` |
+| `$0A` | CondVictory (E271) | round mine, opponent fallen (`≥ $F0`), no projectiles in air and voice channel free |
+| `$0B` | CondRoundLost (E296) | round ended not mine (works for draw) |
 
-`CondOponenteLongeCostas` returns full mirror byte (`$00`/`$40`): outside walker (which only tests ≠ 0), this is the value written to `FighterFlip` to turn — see bit 4 flag in §6.
+`CondOpponentFarBack` returns full mirror byte (`$00`/`$40`): outside walker (which only tests ≠ 0), this is the value written to `FighterFlip` to turn — see bit 4 flag in §6.
 
 ## 5. Transition walker
 
@@ -121,7 +121,7 @@ Per frame, for each fighter (`FighterUpdate` → `3F:EFCE`): input/IA → `Input
 **`StateCheckTransitions` (`3F:E0CE`)** receives list in `zp_D7/zp_D8` and origin in `zp_DD` (`$01` special, `$02` button, `$04` guard/damage/reaction). Walks:
 
 1. Pre-filters by origin: with `zp_DD=$04`, a node equal to current state is skipped (unless current class `& $F8` is `$28` — guard `$28`–`$2F` — or `$30` — reaction `$30`–`$37`); with `zp_DD=$02` during a move with sound (class `$70`–`$98`), only current node passes.
-2. Outside these cases: if my class doesn't have bit 2 (airborne, §3), test `CondOponenteLongeCostas` — back turned and far, node skipped (doesn't react from behind).
+2. Outside these cases: if my class doesn't have bit 2 (airborne, §3), test `CondOpponentFarBack` — back turned and far, node skipped (doesn't react from behind).
 3. Test node: `+0 ≥ $80` = true immediately; otherwise call condition (§4).
 4. True → `TransApply` (`3F:E13B`): writes `FighterNextPtr` = node address; for classes `$28`–`$40` and `$B0`–`$E0` forces `AnimTimer=1` (move starts next frame), unless current frame has flag bit 3.
 5. False → `TransNextNode` (`3F:E129`): follows +1/+2 and repeats; pointer `0` = end, nothing changes.
@@ -172,7 +172,7 @@ The loop works (`AnimAdvance`): with `LoopRepeat` (+11) ≠ 0, decrements and, w
 Real example — 3rd frame of far strong kick (state `$ABE2`: 1st `ABE9`, 2nd `ABF7`) and, below, a guard tremor loop:
 
 ```
-D01_AC05:  ; dur=6 efe=$12/$C2 fl=$00 mov=$04 vx=0 vy=0 rep=0
+D01_AC05:  ; dur=6 fx=$12/$C2 fl=$00 mov=$04 vx=0 vy=0 rep=0
     .byte $06           ; +0  6 frames
     .word D00_87E2      ; +1/+2 metasprite
     .word D00_9356      ; +3/+4 collision boxes (example from section 10)
@@ -181,8 +181,8 @@ D01_AC05:  ; dur=6 efe=$12/$C2 fl=$00 mov=$04 vx=0 vy=0 rep=0
     .byte $00,$04,$00,$00,$00   ; +7..+11
     .word D01_AC13      ; +12/+13 next frame
 
-D01_A439:  ; dur=1 efe=$00/$00 fl=$30 mov=$04 vx=-32 vy=0 rep=0
-D01_A447:  ; dur=1 efe=$00/$00 fl=$30 mov=$04 vx=32 vy=0 rep=7 br=$A439 (16 bytes)
+D01_A439:  ; dur=1 fx=$00/$00 fl=$30 mov=$04 vx=-32 vy=0 rep=0
+D01_A447:  ; dur=1 fx=$00/$00 fl=$30 mov=$04 vx=32 vy=0 rep=7 br=$A439 (16 bytes)
 ```
 
 In the example: `AC05` is a typical attack frame — duration 6, damage 18 (`$12`), type `$C2` (blockable in both postures, reaction class 2 — §7), collision box active (§10) and no displacement (mov `$04`, vx=0). `A439`/`A447` are the guard tremor of orphan state `$A432` (§2): ±32 (`±$20`) = ±2 px per frame, loop `A447 → A439` repeated 7×, flag bit 5 (exempt from edge clamp, §8). Real walk is another state — `D01_A16D` (direction table "forward" entry, class `$61`): frames `rep=0` with flags `$17`/`$1F` (accept direction, button and special) and `vx = $17` (23) ≈ 1.4 px per frame, forward only (§8).

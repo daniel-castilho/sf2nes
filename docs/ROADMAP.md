@@ -101,7 +101,7 @@ AI is very good at reading 40 lines of 6502 and saying what they do. It is bad a
 |------------------|---------------|
 | a name or comment | `make gen && make` → continues identical (a name never changes a byte) |
 | "this variable is P2's energy" | `SF2_HOLD="0F:01:2200:99999"` and watch the match; or per-frame dump (`SF2_RAMDUMP=1`) |
-| "this routine only runs on selection" | the `; modos:` line above the routine already says where it ran |
+| "this routine only runs on selection" | the `; modes:` line above the routine already says where it ran |
 | "this is a pointer" | `trace/pointers.txt`; if not there, run `ptrtrace.lua` on a scenario that passes through it |
 | a change that shouldn't alter anything | `tools/mesen/regress.sh build/…nes` |
 | a fix | a test script that fails before and passes after (model: `reset_test.lua`) |
@@ -109,7 +109,7 @@ AI is very good at reading 40 lines of 6502 and saying what they do. It is bad a
 ### Work cycle (used in Step 1; valid for next ones)
 
 1. Pick an unnamed routine: `python3 tools/show.py 3F:E189 60`.
-2. Give AI **together**: the routine, routines it calls, relevant parts of `docs/RAM.md` and `docs/ARCHITECTURE.md`. Lines `; <-` (who calls) and `; modos:` already come in `show.py` output.
+2. Give AI **together**: the routine, routines it calls, relevant parts of `docs/RAM.md` and `docs/ARCHITECTURE.md`. Lines `; <-` (who calls) and `; modes:` already come in `show.py` output.
 3. Ask for a **hypothesis with test**: "what does this routine do, what name would you give it, and what emulator experiment would confirm or refute that?".
 4. Run the experiment. Only then record in `annotations/sf2ne.ann` (`label`, `ram`, `comment`, `block`).
 5. `make gen && make`. Commit.

@@ -127,7 +127,7 @@ A frame can be **normal** (14 bytes) or **with loop** (16 bytes).
 | Metasprite | metasprite label in frame bank | `MsParado`, `MsSoco` |
 | Collision | collision box label | `ColPe`, `ColAgachado` |
 | Bank | PRG bank symbol | `BancoEstadosRyu`, `BancoFramesRyu` |
-| Condition | transition condition name (when known) | `CondOponentePerto`, `CondNoAr` |
+| Condition | transition condition name (when known) | `CondOpponentNear`, `CondInAir` |
 | Class | state class name (when known) | `ClaseEmPe`, `ClaseAgachado` |
 | Effect | effect type name (when known) | `EfeitoProjetil`, `EfeitoSom` |
 
@@ -227,7 +227,7 @@ banco_frames = "BancoFramesRyu"
 
 [[personagem.estado]]
 id = "estado_exemplo"
-condicao_entrada = { simbolo = "CondOponentePerto", bruto = 0x02 }  # hypothesis
+condicao_entrada = { simbolo = "CondOpponentNear", bruto = 0x02 }  # hypothesis
 proxima_alternativa = nulo
 cadeia_natural = "estado_seguinte"
 classe = { simbolo = "ClasseEmPe", bruto = 0x59 }  # confirm

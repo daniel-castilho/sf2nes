@@ -5,4 +5,4 @@
     .byte $40            ; CHR-ROM: 64 x 8K
     .byte $51            ; flags 6: mapper (low nibble) = 5, vertical mirroring
     .byte $08            ; flags 7: NES 2.0
-    .byte $00,$00,$00,$00,$02,$00,$00,$00   ; byte 12 = $02: multi-regiao
+    .byte $00,$00,$00,$00,$02,$00,$00,$00   ; byte 12 = $02: multi-region
