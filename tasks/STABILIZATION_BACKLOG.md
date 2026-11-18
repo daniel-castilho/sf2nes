@@ -14,7 +14,7 @@ This backlog separates work into three distinct tracks. **D-01 and D-03 were res
 - **Phase 2** — specification of text authoring format for states/frames and decision on canonical source → **DECISION ACCEPTED (D-02, 2026-11-17)** (`tasks/STATE_DATA_FORMAT_DECISION.md`, external TOML format; no implementation authorized). Did not block symbol naming.
 - **Phase 3** — naming driven by criticality and evidence → **COMPLETED — REPORT DELIVERED** (`tasks/PHASE_3_EXECUTION_REPORT.md` §10; commits through `53b99f4`, full list in §10.1). **715 labels renamed; 886 data labels remain automatic** by scope decision.
 - **Phase 4** — documentary reconciliation and technical decision registration → **COMPLETED (2026-11-17)** (`docs/PROJECT_STATUS.md` §12; documentation only, no build/test).
-- **Phase 5** — future validation proposal, without executing tests.
+- **Phase 5** — future validation proposal → **PLAN PROPOSED — D-05 PENDING** ([`tasks/PROJECT_VALIDATION_PLAN.md`](PROJECT_VALIDATION_PLAN.md)); tests, builds and emulator runs are not authorized.
 
 Refer to `tasks/PROJECT_STABILIZATION_EXECUTION_PLAN.md` and `docs/PROJECT_STATUS.md` instead of duplicating complete requirements.
 
