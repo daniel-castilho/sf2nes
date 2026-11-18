@@ -1808,12 +1808,50 @@ label 37:F4E5 ScreenTitle
 label 37:F391 TextDisclaimer
 label 37:F68F TextPushStart
 
+# ------------------------------------------------------------------------------------------------
+# Phase 3 data naming batch: 17 automatic data labels (bank $37).
+# Evidence and deferred streams: tasks/DATA_NAMING_37.md. Labels and comments only; no byte change.
+# ------------------------------------------------------------------------------------------------
+label 37:E0FA FighterVoiceContTbl
+comment 37:E0FA continuation byte of each (sample, continuation) pair; offset +1 of FighterVoiceTbl (same 16-byte records)
+label 37:E199 StateClassSfxTbl
+comment 37:E199 state class 0-5 -> sfx number for FamiToneSfxPlay; stream offset comes from SfxChannelOfs
+label 37:E1A7 SfxStreamPtrTbl
+comment 37:E1A7 sfx number -> stream pointer (11 words); entry 10 shares the tail at E375
+label 37:E8AD _FT2DutyTable
+comment 37:E8AD pulse duty values (FamiTone2 duty_table)
+label 37:E8B1 _FT2NoiseDutyTable
+comment 37:E8B1 noise duty values (FamiTone2 duty_table_nz)
+label 37:EA27 _FT2VibratoOffsetTable
+comment 37:EA27 vibrato depth -> row offset in _FT2VibratoTable (FamiTone2 Vib_Offset)
+label 37:EA33 _FT2VibratoTable
+comment 37:EA33 10x11 signed vibrato offsets (FamiTone2 Vib_Table)
+label 37:EE74 _FT2DummyEnvelope
+comment 37:EE74 silent envelope used when music stops (FamiTone2 _FT2DummyEnvelope)
+label 37:F293 SelectCursorFighterTbl
+comment 37:F293 cursor 0-7 -> fighter index used by FighterChar
+label 37:F29B SelectFlagPtrLoTbl
+comment 37:F29B cursor -> flag metasprite pointer, low half
+label 37:F2A3 SelectFlagPtrHiTbl
+comment 37:F2A3 cursor -> flag metasprite pointer, high half
+label 37:F2AB SelectFlagXTbl
+comment 37:F2AB cursor -> flag sprite base X
+label 37:F2B3 SelectFlagYTbl
+comment 37:F2B3 cursor -> flag sprite base Y
+label 37:F2BB SelectCursorXTbl
+comment 37:F2BB cursor -> cursor sprite X
+label 37:F2C3 SelectCursorYTbl
+comment 37:F2C3 cursor -> cursor sprite Y
+label 37:F699 TitlePalette
+comment 37:F699 title 12-byte palette, copied to PaletteBuf and PaletteBuf+12
+label 37:FF9F ResetVectorFill
+comment 37:FF9F 91 bytes of $FF; the reset vector points here when bank $37 is mapped (docs/BUGS.md)
 
 # --- rotinas e continuacoes nomeadas na revisao de documentacao (ordem de endereco) ---
 label 37:E394 TitleDrawPushStart
 comment 37:E394 restaura as 11 cores do PRESS START no PPU ($2ACB) durante o fade do titulo
 label 37:E40B SfxPlayByState
-comment 37:E40B sound effect by state class: channel at D37_E199[x], sfx at SfxChannelOfs[state]
+comment 37:E40B sound effect by state class: sfx number from StateClassSfxTbl[class], stream offset from SfxChannelOfs[slot]
 label 37:E6DD _FT2UpdateEnvelopes
 comment 37:E6DD loop of 5 voices: updates volume envelopes (X=0)
 label 37:E6DF _FT2EnvProcess
@@ -1888,9 +1926,9 @@ comment 37:F264 A na borda: confirma o lutador atual (P1/P2)
 patch 37:F06B C9 02 90 07
 comment 37:F06B Ryu (0) e Ken (1) confirmam; os demais seguem bloqueados
 # Mapa de selecao: o narrador anuncia o Japao (ram_03B5 = 0, destino = Ryu). O pisca-pisca deve
-# ficar na posicao do Japao (indice 0), nao na dos EUA (indice 4, posicao do Ken). D37_F2BB sao
-# as colunas X e D37_F2C3 as linhas Y; o indice 4 (Ken) e' o byte $F2C7. O sprite do Ken no mapa
-# (D37_F2AB/F2B3) nao muda: so' a bandeira piscante aponta para o destino.
+# ficar na posicao do Japao (indice 0), nao na dos EUA (indice 4, posicao do Ken). SelectCursorXTbl sao
+# as colunas X e SelectCursorYTbl as linhas Y; o indice 4 (Ken) e' o byte SelectCursorYTbl+4. O sprite do Ken no mapa
+# (SelectFlagXTbl/SelectFlagYTbl) nao muda: so' a bandeira piscante aponta para o destino.
 label 37:F27B SelectNextPlayer
 comment 37:F27B passa ao outro jogador (X=1 -> 0) ou encerra
 label 37:F57E TitleLoop
@@ -2215,7 +2253,7 @@ label 20:84E5 FlagJapan
 label 20:84EE FlagThailand
 label 20:84F7 FlagUsa
 label 20:8500 FlagUssr
-comment 20:84D3 selection flags (D37_F29B); 84EE also used by M.Bison
+comment 20:84D3 selection flags (SelectFlagPtrLoTbl); 84EE also used by M.Bison
 
 # --- end of round ---
 label 20:848B RoundEndDrawTieAltMetasprite
@@ -2665,7 +2703,7 @@ alt DEST_FLAG_BLINK 37:EFF0 3
 |    jsr DestFlagBlink
 
 # after drawing cursor flag, adds destination flag. Hook replaces
-# "lda D37_F293,x"; routine returns A with same fighter index for original "sta FighterChar".
+# "lda SelectCursorFighterTbl,x"; routine returns A with same fighter index for original "sta FighterChar".
 alt DEST_FLAG_BLINK 37:F066 3
 |    jsr DestFlagOam
 
@@ -2718,7 +2756,7 @@ alt DEST_FLAG_BLINK 37:F6A5 C0
 |    sta OamBuf+20               ; sprite 5 of cursor country
 |DestFlagDraw:
 |    ldx zp_E9
-|    lda D37_F293,x              ; returns original index for "sta FighterChar"
+|    lda SelectCursorFighterTbl,x; returns original index for "sta FighterChar"
 |    rts
 |
 |DestFlagRestore:

@@ -95,7 +95,7 @@ FightTextZoomMedium:
 FightTextZoomLarge:
     .byte $01,$FF,$00,$06,$04,$EF,$60,$62,$64,$66,$68,$6A,$80; 84C6
 FlagBrazil:
-    .byte $00,$FF,$00,$02,$00,$EF,$04,$06,$80   ; 84D3              bandeiras da selecao (D37_F29B); 84EE tambem usada por M.Bison
+    .byte $00,$FF,$00,$02,$00,$EF,$04,$06,$80   ; 84D3              bandeiras da selecao (SelectFlagPtrLoTbl); 84EE tambem usada por M.Bison
 FlagChina:
     .byte $00,$FF,$00,$02,$00,$EF,$08,$0A,$80   ; 84DC
 FlagJapan:

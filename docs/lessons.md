@@ -277,12 +277,12 @@ Bank `$00` is the only Ryu code bank modified, and only in those two bytes.
 
 ---
 
-## 10. Appendix — what the `$3C`/`$3F`/`$20`/`$36`/`$3B` data naming batches taught
+## 10. Appendix — what the `$3C`/`$3F`/`$20`/`$36`/`$3B`/`$37` data naming batches taught
 
-The data batches (33 labels from `$3C`, 15 from `$3F`, 30 from `$20`, 27 from `$36` and 35 from `$3B`, see
-`tasks/DATA_NAMING_3C.md`, `tasks/DATA_NAMING_3F.md`, `tasks/DATA_NAMING_20.md`,
-`tasks/DATA_NAMING_36.md` and `tasks/DATA_NAMING_3B.md`) did not change bytes, but exposed these reading
-pitfalls:
+The data batches (33 labels from `$3C`, 15 from `$3F`, 30 from `$20`, 27 from `$36`, 35 from `$3B` and
+17 from `$37`, see `tasks/DATA_NAMING_3C.md`, `tasks/DATA_NAMING_3F.md`, `tasks/DATA_NAMING_20.md`,
+`tasks/DATA_NAMING_36.md`, `tasks/DATA_NAMING_3B.md` and `tasks/DATA_NAMING_37.md`) did not change
+bytes, but exposed these reading pitfalls:
 
 * **Do not classify a bank by its address.** Initial triage treated `$29`/`$2D` as "AI" because they are
   near the engine; generated headers show they are **FamiTone2 music** (173 labels). Reading the header
@@ -329,6 +329,21 @@ pitfalls:
   count gave 1,011/456/471/61 bytes for the `$3B` streams; the correct decode gives exactly 1,024
   (`VersusBgRle`) and 480+480+64 (`SelectBgTopRle`/`SelectBgBottomRle`/`SelectBgAttrRle`). Sanity-check a
   decoded size against the nametable/attribute geometry before naming the stream.
+* **A table at `base+1` is a column, not a second array.** In `$37`, `D37_E0FA` is literally
+  `FighterVoiceTbl+1`: `VoicePlayFighter` reads the sample at `FighterVoiceTbl,y` and the continuation at
+  `FighterVoiceTbl+1,y`, with `y = FighterChar*16 + offset`. Naming it `FighterVoiceContTbl` is useful
+  only if the comment says it is the odd column of the same 16-byte records; otherwise the next reader
+  treats it as an independent table and may try to resize it.
+* **Match engine tables against the upstream source before inventing names.** The `$37` bytes
+  `$30,$70,$B0,$F0`, the 10×11 vibrato table and the three-byte dummy envelope match FamiTone2
+  `duty_table`, `Vib_Table` and `_FT2DummyEnvelope` byte-for-byte in the public v1.12/v1.15 sources.
+  That gives HIGH confidence without executing the ROM; the project still keeps its `_FT2`/`Table`
+  spelling instead of copying the upstream identifiers.
+* **A valid pointer does not prove an event name.** The ten sfx streams of `$37` are valid FamiTone2
+  command sequences and are reachable from `StateClassSfxTbl`, `HitSfxTbl` and `EffectParam`, but the
+  actual sound identity (hit, block, projectile, …) needs audio/runtime confirmation. They stayed
+  automatic (P3); naming them `SfxStream0..9` would only restate the index, and naming them by event
+  would assert more than the static evidence supports.
 * **Translation can desynchronize the generator.** After `fa7c215`, `annotations/sf2ne.ann` is in English
   while the committed `src/*.s` still carry the pre-translation Portuguese comments. `make gen` rewrites
   the file headers back to Portuguese (the strings are hardcoded in `tools/disasm.py`) and translates the
@@ -337,5 +352,6 @@ pitfalls:
   labels only; a dedicated regeneration/translation commit is still pending.
 
 **Practical rule:** for each batch, (1) read the consumer, (2) propose name + confidence, (3) apply only
-labels/comments, (4) validate with `make gen`, `make` and identical SHA-1, (5) confirm that no `.byte`/
-`.word` operand changed. The SHA-1 is the proof that naming is cosmetic.
+labels/comments, (4) validate `make gen` in a scratch copy while the translation is pending, then run
+`make` and compare the SHA-1, (5) confirm that no `.byte`/`.word` operand changed. The SHA-1 is the proof
+that naming is cosmetic.

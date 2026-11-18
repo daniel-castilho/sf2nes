@@ -40,10 +40,10 @@ Read in this order:
 
 ## What is still **not** ready
 
-**Current focus — stabilization and maintainability.** Implementation of new characters and gameplay features is paused, not cancelled. Phase 3 naming was closed on 2026-11-16 (`tasks/PHASE_3_EXECUTION_REPORT.md` §10); 1,073 automatic data labels remain, kept as P3/opaque backlog in `tasks/DATA_LABEL_INVENTORY.tsv`. The next work cycle will be defined from `tasks/NAMING_CANDIDATES.md`, `docs/PROJECT_STATUS.md` and `tasks/PROJECT_STABILIZATION_EXECUTION_PLAN.md`.
+**Current focus — stabilization and maintainability.** Implementation of new characters and gameplay features is paused, not cancelled. Phase 3 naming was closed on 2026-11-16 (`tasks/PHASE_3_EXECUTION_REPORT.md` §10); 1,056 automatic data labels remain, kept as P3/opaque backlog in `tasks/DATA_LABEL_INVENTORY.tsv`. The next work cycle will be defined from `tasks/NAMING_CANDIDATES.md`, `docs/PROJECT_STATUS.md` and `tasks/PROJECT_STABILIZATION_EXECUTION_PLAN.md`.
 
-There are 2,145 label definitions (2,141 unique names): **1,068 semantic** and **1,073 automatic data labels**
-  (`D01_A4CB`…). **No automatic code labels remain** (`L3F_E4DA`…): the P0/P1, P2 and FamiTone2 batches of Phase 3 named the 379 that existed. The `$3C` (33), `$3F` (15), `$20` (30), `$36` (27) and `$3B` (35) data batches already named fiches, palettes, portraits, the fight core, HUD/effects, the stage backgrounds and the fight/VS/select HUD (`tasks/DATA_NAMING_3C.md`, `tasks/DATA_NAMING_3F.md`, `tasks/DATA_NAMING_20.md`, `tasks/DATA_NAMING_36.md`, `tasks/DATA_NAMING_3B.md`); the remaining 1,073 are inventoried in
+There are 2,145 label definitions (2,140 unique names): **1,084 semantic** and **1,056 automatic data labels**
+  (`D01_A4CB`…). **No automatic code labels remain** (`L3F_E4DA`…): the P0/P1, P2 and FamiTone2 batches of Phase 3 named the 379 that existed. The `$3C` (33), `$3F` (15), `$20` (30), `$36` (27), `$3B` (35) and `$37` (17) data batches already named fiches, palettes, portraits, the fight core, HUD/effects, the stage backgrounds, the fight/VS/select HUD and the sound/select/title tables (`tasks/DATA_NAMING_3C.md`, `tasks/DATA_NAMING_3F.md`, `tasks/DATA_NAMING_20.md`, `tasks/DATA_NAMING_36.md`, `tasks/DATA_NAMING_3B.md`, `tasks/DATA_NAMING_37.md`); the remaining 1,056 are inventoried in
   `tasks/DATA_LABEL_INVENTORY.tsv`.
   Of the variables, 78 are named. The Phase 3 inventory is in `tasks/NAMING_CANDIDATES.md`.
 * **Partially documented data formats:** metasprites and states are understood; collision boxes,

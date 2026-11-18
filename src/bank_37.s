@@ -31,7 +31,7 @@ CountryVoiceTbl:
     .byte $0A,$0C,$0D,$0C,$0B,$0A,$0C,$0F,$0F,$0E; E0EF              voz (nome do pais) de cada um dos 10 personagens na tela de selecao
 FighterVoiceTbl:
     .byte $18                                   ; E0F9              16 bytes por personagem: pares (amostra, continuacao) para cada voz; $FF = nenhuma
-D37_E0FA:
+FighterVoiceContTbl:
     .byte $FF,$1B,$FF,$1B,$FF,$1C,$1D,$1C,$1D,$1E,$1F,$1E,$1F,$FF,$FF,$18; E0FA
     .byte $FF,$1B,$FF,$1B,$FF,$1C,$1D,$1C,$1D,$1E,$1F,$1E,$1F,$FF,$FF,$19; E10A
     .res 47, $FF                                ; E11A
@@ -40,14 +40,14 @@ D37_E0FA:
     .byte $1A                                   ; E169
     .res 31, $FF                                ; E16A
     .byte $18,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF; E189
-D37_E199:
+StateClassSfxTbl:
     .byte $02,$03,$04,$02,$03,$04               ; E199
 SfxChannelOfs:
     .byte $00,$0F,$1E,$2D                       ; E19F
 SfxData:
-    .word D37_E1A7                              ; E1A3  A7 E1       efeitos sonoros no formato FamiTone2 (lista de ponteiros + fluxos de escrita na APU)
-    .word D37_E1A7                              ; E1A5  A7 E1       (inferido)
-D37_E1A7:
+    .word SfxStreamPtrTbl                       ; E1A3  A7 E1       efeitos sonoros no formato FamiTone2 (lista de ponteiros + fluxos de escrita na APU)
+    .word SfxStreamPtrTbl                       ; E1A5  A7 E1       (inferido)
+SfxStreamPtrTbl:
     .word D37_E1BD                              ; E1A7  BD E1
     .word D37_E1EC                              ; E1A9  EC E1
     .word D37_E20C                              ; E1AB  0C E2
@@ -171,8 +171,8 @@ SfxPlay_Select:
 ; <- farjmp StateSetByte
 ; modos: luta
 SfxPlayByState:
-    ldx zp_DC                                   ; E40B  A6 DC       efeito sonoro por classe de estado: canal em D37_E199[x], sfx em SfxChannelOfs[estado]
-    lda D37_E199,x                              ; E40D  BD 99 E1    [idx $00..$05]
+    ldx zp_DC                                   ; E40B  A6 DC       efeito sonoro por classe de estado: sfx em StateClassSfxTbl[classe], canal em SfxChannelOfs[slot]
+    lda StateClassSfxTbl,x                      ; E40D  BD 99 E1    [idx $00..$05]
     ldy zp_DB                                   ; E410  A4 DB
     ldx SfxChannelOfs,y                         ; E412  BE 9F E1    [idx $00..$01]
     jsr FamiToneSfxPlay                         ; E415  20 B0 ED
@@ -222,7 +222,7 @@ VoicePlayFighter:
     jsr VoicePlay                               ; E451  20 27 E4
     ldx zp_DB                                   ; E454  A6 DB
     ldy zp_DC                                   ; E456  A4 DC
-    lda D37_E0FA,y                              ; E458  B9 FA E0    [idx $00..$0C]
+    lda FighterVoiceContTbl,y                   ; E458  B9 FA E0    [idx $00..$0C]
     sta VoiceQueued                             ; E45B  8D 5E 04
 VoicePlayFighterEnd:
     rts                                         ; E45E  60          VoicePlayFighterEnd — FamiTone2/vozes: termina a voz do lutador apos encadear a continuacao
@@ -322,9 +322,9 @@ _FT2MusicStopChannels:
     bne _FT2MusicStopChannels                   ; E4FB  D0 E8
     ldx #$00                                    ; E4FD  A2 00
 _FT2MusicStopEnvelopes:
-    lda #<D37_EE74                              ; E4FF  A9 74       _FT2MusicStopEnvelopes — FamiTone2: aponta todos os envelopes para o envelope mudo
+    lda #<_FT2DummyEnvelope                     ; E4FF  A9 74       _FT2MusicStopEnvelopes — FamiTone2: aponta todos os envelopes para o envelope mudo
     sta ram_011C,x                              ; E501  9D 1C 01
-    lda #>D37_EE74                              ; E504  A9 EE
+    lda #>_FT2DummyEnvelope                     ; E504  A9 EE
     sta ram_012A,x                              ; E506  9D 2A 01
     lda #$00                                    ; E509  A9 00
     sta ram_010E,x                              ; E50B  9D 0E 01
@@ -613,7 +613,7 @@ _FT2UpdateSoundCh1Note:
     lda ram_0103                                ; E728  AD 03 01    _FT2UpdateSoundCh1Note — FamiTone2: calcula o periodo da nota da canal 1
     and #$03                                    ; E72B  29 03
     tax                                         ; E72D  AA
-    lda D37_E8AD,x                              ; E72E  BD AD E8    [idx $00..$00]
+    lda _FT2DutyTable,x                         ; E72E  BD AD E8    [idx $00..$00]
     sta ram_047A                                ; E731  8D 7A 04
     lda ram_0150                                ; E734  AD 50 01
     beq _FT2UpdateSoundCh1Volume                ; E737  F0 40
@@ -653,7 +653,7 @@ _FT2UpdateSoundCh1Volume:
     lda ram_0107                                ; E77F  AD 07 01
     and #$03                                    ; E782  29 03
     tax                                         ; E784  AA
-    lda D37_E8AD,x                              ; E785  BD AD E8    [idx $00..$00]
+    lda _FT2DutyTable,x                         ; E785  BD AD E8    [idx $00..$00]
     sta ram_047A                                ; E788  8D 7A 04
     lda ram_0151                                ; E78B  AD 51 01
     beq _FT2UpdateSoundCh2Volume                ; E78E  F0 40
@@ -721,7 +721,7 @@ _FT2UpdateSoundCh3Control:
     lda ram_010D                                ; E813  AD 0D 01
     and #$03                                    ; E816  29 03
     tax                                         ; E818  AA
-    lda D37_E8B1,x                              ; E819  BD B1 E8    [idx $00..$00]
+    lda _FT2NoiseDutyTable,x                    ; E819  BD B1 E8    [idx $00..$00]
     sta ram_047A                                ; E81C  8D 7A 04
     lda ram_0153                                ; E81F  AD 53 01
     beq _FT2UpdateSoundCh4Volume                ; E822  F0 27
@@ -782,9 +782,9 @@ _FT2UpdateSoundTriangle:
     sta NOISE_LO                                ; E8A9  8D 0E 40
     rts                                         ; E8AC  60
 
-D37_E8AD:
+_FT2DutyTable:
     .byte $30,$70,$B0,$F0                       ; E8AD
-D37_E8B1:
+_FT2NoiseDutyTable:
     .byte $00,$80,$00,$80                       ; E8B1
 
 ; <- jsr _FT2EnvSetRepeat
@@ -986,11 +986,11 @@ _FT2LoadNotePitch:
 _FT2Vibrato:
     ldx ram_0467,y                              ; E9F9  BE 67 04    aplica o vibrato: profundidade ram_0467 e fase ram_046A somam ao tom
     beq _FT2VibratoReturn                       ; E9FC  F0 22
-    lda D37_EA27,x                              ; E9FE  BD 27 EA    (nt)
+    lda _FT2VibratoOffsetTable,x                ; E9FE  BD 27 EA    (nt)
     clc                                         ; EA01  18          (nt)
     adc ram_046A                                ; EA02  6D 6A 04    (nt)
     tax                                         ; EA05  AA          (nt)
-    lda D37_EA33,x                              ; EA06  BD 33 EA    (nt)
+    lda _FT2VibratoTable,x                      ; EA06  BD 33 EA    (nt)
     bmi _FT2VibratoClampLow                     ; EA09  30 0A       (nt)
     clc                                         ; EA0B  18          (nt)
     adc ram_0477                                ; EA0C  6D 77 04    (nt)
@@ -1009,9 +1009,9 @@ _FT2VibratoReturn:
     ldx ram_0478                                ; EA23  AE 78 04
     rts                                         ; EA26  60
 
-D37_EA27:
+_FT2VibratoOffsetTable:
     .byte $00,$00,$0B,$16,$21,$2C,$37,$42,$4D,$58,$63,$6E; EA27
-D37_EA33:
+_FT2VibratoTable:
     .byte $00,$01,$01,$01,$01,$00,$00,$FF,$FF,$FF,$FF,$00,$01,$02,$02,$01; EA33
     .byte $00,$00,$FF,$FE,$FE,$FF,$00,$02,$03,$03,$02,$01,$FF,$FD,$FC,$FC; EA43
     .byte $FE,$00,$03,$05,$06,$05,$02,$FE,$FB,$FA,$FB,$FD,$00,$03,$06,$06; EA53
@@ -1657,7 +1657,7 @@ _FT2SfxUpdateTriangle:
 _FT2SfxUpdateNoise:
     rts                                         ; EE73  60          _FT2SfxUpdateNoise — FamiTone2: mistura o volume e o periodo do ruido do efeito
 
-D37_EE74:
+_FT2DummyEnvelope:
     .byte $C0,$00,$00                           ; EE74
 _FT2NoteTableLSB:
     .byte $00,$F1,$7E,$13,$AD,$4D,$F3,$9D,$4C,$00,$B8,$74,$34,$F8,$BF,$89; EE77
@@ -1829,9 +1829,9 @@ SelectDrawCursor:
     lda #>SelectCursorMetasprite                ; F005  A9 84
     sta zp_DA                                   ; F007  85 DA
     ldx zp_E9                                   ; F009  A6 E9
-    lda D37_F2BB,x                              ; F00B  BD BB F2    [idx $00..$07]
+    lda SelectCursorXTbl,x                      ; F00B  BD BB F2    [idx $00..$07]
     sta zp_DB                                   ; F00E  85 DB
-    lda D37_F2C3,x                              ; F010  BD C3 F2    [idx $00..$07]
+    lda SelectCursorYTbl,x                      ; F010  BD C3 F2    [idx $00..$07]
     sta zp_DC                                   ; F013  85 DC
     lda #$00                                    ; F015  A9 00
     sta zp_DD                                   ; F017  85 DD
@@ -1841,15 +1841,15 @@ SelectDrawCursor:
     sta zp_E1                                   ; F01F  85 E1
     farcall SelectDrawBlink                     ; F021  A9 F0 48 A9 32 48 A9 37 .. -> 3B:F359
     ldx zp_E9                                   ; F033  A6 E9
-    lda D37_F29B,x                              ; F035  BD 9B F2    [idx $00..$07]
+    lda SelectFlagPtrLoTbl,x                    ; F035  BD 9B F2    [idx $00..$07]
     sta zp_D9                                   ; F038  85 D9
-    lda D37_F2A3,x                              ; F03A  BD A3 F2    [idx $00..$07]
+    lda SelectFlagPtrHiTbl,x                    ; F03A  BD A3 F2    [idx $00..$07]
     sta zp_DA                                   ; F03D  85 DA
-    lda D37_F2AB,x                              ; F03F  BD AB F2    [idx $00..$07]
+    lda SelectFlagXTbl,x                        ; F03F  BD AB F2    [idx $00..$07]
     sta zp_DB                                   ; F042  85 DB
-    lda D37_F2B3,x                              ; F044  BD B3 F2    [idx $00..$07]
+    lda SelectFlagYTbl,x                        ; F044  BD B3 F2    [idx $00..$07]
     sta zp_DC                                   ; F047  85 DC
-    lda D37_F293,x                              ; F049  BD 93 F2    [idx $00..$07]
+    lda SelectCursorFighterTbl,x                ; F049  BD 93 F2    [idx $00..$07]
     cmp #$04                                    ; F04C  C9 04
     bne SelectDrawFighterSprite                 ; F04E  D0 02
     inc zp_E1                                   ; F050  E6 E1
@@ -1863,7 +1863,7 @@ __alt_37_F066:
     .assert * - __alt_37_F066 <= $3, error, "bloco alt DEST_FLAG_BLINK em $F066 passou do tamanho"
     .res $3 - (* - __alt_37_F066), $FF
 .else
-    lda D37_F293,x                              ; F066  BD 93 F2    [idx $00..$07]
+    lda SelectCursorFighterTbl,x                ; F066  BD 93 F2    [idx $00..$07]
 .endif
 
     sta FighterChar                             ; F069  85 00
@@ -1930,15 +1930,15 @@ SelectFighterIntro:
     lda #$02                                    ; F0EB  A9 02
     sta zp_E1                                   ; F0ED  85 E1
     ldx zp_E9                                   ; F0EF  A6 E9
-    lda D37_F29B,x                              ; F0F1  BD 9B F2    [idx $00..$00]
+    lda SelectFlagPtrLoTbl,x                    ; F0F1  BD 9B F2    [idx $00..$00]
     sta zp_D9                                   ; F0F4  85 D9
-    lda D37_F2A3,x                              ; F0F6  BD A3 F2    [idx $00..$00]
+    lda SelectFlagPtrHiTbl,x                    ; F0F6  BD A3 F2    [idx $00..$00]
     sta zp_DA                                   ; F0F9  85 DA
-    lda D37_F2AB,x                              ; F0FB  BD AB F2    [idx $00..$00]
+    lda SelectFlagXTbl,x                        ; F0FB  BD AB F2    [idx $00..$00]
     sta zp_DB                                   ; F0FE  85 DB
-    lda D37_F2B3,x                              ; F100  BD B3 F2    [idx $00..$00]
+    lda SelectFlagYTbl,x                        ; F100  BD B3 F2    [idx $00..$00]
     sta zp_DC                                   ; F103  85 DC
-    lda D37_F293,x                              ; F105  BD 93 F2    [idx $00..$00]
+    lda SelectCursorFighterTbl,x                ; F105  BD 93 F2    [idx $00..$00]
     cmp #$04                                    ; F108  C9 04
     bne SelectIntroDrawFighter                  ; F10A  D0 02
     inc zp_E1                                   ; F10C  E6 E1       (nt)
@@ -2128,9 +2128,9 @@ SelectEndVoice:
 SelectEnd:
     rts                                         ; F292  60          SelectEnd — fim da tela de selecao
 
-D37_F293:
+SelectCursorFighterTbl:
     .byte $00,$04,$03,$07,$01,$02,$09,$08       ; F293
-D37_F29B:
+SelectFlagPtrLoTbl:
     .byte <(FlagJapan)                          ; F29B  E5
     .byte <(FlagBrazil)                         ; F29C  D3
     .byte <(FlagUsa)                            ; F29D  F7
@@ -2139,7 +2139,7 @@ D37_F29B:
     .byte <(FlagChina)                          ; F2A0  DC
     .byte <(FlagUssr)                           ; F2A1  00
     .byte <(FlagThailand)                       ; F2A2  EE
-D37_F2A3:
+SelectFlagPtrHiTbl:
     .byte >(FlagJapan)                          ; F2A3  84
     .byte >(FlagBrazil)                         ; F2A4  84
     .byte >(FlagUsa)                            ; F2A5  84
@@ -2148,13 +2148,13 @@ D37_F2A3:
     .byte >(FlagChina)                          ; F2A8  84
     .byte >(FlagUssr)                           ; F2A9  85
     .byte >(FlagThailand)                       ; F2AA  84
-D37_F2AB:
+SelectFlagXTbl:
     .byte $80,$B0,$BC,$68,$B9,$6E,$4A,$68       ; F2AB
-D37_F2B3:
+SelectFlagYTbl:
     .byte $5F,$6F,$54,$6B,$33,$3B,$3D,$6B       ; F2B3
-D37_F2BB:
+SelectCursorXTbl:
     .byte $50,$68,$80,$98,$50,$68,$80,$98       ; F2BB
-D37_F2C3:
+SelectCursorYTbl:
     .byte $B8,$B8,$B8,$B8,$D8,$D8,$D8,$D8       ; F2C3
 
 ; modos: aviso/QR, frase final
@@ -2341,7 +2341,7 @@ ScreenTitle:
     ldx #$0B                                    ; F51F  A2 0B
     stx a:PaletteDirty                          ; F521  8E D4 00
 TitlePaletteCopyLoop:
-    lda D37_F699,x                              ; F524  BD 99 F6    [idx $00..$0B] TitlePaletteCopyLoop — titulo: copia 12 bytes de paleta
+    lda TitlePalette,x                          ; F524  BD 99 F6    [idx $00..$0B] TitlePaletteCopyLoop — titulo: copia 12 bytes de paleta
     sta a:PaletteBuf,x                          ; F527  9D BC 00
     sta a:PaletteBuf+12,x                       ; F52A  9D C8 00
     dex                                         ; F52D  CA
@@ -2534,7 +2534,7 @@ TitleBlinkOnLoop:
 
 TextPushStart:
     .byte $50,$55,$53,$48,$20,$53,$54,$41,$52,$54; F68F
-D37_F699:
+TitlePalette:
     .byte $16,$27,$37,$21,$31,$01,$27,$37,$37,$0F,$0F,$0F; F699
 
 .ifdef DEST_FLAG_BLINK
@@ -2581,7 +2581,7 @@ DestFlagOam:
     sta OamBuf+20               ; sprite 5 do pais do cursor
 DestFlagDraw:
     ldx zp_E9
-    lda D37_F293,x              ; devolve o índice original para "sta FighterChar"
+    lda SelectCursorFighterTbl,x; devolve o índice original para "sta FighterChar"
     rts
 
 DestFlagRestore:
@@ -2624,7 +2624,7 @@ ResetStub:
 .include "kernel.inc"
 
     .byte $FF,$FF,$FF,$FF                       ; FF9B
-D37_FF9F:
+ResetVectorFill:
     .res 91, $FF                                ; FF9F
     .word NmiHandler                            ; FFFA  1E FE
 
@@ -2634,7 +2634,7 @@ __alt_37_FFFC:
     .assert * - __alt_37_FFFC <= $2, error, "bloco alt FIX_SOFT_RESET em $FFFC passou do tamanho"
     .res $2 - (* - __alt_37_FFFC), $FF
 .else
-    .word D37_FF9F                              ; FFFC  9F FF
+    .word ResetVectorFill                       ; FFFC  9F FF
 .endif
 
     .word IrqHandler                            ; FFFE  7C FC
