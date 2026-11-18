@@ -1,6 +1,6 @@
 # Data naming — batch 4: bank `$36` (stages)
 
-- **Status:** **PROPOSED** — awaiting approval to apply in `annotations/sf2ne.ann`.  
+- **Status:** **APPLIED** — 27 names applied in `annotations/sf2ne.ann`; 3 write-only labels kept automatic.  
 - **Scope:** the 30 automatic `D36_*` labels of `src/bank_36.s`.  
 - **Source of truth:** `annotations/sf2ne.ann`, `src/bank_3B.s` (`VersusLoadStage`, `RoundInitLoadStage`), `src/kernel.inc` (screen-split IRQ), `docs/RAM.md` and direct RLE stream decoding of `src/bank_36.s`.  
 - **Rule:** only labels and comments change; ROM bytes and SHA-1 must remain identical.
@@ -120,3 +120,38 @@ Then come 64 raw bytes at `$2BC0` (attributes of `$2800`) and `$2FC0` (attribute
   4. `git diff -U0 -- src` without any `.byte`/`.word`/`.res` line changed;
   5. `src/bank_05.s` (Ken, manual source) without references to `D36_*`.
 - **Expected metric:** 27 labels leave `autoD` (1,135 → 1,108); `semantic unique` rises from 1,006 to 1,033. The 3 write-only labels remain automatic.
+
+## 5. Application result
+
+- **Applied on:** 2026-11-17, in `annotations/sf2ne.ann` (section `# BANCO $36`).
+- **Committed in:** `fa7c215` (the batch was already applied when that commit bundled the English translation; it has no separate commit).
+- **Names applied:** 27 — 9 scalar tables, 9 pointer tables, 9 data blobs.
+- **Kept automatic:** 3 — `D36_C005`, `D36_C00A`, `D36_C00F` (write-only in `ram_03BC`–`ram_03BE`, no static consumer).
+- **Consumers updated:** `src/bank_36.s` (27 labels, 3 `D36_*` left), `src/bank_3B.s` (`VersusLoadStage`, `RoundInitLoadStage`), `src/globals.inc` (exports).
+
+### 5.1 Validation
+
+| Verification | Result |
+|--------------|--------|
+| `make gen` | OK |
+| `make` | OK — canonical build with `DEST_FLAG_BLINK` |
+| SHA-1 of `build/sf2ne.nes` | `3ad177a0a7867a821e6c1709b4e6dbdda3555aa1` — identical to baseline |
+| `.byte`/`.word`/`.res` in `src/bank_36.s` | operands unchanged; only labels and comments |
+| `src/bank_05.s` (Ken, manual source) | 0 references to `D36_*` |
+| `make fixed` | OK — expected divergence (`-D FIX_SOFT_RESET`) |
+
+> `make gen` after `fa7c215` also rewrites the generated file headers back to Portuguese, because `tools/disasm.py` still carries the pre-translation strings. The ROM bytes and labels are unaffected; those header-only diffs were discarded, not committed.
+
+### 5.2 Metrics after the batch
+
+Canonical method: `grep -rhE '^[A-Za-z_][A-Za-z0-9_]*:$' src/bank_*.s`, with the caveat of the three same-line-comment labels (`EdgeARel`, `EdgeBRel`, `EdgeBBtn`).
+
+| Metric | Before `$36` | After `$36` |
+|--------|--------------|-------------|
+| Label definitions | 2,145 | **2,145** |
+| Unique names | 2,141 | **2,141** |
+| Automatic data (`D`) | 1,135 | **1,108** |
+| Unique semantic | 1,006 | **1,033** |
+| Per-bank semantic sum | 1,010 | **1,037** |
+
+The 1,037 vs 1,033 difference keeps the same explanation as Phase 3: `ResetStub` (3×), `RoundStart` (2×) and `InputButtons` (2× in `$3F`).

@@ -5,7 +5,7 @@
 - **Verification ROM:** `build/sf2ne.nes` — SHA-1 `3ad177a0a7867a821e6c1709b4e6dbdda3555aa1`.
 - **Baseline (Phase 1):** 379 automatic code labels, 1,213 data labels, 549 semantic labels.
 - **Current state:** 0 automatic code labels; 1,213 data labels; 928 unique semantic names; 2,141 unique names in 2,145 definitions.
-  *This is the end-of-Phase 3 portrait. After it, the data batches `$3C` (33 labels), `$3F` (15) and `$20` (30) were renamed (`tasks/DATA_NAMING_3C.md`, `tasks/DATA_NAMING_3F.md`, `tasks/DATA_NAMING_20.md`), leading to 1,135 automatic data labels and 1,006 unique semantic names — see `docs/PROJECT_STATUS.md` §11.*
+  *This is the end-of-Phase 3 portrait. After it, the data batches `$3C` (33 labels), `$3F` (15), `$20` (30) and `$36` (27) were renamed (`tasks/DATA_NAMING_3C.md`, `tasks/DATA_NAMING_3F.md`, `tasks/DATA_NAMING_20.md`, `tasks/DATA_NAMING_36.md`), leading to 1,108 automatic data labels and 1,033 unique semantic names — see `docs/PROJECT_STATUS.md` §11.*
 - **Scope:** labels and comments only; no code or data byte was altered.
 - **Date:** 2026-11-15
 

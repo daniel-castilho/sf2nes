@@ -36,14 +36,14 @@ Read in this order:
 3. [`docs/BUGS.md`](docs/BUGS.md) — reported bugs: what is resolved and where the others are.
 4. [`docs/ROADMAP.md`](docs/ROADMAP.md) — the path to finishing the game, and how to use AI without fooling yourself.
 5. [`docs/TOOLS.md`](docs/TOOLS.md) — scripts, annotation format, headless emulator.
-6. [`docs/lessons.md`](docs/lessons.md) — lessons learned: how Ken's freeze on special moves was diagnosed and fixed (symptom, PC trace, root cause, fix and verification) and what the data naming batches (`$3C`, `$3F` and `$20`) taught about table reading, metasprites and metrics.
+6. [`docs/lessons.md`](docs/lessons.md) — lessons learned: how Ken's freeze on special moves was diagnosed and fixed (symptom, PC trace, root cause, fix and verification) and what the data naming batches (`$3C`, `$3F`, `$20` and `$36`) taught about table reading, metasprites, stage layouts and metrics.
 
 ## What is still **not** ready
 
-**Current focus — stabilization and maintainability.** Implementation of new characters and gameplay features is paused, not cancelled. Phase 3 naming was closed on 2026-11-16 (`tasks/PHASE_3_EXECUTION_REPORT.md` §10); 1,135 automatic data labels remain, kept as P3/opaque backlog in `tasks/DATA_LABEL_INVENTORY.tsv`. The next work cycle will be defined from `tasks/NAMING_CANDIDATES.md`, `docs/PROJECT_STATUS.md` and `tasks/PROJECT_STABILIZATION_EXECUTION_PLAN.md`.
+**Current focus — stabilization and maintainability.** Implementation of new characters and gameplay features is paused, not cancelled. Phase 3 naming was closed on 2026-11-16 (`tasks/PHASE_3_EXECUTION_REPORT.md` §10); 1,108 automatic data labels remain, kept as P3/opaque backlog in `tasks/DATA_LABEL_INVENTORY.tsv`. The next work cycle will be defined from `tasks/NAMING_CANDIDATES.md`, `docs/PROJECT_STATUS.md` and `tasks/PROJECT_STABILIZATION_EXECUTION_PLAN.md`.
 
-There are 2,145 label definitions (2,141 unique names): **1,006 semantic** and **1,135 automatic data labels**
-  (`D01_A4CB`…). **No automatic code labels remain** (`L3F_E4DA`…): the P0/P1, P2 and FamiTone2 batches of Phase 3 named the 379 that existed. The `$3C` (33), `$3F` (15) and `$20` (30) data batches already named fiches, palettes, portraits, the fight core and HUD/effects (`tasks/DATA_NAMING_3C.md`, `tasks/DATA_NAMING_3F.md`, `tasks/DATA_NAMING_20.md`); the remaining 1,135 are inventoried in
+There are 2,145 label definitions (2,141 unique names): **1,033 semantic** and **1,108 automatic data labels**
+  (`D01_A4CB`…). **No automatic code labels remain** (`L3F_E4DA`…): the P0/P1, P2 and FamiTone2 batches of Phase 3 named the 379 that existed. The `$3C` (33), `$3F` (15), `$20` (30) and `$36` (27) data batches already named fiches, palettes, portraits, the fight core, HUD/effects and the stage backgrounds (`tasks/DATA_NAMING_3C.md`, `tasks/DATA_NAMING_3F.md`, `tasks/DATA_NAMING_20.md`, `tasks/DATA_NAMING_36.md`); the remaining 1,108 are inventoried in
   `tasks/DATA_LABEL_INVENTORY.tsv`.
   Of the variables, 78 are named. The Phase 3 inventory is in `tasks/NAMING_CANDIDATES.md`.
 * **Partially documented data formats:** metasprites and states are understood; collision boxes,

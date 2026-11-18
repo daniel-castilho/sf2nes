@@ -5,7 +5,7 @@
 - **Source:** `src/bank_*.s` generated from `annotations/sf2ne.ann`; read-only.  
 - **Objective:** classify by bank/subsystem, references, and category to choose the first data naming batch.  
 - **Complete inventory:** `tasks/DATA_LABEL_INVENTORY.tsv` (1,213 rows, tab-separated).  
-- **Note:** snapshot prior to data batches. After `tasks/DATA_NAMING_3C.md` (33 labels), `tasks/DATA_NAMING_3F.md` (15) and `tasks/DATA_NAMING_20.md` (30), **1,135** automatic data labels remain.
+- **Note:** snapshot prior to data batches. After `tasks/DATA_NAMING_3C.md` (33 labels), `tasks/DATA_NAMING_3F.md` (15), `tasks/DATA_NAMING_20.md` (30) and `tasks/DATA_NAMING_36.md` (27), **1,108** automatic data labels remain.
 
 ## 1. Method
 

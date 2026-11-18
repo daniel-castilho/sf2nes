@@ -277,19 +277,20 @@ Bank `$00` is the only Ryu code bank modified, and only in those two bytes.
 
 ---
 
-## 10. Appendix — what the `$3C`/`$3F`/`$20` data naming batches taught
+## 10. Appendix — what the `$3C`/`$3F`/`$20`/`$36` data naming batches taught
 
-The first batches of names for automatic data labels (33 labels from `$3C`, 15 from `$3F` and 30 from
-`$20`, see `tasks/DATA_NAMING_3C.md`, `tasks/DATA_NAMING_3F.md` and `tasks/DATA_NAMING_20.md`) did not
-change bytes, but exposed five reading pitfalls:
+The data batches (33 labels from `$3C`, 15 from `$3F`, 30 from `$20` and 27 from `$36`, see
+`tasks/DATA_NAMING_3C.md`, `tasks/DATA_NAMING_3F.md`, `tasks/DATA_NAMING_20.md` and
+`tasks/DATA_NAMING_36.md`) did not change bytes, but exposed these reading pitfalls:
 
 * **Do not classify a bank by its address.** Initial triage treated `$29`/`$2D` as "AI" because they are
   near the engine; generated headers show they are **FamiTone2 music** (173 labels). Reading the header
   and the consumer before proposing a category costs less than redoing the inventory.
 * **The canonical label metric is blind to comments on the same line.** The regex
   `^[A-Za-z_][A-Za-z0-9_]*:$` does not count `EdgeARel`, `EdgeBRel` and `EdgeBBtn` (in `$3F`), which have
-  a comment after the colon. That is why the per-bank sum (1,010 semantic) differs from the unique total
-  published (1,006). When comparing metrics, always use the same command and record the difference.
+  a comment after the colon. That is why the per-bank sum (1,037 semantic after `$36`) differs from the
+  unique total published (1,033). When comparing metrics, always use the same command and record the
+  difference.
 * **"Per-character" tables have a fixed stride — confirm the stride in the consumer.** In `$3C`, fiches
   use 1 byte per character (10 bytes per table), while palettes use 12 bytes per character
   (`FighterChar*12`) and portrait tiles, 6. A `*Tbl` name is only safe after finding the multiplication
@@ -307,6 +308,24 @@ change bytes, but exposed five reading pitfalls:
   preserved as a curiosity. And `848B` is a 48×32 graphic block without readable text (MEDIUM confidence).
   When the metasprite does not form a phrase, the name should describe the **consumer routine**
   (`RoundEndDrawTieAltMetasprite`), not invent a caption.
+* **A trace "read" can be fictitious.** In `$36`, `ram_03BC`–`ram_03BE` seemed to have 29 reads, but all
+  of them came from the reset loop's `sta ram_0300,x` at `3F:FFC9`, which the tracer reports as a read of
+  the absolute address. With no real consumer, `C005`/`C00A`/`C00F` stayed automatic: write-only is not
+  evidence of meaning.
+* **Decode the stream to find the band boundaries.** The `$36` RLE blocks only make sense after
+  decompressing: 640/192/128 bytes map exactly to lines 0–19/20–25/26–29 of a 32×30 nametable. The three
+  CHR switches in the screen-split IRQ line up with the same bands, which is what justifies
+  `Top`/`Mid`/`Floor` in the names.
+* **Check the nametable mirroring before naming "left/right".** `MMC5_NT_MAP = $44` gives vertical
+  mirroring: `$2800` is the left nametable and `$2C00` the right one. Without reading the mapper value,
+  the two identical 960-byte streams look like duplicates.
+* **Do not "fix" a table quirk that the only used entry hides.** `C000`–`C00F` are indexed with
+  `y = layout*2` although each table has 5 bytes; for layouts 3–4 that would read `$FF`. Only layout 0 has
+  data, so behavior is the first byte. Naming documents the observed use; it does not repair the indexing.
+* **Translation can desynchronize the generator.** After `fa7c215`, `make gen` rewrites file headers back
+  to Portuguese because `tools/disasm.py` still contains the old strings. The label/comment body comes from
+  the translated annotations, and ROM bytes do not change; the header-only diff must be discarded instead
+  of committed.
 
 **Practical rule:** for each batch, (1) read the consumer, (2) propose name + confidence, (3) apply only
 labels/comments, (4) validate with `make gen`, `make` and identical SHA-1, (5) confirm that no `.byte`/

@@ -12,7 +12,7 @@ This backlog separates work into three distinct tracks. **D-01 and D-03 were res
 
 - **Phase 1** — reproducible audit of metrics, sources of truth, documentation, banks, and existing validations → **AUDIT COMPLETED — DOCUMENT DELIVERED** (`docs/PROJECT_STATUS.md`, commit `ada6c6f`). No indication of approved tests.
 - **Phase 2** — specification of text authoring format for states/frames and decision on canonical source → **PROPOSAL DELIVERED — DECISION PENDING** (`tasks/STATE_DATA_FORMAT_DECISION.md`, state `PROPOSED`). Did not block symbol naming.
-- **Phase 3** — naming driven by criticality and evidence → **COMPLETED — REPORT DELIVERED** (`tasks/PHASE_3_EXECUTION_REPORT.md` §10; commits `e2e18f3`, `64a29f8`, `92fbde1` and `2df963c`). 466 labels renamed; 1,135 data labels remain automatic by scope decision.
+- **Phase 3** — naming driven by criticality and evidence → **COMPLETED — REPORT DELIVERED** (`tasks/PHASE_3_EXECUTION_REPORT.md` §10; commits `e2e18f3`, `64a29f8`, `92fbde1`, `2df963c` and `fa7c215`). 493 labels renamed; 1,108 data labels remain automatic by scope decision.
 - **Phase 4** — documentary reconciliation and technical decision registration.
 - **Phase 5** — future validation proposal, without executing tests.
 

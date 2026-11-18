@@ -118,24 +118,27 @@ Metrics in sections 4 and 7 are historical (before data batches). The metrics in
 | Data `$3C` | 33 | sheets, palettes, and portraits | `64a29f8` |
 | Data `$3F` | 15 | fighting core | `92fbde1` |
 | Data `$20` | 30 | HUD/effects, flags, projectiles, and M.Bison portrait | `2df963c` |
-| **Total** | **78** | — | — |
+| Data `$36` | 27 | stages: RLE backgrounds, CHR/split tables, attributes and palette | `fa7c215`* |
+| **Total** | **105** | — | — |
 
-With the 388 code labels, Phase 3 renamed **466 labels**.
+\* The `$36` batch was applied before `fa7c215` and entered the repository bundled with that English-translation commit; it has no separate commit.
+
+With the 388 code labels, Phase 3 and the follow-up batches renamed **493 labels**.
 
 ### 10.2 Final metrics
 
 Canonical method: `grep -rhE '^[A-Za-z_][A-Za-z0-9_]*:$' src/bank_*.s`, with the caveat of the three labels with same-line comment (`EdgeARel`, `EdgeBRel`, `EdgeBBtn`).
 
-| Metric | Phase 1 | Closing |
-|--------|---------|---------|
-| Label definitions | 2,145 | **2,145** |
-| Unique names | 2,141 | **2,141** |
-| Automatic code (`L`) | 379 | **0** |
-| Automatic data (`D`) | 1,213 | **1,135** |
-| Unique semantic | 549 | **1,006** |
-| Semantic sum by bank | — | **1,010** |
+| Metric | Phase 1 | Closing | After `$36` |
+|--------|---------|---------|-------------|
+| Label definitions | 2,145 | **2,145** | **2,145** |
+| Unique names | 2,141 | **2,141** | **2,141** |
+| Automatic code (`L`) | 379 | **0** | **0** |
+| Automatic data (`D`) | 1,213 | **1,135** | **1,108** |
+| Unique semantic | 549 | **1,006** | **1,033** |
+| Semantic sum by bank | — | **1,010** | **1,037** |
 
-The 1,010 vs 1,006 difference comes from `ResetStub` (3×), `RoundStart` (2×), and `InputButtons` (2× in `$3F`). The canonical regex does not count the three same-line-comment labels; including them would give 1,009 unique semantic and 1,013 bank sum.
+The 1,037 vs 1,033 difference comes from `ResetStub` (3×), `RoundStart` (2×), and `InputButtons` (2× in `$3F`). The canonical regex does not count the three same-line-comment labels; including them would give 1,036 unique semantic and 1,040 bank sum.
 
 ### 10.3 Verification
 
@@ -146,13 +149,15 @@ The 1,010 vs 1,006 difference comes from `ResetStub` (3×), `RoundStart` (2×), 
 | SHA-1 of `build/sf2ne.nes` | `3ad177a0a7867a821e6c1709b4e6dbdda3555aa1` — identical to baseline |
 | `src/bank_20.s` | 0 `D20_*` labels; 144 `.byte`/`.word` directives with identical operands |
 | `src/bank_37.s`, `src/bank_3B.s`, `src/bank_3C.s` | only swap of `D20_*` for new names; same addresses in comments |
-| `src/bank_05.s` (Ken, manual source) | 0 references to `D20_*` |
+| `src/bank_36.s` | 27 `D36_*` replaced; 3 write-only labels kept automatic; `.byte`/`.word` operands identical |
+| `src/bank_3B.s` after `$36` | only `VersusLoadStage`/`RoundInitLoadStage` now cite `Stage*` names |
+| `src/bank_05.s` (Ken, manual source) | 0 references to `D20_*` or `D36_*` |
 | `make fixed` | OK — expected divergence (`-D FIX_SOFT_RESET`) |
 
 ### 10.4 Decisions and acceptance
 
 - **D-01 — RESOLVED.** Reproducible method registered in `docs/PROJECT_STATUS.md` §4/§11 and in this section: count definitions and unique names separately, distinguish code/data/semantic, and keep the caveat of the three same-line-comment labels.
-- **D-03 — RESOLVED.** First batch was P0/P1 (engine core), followed by P2/PAD/FamiTone2 and `$3C`, `$3F`, `$20` data. Minimum evidence: demonstrable consumer, table structure, or existing documentation; confidence `HIGH`/`MEDIUM`; `LOW` remains automatic.
+- **D-03 — RESOLVED.** First batch was P0/P1 (engine core), followed by P2/PAD/FamiTone2 and `$3C`, `$3F`, `$20`, `$36` data. Minimum evidence: demonstrable consumer, table structure, or existing documentation; confidence `HIGH`/`MEDIUM`; `LOW` remains automatic. In `$36`, three write-only labels (`C005`, `C00A`, `C00F`) stayed automatic for lack of a static consumer.
 - **D-02 — PROPOSED, non-blocking for naming.** Decision on state/frame canonical source (`tasks/STATE_DATA_FORMAT_DECISION.md`) still awaits Maintainer. Phase 3 did not use it: naming acted only on symbols, whose canonical source is `annotations/sf2ne.ann`.
 - **D-04…D-07 — PENDING**, no change in this phase.
 
@@ -175,6 +180,7 @@ Phase 3 spec §12 acceptance criteria:
 
 ### 10.5 Pendencies and next step
 
-- **1,135 automatic data labels remain**; spec allows keeping them when semantics is undetermined (P3/opaque). Distribution: `$00` 206, `$01` 304, `$04` 3, `$05` 352, `$08/$0C/$10/$1C/$24` 5, `$29` 103, `$2D` 70, `$36` 30, `$37` 27, `$3B` 35.
-- Next candidates by evidence/effort: `$36` (30) and `$3B` (35); then `$37` (27) and music (`$29`/`$2D`, 173). Large Ryu/Ken banks (`$00`/`$01`/`$05`, 865) require state/frame analysis and may remain P3.
+- **1,108 automatic data labels remain**; spec allows keeping them when semantics is undetermined (P3/opaque). Distribution: `$00` 206, `$01` 304, `$04` 3, `$05` 352, `$08/$0C/$10/$1C/$24` 5, `$29` 103, `$2D` 70, `$36` 3, `$37` 27, `$3B` 35.
+- Next candidates by evidence/effort: `$3B` (35) and `$37` (27); then music (`$29`/`$2D`, 173). Large Ryu/Ken banks (`$00`/`$01`/`$05`, 862) require state/frame analysis and may remain P3.
+- The three `$36` write-only labels (`C005`, `C00A`, `C00F`) stay automatic until a consumer appears; `MMC5_CHR_BG2` is never used in the ROM.
 - No character, feature, or playable content was started.
