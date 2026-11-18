@@ -277,14 +277,14 @@ Bank `$00` is the only Ryu code bank modified, and only in those two bytes.
 
 ---
 
-## 10. Appendix — what the `$3C`/`$3F`/`$20`/`$36`/`$3B`/`$37`/`$29`/`$2D`/`$01` data naming batches taught
+## 10. Appendix — what the `$3C`/`$3F`/`$20`/`$36`/`$3B`/`$37`/`$29`/`$2D`/`$01`/`$05` data naming batches taught
 
 The data batches (33 labels from `$3C`, 15 from `$3F`, 30 from `$20`, 27 from `$36`, 35 from `$3B`,
-17 from `$37`, 46 from `$29`, 14 from `$2D` and 38 from `$01`, see `tasks/DATA_NAMING_3C.md`,
-`tasks/DATA_NAMING_3F.md`, `tasks/DATA_NAMING_20.md`, `tasks/DATA_NAMING_36.md`,
-`tasks/DATA_NAMING_3B.md`, `tasks/DATA_NAMING_37.md`, `tasks/DATA_NAMING_29.md`,
-`tasks/DATA_NAMING_2D.md` and `tasks/DATA_NAMING_01.md`) did not change bytes, but exposed these
-reading pitfalls:
+17 from `$37`, 46 from `$29`, 14 from `$2D`, 38 from `$01` and 38 from `$05`, see
+`tasks/DATA_NAMING_3C.md`, `tasks/DATA_NAMING_3F.md`, `tasks/DATA_NAMING_20.md`,
+`tasks/DATA_NAMING_36.md`, `tasks/DATA_NAMING_3B.md`, `tasks/DATA_NAMING_37.md`,
+`tasks/DATA_NAMING_29.md`, `tasks/DATA_NAMING_2D.md`, `tasks/DATA_NAMING_01.md` and
+`tasks/DATA_NAMING_05.md`) did not change bytes, but exposed these reading pitfalls:
 
 * **Do not classify a bank by its address.** Initial triage treated `$29`/`$2D` as "AI" because they are
   near the engine; generated headers show they are **FamiTone2 music** (173 labels). Reading the header
@@ -384,6 +384,11 @@ reading pitfalls:
   last test.
 * **One direction entry can be shared.** `$A373` is referenced twice in `$A000` (down `$08` and
   down-forward `$0B`), so it receives one name and the comment lists both values.
+* **A hand-written bank mirrors names, not generated labels.** `$05` is declared `keepbank 05`, so
+  `make gen` never rewrites `src/bank_05.s`; `label` lines in the `.ann` would not apply and the file
+  must be edited directly. The mirror is evidence-based only after confirming that the assembled `$01`
+  and `$05` tables and state headers are byte-identical; the fiche comments in `$3C` still come from the
+  `.ann`, because that file is generated.
 * **Weak/strong special names depend on the command list.** `RyuSpcTrans` is indexed by `CmdMoveIdx`, and
   `CmdKeyListRyu` uses kick strength for hadouken/shoryuken and punch strength for tatsumaki. Naming the
   six states without reading `CmdKeyAttackTbl` would invert weak and strong.

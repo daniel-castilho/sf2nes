@@ -2086,6 +2086,9 @@ comment 04:90F1 Ken defeat portrait layout: copy of normal + empty group 3 (DE=3
 # ============================================================================================================
 # Original bank $05 is all $FF. Ken's source is hand-written (no data to regenerate), but the
 # segment must remain in sf2ne.cfg for the linker.
+# 38 structural names mirror bank $01 at the same addresses: 8 pointer tables (7 renamed;
+# KenSpcTrans already named), 8 direction entries, 17 button-chain states and 6 special-move states.
+# 314 automatic labels stay as-is (40 state headers + 274 frames, P3). Evidence: tasks/DATA_NAMING_05.md.
 keepbank 05
 
 # ============================================================================================================
@@ -2235,35 +2238,35 @@ block 3C:8000 Columns 0 (Ryu) and 1 (Ken) filled in pointer tables. Column 1 poi
 block 3C:8000 states $05 (window $A000) and to frames/collisions of bank $04.
 # Ken: fiche column 1. Patches always fall at table offset +1 (Ryu column 0 does not change).
 patch 3C:800B A0
-comment 3C:800B Ken: >D05_A000
+comment 3C:800B Ken: >KenDirTransTbl
 patch 3C:8015 12
-comment 3C:8015 Ken: <D05_A012
+comment 3C:8015 Ken: <KenAttackTransTbl
 patch 3C:801F A0
-comment 3C:801F Ken: >D05_A012
+comment 3C:801F Ken: >KenAttackTransTbl
 patch 3C:8029 1A
 comment 3C:8029 Ken: <KenSpcTrans
 patch 3C:8033 A0
 comment 3C:8033 Ken: >KenSpcTrans
 patch 3C:803D 26
-comment 3C:803D Ken: <D05_A026
+comment 3C:803D Ken: <KenGuardReactTbl
 patch 3C:8047 A0
-comment 3C:8047 Ken: >D05_A026
+comment 3C:8047 Ken: >KenGuardReactTbl
 patch 3C:8051 3E
-comment 3C:8051 Ken: <D05_A03E
+comment 3C:8051 Ken: <KenHitReactStandTbl
 patch 3C:805B A0
-comment 3C:805B Ken: >D05_A03E
+comment 3C:805B Ken: >KenHitReactStandTbl
 patch 3C:8065 56
-comment 3C:8065 Ken: <D05_A056
+comment 3C:8065 Ken: <KenHitReactCrouchTbl
 patch 3C:806F A0
-comment 3C:806F Ken: >D05_A056
+comment 3C:806F Ken: >KenHitReactCrouchTbl
 patch 3C:8079 6E
-comment 3C:8079 Ken: <D05_A06E
+comment 3C:8079 Ken: <KenHitReactNeutralTbl
 patch 3C:8083 A0
-comment 3C:8083 Ken: >D05_A06E
+comment 3C:8083 Ken: >KenHitReactNeutralTbl
 patch 3C:808D 86
-comment 3C:808D Ken: <D05_A086
+comment 3C:808D Ken: <KenThrowTbl
 patch 3C:8097 A0
-comment 3C:8097 Ken: >D05_A086
+comment 3C:8097 Ken: >KenThrowTbl
 patch 3C:80A1 C0
 comment 3C:80A1 Ken: <CmdKeyListRyu
 patch 3C:80AB E0

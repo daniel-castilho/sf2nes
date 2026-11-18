@@ -1,11 +1,11 @@
 # Data label inventory — initial screening
 
-- **Status:** static screening; names applied in batches `$3C`, `$3F`, `$20`, `$36`, `$3B`, `$37`, `$29`, `$2D` and `$01`.  
+- **Status:** static screening; names applied in batches `$3C`, `$3F`, `$20`, `$36`, `$3B`, `$37`, `$29`, `$2D`, `$01` and `$05`.
 - **Scope:** 1,213 automatic data labels (`D<bb>_<aaaa>`) in `src/bank_*.s`.  
 - **Source:** `src/bank_*.s` generated from `annotations/sf2ne.ann`; read-only.  
 - **Objective:** classify by bank/subsystem, references, and category to choose the first data naming batch.  
 - **Complete inventory:** `tasks/DATA_LABEL_INVENTORY.tsv` (1,213 rows, tab-separated).  
-- **Note:** snapshot prior to data batches. After `tasks/DATA_NAMING_3C.md` (33 labels), `tasks/DATA_NAMING_3F.md` (15), `tasks/DATA_NAMING_20.md` (30), `tasks/DATA_NAMING_36.md` (27), `tasks/DATA_NAMING_3B.md` (35), `tasks/DATA_NAMING_37.md` (17), `tasks/DATA_NAMING_29.md` (46), `tasks/DATA_NAMING_2D.md` (14) and `tasks/DATA_NAMING_01.md` (38), **958** automatic data labels remain.
+- **Note:** snapshot prior to data batches. After `tasks/DATA_NAMING_3C.md` (33 labels), `tasks/DATA_NAMING_3F.md` (15), `tasks/DATA_NAMING_20.md` (30), `tasks/DATA_NAMING_36.md` (27), `tasks/DATA_NAMING_3B.md` (35), `tasks/DATA_NAMING_37.md` (17), `tasks/DATA_NAMING_29.md` (46), `tasks/DATA_NAMING_2D.md` (14), `tasks/DATA_NAMING_01.md` (38) and `tasks/DATA_NAMING_05.md` (38), **920** automatic data labels remain.
 
 ## 1. Method
 

@@ -16,29 +16,29 @@
 
 ; ------------------------------------------------------------------------------------------------
 ; 8 tabelas de ponteiros (words consecutivas; $0000 = vaga)
-D05_A000:
-    .word D05_A0F6
-    .word D05_A16D
-    .word D05_A3D5
-    .word D05_A223
-    .word D05_A373
-    .word D05_A270
-    .word D05_A2E7
-    .word D05_A373
-    .word D05_A3EA
-D05_A012:
-    .word D05_AD86
-    .word D05_AF07
-    .word D05_ABBF
-    .word D05_AADF
+KenDirTransTbl:
+    .word KenDirNeutralEntry
+    .word KenDirForwardEntry
+    .word KenDirBackEntry
+    .word KenDirUpEntry
+    .word KenDirDownEntry
+    .word KenDirUpForwardEntry
+    .word KenDirUpBackEntry
+    .word KenDirDownEntry
+    .word KenDirDownBackEntry
+KenAttackTransTbl:
+    .word KenWeakPunchAir
+    .word KenStrongPunchGround
+    .word KenWeakKickAir
+    .word KenThrowStart
 KenSpcTrans:
-    .word D05_AF54
-    .word D05_AFA1
-    .word D05_AFEE
-    .word D05_B049
-    .word D05_B0B9
-    .word D05_B140
-D05_A026:
+    .word KenHadoukenWeak
+    .word KenHadoukenStrong
+    .word KenShoryukenWeak
+    .word KenShoryukenStrong
+    .word KenTatsumakiWeak
+    .word KenTatsumakiStrong
+KenGuardReactTbl:
     .word D05_A4CB
     .word D05_A4FE
     .word D05_A531
@@ -51,7 +51,7 @@ D05_A026:
     .word D05_A531
     .word D05_A531
     .word D05_A564
-D05_A03E:
+KenHitReactStandTbl:
     .word D05_A597
     .word D05_A5CA
     .word D05_A60B
@@ -64,7 +64,7 @@ D05_A03E:
     .word $0000
     .word $0000
     .word D05_A80A
-D05_A056:
+KenHitReactCrouchTbl:
     .word D05_A739
     .word D05_A76C
     .word D05_A7AD
@@ -77,7 +77,7 @@ D05_A056:
     .word $0000
     .word $0000
     .word D05_A867
-D05_A06E:
+KenHitReactNeutralTbl:
     .word D05_AA06
     .word D05_AA06
     .word D05_AA06
@@ -90,7 +90,7 @@ D05_A06E:
     .word $0000
     .word $0000
     .word D05_A8C4
-D05_A086:
+KenThrowTbl:
     .word D05_AA92
     .word $0000
     .word D05_AA92
@@ -155,7 +155,7 @@ D05_A0E8:
     .word D05_A0E8
 
 ; -- estado (7 bytes)  [cond=$0B classe=$F1 acertos=0]
-D05_A0F6:
+KenDirNeutralEntry:
     .byte $0B
     .word D05_A0B0
     .word D05_A12E
@@ -232,7 +232,7 @@ D05_A15F:
     .word D05_A135
 
 ; -- estado (7 bytes)  [cond=$FF classe=$61 acertos=0]
-D05_A16D:
+KenDirForwardEntry:
     .byte $FF
     .word $0000
     .word $0000
@@ -342,7 +342,7 @@ D05_A215:
     .word D05_A1DD
 
 ; -- estado (7 bytes)  [cond=$FF classe=$5C acertos=0]
-D05_A223:
+KenDirUpEntry:
     .byte $FF
     .word $0000
     .word D05_A35E
@@ -389,7 +389,7 @@ D05_A262:
     .word $0000
 
 ; -- estado (7 bytes)  [cond=$FF classe=$64 acertos=0]
-D05_A270:
+KenDirUpForwardEntry:
     .byte $FF
     .word $0000
     .word D05_A35E
@@ -460,7 +460,7 @@ D05_A2D9:
     .word $0000
 
 ; -- estado (7 bytes)  [cond=$FF classe=$6C acertos=0]
-D05_A2E7:
+KenDirUpBackEntry:
     .byte $FF
     .word $0000
     .word D05_A35E
@@ -546,7 +546,7 @@ D05_A365:
     .word $0000
 
 ; -- estado (7 bytes)  [cond=$03 classe=$5A acertos=0]
-D05_A373:
+KenDirDownEntry:
     .byte $03
     .word D05_A39D
     .word D05_A3C0
@@ -614,7 +614,7 @@ D05_A3C7:
     .word $0000                         ; fim da animacao -> segue cadeia natural D05_A12E (era D05_A3C7)
 
 ; -- estado (7 bytes)  [cond=$00 classe=$29 acertos=0]
-D05_A3D5:
+KenDirBackEntry:
     .byte $00
     .word D05_A1C8
     .word D05_A12E
@@ -629,9 +629,9 @@ D05_A3DC:
     .word D05_A3DC
 
 ; -- estado (7 bytes)  [cond=$00 classe=$2A acertos=0]
-D05_A3EA:
+KenDirDownBackEntry:
     .byte $00
-    .word D05_A373
+    .word KenDirDownEntry
     .word D05_A3C0
     .byte $2A,$00
 
@@ -1737,9 +1737,9 @@ D05_AAD1:
     .word $0000
 
 ; -- estado (7 bytes)  [cond=$09 classe=$A1 acertos=1]
-D05_AADF:
+KenThrowStart:
     .byte $09
-    .word D05_ACC9
+    .word KenStrongKickAir
     .word D05_A12E
     .byte $A1,$01
 
@@ -1784,7 +1784,7 @@ D05_AB1E:
     .word $0000
 
 ; -- estado (7 bytes)  [cond=$FF classe=$71 acertos=1]
-D05_AB2C:
+KenWeakKick:
     .byte $FF
     .word $0000
     .word D05_A12E
@@ -1815,9 +1815,9 @@ D05_AB4F:
     .word $0000
 
 ; -- estado (7 bytes)  [cond=$02 classe=$71 acertos=1]
-D05_AB5D:
+KenWeakKickNear:
     .byte $02
-    .word D05_AB2C
+    .word KenWeakKick
     .word D05_A12E
     .byte $71,$01
 
@@ -1846,9 +1846,9 @@ D05_AB80:
     .word $0000
 
 ; -- estado (7 bytes)  [cond=$07 classe=$72 acertos=1]
-D05_AB8E:
+KenWeakKickCrouch:
     .byte $07
-    .word D05_AB5D
+    .word KenWeakKickNear
     .word D05_A3C0
     .byte $72,$01
 
@@ -1877,9 +1877,9 @@ D05_ABB1:
     .word $0000
 
 ; -- estado (7 bytes)  [cond=$05 classe=$74 acertos=1]
-D05_ABBF:
+KenWeakKickAir:
     .byte $05
-    .word D05_AB8E
+    .word KenWeakKickCrouch
     .word D05_A35E
     .byte $74,$01
 
@@ -1900,7 +1900,7 @@ D05_ABD4:
     .word $0000
 
 ; -- estado (7 bytes)  [cond=$FF classe=$81 acertos=1]
-D05_ABE2:
+KenStrongKick:
     .byte $FF
     .word $0000
     .word D05_A12E
@@ -1947,9 +1947,9 @@ D05_AC21:
     .word $0000
 
 ; -- estado (7 bytes)  [cond=$02 classe=$81 acertos=1]
-D05_AC2F:
+KenStrongKickNear:
     .byte $02
-    .word D05_ABE2
+    .word KenStrongKick
     .word D05_A12E
     .byte $81,$01
 
@@ -1994,9 +1994,9 @@ D05_AC6E:
     .word $0000
 
 ; -- estado (7 bytes)  [cond=$07 classe=$82 acertos=1]
-D05_AC7C:
+KenStrongKickCrouch:
     .byte $07
-    .word D05_AC2F
+    .word KenStrongKickNear
     .word D05_A3C0
     .byte $82,$01
 
@@ -2041,9 +2041,9 @@ D05_ACBB:
     .word $0000
 
 ; -- estado (7 bytes)  [cond=$05 classe=$84 acertos=1]
-D05_ACC9:
+KenStrongKickAir:
     .byte $05
-    .word D05_AC7C
+    .word KenStrongKickCrouch
     .word D05_A35E
     .byte $84,$01
 
@@ -2080,7 +2080,7 @@ D05_ACFA:
     .word $0000
 
 ; -- estado (7 bytes)  [cond=$FF classe=$89 acertos=1]
-D05_AD08:
+KenWeakPunch:
     .byte $FF
     .word $0000
     .word D05_A12E
@@ -2127,9 +2127,9 @@ D05_AD47:
     .word $0000
 
 ; -- estado (7 bytes)  [cond=$07 classe=$8A acertos=1]
-D05_AD55:
+KenWeakPunchCrouch:
     .byte $07
-    .word D05_AD08
+    .word KenWeakPunch
     .word D05_A3C0
     .byte $8A,$01
 
@@ -2158,9 +2158,9 @@ D05_AD78:
     .word $0000
 
 ; -- estado (7 bytes)  [cond=$05 classe=$8C acertos=1]
-D05_AD86:
+KenWeakPunchAir:
     .byte $05
-    .word D05_AD55
+    .word KenWeakPunchCrouch
     .word D05_A35E
     .byte $8C,$01
 
@@ -2181,7 +2181,7 @@ D05_AD9B:
     .word $0000
 
 ; -- estado (7 bytes)  [cond=$FF classe=$99 acertos=1]
-D05_ADA9:
+KenStrongPunch:
     .byte $FF
     .word $0000
     .word D05_A12E
@@ -2228,9 +2228,9 @@ D05_ADE8:
     .word $0000
 
 ; -- estado (7 bytes)  [cond=$02 classe=$99 acertos=2]
-D05_ADF6:
+KenStrongPunchNear:
     .byte $02
-    .word D05_ADA9
+    .word KenStrongPunch
     .word D05_A12E
     .byte $99,$02
 
@@ -2283,9 +2283,9 @@ D05_AE43:
     .word $0000
 
 ; -- estado (7 bytes)  [cond=$07 classe=$9A acertos=1]
-D05_AE51:
+KenStrongPunchCrouch:
     .byte $07
-    .word D05_ADF6
+    .word KenStrongPunchNear
     .word D05_A3C0
     .byte $9A,$01
 
@@ -2338,9 +2338,9 @@ D05_AE9E:
     .word $0000
 
 ; -- estado (7 bytes)  [cond=$05 classe=$9C acertos=1]
-D05_AEAC:
+KenStrongPunchAir:
     .byte $05
-    .word D05_AE51
+    .word KenStrongPunchCrouch
     .word D05_A35E
     .byte $9C,$01
 
@@ -2393,9 +2393,9 @@ D05_AEF9:
     .word D05_AEF9
 
 ; -- estado (7 bytes)  [cond=$06 classe=$9C acertos=1]
-D05_AF07:
+KenStrongPunchGround:
     .byte $06
-    .word D05_AEAC
+    .word KenStrongPunchAir
     .word D05_A35E
     .byte $9C,$01
 
@@ -2440,7 +2440,7 @@ D05_AF46:
     .word $0000
 
 ; -- estado (7 bytes)  [cond=$08 classe=$B1 acertos=0]
-D05_AF54:
+KenHadoukenWeak:
     .byte $08
     .word $0000
     .word D05_A12E
@@ -2487,7 +2487,7 @@ D05_AF93:
     .word $0000
 
 ; -- estado (7 bytes)  [cond=$08 classe=$B9 acertos=0]
-D05_AFA1:
+KenHadoukenStrong:
     .byte $08
     .word $0000
     .word D05_A12E
@@ -2534,7 +2534,7 @@ D05_AFE0:
     .word $0000
 
 ; -- estado (7 bytes)  [cond=$FF classe=$C4 acertos=2]
-D05_AFEE:
+KenShoryukenWeak:
     .byte $FF
     .word $0000
     .word D05_B0A4
@@ -2589,7 +2589,7 @@ D05_B03B:
     .word $0000
 
 ; -- estado (7 bytes)  [cond=$FF classe=$CC acertos=2]
-D05_B049:
+KenShoryukenStrong:
     .byte $FF
     .word $0000
     .word D05_B0A4
@@ -2659,7 +2659,7 @@ D05_B0AB:
     .word $0000
 
 ; -- estado (7 bytes)  [cond=$FF classe=$D4 acertos=6]
-D05_B0B9:
+KenTatsumakiWeak:
     .byte $FF
     .word $0000
     .word D05_A35E
@@ -2739,7 +2739,7 @@ D05_B132:
     .word $0000
 
 ; -- estado (7 bytes)  [cond=$FF classe=$DC acertos=6]
-D05_B140:
+KenTatsumakiStrong:
     .byte $FF
     .word $0000
     .word D05_A35E

@@ -16,13 +16,13 @@ CharDirTransLoTbl:
     .byte $00,$00,$00,$00,$00,$00,$00,$00,$00   ; 8001
 CharDirTransHiTbl:
     .byte >(RyuDirTransTbl)                     ; 800A  A0
-    .byte $A0,$00,$00,$00,$00,$00,$00,$00,$00   ; 800B              Ken: >D05_A000
+    .byte $A0,$00,$00,$00,$00,$00,$00,$00,$00   ; 800B              Ken: >KenDirTransTbl
 CharAttackTransLoTbl:
     .byte <(RyuAttackTransTbl)                  ; 8014  12
-    .byte $12,$00,$00,$00,$00,$00,$00,$00,$00   ; 8015              Ken: <D05_A012
+    .byte $12,$00,$00,$00,$00,$00,$00,$00,$00   ; 8015              Ken: <KenAttackTransTbl
 CharAttackTransHiTbl:
     .byte >(RyuAttackTransTbl)                  ; 801E  A0
-    .byte $A0,$00,$00,$00,$00,$00,$00,$00,$00   ; 801F              Ken: >D05_A012
+    .byte $A0,$00,$00,$00,$00,$00,$00,$00,$00   ; 801F              Ken: >KenAttackTransTbl
 CharSpecialTransLoTbl:
     .byte <(RyuSpcTrans)                        ; 8028  1A
     .byte $1A,$00,$00,$00,$00,$00,$00,$00,$00   ; 8029              Ken: <KenSpcTrans
@@ -31,34 +31,34 @@ CharSpecialTransHiTbl:
     .byte $A0,$00,$00,$00,$00,$00,$00,$00,$00   ; 8033              Ken: >KenSpcTrans
 CharGuardReactLoTbl:
     .byte <(RyuGuardReactTbl)                   ; 803C  26
-    .byte $26,$00,$00,$00,$00,$00,$00,$00,$00   ; 803D              Ken: <D05_A026
+    .byte $26,$00,$00,$00,$00,$00,$00,$00,$00   ; 803D              Ken: <KenGuardReactTbl
 CharGuardReactHiTbl:
     .byte >(RyuGuardReactTbl)                   ; 8046  A0
-    .byte $A0,$00,$00,$00,$00,$00,$00,$00,$00   ; 8047              Ken: >D05_A026
+    .byte $A0,$00,$00,$00,$00,$00,$00,$00,$00   ; 8047              Ken: >KenGuardReactTbl
 CharHitReact1LoTbl:
     .byte <(RyuHitReactStandTbl)                ; 8050  3E
-    .byte $3E,$00,$00,$00,$00,$00,$00,$00,$00   ; 8051              Ken: <D05_A03E
+    .byte $3E,$00,$00,$00,$00,$00,$00,$00,$00   ; 8051              Ken: <KenHitReactStandTbl
 CharHitReact1HiTbl:
     .byte >(RyuHitReactStandTbl)                ; 805A  A0
-    .byte $A0,$00,$00,$00,$00,$00,$00,$00,$00   ; 805B              Ken: >D05_A03E
+    .byte $A0,$00,$00,$00,$00,$00,$00,$00,$00   ; 805B              Ken: >KenHitReactStandTbl
 CharHitReact2LoTbl:
     .byte <(RyuHitReactCrouchTbl)               ; 8064  56
-    .byte $56,$00,$00,$00,$00,$00,$00,$00,$00   ; 8065              Ken: <D05_A056
+    .byte $56,$00,$00,$00,$00,$00,$00,$00,$00   ; 8065              Ken: <KenHitReactCrouchTbl
 CharHitReact2HiTbl:
     .byte >(RyuHitReactCrouchTbl)               ; 806E  A0
-    .byte $A0,$00,$00,$00,$00,$00,$00,$00,$00   ; 806F              Ken: >D05_A056
+    .byte $A0,$00,$00,$00,$00,$00,$00,$00,$00   ; 806F              Ken: >KenHitReactCrouchTbl
 CharHitReact0LoTbl:
     .byte <(RyuHitReactNeutralTbl)              ; 8078  6E
-    .byte $6E,$00,$00,$00,$00,$00,$00,$00,$00   ; 8079              Ken: <D05_A06E
+    .byte $6E,$00,$00,$00,$00,$00,$00,$00,$00   ; 8079              Ken: <KenHitReactNeutralTbl
 CharHitReact0HiTbl:
     .byte >(RyuHitReactNeutralTbl)              ; 8082  A0
-    .byte $A0,$00,$00,$00,$00,$00,$00,$00,$00   ; 8083              Ken: >D05_A06E
+    .byte $A0,$00,$00,$00,$00,$00,$00,$00,$00   ; 8083              Ken: >KenHitReactNeutralTbl
 CharHitReact12LoTbl:
     .byte <(RyuThrowTbl)                        ; 808C  86
-    .byte $86,$00,$00,$00,$00,$00,$00,$00,$00   ; 808D              Ken: <D05_A086
+    .byte $86,$00,$00,$00,$00,$00,$00,$00,$00   ; 808D              Ken: <KenThrowTbl
 CharHitReact12HiTbl:
     .byte >(RyuThrowTbl)                        ; 8096  A0
-    .byte $A0,$00,$00,$00,$00,$00,$00,$00,$00   ; 8097              Ken: >D05_A086
+    .byte $A0,$00,$00,$00,$00,$00,$00,$00,$00   ; 8097              Ken: >KenThrowTbl
 CharCmdListLoTbl:
     .byte <(CmdKeyListRyu)                      ; 80A0  C0
     .byte $C0,$00,$00,$00,$00,$00,$00,$00,$00   ; 80A1              Ken: <CmdKeyListRyu
