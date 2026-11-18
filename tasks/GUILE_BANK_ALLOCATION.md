@@ -168,7 +168,7 @@ The Maintainer answered the Phase 1 audit questions on 2026-11-18:
 | Q4 — CPU scope | **P1/human only** | Leave AI pair 9 null; CPU stays Ryu; selection must not route CPU to Guile |
 | Q5 — projectile path | **Parameterize the shared path** | Patch the shared hit/draw path in `$3F`/`$3B` instead of duplicating it |
 | Q6 — P10 mechanism | **Global remap of `CmdKeyAttackTbl[0C]/[0D]`** | Set keys `$0C`/`$0D` to LK/HK (`$02`/`$03`); change is limited to those two bytes; broader remaps still require a new decision |
-| Q7 — pose coverage | **Approved definitive list (2026-11-18)** | Recorded in `tasks/GUILE_BEHAVIORAL_ENGINEERING_SPEC_EN.md` §5.1; defines coverage only, not numeric values. P8 still blocks assets |
+| Q7 — pose coverage | **Approved definitive list (2026-11-18; revised the same date)** | Recorded in `tasks/GUILE_BEHAVIORAL_ENGINEERING_SPEC_EN.md` §5.1; defines coverage only, not numeric values. Knee Pad excluded from NES scope because its published input requires MK, which the NES scheme does not provide. P8 still blocks assets |
 
 P8, P9, P11, and D-05 remain open. This decision record does not resolve them.
 
@@ -176,7 +176,7 @@ P8, P9, P11, and D-05 remain open. This decision record does not resolve them.
 
 ## 7. Approval record
 
-**APPROVED BY MAINTAINER — 2026-11-18.** The approved allocation is state bank `$09`, shared frame/hitbox bank `$14`, and reserved CHR pages `$39`/`$3A` with `$3B` for the projectile candidate. Guile is human-controlled only; the shared projectile path is parameterized; the P10 Flash Kick mechanism is the audited global remap of keys `$0C`/`$0D`. Q7 pose/move coverage was supplied and recorded in the specification §5.1; P8 still blocks asset provenance, conversion, and numeric values.
+**APPROVED BY MAINTAINER — 2026-11-18.** The approved allocation is state bank `$09`, shared frame/hitbox bank `$14`, and reserved CHR pages `$39`/`$3A` with `$3B` for the projectile candidate. Guile is human-controlled only; the shared projectile path is parameterized; the P10 Flash Kick mechanism is the audited global remap of keys `$0C`/`$0D`. Q7 pose/move coverage was supplied and recorded in the specification §5.1, with Knee Pad subsequently excluded because the NES scheme has no MK class; P8 still blocks asset provenance, conversion, and numeric values.
 
 **Applied status:** NOT APPLIED. No annotation, source, linker configuration, ROM, build, generator, test, or emulator change has been made under this approval.
 

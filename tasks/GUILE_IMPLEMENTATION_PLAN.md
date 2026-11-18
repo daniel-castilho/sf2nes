@@ -22,7 +22,7 @@
 | CPU scope | Whether Guile must work as CPU | **APPROVED (2026-11-18)**: P1/human only; AI pointer stays null; CPU stays Ryu | Maintainer answer Q4 |
 | Projectile path | How Sonic Boom uses the shared projectile engine | **APPROVED (2026-11-18)**: parameterize the shared hit/draw path | Maintainer answer Q5 |
 | P10 mechanism | How Flash Kick LK/HK is implemented | **APPROVED (2026-11-18)**: audited global remap of `CmdKeyAttackTbl[0C]/[0D]`; no wider remap | Maintainer answer Q6; Phase 1 consumer audit |
-| Pose/move coverage | Definitive Guile animation/state coverage (Q7) | **APPROVED (2026-11-18)**: full list recorded in `tasks/GUILE_BEHAVIORAL_ENGINEERING_SPEC_EN.md` §5.1 | Defines coverage only; no frame counts, damage, hitboxes, or NES binding for Knee Pad |
+| Pose/move coverage | Definitive Guile animation/state coverage (Q7) | **APPROVED (2026-11-18)**: full list recorded in `tasks/GUILE_BEHAVIORAL_ENGINEERING_SPEC_EN.md` §5.1 | Defines coverage only; no frame counts, damage, or hitboxes. Knee Pad removed from approved NES scope: its published input requires MK, which the NES scheme does not provide |
 
 D-04, P10, the Phase 2 allocation, CPU scope, projectile path, the P10 mechanism, and the pose/move coverage list are resolved. P8 (legal provenance, conversion, numeric values), P9, P11 and D-05 stay open and are treated as gates below. Resolving them later does not require rewriting this plan; it only opens the corresponding gate.
 
