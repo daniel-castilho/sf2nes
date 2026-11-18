@@ -42,7 +42,7 @@ The author wired each bank to a fixed window: **bank `n` always appears in windo
 | Window | Content | Banks used |
 |--------|---------|------------|
 | `$8000` (`$5114`) | character data: frames/metasprites (+ AI) | `$00` Ryu, `$04` Ken (Ken playable frames/collisions), `$08` `$0C` `$10` `$1C` `$24` (portraits only), `$20` (HUD/effects + portrait), `$3C` (fiches, names, quotes, selection, VS) |
-| `$A000` (`$5115`) | fighter states; music | `$01` (Ryu states), `$29` and `$2D` (music, FamiTone2 format) |
+| `$A000` (`$5115`) | fighter states; music | `$01` (Ryu states), `$05` (Ken states, hand-written source), `$29` and `$2D` (music, FamiTone2 format) |
 | `$C000` (`$5116`) | DPCM voices; compressed screens | `$02 $06 $0A $0E $12 $16 $1A $1E $22 $26 $2A` (DPCM), `$36` (RLE nametables) |
 | `$E000` (`$5117`) | **code** | `$37`, `$3B`, `$3F` |
 
@@ -76,7 +76,10 @@ farcall Routine      ; 18 bytes: pushes return and current bank, A = target bank
 farjmp  Routine      ; 12 bytes: "tail call" variant (no own return)
 ```
 
-There are 52 `farcall` and 7 `farjmp` in the ROM. The target bank comes from the label itself (ca65 `.bank()`).
+The original ROM has **52 `farcall` and 7 `farjmp`**. The current generated source shows **51 `farcall`** because the
+temporary Ken patch at `3F:F828` replaces the `ScreenDisclaimer` `farcall` with 18 NOPs. Static method: 48 bank call
+sites + 3 `kernel.inc` copies = 51; adding back the patched call gives 52. The target bank comes from the label itself
+(ca65 `.bank()`).
 
 ### Table dispatch ("RTS trick")
 
@@ -139,7 +142,7 @@ This is the most important point for those who want to **finish the game**: almo
 | id | Name | Frame bank (`CharFrameBankTbl`) | What exists in ROM |
 |----|------|---------------------------------|--------------------|
 | 0 | RYU | `$00` | **complete**: frames, states (`$01`), AI, voices, portrait |
-| 1 | KEN | `$04` | 4.3 KB of frames (same structure as Ryu, other tiles) **never used**, portrait; no states |
+| 1 | KEN | `$04` | 4.3 KB of frames (same structure as Ryu, other tiles) + portrait; partial states in hand-written bank `$05`. Ken is paused (`docs/ROADMAP.md` Step 3); moveset incomplete. |
 | 2 | CHUN LI | `$08` | portrait only |
 | 3 | GUILE | `$0C` | portrait only |
 | 4 | BLANKA | `$10` | portrait only |
@@ -301,5 +304,8 @@ Out of guarantee: voice banks (directory keeps address/64), portrait banks, and 
 | `$36` | `$C000` | 1.3 KB | RLE screens + tables |
 | `$3C` | `$8000` | 1.8 KB | **character fiches**, names, victory quotes, selection/VS data |
 | `$02`…`$2A` (step 4) | `$C000` | — | 11 DPCM voice banks |
-| `$37`, `$3B`, `$3F` | `$E000` | 6.4 / 8.1 / 7.3 KB | code |
+| `$37`, `$3B`, `$3F` | `$E000` | 6.4 / ~7.9 / 7.3 KB | code |
 | other 36 | — | 0 | empty (`$FF`) |
+
+Occupancy values are **published estimates, not revalidated** in Phase 4. Bank `$3B` is full (~120 bytes free per §2);
+the earlier `8.1 KB` figure was arithmetically impossible for an 8 KB bank and is superseded.

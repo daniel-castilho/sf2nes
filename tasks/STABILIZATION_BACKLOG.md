@@ -13,7 +13,7 @@ This backlog separates work into three distinct tracks. **D-01 and D-03 were res
 - **Phase 1** — reproducible audit of metrics, sources of truth, documentation, banks, and existing validations → **AUDIT COMPLETED — DOCUMENT DELIVERED** (`docs/PROJECT_STATUS.md`, commit `ada6c6f`). No indication of approved tests.
 - **Phase 2** — specification of text authoring format for states/frames and decision on canonical source → **DECISION ACCEPTED (D-02, 2026-11-17)** (`tasks/STATE_DATA_FORMAT_DECISION.md`, external TOML format; no implementation authorized). Did not block symbol naming.
 - **Phase 3** — naming driven by criticality and evidence → **COMPLETED — REPORT DELIVERED** (`tasks/PHASE_3_EXECUTION_REPORT.md` §10; commits through `53b99f4`, full list in §10.1). **715 labels renamed; 886 data labels remain automatic** by scope decision.
-- **Phase 4** — documentary reconciliation and technical decision registration.
+- **Phase 4** — documentary reconciliation and technical decision registration → **COMPLETED (2026-11-17)** (`docs/PROJECT_STATUS.md` §12; documentation only, no build/test).
 - **Phase 5** — future validation proposal, without executing tests.
 
 Refer to `tasks/PROJECT_STABILIZATION_EXECUTION_PLAN.md` and `docs/PROJECT_STATUS.md` instead of duplicating complete requirements.
@@ -64,7 +64,7 @@ All items start as `PENDING`. The backlog does not resolve them on its own nor t
 
 - **D-01 — RESOLVED.** Canonical method: `grep -rhE '^[A-Za-z_][A-Za-z0-9_]*:$' src/bank_*.s`, separating definitions from unique names and categories (code/data/semantic). The caveat of three labels with comment on the same line (`EdgeARel`, `EdgeBRel`, `EdgeBBtn`) is registered in `docs/PROJECT_STATUS.md` §11.
 - **D-03 — RESOLVED.** First batch: P0/P1 (engine core), followed by P2/PAD/FamiTone2 and data batches `$3C` through `$04`. Minimum evidence: demonstrable consumer, table structure, or existing documentation; confidence HIGH/MEDIUM; LOW remains automatic.
-- **D-02 — ACCEPTED (2026-11-17).** Maintainer accepted the external declarative format (TOML) as canonical source for future state/frame authoring. Implementation, migration, build, and tests remain unauthorized. Phase 3 acted only on symbols, whose canonical source is `annotations/sf2ne.ann`.
+- **D-02 — ACCEPTED (2026-11-17).** Maintainer accepted the external declarative format (TOML) as canonical source for future state/frame authoring. Implementation, migration, build, and tests remain unauthorized. Phase 3 acted only on symbols, whose canonical source is `annotations/sf2ne.ann`. A Gate C prototype exists (`cb01b25`) but is outside the canonical flow and unvalidated; see `docs/PROJECT_STATUS.md` §11.4/§12.
 
 ---
 

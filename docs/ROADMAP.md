@@ -9,7 +9,7 @@
 What changes is the size of "finishing":
 
 * **the engine is ready and data-driven** — states, animations, AI, commands and voices of one fighter are tables, not code. That's the best possible news for whoever wants to add characters;
-* **but only Ryu has content.** Of the other nine in the planned roster there are name, quote, country voice and (for seven) the portrait. Ken has 4.3 KB of frames ready and never used. Each new fighter is mostly **art and data work**: sprites, states, collision boxes, AI scripts, voices.
+* **but only Ryu has content.** Of the other nine in the planned roster there are name, quote, country voice and (for seven) the portrait. Ken has 4.3 KB of frames in bank `$04` and partial states in a hand-written `$05` bank (paused — see Step 3). Each new fighter is mostly **art and data work**: sprites, states, collision boxes, AI scripts, voices.
 
 For reference, Ryu alone has 71 states and 274 animation frames.
 Programming: weeks. Content for a full roster: much more than that. Plan per fighter.
@@ -50,7 +50,7 @@ Future steps related to characters, content tools, scenarios/music/endings and o
 - [x] The rest: projectile (hadouken) — §12 — and jump physics (§8, `VelY` integration); HUD and character selection were out of scope
 - [x] all `L3F_*` labels named — 242 added in this phase + 173 pre-existing in `.ann` (`F0A5`–`F648`, described in `docs/FORMATS.md` §8), 194 spread in auxiliary routines; rename each one when touching it in Step 2
 
-Step goal — a `docs/FORMATS.md` document with each data structure described field by field, read from code and checked against ROM: **done** (with `(hypothesis)` and `(nt)` marked where reading isn't guaranteed). The "no `L3F_xxxx` labels" part didn't close: ~276 remain above.
+Step goal — a `docs/FORMATS.md` document with each data structure described field by field, read from code and checked against ROM: **done** (with `(hypothesis)` and `(nt)` marked where reading isn't guaranteed). The "no `L3F_xxxx` labels" part didn't close at Step 1: ~276 remained then (historical; Phase 3 later named all automatic code labels — see `docs/PROJECT_STATUS.md` §11).
 
 ### Step 2 — fix and unlock what already exists
 
@@ -84,12 +84,12 @@ When Ken works, the path for others is proven; what remains is art.
 Editing states in `.byte` doesn't scale. Before third fighter it's worth building:
 
 - [ ] **PNG → CHR + metasprites** converter (author has `yanct` in `ref/`; check if it works);
-- [ ] a text format for states/frames (ca65 macros or a script) instead of loose bytes;
+- [ ] a text format for states/frames instead of loose bytes — **D-02 accepted** (external TOML, 2026-11-17). A Gate C prototype exists (`tools/state_data_gen.py`, `tools/comparar_estados.py`, `data/estados/*`, `make gen-states`, commit `cb01b25`) but is outside the canonical flow and unvalidated; migration/use are not authorized (see `docs/PROJECT_STATUS.md` §11.4/§12);
 - [ ] WAV → DPCM converter aligned to 64 bytes, updating voice directory.
 
 ### Step 5 — scenarios, music, endings `PAUSED — outside current phase`
 
-There are 36 empty PRG banks and 198 free CHR pages: space is not the problem. Bank `$3B` (fight code) is full — new code goes to a new bank in window `$E000` (`$33`, `$2F`…), which needs its own kernel copy: just a `bank_33.s` file with `.include "kernel.inc"` at the same address and vectors at the end.
+There are 36 empty PRG banks and 198 free CHR pages: space is not the problem. Bank `$3B` (fight code) is full (~120 bytes free; published estimate, not revalidated — see `docs/PROJECT_STATUS.md` §7 IN-05) — new code goes to a new bank in window `$E000` (`$33`, `$2F`…), which needs its own kernel copy: just a `bank_33.s` file with `.include "kernel.inc"` at the same address and vectors at the end.
 
 ---------------------------------------------------------------------------------------------------
 

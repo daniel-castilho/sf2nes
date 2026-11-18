@@ -32,6 +32,8 @@ tools/mesen/setup_mesen.sh       # optional: downloads Mesen 2.1.1 and leaves it
 | `make gen` | regenerates `src/`, `sf2ne.cfg` and `assets/` from ROM + trace + annotations |
 | `make fixed` | assembles `build/sf2ne_fixed.nes` with optional fixes (`-D FIX_SOFT_RESET`) |
 | `make fixed FIXDEFS="-D A -D B"` | chooses which `alt` blocks to enable: `FIX_SOFT_RESET`, `FIX_HEAVY_ONCE`, `FIX_EDGE_ATTACK`, `MODE_VERSUS` |
+| `make prontos` | rebuilds four playable ROMs in `prontos/` (reset fix, versus, strong attack once, edge attack) via `make fixed` with different `FIXDEFS` |
+| `make gen-states` | **prototype (Gate C):** converts `data/estados/*.toml` to `src/<name>.s` using `tools/state_data_gen.py`; writes into `src/` (side effect); not part of `make gen` or the canonical build, and migration/use are not authorized |
 | `make assets` | exports graphics (PNG) and voices (WAV) to `extracted/` |
 | `make clean` | deletes `build/` |
 
@@ -65,6 +67,8 @@ Two `alt` overlapping only halfway are rejected by the generator (the `.else` wo
 
 ## Scripts in `tools/`
 
+Interfaces below are read from source/help text; **none was executed in Phase 4**. "Not executed" does not mean broken.
+
 | Script | Use |
 |--------|-----|
 | `disasm.py` | project generator (it is `make gen`). Prints per-bank statistics and warnings. |
@@ -76,6 +80,8 @@ Two `alt` overlapping only halfway are rejected by the generator (the `.else` wo
 | `shift_test.sh <banco> [<banco>…]` | relocation test: inserts 1 byte at start of each listed bank and assembles `build/shift/…` |
 | `extract_chr.py`, `extract_dpcm.py` | export graphics and voices (`make assets`) |
 | `trace_merge.py rom saida dir…` | merges raw emulator executions into `trace/` |
+| `state_data_gen.py entrada.toml saida.s` | **prototype (Gate C):** converts declarative state/frame TOML to ca65 assembly; Python 3.11+ (`tomllib`); writes only the given output file; outside the canonical flow and not executed in Phase 4 |
+| `comparar_estados.py original.s gerado.s` | **prototype (Gate C):** compares `.byte`/`.word` data lines between two assembly files (`.byte` exact; `.word` zero vs non-zero); not executed in Phase 4 |
 | `sheet.py out.png colunas escala a.png b.png …` | screenshot contact sheet |
 | `d6502.py`, `tracelib.py` | libraries (opcode table, trace reading) |
 
@@ -90,6 +96,9 @@ and each code line brings original address and bytes; `(nt)` = never executed in
 
 ## Headless emulator (`tools/mesen/`)
 
+> **Known stale reference:** the header of `run_trace.sh` still cites `docs/FERRAMENTAS.md`, which no longer
+> exists. This document is the current reference; the script was not edited in Phase 4.
+
 Mesen 2 has a `--testrunner` mode that runs a Lua script without opening a window. Details that were hard to discover
 and that `setup_mesen.sh` / `run_trace.sh` already solve:
 
@@ -103,9 +112,9 @@ and that `setup_mesen.sh` / `run_trace.sh` already solve:
 | `cdl.lua` | executed code, data reads (with the instruction that read), indirect jumps, RAM use, MMC5 registers, DPCM samples, which screen mode each instruction ran on, screenshots |
 | `ptrtrace.lua` | **pointers**, by origin tracing (see below) |
 | `reset_test.lua` / `reset_test.sh` | presses RESET at a chosen frame and verifies whether the game restarts |
-| `compare_roms.sh A B plano quadros semente` | runs two ROMs with same inputs and compares screens, sound and timeline |
-| `regress.sh ROM` | 5-match battery against original (use after changes that should not alter anything) |
-| `run_trace.sh <plano> <quadros> <semente> <saida> [shots] [pokes]` | runs one of the above scripts (`SF2_SCRIPT=…`) |
+| `compare_roms.sh A B plano quadros semente [intervalo=150] [pokes]` | runs two ROMs with same inputs and compares screens, sound and timeline |
+| `regress.sh ROM [rom_de_referencia]` | 5-match battery against the original ROM (default `rom/sf2ne_demo.nes`); use after changes that should not alter anything |
+| `run_trace.sh <plano> <quadros> <semente> <saida> [shots=300] [pokes]` | runs one of the above scripts (`SF2_SCRIPT=…`) |
 | `batch1.sh`, `batch2.sh`, `batch3.sh`, `batch_ptr.sh` | batches used to generate `trace/` |
 
 Input plans: `attract` (doesn't touch anything), `idle` (enters fight and stays still), `p1random` (P1 random,

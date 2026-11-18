@@ -9,7 +9,7 @@ make verify   # optional HISTORICAL check: compares the build with the original 
 make fixed    # builds build/sf2ne_fixed.nes with the soft reset freeze fix
 make fixed FIXDEFS="-D FIX_SOFT_RESET -D MODE_VERSUS"   # same + versus mode (P2 on controller 2)
 make fixed FIXDEFS="-D FIX_SOFT_RESET -D FIX_HEAVY_ONCE"   # same + strong attack without repetition (experimental)
-make prontos  # rebuilds the three playable variants in prontos/
+make prontos  # rebuilds the four playable variants in prontos/
 make assets   # exports graphics (PNG) and the 31 voices (WAV) to extracted/
 make gen      # regenerates src/ after editing annotations/sf2ne.ann
 ```
@@ -27,7 +27,7 @@ Requirements: `python3` and `cc65` (`sudo apt install cc65`). The emulator is on
 | **Symbolic pointers** | 114 immediate pairs and 2,550 bytes of data discovered by source tracing in the emulator; plus 187 completed by table structure. |
 | **Structure understood** | cartridge and MMC5 map, IRQ/NMI kernel, inter-bank calls, screen flow, fight loop, sound (FamiTone2), voice directory, character fiche, **state bank format** (71 states, 274 frames), **collision boxes** (variable-length records), **AI bytecode** (18 opcodes) and **transition conditions** (12 conditions). |
 | **Bugs** | soft reset freeze: cause found, fixed (14 bytes per bank) and tested. Command delay and repetition: cause found and measured (`InputButtons`). |
-| **Findings** | the engine already runs **2 players** — just needs connecting (option `MODE_VERSUS`, 1 byte); the planned roster of 10 fighters, with names and phrases, is in the ROM; Ken has 4.3 KB of frames ready now integrated into bank `$05`; versus and single player modes work. |
+| **Findings** | the engine already runs **2 players** — just needs connecting (option `MODE_VERSUS`, 1 byte); the planned roster of 10 fighters, with names and phrases, is in the ROM; Ken has 4.3 KB of frames in bank `$04` plus a partial hand-written state bank `$05` (Ken remains paused — see `docs/ROADMAP.md` Step 3); versus and single player modes work. |
 
 All data formats driving the fight engine — character fiche, state banks, animation frames, metasprites,
 collision boxes, damage, commands, projectile, AI bytecode and transition conditions — are documented in
@@ -53,8 +53,11 @@ Read in this order:
 There are 2,145 label definitions (2,140 unique names): **1,254 semantic** and **886 automatic data labels**
   (`D01_A4CB`…). **No automatic code labels remain** (`L3F_E4DA`…): the P0/P1, P2 and FamiTone2 batches of Phase 3 named the 379 that existed. The `$3C` (33), `$3F` (15), `$20` (30), `$36` (27), `$3B` (35), `$37` (17), `$29` (46), `$2D` (14), `$01` (38), `$05` (38), `$00` (31) and `$04` (3) data batches already named fiches, palettes, portraits, the fight core, HUD/effects, the stage backgrounds, the fight/VS/select HUD, the sound/select/title tables, the music modules, the Ryu/Ken state-bank anchors, Ryu's AI scripts/helper tables and Ken's fiche-referenced data (`tasks/DATA_NAMING_3C.md`, `tasks/DATA_NAMING_3F.md`, `tasks/DATA_NAMING_20.md`, `tasks/DATA_NAMING_36.md`, `tasks/DATA_NAMING_3B.md`, `tasks/DATA_NAMING_37.md`, `tasks/DATA_NAMING_29.md`, `tasks/DATA_NAMING_2D.md`, `tasks/DATA_NAMING_01.md`, `tasks/DATA_NAMING_05.md`, `tasks/DATA_NAMING_00.md`, `tasks/DATA_NAMING_04.md`); the remaining 886 are inventoried in
   `tasks/DATA_LABEL_INVENTORY.tsv`.
-  Of the variables, 78 are named. The Phase 3 inventory is in `tasks/NAMING_CANDIDATES.md`.
-* **Code never executed** (14–17% of banks `$37` and `$3F`): came from static analysis. These are mostly
+  `src/ram.inc` declares 484 RAM symbols, 41 of them automatic `zp_*` placeholders. The earlier “78 named
+  variables” figure has no documented method and is **not revalidated**; see [`docs/RAM.md`](docs/RAM.md)
+  and [`docs/PROJECT_STATUS.md`](docs/PROJECT_STATUS.md) §7 (IN-02). The Phase 3 inventory is in `tasks/NAMING_CANDIDATES.md`.
+* **Code never executed** — historical figure: 14–17% of banks `$37` and `$3F`, derived from the trace set
+  (29 merged runs, `trace/README.txt`); **not revalidated**. These are mostly
   unused FamiTone2 resources and rare engine branches. It's disassembled but not exercised.
 * **Voices:** the sample directory keeps address/64; moving a sample requires manually editing the table.
 
@@ -69,14 +72,14 @@ assets/                   CHR and voice banks, included with .incbin
 tools/                    generator, extractors, tests; tools/mesen/ = emulator scripts
 docs/                     documentation
 extracted/                PNGs and WAVs (make assets)
-prontos/                  assembled ROMs ready to play: reset fix, versus, strong attack once
+prontos/                  assembled ROMs ready to play: reset fix, versus, strong attack once, edge attack
 ref/                      public libraries from the author (familib, pa65, yanct) for comparison
 build/                    assembly output (do not version)
 ```
 
 ## Workflow
 
-**Current phase — stabilization and maintainability (documentation only).** No new character or gameplay feature is being implemented in this phase. `src/` remains generated from `annotations/sf2ne.ann`; do not edit by hand. The next implementation phase will be defined after the Phase 1 documentation audit.
+**Current phase — stabilization and maintainability (documentation only).** No new character or gameplay feature is being implemented in this phase. `src/` remains generated from `annotations/sf2ne.ann`; do not edit by hand. The next implementation phase is not defined; resuming work requires the decisions tracked in [`docs/PROJECT_STATUS.md`](docs/PROJECT_STATUS.md) and [`tasks/STABILIZATION_BACKLOG.md`](tasks/STABILIZATION_BACKLOG.md).
 
 ```
 tools/show.py 3F:E4DA 60          # reads a routine (shows who calls it and on which screens it runs)
@@ -104,6 +107,10 @@ remains untouched.
 Study project, for personal use. The ROM and extracted data belong to their authors.
 
 ## Ken Implementation — Phase 6: Delivery
+
+> **Historical record (2026-11-13, commit `fccaae6`).** This is not the current project status: Ken is paused
+> under [`docs/ROADMAP.md`](docs/ROADMAP.md) Step 3, and the SHA-1 below does not identify the current canonical
+> build. Content is preserved for chronology.
 
 ### Current Status
 

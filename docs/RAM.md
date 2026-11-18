@@ -2,6 +2,8 @@
 
 The full list of used addresses, with read/write counts, is in `src/ram.inc` (generated) and, with **which instructions** touch each address, in `trace/ram.txt`. Here only identified variables are listed.
 
+**Counts (CONFIRMED — STATIC, Phase 4):** `src/ram.inc` declares 484 symbols, 41 of them automatic `zp_*` placeholders. The earlier README figure “78 named variables” has no documented method and is **not revalidated**; this map lists identified variables only. See `docs/PROJECT_STATUS.md` §7 (IN-02).
+
 How they were found: RAM dump every frame during full matches (`SF2_RAMDUMP=1`), cross-referenced with screenshots, plus reading code that uses them. To confirm a hypothesis, force the value in the emulator (`SF2_HOLD="address:value:from:to"`) and see what changes.
 
 ## Fighters — 2-position vectors (`,x` with X = 0 for P1, 1 for P2)

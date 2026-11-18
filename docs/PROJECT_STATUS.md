@@ -118,7 +118,7 @@ The values below are **published in documentation (`docs/ARCHITECTURE.md` §7), 
 | `$3C` | `$8000` | Character fiches, names, victory quotes, selection/VS data | 1.8 KB | Documented, not revalidated |
 | `$02…$2A` (step 4) | `$C000` | 11 DPCM voice banks | — | Documented, not revalidated |
 | `$37` | `$E000` | Sound (FamiTone2 + voices), warning, title and selection screens | 6.4 KB | Documented, not revalidated |
-| `$3B` | `$E000` | Fight (rounds, HUD, drawing, split screen), VS screens and final quote, video utilities | 8.1 KB (full!) | Documented, not revalidated |
+| `$3B` | `$E000` | Fight (rounds, HUD, drawing, split screen), VS screens and final quote, video utilities | ~7.9 KB (full; ~120 bytes free) | Published, not revalidated (IN-05) |
 | `$3F` | `$E000` | Reset, main loop, fight engine core | 7.3 KB | Documented, not revalidated |
 | Other 36 banks | — | Empty (`$FF`) | 0 | Documented, not revalidated |
 
@@ -158,17 +158,17 @@ Inventoried by reading `tools/` and `tools/mesen/`. **No script was executed.** 
 
 ## 7. Inconsistency matrix
 
-Comparing `README.md`, `docs/ROADMAP.md`, `docs/ARCHITECTURE.md`, `docs/FORMATS.md`, `docs/RAM.md`, `docs/BUGS.md`, `docs/TOOLS.md` and task specifications. No divergence was corrected; all are registered for later prioritization.
+Comparing `README.md`, `docs/ROADMAP.md`, `docs/ARCHITECTURE.md`, `docs/FORMATS.md`, `docs/RAM.md`, `docs/BUGS.md`, `docs/TOOLS.md` and task specifications. The Phase 1 claim wording is preserved below; the **Phase 4 disposition** column records the current status and evidence. Full reconciliation record: §12.
 
-| ID | Claim/subject | Document A | Document B | Category | Risk | Proposed destination |
+| ID | Claim/subject | Document A | Document B | Category | Risk | Phase 4 disposition |
 |----|---------------|------------|------------|----------|------|----------------------|
-| IN-01 | Label count: "1,795 labels; 304 have real names" (README §"What is not ready yet") | `README.md` | Recalculated count (2,145 definitions, 2,140 unique, 1,254 semantic, 886 automatic data, 0 automatic code) | Count/metric | Resolved in Phase 3 — README and this document reconciled | Keep canonical metric from section 4; D-01 resolved at Phase 3 close |
-| IN-02 | Named variable count: "78 named" (README) | `README.md` | Not recalculated in this audit (would require `ram.inc` inspection) | Count/metric | Low | Verify against `src/ram.inc` in Phase 1 |
-| IN-03 | "Never executed code (14–17% of banks `$37` and `$3F`)" (README) | `README.md` | Not revalidated (would require current traces) | Bank capacity/build | Medium — percentage may be outdated | Confirm with `datamap.py`/traces in Phase 1, without running emulator |
-| IN-04 | "52 farcall and 7 farjmp" (ARCHITECTURE.md §2.7) | `docs/ARCHITECTURE.md` | Not recounted in this audit | Source of truth/generation | Low | Verify against annotations/generator in Phase 4 |
-| IN-05 | "Bank `$3B` is full — ~120 bytes free" (ARCHITECTURE.md §7 and ROADMAP.md Step 5) | `docs/ARCHITECTURE.md`, `docs/ROADMAP.md` | Not revalidated (no build) | Bank capacity/build | Medium — limits code addition in `$3B` | Confirm with linker map if build authorized (Gate C/D) |
-| IN-06 | README describes canonical build as "with playable Ken" and `make verify` warns it diverges from original | `README.md` | `Makefile` (`DEFS := -D DEST_FLAG_BLINK`, build diverges by design) | Source of truth/generation | Low — intentional behavior, documented | None; consistent in intent |
-| IN-07 | "Ken has 4.3 KB of frames now integrated into bank $05" (README §Findings) vs "Bank $05 is hand-written source (original is all $FF)" (ROADMAP.md Step 3) | `README.md`, `docs/ROADMAP.md` | Sources describe complementary situations (frames vs states) | Status/scope | Low | Clarify in Phase 4 |
+| IN-01 | Label count: "1,795 labels; 304 have real names" (README §"What is not ready yet") | `README.md` | Recalculated count (2,145 definitions, 2,140 unique, 1,254 semantic, 886 automatic data, 0 automatic code) | Count/metric | Resolved in Phase 3 — README and this document reconciled | **RESOLVED (Phase 3).** Current summaries use 2,145/2,140/1,254/886; no current-status paragraph repeats 1,795/304. CONFIRMED — STATIC (docs). |
+| IN-02 | Named variable count: "78 named" (README) | `README.md` | Not recalculated in this audit (would require `ram.inc` inspection) | Count/metric | Low | **NOT REVALIDATED** — "78" has no documented method. README now gives the static count (484 symbols in `src/ram.inc`, 41 automatic `zp_*` placeholders) and links here and to `docs/RAM.md`. CONFIRMED — STATIC (`grep ':='`). |
+| IN-03 | "Never executed code (14–17% of banks `$37` and `$3F`)" (README) | `README.md` | Not revalidated (would require current traces) | Bank capacity/build | Medium — percentage may be outdated | **HISTORICAL** — figure derives from the merged trace set (29 runs, `trace/README.txt`); not revalidated. CONFIRMED — EXISTING TRACE (artifact), HISTORICAL figure. |
+| IN-04 | "52 farcall and 7 farjmp" (ARCHITECTURE.md §2.7) | `docs/ARCHITECTURE.md` | Not recounted in this audit | Source of truth/generation | Low | **RESOLVED** — original ROM: 52 `farcall` + 7 `farjmp`; current generated source: 51 `farcall` because the temporary Ken patch `3F:F828` replaces the `ScreenDisclaimer` call with 18 NOPs (48 bank call sites + 3 `kernel.inc` copies = 51; +1 removed = 52). CONFIRMED — STATIC. |
+| IN-05 | "Bank `$3B` is full — ~120 bytes free" (ARCHITECTURE.md §7 and ROADMAP.md Step 5) | `docs/ARCHITECTURE.md`, `docs/ROADMAP.md` | Not revalidated (no build) | Bank capacity/build | Medium — limits code addition in `$3B` | **CORRECTED** — `$3B` occupancy published as `8.1 KB` is impossible for an 8 KB bank; now `~7.9 KB (full; ~120 bytes free)`, derived from the published `~120 bytes free`. Published, NOT REVALIDATED. |
+| IN-06 | README describes canonical build as "with playable Ken" and `make verify` warns it diverges from original | `README.md` | `Makefile` (`DEFS := -D DEST_FLAG_BLINK`, build diverges by design) | Source of truth/generation | Low — intentional behavior, documented | **CONFIRMED — STATIC.** Canonical build intentionally diverges; original reconstruction identity (`0bf9dc57…`) kept separate. README `make prontos` count corrected to four variants (Makefile). |
+| IN-07 | "Ken has 4.3 KB of frames now integrated into bank $05" (README §Findings) vs "Bank $05 is hand-written source (original is all $FF)" (ROADMAP.md Step 3) | `README.md`, `docs/ROADMAP.md` | Sources describe complementary situations (frames vs states) | Status/scope | Low | **RESOLVED** — frames are in bank `$04` (4.3 KB); partial states are in hand-written bank `$05`. README, ARCHITECTURE §1/§4.1 and ROADMAP corrected; Ken remains PAUSED (ROADMAP Step 3). CONFIRMED — STATIC. |
 
 ## 8. Stabilization decisions
 
@@ -190,12 +190,15 @@ D-01, D-02 and D-03 are now resolved; D-04 to D-07 remain open.
 
 - No assembly, execution, emulation or testing was performed. All bank occupancy metrics are documented/historical, not revalidated.
 - No permanent audit tool was created (as Phase 1 scope prohibits).
-- No document divergence was corrected; all were registered in section 7.
+- Phase 1 divergences were reconciled in Phase 4 as recorded in §12; the original Phase 1 wording is preserved in §7.
+- Phase 4 did not run `make`, `make gen`, scripts, tests or the emulator. New claims are CONFIRMED — STATIC, CONFIRMED — EXISTING TRACE, HISTORICAL, or explicitly NOT REVALIDATED.
+- Trace coverage (14–17% of banks `$37`/`$3F`) and the old "78 named variables" figure are not revalidated; see IN-02/IN-03 in §7.
+- `tools/mesen/run_trace.sh` still references `docs/FERRAMENTAS.md`, which no longer exists; the tool was not edited (outside Phase 4 scope).
 - README historical label count (1,795) was not used; a new count was made from generated sources and updated in Phase 3 and in `$3C`, `$3F`, `$20`, `$36`, `$3B`, `$37`, `$29`, `$2D`, `$01`, `$05`, `$00` and `$04` batches (2,145 definitions, 2,140 unique names, 1,254 semantic).
 
 ### Recommended next steps (without implementing or choosing canonical source)
 
-1. **Request Gate A** (documentary audit) to consolidate current metrics and resolve documented divergences (section 7).
+1. **Phase 4 complete** (documentation reconciliation); see §12. Resuming implementation requires explicit Maintainer decisions on D-04–D-07.
 2. **Label counting criterion** (D-01): resolved at Phase 3 close; canonical metric is in section 4.
 3. **Canonical source for states/frames** (D-02): accepted on 2026-11-17 (external TOML); implementation and migration remain unauthorized.
 4. **Evaluate whether "never executed code" percentage (14–17%) needs revalidation** with existing traces, without running a new emulator.
@@ -310,4 +313,17 @@ No emulator execution was done in this phase; verification is static (flow, call
 - **Decisions:** D-01 and D-03 resolved at close; D-02 accepted on 2026-11-17 (external TOML format, no implementation authorized); D-04…D-07 follow `PENDING` in `tasks/STABILIZATION_BACKLOG.md`.
 - **Data (`D<bb>_<aaaa>`, 886):** inventoried and prioritized in `tasks/DATA_LABEL_INVENTORY.tsv`; `$3C` (33), `$3F` (15), `$20` (30), `$36` (27), `$3B` (35), `$37` (17), `$29` (46), `$2D` (14), `$01` (38), `$05` (38), `$00` (31) and `$04` (3) batches applied. The remainder is metasprites, collision records, state/frame records and shared sound reference blocks; they stay P3 unless a consumer is documented.
 - **`$36` write-only labels:** `D36_C005`, `D36_C00A` and `D36_C00F` remain automatic until a consumer appears (`MMC5_CHR_BG2` is never used).
-- **State/frame migration to TOML:** decision accepted (D-02); implementation and migration are not authorized and not started.
+- **State/frame migration to TOML:** decision accepted (D-02); canonical use and migration are not authorized and not started. A Gate C prototype exists (`tools/state_data_gen.py`, `tools/comparar_estados.py`, `data/estados/*.toml`, `make gen-states`, commit `cb01b25`), but it is outside the canonical flow, was not validated, and does not authorize use. See §12.
+
+## 12. Phase 4 — documentation reconciliation record (2026-11-17)
+
+- **Base:** `fdbb6dd` (`HEAD = origin/main`), a recorded descendant of the specification baseline `9a6c9f8`. Working tree was clean except the Phase 4 specification, committed together with this record.
+- **Scope:** documentation only. No source, annotation, tool, asset, ROM, Makefile or linker configuration was edited; no `make`, `make gen`, script, test or emulator run was performed.
+- **IN dispositions:** IN-01 RESOLVED; IN-02 NOT REVALIDATED (static count documented); IN-03 HISTORICAL (existing trace set); IN-04 RESOLVED (52 original / 51 current, explained by the temporary `3F:F828` patch); IN-05 CORRECTED (`$3B` ~7.9 KB, published/not revalidated); IN-06 CONFIRMED — STATIC (intentional canonical divergence); IN-07 RESOLVED (frames `$04`, partial states `$05`, Ken paused). Evidence labels are in §7.
+- **IN-08:** the Phase 3 report §10.4 citation was already corrected in `fdbb6dd` (`docs/CODING_STANDARDS.md` §2 + `tasks/NAMING_CANDIDATES.md` §4); no further edit.
+- **Decisions:** D-01/D-03 RESOLVED; D-02 ACCEPTED (external TOML; converter/migration unauthorized); D-04–D-07 PENDING.
+- **Phase 3 metrics:** the closeout in `tasks/PHASE_3_EXECUTION_REPORT.md` §10 and §11 here prevail: 2,145 definitions, 2,140 unique, 1,254 semantic, 886 automatic data, 0 automatic code, 715 renamed. Intermediate values remain historical.
+- **Gate C prototype:** exists since `cb01b25`; documented as a non-canonical, unvalidated prototype (see §11.4). No authorization is implied.
+- **Files reconciled:** `README.md`, `docs/PROJECT_STATUS.md`, `docs/ARCHITECTURE.md`, `docs/ROADMAP.md`, `docs/TOOLS.md`, `docs/RAM.md`, `tasks/STABILIZATION_BACKLOG.md`, plus `tasks/PHASE_4_DOCUMENTATION_RECONCILIATION_SPEC.md`.
+- **Specification exception:** `tasks/PHASE_4_DOCUMENTATION_RECONCILIATION_SPEC.md` was untracked and is not listed in §6; it is committed with this record under explicit Maintainer authorization.
+- **Preserved:** Phase 1 audit and Phase 3 chronology; Ken scope and content pause; CPU Ryu decision; arcade REA boundaries.
