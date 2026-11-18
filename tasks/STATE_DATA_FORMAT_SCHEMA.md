@@ -1,9 +1,9 @@
 # Authoring schema — states and animation frames (Phase 2)
 
-**Status:** PROPOSED (part of format decision; awaits Maintainer approval)  
-**Origin:** `tasks/PHASE_2_STATE_DATA_FORMAT_SPEC.md` (Phase 2)  
-**Type:** conceptual design document — not code, not a converter, not game data  
-**Prerequisites confirmed:** Phase 0 and Phase 1 completed
+- **Status:** ACCEPTED (2026-11-17, part of D-02; no implementation authorized)
+- **Origin:** `tasks/PHASE_2_STATE_DATA_FORMAT_SPEC.md` (Phase 2)
+- **Type:** conceptual design document — not code, not a converter, not game data
+- **Prerequisites confirmed:** Phase 0 and Phase 1 completed
 
 ---
 

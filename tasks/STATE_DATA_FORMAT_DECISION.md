@@ -1,10 +1,10 @@
 # Format decision — state and frame authoring (Phase 2)
 
-**Status:** PROPOSED (Engineer recommendation; awaits explicit Maintainer decision)  
-**Update 2026-11-16:** decision remains `PROPOSED`; Phase 3 closing did not use it as prerequisite, since naming acted only on symbols (`annotations/sf2ne.ann`). See `tasks/PHASE_3_EXECUTION_REPORT.md` §10.4.  
-**Origin:** `tasks/PHASE_2_STATE_DATA_FORMAT_SPEC.md` (Phase 2 of stabilization plan)  
-**Type:** decision/design document — does not authorize implementation, build, test, or migration  
-**Prerequisites confirmed:** Phase 0 accepted, Phase 1 completed with `docs/PROJECT_STATUS.md` available
+- **Status:** ACCEPTED (Maintainer decision, 2026-11-17): external declarative format (TOML) as canonical source for future state/frame authoring. Implementation, migration, build, and tests remain unauthorized.
+- **Update 2026-11-17:** decision accepted by the Maintainer; Phase 3 closing recorded in `tasks/PHASE_3_EXECUTION_REPORT.md` §10.4.
+- **Origin:** `tasks/PHASE_2_STATE_DATA_FORMAT_SPEC.md` (Phase 2 of stabilization plan)
+- **Type:** decision/design document — does not authorize implementation, build, test, or migration
+- **Prerequisites confirmed:** Phase 0 accepted, Phase 1 completed with `docs/PROJECT_STATUS.md` available
 
 ---
 
@@ -12,7 +12,7 @@
 
 The Engineer recommends **external declarative format** (structured file processed by dedicated tool) as canonical source for state and animation frame authoring, instead of ca65 macros/DSL.
 
-**Status:** `PROPOSED` — final approval belongs to the Maintainer. No implementation, converter, migration, or build change is authorized by this document.
+**Status:** `ACCEPTED` on 2026-11-17. No implementation, converter, migration, or build change is authorized by this document.
 
 ---
 
@@ -58,7 +58,7 @@ Phase 1 audit (`docs/PROJECT_STATUS.md`) recorded 549 semantic labels vs 1,592 a
 | Ambiguity risk | Low | Medium (indentation, implicit types) | Low |
 | Suitability for rigid schema | High | Medium | High |
 
-**Recommended syntax (still PROPOSED):** TOML, for having comments, explicit typing, and standard parser in modern Python, with low indentation-ambiguity risk. Final decision between TOML/YAML/JSON belongs to the Maintainer.
+**Accepted syntax:** TOML, for having comments, explicit typing, and standard parser in modern Python, with low indentation-ambiguity risk. The Maintainer accepted TOML on 2026-11-17.
 
 ---
 
@@ -102,12 +102,12 @@ Phase 1 audit (`docs/PROJECT_STATUS.md`) recorded 549 semantic labels vs 1,592 a
 
 | Item | Status |
 |------|--------|
-| External declarative format as preferred direction | PROPOSED |
-| TOML as preferred syntax | PROPOSED |
-| Canonical source vs. generated separation | PROPOSED |
-| Final approval (Maintainer) | PENDING |
+| External declarative format as preferred direction | ACCEPTED (2026-11-17) |
+| TOML as preferred syntax | ACCEPTED (2026-11-17) |
+| Canonical source vs. generated separation | ACCEPTED (2026-11-17) |
+| Final approval (Maintainer) | ACCEPTED (2026-11-17) |
 
-Final decision belongs to the Maintainer. Until explicit approval, no converter, migration, `make gen` change, build, or test is authorized.
+Decision accepted by the Maintainer on 2026-11-17. Acceptance does not authorize a converter, migration, `make gen` change, build, or test; those require separate authorization.
 
 ---
 
@@ -124,9 +124,9 @@ Final decision belongs to the Maintainer. Until explicit approval, no converter,
 
 ---
 
-## 9. Next steps (after approval)
+## 9. Next steps (decision accepted; implementation not authorized)
 
-1. Gate C: authorize tool implementation (parser + assembly generator).
+1. Gate C (not authorized): authorize tool implementation (parser + assembly generator).
 2. Implement converter and validate against current Ryu data (no Ken, no new content).
 3. Gradual migration by bank/character, with documented rollback.
 4. Future verification: build, ROM comparison, and regression of existing features.

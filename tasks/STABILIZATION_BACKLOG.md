@@ -4,15 +4,15 @@
 **Type:** planning document and pending-decision record.  
 **No implementation, build, test, or emulator execution is authorized by this file.**
 
-This backlog separates work into three distinct tracks. **D-01 and D-03 were resolved at Phase 3 closing (2026-11-16); D-02 remains `PROPOSED`; D-04 to D-07 remain `PENDING`.**
+This backlog separates work into three distinct tracks. **D-01 and D-03 were resolved at Phase 3 closing (2026-11-16); D-02 was accepted on 2026-11-17; D-04 to D-07 remain `PENDING`.**
 
 ---
 
 ## Track A — stabilization/maintainability (candidates, without implementation approval)
 
 - **Phase 1** — reproducible audit of metrics, sources of truth, documentation, banks, and existing validations → **AUDIT COMPLETED — DOCUMENT DELIVERED** (`docs/PROJECT_STATUS.md`, commit `ada6c6f`). No indication of approved tests.
-- **Phase 2** — specification of text authoring format for states/frames and decision on canonical source → **PROPOSAL DELIVERED — DECISION PENDING** (`tasks/STATE_DATA_FORMAT_DECISION.md`, state `PROPOSED`). Did not block symbol naming.
-- **Phase 3** — naming driven by criticality and evidence → **COMPLETED — REPORT DELIVERED** (`tasks/PHASE_3_EXECUTION_REPORT.md` §10; commits `e2e18f3`, `64a29f8`, `92fbde1`, `2df963c` and `fa7c215`). 493 labels renamed; 1,108 data labels remain automatic by scope decision.
+- **Phase 2** — specification of text authoring format for states/frames and decision on canonical source → **DECISION ACCEPTED (D-02, 2026-11-17)** (`tasks/STATE_DATA_FORMAT_DECISION.md`, external TOML format; no implementation authorized). Did not block symbol naming.
+- **Phase 3** — naming driven by criticality and evidence → **COMPLETED — REPORT DELIVERED** (`tasks/PHASE_3_EXECUTION_REPORT.md` §10; commits through `53b99f4`, full list in §10.1). **715 labels renamed; 886 data labels remain automatic** by scope decision.
 - **Phase 4** — documentary reconciliation and technical decision registration.
 - **Phase 5** — future validation proposal, without executing tests.
 
@@ -53,18 +53,18 @@ All items start as `PENDING`. The backlog does not resolve them on its own nor t
 | ID | Question to resolve | State | Owner | Evidence/input needed | Blocks |
 |----|---------------------|-------|-------|----------------------|--------|
 | D-01 | What reproducible method will be used to count total labels, code/data labels, and semantically named labels? | RESOLVED | Maintainer | `docs/PROJECT_STATUS.md` §4/§11 and `tasks/PHASE_3_EXECUTION_REPORT.md` §10.2. | Naming metrics and future comparison. |
-| D-02 | What will be the canonical source for state/frame authoring: annotations, ca65 macros, or external declarative format? | PROPOSED | Maintainer | `tasks/STATE_DATA_FORMAT_DECISION.md`; state/frame decision follows in Phase 2/4. | Implementing converter or migrating data. |
-| D-03 | Which routines/tables will be the first naming batch, and what minimum evidence makes a name acceptable? | RESOLVED | Maintainer | P0/P1, P2, PAD, FamiTone2 and `$3C`/`$3F`/`$20` data batches; criteria in `tasks/NAMING_CANDIDATES.md` and batch reports. | Renaming campaign. |
+| D-02 | What will be the canonical source for state/frame authoring: annotations, ca65 macros, or external declarative format? | ACCEPTED (2026-11-17) | Maintainer | `tasks/STATE_DATA_FORMAT_DECISION.md` (external TOML). | Implementing converter or migrating data (still requires separate authorization). |
+| D-03 | Which routines/tables will be the first naming batch, and what minimum evidence makes a name acceptable? | RESOLVED | Maintainer | P0/P1, P2, PAD, FamiTone2 and data batches `$3C` through `$04`; criteria in `tasks/NAMING_CANDIDATES.md` and batch reports. | Renaming campaign. |
 | D-04 | What criteria and explicit decision reopen character/feature implementation? | PENDING | Maintainer | Maintainer priorities and stabilization conclusion. | Resuming Track C. |
 | D-05 | What future validations will be authorized, by whom, and in what scope? | PENDING | Maintainer | Phase 5 validation proposal and explicit authorization. | Creating/running tests, builds, or emulator validation in future work. |
 | D-06 | Will external asset tools be evaluated and when? | PENDING | Maintainer | Content need, availability, and license review. | Integrating external converters. |
 | D-07 | Is there a measurable need to change kernel/bank organization? | PENDING | Maintainer | Space audit, vector requirements, and cycle constraints. | Any kernel refactoring. |
 
-### Resolution record (2026-11-16)
+### Resolution record (2026-11-16; D-02 added 2026-11-17)
 
 - **D-01 — RESOLVED.** Canonical method: `grep -rhE '^[A-Za-z_][A-Za-z0-9_]*:$' src/bank_*.s`, separating definitions from unique names and categories (code/data/semantic). The caveat of three labels with comment on the same line (`EdgeARel`, `EdgeBRel`, `EdgeBBtn`) is registered in `docs/PROJECT_STATUS.md` §11.
-- **D-03 — RESOLVED.** First batch: P0/P1 (engine core), followed by P2/PAD/FamiTone2 and `$3C`/`$3F`/`$20` data. Minimum evidence: demonstrable consumer, table structure, or existing documentation; confidence HIGH/MEDIUM; LOW remains automatic.
-- **D-02 — PROPOSED, not blocking Phase 3.** Phase 3 acted only on symbols, whose canonical source is `annotations/sf2ne.ann`; the state/frame decision was neither used nor anticipated.
+- **D-03 — RESOLVED.** First batch: P0/P1 (engine core), followed by P2/PAD/FamiTone2 and data batches `$3C` through `$04`. Minimum evidence: demonstrable consumer, table structure, or existing documentation; confidence HIGH/MEDIUM; LOW remains automatic.
+- **D-02 — ACCEPTED (2026-11-17).** Maintainer accepted the external declarative format (TOML) as canonical source for future state/frame authoring. Implementation, migration, build, and tests remain unauthorized. Phase 3 acted only on symbols, whose canonical source is `annotations/sf2ne.ann`.
 
 ---
 

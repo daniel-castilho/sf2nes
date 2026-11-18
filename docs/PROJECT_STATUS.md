@@ -1,6 +1,6 @@
 # Project Status — audit (Phase 1) and Phase 3 update
 
-> **Reading note:** sections 1–10 preserve the Phase 1 static audit, performed on `ada6c6f`. **Section 11** records the status after Phase 3 naming batches (Gate D, P2, PAD, FamiTone2 and `$3C`/`$3F`/`$20` data), closed on 2026-11-16, with reconciled metrics. Where the two views diverge, section 11 prevails for current status.
+> **Reading note:** sections 1–10 preserve the Phase 1 static audit, performed on `ada6c6f`. **Section 11** records the status after Phase 3 naming batches (Gate D, P2, PAD, FamiTone2 and data `$3C` through `$04`), closed on 2026-11-16, with reconciled metrics and D-02 accepted on 2026-11-17. Where the two views diverge, section 11 prevails for current status.
 
 ## 1. Audit metadata and limitations
 
@@ -98,7 +98,7 @@ Items not confirmed (require build/execution/inspection outside scope):
 - The README historical number ("1,795 labels; 304 have real names") was replaced in Phase 3; counts above were recalculated from generated sources and README now publishes the canonical metric.
 - Overlapping categories were not summed; total label count is not used as a single quality measure.
 - Label `InputButtons` is duplicated inside `src/bank_3F.s` (2 definitions, 1 unique name). Labels `ResetStub` (banks `$37`, `$3B`, `$3F`), `ResetVectorFill` (banks `$37`, `$3B`) and `RoundStart` (banks `$3B`, `$3F`) appear in multiple banks; counted as 1 unique name each globally.
-- Phase 1 audit did not rename labels. In Phase 3, P0/P1, P2, PAD and FamiTone2 batches renamed 388 labels and data `$3C`, `$3F`, `$20`, `$36`, `$3B` and `$37` batches renamed another 157 — **545 total** (see section 11, `tasks/NAMING_CANDIDATES.md` and `tasks/PHASE_3_EXECUTION_REPORT.md` §10), without altering any byte.
+- Phase 1 audit did not rename labels. In Phase 3, P0/P1, P2, PAD and FamiTone2 batches renamed 388 labels and data `$3C`, `$3F`, `$20`, `$36`, `$3B`, `$37`, `$29`, `$2D`, `$01`, `$05`, `$00` and `$04` batches renamed another 327 — **715 total** (see section 11, `tasks/NAMING_CANDIDATES.md` and `tasks/PHASE_3_EXECUTION_REPORT.md` §10), without altering any byte.
 - No permanent tool was created or modified in `tools/` in this phase.
 
 ## 5. Bank map and documented capacity
@@ -172,17 +172,17 @@ Comparing `README.md`, `docs/ROADMAP.md`, `docs/ARCHITECTURE.md`, `docs/FORMATS.
 
 ## 8. Stabilization decisions
 
-Reference to `tasks/STABILIZATION_BACKLOG.md` (created in Phase 0). At Phase 3 close (2026-11-16), D-01 and D-03 were resolved; D-02 remains `PROPOSED`; D-04 to D-07 follow `PENDING`:
+Reference to `tasks/STABILIZATION_BACKLOG.md` (created in Phase 0). At Phase 3 close (2026-11-16), D-01 and D-03 were resolved; D-02 was accepted on 2026-11-17; D-04 to D-07 follow `PENDING`:
 
 - **D-01 — RESOLVED:** reproducible label counting method, registered in section 4 and in `tasks/PHASE_3_EXECUTION_REPORT.md` §10.2.
-- **D-02 — PROPOSED:** canonical source for state/frame authoring; did not block symbol naming (blocks implementing converter or migrating data).
+- **D-02 — ACCEPTED (2026-11-17):** external declarative format (TOML) as canonical source for future state/frame authoring; did not block symbol naming. Implementation, migration, build, and tests remain unauthorized.
 - **D-03 — RESOLVED:** first naming batch and minimal evidence, registered in `tasks/NAMING_CANDIDATES.md` and batch reports.
 - **D-04:** Criteria to reopen character/feature implementation (blocks resuming track C).
 - **D-05:** Future validations authorized, by whom, in what scope (blocks creating/running tests, builds or emulator validation).
 - **D-06:** Evaluation of external asset tools (blocks integrating external converters).
 - **D-07:** Measurable need to change kernel/bank organization (blocks any kernel refactoring).
 
-None of these was resolved in this audit.
+D-01, D-02 and D-03 are now resolved; D-04 to D-07 remain open.
 
 ## 9. Limitations and recommended next steps
 
@@ -197,7 +197,7 @@ None of these was resolved in this audit.
 
 1. **Request Gate A** (documentary audit) to consolidate current metrics and resolve documented divergences (section 7).
 2. **Label counting criterion** (D-01): resolved at Phase 3 close; canonical metric is in section 4.
-3. **Decide canonical source for states/frames** (D-02) before specifying text format (Phase 2).
+3. **Canonical source for states/frames** (D-02): accepted on 2026-11-17 (external TOML); implementation and migration remain unauthorized.
 4. **Evaluate whether "never executed code" percentage (14–17%) needs revalidation** with existing traces, without running a new emulator.
 
 ## 10. Source index
@@ -224,11 +224,11 @@ None of these was resolved in this audit.
 
 **Label counting method:** `grep -rhE '^[A-Za-z_][A-Za-z0-9_]*:$' src/bank_*.s`, with classification by `L<bb>_<aaaa>` (code) and `D<bb>_<aaaa>` (data) patterns confirmed in generator; everything else is semantic. Files consulted: all `src/bank_*.s` listed in the index above.
 
-## 11. Status after Phase 3 (naming) and data `$3C`/`$3F`/`$20`/`$36`/`$3B`/`$37`/`$29`/`$2D`/`$01`/`$05` batches
+## 11. Status after Phase 3 (naming) and data `$3C`/`$3F`/`$20`/`$36`/`$3B`/`$37`/`$29`/`$2D`/`$01`/`$05`/`$00`/`$04` batches
 
 - **Date:** 2026-11-17
-- **Base committed:** `efa5dde` (`$01` batch; previous: `6b75ae3` `$2D`, `3540a92` `$29`, `c871806` generator regeneration, `cfc7d78` `$37`, `3ba99e3` `$3B`, `8108eb1` `$36`, `fa7c215`, `2df963c`, `64a29f8`, `92fbde1`)
-- **Working tree:** the `$05` batch (`annotations/sf2ne.ann`, `src/bank_05.s`, `src/bank_3C.s`, docs and `tasks/DATA_NAMING_05.md`) is applied and validated, pending commit authorization. Phase 3 closed on 2026-11-16.
+- **Base committed:** `53b99f4` (`$04` batch; previous: `b95ff5b` `$00`, `045cc5c` `$05`, `efa5dde` `$01`, `6b75ae3` `$2D`, `3540a92` `$29`, `c871806` generator regeneration, `cfc7d78` `$37`, `3ba99e3` `$3B`, `8108eb1` `$36`, `fa7c215`, `2df963c`, `64a29f8`, `92fbde1`); docs commit `39b7668`.
+- **Working tree:** clean; all batches committed and pushed (`HEAD = origin/main = 39b7668`). Phase 3 closed on 2026-11-16; D-02 accepted on 2026-11-17.
 
 ### 11.1 Reconciled metrics
 
@@ -304,10 +304,10 @@ Line-by-line inventory, with unique ID, previous ID, previous symbol, evidence, 
 
 No emulator execution was done in this phase; verification is static (flow, calls, comments) plus build and SHA-1/byte comparison.
 
-### 11.4 Pending
+### 11.4 Closing record
 
-- **Commit:** Phase 3 closed on 2026-11-16; `$3C`, `$3F` and `$20` batches committed (`64a29f8`, `92fbde1`, `2df963c`). The `$36` batch was applied before `fa7c215` and is recorded in `8108eb1`; the `$3B` batch is committed as `3ba99e3`; the `$37` batch is committed as `cfc7d78` and pushed; the `$29` batch is committed as `3540a92` and pushed; the `$2D` batch is committed as `6b75ae3` and pushed; the `$01` batch is committed as `efa5dde` and pushed; the `$05` batch is committed as `045cc5c` and pushed; the `$00` batch is committed as `b95ff5b` and pushed; the `$04` batch is applied and validated, pending commit authorization.
-- **Decisions:** D-01 and D-03 resolved at close; D-02 remains `PROPOSED` (does not block naming); D-04…D-07 follow `PENDING` in `tasks/STABILIZATION_BACKLOG.md`.
+- **Commit:** Phase 3 closed on 2026-11-16 and all batches are committed and pushed: `$3C` `64a29f8`, `$3F` `92fbde1`, `$20` `2df963c`, `$36` (bundled with `fa7c215`; recorded in `8108eb1`), `$3B` `3ba99e3`, `$37` `cfc7d78`, `$29` `3540a92`, `$2D` `6b75ae3`, `$01` `efa5dde`, `$05` `045cc5c`, `$00` `b95ff5b`, `$04` `53b99f4`; docs commit `39b7668`. `HEAD = origin/main`.
+- **Decisions:** D-01 and D-03 resolved at close; D-02 accepted on 2026-11-17 (external TOML format, no implementation authorized); D-04…D-07 follow `PENDING` in `tasks/STABILIZATION_BACKLOG.md`.
 - **Data (`D<bb>_<aaaa>`, 886):** inventoried and prioritized in `tasks/DATA_LABEL_INVENTORY.tsv`; `$3C` (33), `$3F` (15), `$20` (30), `$36` (27), `$3B` (35), `$37` (17), `$29` (46), `$2D` (14), `$01` (38), `$05` (38), `$00` (31) and `$04` (3) batches applied. The remainder is metasprites, collision records, state/frame records and shared sound reference blocks; they stay P3 unless a consumer is documented.
 - **`$36` write-only labels:** `D36_C005`, `D36_C00A` and `D36_C00F` remain automatic until a consumer appears (`MMC5_CHR_BG2` is never used).
-- **State/frame migration to TOML:** not authorized and not started.
+- **State/frame migration to TOML:** decision accepted (D-02); implementation and migration are not authorized and not started.

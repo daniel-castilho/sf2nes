@@ -1,11 +1,12 @@
 # Technical specification — Phase 2: state and frame authoring format
 
-**Status:** ready for the Software Engineer to execute as design phase; does not authorize format/converter implementation.  
-**Project:** Street Fighter II NE (`daniel-castilho/sf2nes`).  
-**Origin:** Phase 2 of `tasks/PROJECT_STABILIZATION_EXECUTION_PLAN.md`.  
-**Prerequisites:** Phase 0 accepted and Phase 1 completed, with `docs/PROJECT_STATUS.md` available.  
-**Type of work:** survey, alternative comparison, specification, and decision recommendation.  
-**Code, data migration, build, compilation, ROM, tests, and emulator:** out of scope and not authorized by this specification.
+- **Status:** ready for the Software Engineer to execute as design phase; does not authorize format/converter implementation.
+- **Execution status:** COMPLETED; D-02 accepted on 2026-11-17 (`tasks/STATE_DATA_FORMAT_DECISION.md`).
+- **Project:** Street Fighter II NE (`daniel-castilho/sf2nes`).
+- **Origin:** Phase 2 of `tasks/PROJECT_STABILIZATION_EXECUTION_PLAN.md`.
+- **Prerequisites:** Phase 0 accepted and Phase 1 completed, with `docs/PROJECT_STATUS.md` available.
+- **Type of work:** survey, alternative comparison, specification, and decision recommendation.
+- **Code, data migration, build, compilation, ROM, tests, and emulator:** out of scope and not authorized by this specification.
 
 ## 1. Objective
 

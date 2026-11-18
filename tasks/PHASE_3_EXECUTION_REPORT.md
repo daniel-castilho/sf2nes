@@ -1,9 +1,9 @@
 # Execution report — Phase 3 (evidence-guided naming)
 
-**Date:** 2026-11-15 (code batches); updated 2026-11-16 (data batches and closing)  
-**Committed base:** `3ba99e3` (`$3B` batch; previous: `8108eb1` `$36`, `fa7c215`, `2df963c`, `64a29f8`, `92fbde1`)  
-**State:** Phase 3 concluded and verified; `$37` batch committed as `cfc7d78` and pushed.  
-**Scope:** symbol and comment renaming; no code/data byte was altered.
+- **Date:** 2026-11-15 (code batches); updated 2026-11-17 (data batches and closing)
+- **Committed base:** `53b99f4` (`$04` batch; previous: `b95ff5b` `$00`, `045cc5c` `$05`, `efa5dde` `$01`, `6b75ae3` `$2D`, `3540a92` `$29`, `c871806`, `cfc7d78` `$37`, `3ba99e3` `$3B`, `8108eb1` `$36`, `fa7c215`, `2df963c`, `64a29f8`, `92fbde1`)
+- **State:** Phase 3 concluded and verified; all batches committed and pushed; D-02 accepted on 2026-11-17.
+- **Scope:** symbol and comment renaming; no code/data byte was altered.
 
 > Sections 1–9 preserve the 2026-11-15 record, when only code batches were in the diff. Section 10 consolidates data batches, final metrics, and phase acceptance.
 
@@ -60,7 +60,7 @@ Bank sum (931) differs from unique total (928) because `ResetStub` (3 banks), `R
 - `EdgeARel`, `EdgeBRel`, and `EdgeBBtn` are out of canonical metric due to same-line comment; published metric remains 928 for reproducibility.
 - `InputButtons` remains duplicated within bank `$3F`; not renamed to avoid changing existing contract.
 - No emulator execution; verification is static (flow, calls, comments) + build + SHA-1/bytes.
-- In the 2026-11-15 state, D-01…D-07 were still `PENDING`; closing resolved D-01 and D-03 and kept D-02 `PROPOSED` (see §10.4).
+- In the 2026-11-15 state, D-01…D-07 were still `PENDING`; closing resolved D-01 and D-03, and D-02 remained `PROPOSED` until accepted on 2026-11-17 (see §10.4).
 - State/frame migration to TOML was not authorized nor started.
 
 ## 6. Effects on tools and documents
@@ -126,7 +126,7 @@ Metrics in sections 4 and 7 are historical (before data batches). The metrics in
 | Data `$01` | 38 | Ryu state bank anchors: 7 pointer tables, 8 direction entries, 17 button-chain states and 6 special-move states; 38 state headers and 228 frames deferred | `efa5dde` |
 | Data `$05` | 38 | Ken state bank anchors (mirror of `$01`): 7 pointer tables, 8 direction entries, 17 button-chain states and 6 special-move states; 40 state headers and 274 frames deferred | `045cc5c` |
 | Data `$00` | 31 | Ryu AI: idle script table, 19 bytecode scripts and 11 helper tables; 96 metasprites and 79 collision records deferred | `b95ff5b` |
-| Data `$04` | 3 | Ken fiche-referenced data: win/normal portrait layout, AI stub table and stub script | pending |
+| Data `$04` | 3 | Ken fiche-referenced data: win/normal portrait layout, AI stub table and stub script | `53b99f4` |
 | **Total** | **327** | — | — |
 
 \* The `$36` batch was applied before `fa7c215` and entered the repository bundled with that English-translation commit; it has no separate commit.
@@ -179,15 +179,15 @@ The 1,259 vs 1,254 difference comes from `ResetStub` (3×), `ResetVectorFill` (2
 ### 10.4 Decisions and acceptance
 
 - **D-01 — RESOLVED.** Reproducible method registered in `docs/PROJECT_STATUS.md` §4/§11 and in this section: count definitions and unique names separately, distinguish code/data/semantic, and keep the caveat of the three same-line-comment labels.
-- **D-03 — RESOLVED.** First batch was P0/P1 (engine core), followed by P2/PAD/FamiTone2 and `$3C`, `$3F`, `$20`, `$36`, `$3B`, `$37`, `$29` and `$2D` data. Minimum evidence: demonstrable consumer, table structure, or existing documentation; confidence `HIGH`/`MEDIUM`; `LOW` remains automatic. In `$36`, three write-only labels (`C005`, `C00A`, `C00F`) stayed automatic for lack of a static consumer; in `$29`, 53 shared reference blocks and 4 instrument-record artifacts stayed automatic; in `$2D`, 55 reference blocks and 1 artifact stayed automatic for lack of an independent identity.
-- **D-02 — PROPOSED, non-blocking for naming.** Decision on state/frame canonical source (`tasks/STATE_DATA_FORMAT_DECISION.md`) still awaits Maintainer. Phase 3 did not use it: naming acted only on symbols, whose canonical source is `annotations/sf2ne.ann`.
+- **D-03 — RESOLVED.** First batch was P0/P1 (engine core), followed by P2/PAD/FamiTone2 and data batches `$3C` through `$04`. Minimum evidence: demonstrable consumer, table structure, or existing documentation; confidence `HIGH`/`MEDIUM`; `LOW` remains automatic. In `$36`, three write-only labels (`C005`, `C00A`, `C00F`) stayed automatic for lack of a static consumer; in `$29`, 53 shared reference blocks and 4 instrument-record artifacts stayed automatic; in `$2D`, 55 reference blocks and 1 artifact stayed automatic for lack of an independent identity.
+- **D-02 — ACCEPTED (2026-11-17).** Maintainer accepted the external declarative format (TOML) as canonical source for future state/frame authoring (`tasks/STATE_DATA_FORMAT_DECISION.md`). This does not authorize a converter, migration, or build change. Phase 3 did not use it: naming acted only on symbols, whose canonical source is `annotations/sf2ne.ann`.
 - **D-04…D-07 — PENDING**, no change in this phase.
 
 Phase 3 spec §12 acceptance criteria:
 
 | Criterion | State | Evidence |
 |-----------|-------|----------|
-| Gates of Phases 0–2 and canonical source available | MET for symbols | Phases 0/1 completed; symbol source = `annotations/sf2ne.ann`; D-02 (states/frames) remains `PROPOSED` and out of naming scope |
+| Gates of Phases 0–2 and canonical source available | MET | Phases 0/1 completed; Phase 2 decided (D-02 accepted on 2026-11-17); symbol source = `annotations/sf2ne.ann` |
 | Initial metric reconciled and method frozen | MET | §10.2 and `docs/PROJECT_STATUS.md` §4/§11 |
 | Inventory with address, label, name, category, evidence, confidence, priority | MET | `tasks/NAMING_CANDIDATES.md` and `tasks/DATA_NAMING_3C.md`, `_3F.md`, `_20.md` |
 | P0/P1 batches limited, reviewable, evidence-based; P3 without definitive rename | MET | batches by subsystem; no `LOW` name applied |
@@ -205,4 +205,5 @@ Phase 3 spec §12 acceptance criteria:
 - **886 automatic data labels remain**; spec allows keeping them when semantics is undetermined (P3/opaque). Distribution: `$00` 175, `$01` 266, `$05` 314, `$08/$0C/$10/$1C/$24` 5, `$29` 57, `$2D` 56, `$36` 3, `$37` 10.
 - The `$00` batch named Ryu's AI scripts and helper tables; the 175 remaining `$00` labels are metasprites and collision records. The `$04` batch named the last fiche-referenced Ken data (portrait layout and AI stub); the remaining state/frame and shared-reference labels may stay P3.
 - The three `$36` write-only labels (`C005`, `C00A`, `C00F`) stay automatic until a consumer appears; `MMC5_CHR_BG2` is never used in the ROM.
+- **D-02:** accepted on 2026-11-17 (external TOML); converter implementation and state/frame migration remain unauthorized.
 - No character, feature, or playable content was started.
