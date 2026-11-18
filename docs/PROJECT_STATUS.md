@@ -172,17 +172,17 @@ Comparing `README.md`, `docs/ROADMAP.md`, `docs/ARCHITECTURE.md`, `docs/FORMATS.
 
 ## 8. Stabilization decisions
 
-Reference to `tasks/STABILIZATION_BACKLOG.md` (created in Phase 0). At Phase 3 close (2026-11-16), D-01 and D-03 were resolved; D-02 was accepted on 2026-11-17; D-04 to D-07 follow `PENDING`:
+Reference to `tasks/STABILIZATION_BACKLOG.md` (created in Phase 0). At Phase 3 close (2026-11-16), D-01 and D-03 were resolved; D-02 was accepted on 2026-11-17; D-04 was resolved on 2026-11-18; D-05 to D-07 follow `PENDING`:
 
 - **D-01 — RESOLVED:** reproducible label counting method, registered in section 4 and in `tasks/PHASE_3_EXECUTION_REPORT.md` §10.2.
 - **D-02 — ACCEPTED (2026-11-17):** external declarative format (TOML) as canonical source for future state/frame authoring; did not block symbol naming. Implementation, migration, build, and tests remain unauthorized.
 - **D-03 — RESOLVED:** first naming batch and minimal evidence, registered in `tasks/NAMING_CANDIDATES.md` and batch reports.
-- **D-04:** Criteria to reopen character/feature implementation (blocks resuming track C).
+- **D-04 — RESOLVED (2026-11-18):** character/feature implementation reopened by explicit Maintainer instruction; builds, tests, and emulator validation remain gated by D-05.
 - **D-05:** Future validations authorized, by whom, in what scope (blocks creating/running tests, builds or emulator validation).
 - **D-06:** Evaluation of external asset tools (blocks integrating external converters).
 - **D-07:** Measurable need to change kernel/bank organization (blocks any kernel refactoring).
 
-D-01, D-02 and D-03 are now resolved; D-04 to D-07 remain open.
+D-01, D-02, D-03 and D-04 are now resolved; D-05 to D-07 remain open.
 
 ## 9. Limitations and recommended next steps
 
@@ -198,7 +198,7 @@ D-01, D-02 and D-03 are now resolved; D-04 to D-07 remain open.
 
 ### Recommended next steps (without implementing or choosing canonical source)
 
-1. **Phase 4 complete** (documentation reconciliation); see §12. Resuming implementation requires explicit Maintainer decisions on D-04–D-07.
+1. **Phase 4 complete** (documentation reconciliation); see §12. D-04 was resolved on 2026-11-18, so character implementation may resume; builds, tests, and emulator validation still require D-05, and P8/P9/P10/P11 remain open.
 2. **Label counting criterion** (D-01): resolved at Phase 3 close; canonical metric is in section 4.
 3. **Canonical source for states/frames** (D-02): accepted on 2026-11-17 (external TOML); implementation and migration remain unauthorized.
 4. **Evaluate whether "never executed code" percentage (14–17%) needs revalidation** with existing traces, without running a new emulator.
@@ -327,3 +327,12 @@ No emulator execution was done in this phase; verification is static (flow, call
 - **Files reconciled:** `README.md`, `docs/PROJECT_STATUS.md`, `docs/ARCHITECTURE.md`, `docs/ROADMAP.md`, `docs/TOOLS.md`, `docs/RAM.md`, `tasks/STABILIZATION_BACKLOG.md`, plus `tasks/PHASE_4_DOCUMENTATION_RECONCILIATION_SPEC.md`.
 - **Specification exception:** `tasks/PHASE_4_DOCUMENTATION_RECONCILIATION_SPEC.md` was untracked and is not listed in §6; it is committed with this record under explicit Maintainer authorization.
 - **Preserved:** Phase 1 audit and Phase 3 chronology; Ken scope and content pause; CPU Ryu decision; arcade REA boundaries.
+
+## 13. D-04 resolution and Guile specification reconciliation (2026-11-18)
+
+- **D-04 — RESOLVED.** Explicit Maintainer instruction reopened character/feature implementation; Track C may resume. Builds, generation (`make gen`), tests, and emulator validation remain gated by D-05. P8, P9, and P11 remain open.
+- **P10 — APPROVED (2026-11-18).** Sonic Boom uses LP/HP and Flash Kick uses LK/HK, two strengths per special, with no medium variant and no claim of full arcade parity. The control decision is closed; implementing and validating the mapping is still future work.
+- **Specification reconciled:** `tasks/GUILE_BEHAVIORAL_ENGINEERING_SPEC_EN.md` was aligned with public `main` at `50d937680b17aecaac028be4e2aada5b83a991ed`. Table labels (`CharFrameBankTbl`, `CharStateBankTbl`, `CharHitBoxBankTbl`, `CharDirTransLoTbl`, `CharDirTransHiTbl`), the `CountryVoiceTbl` bank (`37:E0EF`), the remote reference (`refs/review/public-main`), and the aerial-throw heading were corrected. Claims without workspace evidence were removed.
+- **Execution plan:** `tasks/GUILE_IMPLEMENTATION_PLAN.md` records the phased implementation plan, its gates, and the open decisions.
+- **Scope:** documentation only. No source, annotation, tool, asset, ROM, Makefile, or linker configuration was edited; no `make`, `make gen`, script, test, or emulator run was performed.
+- **Files:** `tasks/GUILE_BEHAVIORAL_ENGINEERING_SPEC_EN.md`, `tasks/GUILE_IMPLEMENTATION_PLAN.md`, `tasks/STABILIZATION_BACKLOG.md`, `docs/PROJECT_STATUS.md`.

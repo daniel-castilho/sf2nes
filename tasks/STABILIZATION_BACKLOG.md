@@ -4,7 +4,7 @@
 **Type:** planning document and pending-decision record.  
 **No implementation, build, test, or emulator execution is authorized by this file.**
 
-This backlog separates work into three distinct tracks. **D-01 and D-03 were resolved at Phase 3 closing (2026-11-16); D-02 was accepted on 2026-11-17; D-04 to D-07 remain `PENDING`.**
+This backlog separates work into three distinct tracks. **D-01 and D-03 were resolved at Phase 3 closing (2026-11-16); D-02 was accepted on 2026-11-17; D-04 was resolved on 2026-11-18; D-05 to D-07 remain `PENDING`.**
 
 ---
 
@@ -55,16 +55,17 @@ All items start as `PENDING`. The backlog does not resolve them on its own nor t
 | D-01 | What reproducible method will be used to count total labels, code/data labels, and semantically named labels? | RESOLVED | Maintainer | `docs/PROJECT_STATUS.md` §4/§11 and `tasks/PHASE_3_EXECUTION_REPORT.md` §10.2. | Naming metrics and future comparison. |
 | D-02 | What will be the canonical source for state/frame authoring: annotations, ca65 macros, or external declarative format? | ACCEPTED (2026-11-17) | Maintainer | `tasks/STATE_DATA_FORMAT_DECISION.md` (external TOML). | Implementing converter or migrating data (still requires separate authorization). |
 | D-03 | Which routines/tables will be the first naming batch, and what minimum evidence makes a name acceptable? | RESOLVED | Maintainer | P0/P1, P2, PAD, FamiTone2 and data batches `$3C` through `$04`; criteria in `tasks/NAMING_CANDIDATES.md` and batch reports. | Renaming campaign. |
-| D-04 | What criteria and explicit decision reopen character/feature implementation? | PENDING | Maintainer | Maintainer priorities and stabilization conclusion. | Resuming Track C. |
+| D-04 | What criteria and explicit decision reopen character/feature implementation? | RESOLVED (2026-11-18) | Maintainer | Explicit Maintainer instruction in the 2026-11-18 planning session: character implementation is reopened. Builds, tests, and emulator validation remain gated by D-05. | Resuming Track C (now unblocked). |
 | D-05 | What future validations will be authorized, by whom, and in what scope? | PENDING | Maintainer | Phase 5 validation proposal and explicit authorization. | Creating/running tests, builds, or emulator validation in future work. |
 | D-06 | Will external asset tools be evaluated and when? | PENDING | Maintainer | Content need, availability, and license review. | Integrating external converters. |
 | D-07 | Is there a measurable need to change kernel/bank organization? | PENDING | Maintainer | Space audit, vector requirements, and cycle constraints. | Any kernel refactoring. |
 
-### Resolution record (2026-11-16; D-02 added 2026-11-17)
+### Resolution record (2026-11-16; D-02 added 2026-11-17; D-04 added 2026-11-18)
 
 - **D-01 — RESOLVED.** Canonical method: `grep -rhE '^[A-Za-z_][A-Za-z0-9_]*:$' src/bank_*.s`, separating definitions from unique names and categories (code/data/semantic). The caveat of three labels with comment on the same line (`EdgeARel`, `EdgeBRel`, `EdgeBBtn`) is registered in `docs/PROJECT_STATUS.md` §11.
 - **D-03 — RESOLVED.** First batch: P0/P1 (engine core), followed by P2/PAD/FamiTone2 and data batches `$3C` through `$04`. Minimum evidence: demonstrable consumer, table structure, or existing documentation; confidence HIGH/MEDIUM; LOW remains automatic.
 - **D-02 — ACCEPTED (2026-11-17).** Maintainer accepted the external declarative format (TOML) as canonical source for future state/frame authoring. Implementation, migration, build, and tests remain unauthorized. Phase 3 acted only on symbols, whose canonical source is `annotations/sf2ne.ann`. A Gate C prototype exists (`cb01b25`) but is outside the canonical flow and unvalidated; see `docs/PROJECT_STATUS.md` §11.4/§12.
+- **D-04 — RESOLVED (2026-11-18).** Maintainer reopened character/feature implementation. This unblocks Track C work such as the Guile implementation plan. It does not authorize builds, tests, or emulator validation, which remain gated by D-05, and it does not resolve P8, P9, P10, or P11.
 
 ---
 
