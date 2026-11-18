@@ -5,30 +5,30 @@
 ;
 .include "defs.inc"
 .segment "BANK01"
-D01_A000:
-    .word D01_A0F6                              ; A000  F6 A0
-    .word D01_A16D                              ; A002  6D A1
-    .word D01_A3D5                              ; A004  D5 A3
-    .word D01_A223                              ; A006  23 A2
-    .word D01_A373                              ; A008  73 A3
-    .word D01_A270                              ; A00A  70 A2
-    .word D01_A2E7                              ; A00C  E7 A2
-    .word D01_A373                              ; A00E  73 A3
-    .word D01_A3EA                              ; A010  EA A3
-D01_A012:
-    .word D01_AD86                              ; A012  86 AD
-    .word D01_AF07                              ; A014  07 AF
-    .word D01_ABBF                              ; A016  BF AB
-    .word D01_AADF                              ; A018  DF AA
+RyuDirTransTbl:
+    .word RyuDirNeutralEntry                    ; A000  F6 A0       states by InputDir (9 entries, indexed InputDir-$04); copied to ram_031E
+    .word RyuDirForwardEntry                    ; A002  6D A1
+    .word RyuDirBackEntry                       ; A004  D5 A3
+    .word RyuDirUpEntry                         ; A006  23 A2
+    .word RyuDirDownEntry                       ; A008  73 A3
+    .word RyuDirUpForwardEntry                  ; A00A  70 A2
+    .word RyuDirUpBackEntry                     ; A00C  E7 A2
+    .word RyuDirDownEntry                       ; A00E  73 A3
+    .word RyuDirDownBackEntry                   ; A010  EA A3
+RyuAttackTransTbl:
+    .word RyuWeakPunchAir                       ; A012  86 AD       states by InputAttack 0-3 (weak/strong punch, weak/strong kick); copied to ram_0322
+    .word RyuStrongPunchGround                  ; A014  07 AF
+    .word RyuWeakKickAir                        ; A016  BF AB
+    .word RyuThrowStart                         ; A018  DF AA
 RyuSpcTrans:
-    .word D01_AF54                              ; A01A  54 AF       6 transition pointers of Ryu's specials (ram_0326 points here): indexed by CmdMoveIdx*2, consumed by InputDispatch
-    .word D01_AFA1                              ; A01C  A1 AF
-    .word D01_AFEE                              ; A01E  EE AF
-    .word D01_B049                              ; A020  49 B0
-    .word D01_B0B9                              ; A022  B9 B0
-    .word D01_B140                              ; A024  40 B1
-D01_A026:
-    .word D01_A4CB                              ; A026  CB A4
+    .word RyuHadoukenWeak                       ; A01A  54 AF       6 transition pointers of Ryu's specials (ram_0326 points here): indexed by CmdMoveIdx*2, consumed by InputDispatch
+    .word RyuHadoukenStrong                     ; A01C  A1 AF
+    .word RyuShoryukenWeak                      ; A01E  EE AF
+    .word RyuShoryukenStrong                    ; A020  49 B0
+    .word RyuTatsumakiWeak                      ; A022  B9 B0
+    .word RyuTatsumakiStrong                    ; A024  40 B1
+RyuGuardReactTbl:
+    .word D01_A4CB                              ; A026  CB A4       guard reaction by HitReactClass & $3F (12 entries); copied to ram_032A
     .word D01_A4FE                              ; A028  FE A4       (inferred)
     .word D01_A531                              ; A02A  31 A5       (inferred)
     .word D01_A4CB                              ; A02C  CB A4
@@ -40,8 +40,8 @@ D01_A026:
     .word D01_A531                              ; A038  31 A5       (inferred)
     .word D01_A531                              ; A03A  31 A5       (inferred)
     .word D01_A564                              ; A03C  64 A5
-D01_A03E:
-    .word D01_A597                              ; A03E  97 A5       (inferred)
+RyuHitReactStandTbl:
+    .word D01_A597                              ; A03E  97 A5       (inferred) standing damage reaction (12 entries, fiche slot CharHitReact1); copied to ram_032E
     .word D01_A5CA                              ; A040  CA A5       (inferred)
     .word D01_A60B                              ; A042  0B A6       (inferred)
     .word D01_A668                              ; A044  68 A6
@@ -52,8 +52,8 @@ D01_A03E:
     .word D01_A60B                              ; A04E  0B A6       (inferred)
     .byte $00,$00,$00,$00                       ; A050
     .word D01_A80A                              ; A054  0A A8
-D01_A056:
-    .word D01_A739                              ; A056  39 A7       (inferred)
+RyuHitReactCrouchTbl:
+    .word D01_A739                              ; A056  39 A7       (inferred) crouching damage reaction (12 entries, fiche slot CharHitReact2); copied to ram_0336
     .word D01_A76C                              ; A058  6C A7       (inferred)
     .word D01_A7AD                              ; A05A  AD A7       (inferred)
     .word D01_A739                              ; A05C  39 A7
@@ -64,8 +64,8 @@ D01_A056:
     .word D01_A7AD                              ; A066  AD A7       (inferred)
     .byte $00,$00,$00,$00                       ; A068
     .word D01_A867                              ; A06C  67 A8
-D01_A06E:
-    .word D01_AA06                              ; A06E  06 AA
+RyuHitReactNeutralTbl:
+    .word D01_AA06                              ; A06E  06 AA       neutral damage reaction (12 entries, fiche slot CharHitReact0); copied to ram_0332
     .word D01_AA06                              ; A070  06 AA       (inferred)
     .word D01_AA06                              ; A072  06 AA
     .word D01_AA06                              ; A074  06 AA
@@ -76,8 +76,8 @@ D01_A06E:
     .word D01_A8F5                              ; A07E  F5 A8       (inferred)
     .byte $00,$00,$00,$00                       ; A080
     .word D01_A8C4                              ; A084  C4 A8
-D01_A086:
-    .word D01_AA92                              ; A086  92 AA
+RyuThrowTbl:
+    .word D01_AA92                              ; A086  92 AA       throw reaction, class $0C (12 entries, fiche slot CharHitReact12); copied to ram_033A
     .byte $00,$00,$92,$AA,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00; A088
     .byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00; A098
     .byte $00,$00,$00,$00,$00,$00,$00,$00       ; A0A8
@@ -121,8 +121,8 @@ D01_A0E8:
     .word D01_A0E8                              ; A0F4  E8 A0
 
 ; -- STATE (header, 7 bytes)   [cond=$0B CondRoundLost | class=$F1 | hits=0]
-D01_A0F6:
-    .byte $0B                                   ; A0F6
+RyuDirNeutralEntry:
+    .byte $0B                                   ; A0F6              InputDir $04 neutral: first node of the direction chain (tests CondRoundLost, then victory)
     .word D01_A0B0                              ; A0F7  B0 A0
     .word D01_A12E                              ; A0F9  2E A1
     .byte $F1,$00                               ; A0FB
@@ -192,8 +192,8 @@ D01_A15F:
     .word D01_A135                              ; A16B  35 A1
 
 ; -- STATE (header, 7 bytes)   [cond=$FF always | class=$61 | hits=0]
-D01_A16D:
-    .byte $FF,$00,$00,$00,$00,$61,$00           ; A16D
+RyuDirForwardEntry:
+    .byte $FF,$00,$00,$00,$00,$61,$00           ; A16D              InputDir $05 forward: walk-forward state (class $61)
 
 ; -- frame (14 bytes)   [dur=1 fx=$00/$00 fl=$17 mov=$04 vx=0 vy=0 rep=0]   [1st frame of the state above: header+7]
     .byte $01                                   ; A174
@@ -294,8 +294,8 @@ D01_A215:
     .word D01_A1DD                              ; A221  DD A1
 
 ; -- STATE (header, 7 bytes)   [cond=$FF always | class=$5C | hits=0]
-D01_A223:
-    .byte $FF,$00,$00                           ; A223
+RyuDirUpEntry:
+    .byte $FF,$00,$00                           ; A223              InputDir $07 up: jump-up state (class $5C)
     .word D01_A35E                              ; A226  5E A3
     .byte $5C,$00                               ; A228
 
@@ -338,8 +338,8 @@ D01_A262:
     .byte $00,$00,$0A,$02,$00,$00,$00,$00,$00   ; A267
 
 ; -- STATE (header, 7 bytes)   [cond=$FF always | class=$64 | hits=0]
-D01_A270:
-    .byte $FF,$00,$00                           ; A270
+RyuDirUpForwardEntry:
+    .byte $FF,$00,$00                           ; A270              InputDir $09 up-forward: jump-forward state (class $64)
     .word D01_A35E                              ; A273  5E A3
     .byte $64,$00                               ; A275
 
@@ -406,8 +406,8 @@ D01_A2D9:
     .byte $00,$00,$0A,$02,$00,$00,$00,$00,$00   ; A2DE
 
 ; -- STATE (header, 7 bytes)   [cond=$FF always | class=$6C | hits=0]
-D01_A2E7:
-    .byte $FF,$00,$00                           ; A2E7
+RyuDirUpBackEntry:
+    .byte $FF,$00,$00                           ; A2E7              InputDir $0A up-back: jump-back state (class $6C)
     .word D01_A35E                              ; A2EA  5E A3
     .byte $6C,$00                               ; A2EC
 
@@ -486,8 +486,8 @@ D01_A35E:
     .byte $00,$20,$0E,$04,$00,$00,$00,$00,$00   ; A36A
 
 ; -- STATE (header, 7 bytes)   [cond=$03 CondStanding | class=$5A | hits=0]
-D01_A373:
-    .byte $03                                   ; A373
+RyuDirDownEntry:
+    .byte $03                                   ; A373              InputDir $08 down and $0B down-forward: crouch entry (class $5A)
     .word D01_A39D                              ; A374  9D A3
     .word D01_A3C0                              ; A376  C0 A3       (inferred)
     .byte $5A,$00                               ; A378
@@ -544,8 +544,8 @@ D01_A3C7:
     .word D01_A3C7                              ; A3D3  C7 A3       (inferred)
 
 ; -- STATE (header, 7 bytes)   [cond=$00 CondOpponentAttacks | class=$29 | hits=0]
-D01_A3D5:
-    .byte $00                                   ; A3D5
+RyuDirBackEntry:
+    .byte $00                                   ; A3D5              InputDir $06 back: guard if opponent attacks (class $29), else alternative class $69
     .word D01_A1C8                              ; A3D6  C8 A1
     .word D01_A12E                              ; A3D8  2E A1       (inferred)
     .byte $29,$00                               ; A3DA
@@ -559,9 +559,9 @@ D01_A3DC:
     .word D01_A3DC                              ; A3E8  DC A3       (inferred)
 
 ; -- STATE (header, 7 bytes)   [cond=$00 CondOpponentAttacks | class=$2A | hits=0]
-D01_A3EA:
-    .byte $00                                   ; A3EA
-    .word D01_A373                              ; A3EB  73 A3
+RyuDirDownBackEntry:
+    .byte $00                                   ; A3EA              InputDir $0C down-back: crouch guard if opponent attacks (class $2A)
+    .word RyuDirDownEntry                       ; A3EB  73 A3
     .word D01_A3C0                              ; A3ED  C0 A3       (inferred)
     .byte $2A,$00                               ; A3EF
 
@@ -1573,9 +1573,9 @@ D01_AAD1:
     .byte $00,$00,$00,$00,$00,$02,$27,$E0,$00,$00,$00; AAD4
 
 ; -- STATE (header, 7 bytes)   [cond=$09 CondCanGrab | class=$A1 | hits=1]
-D01_AADF:
-    .byte $09                                   ; AADF
-    .word D01_ACC9                              ; AAE0  C9 AC
+RyuThrowStart:
+    .byte $09                                   ; AADF              throw start from the strong-kick chain (InputAttack 3, CondCanGrab, class $A1)
+    .word RyuStrongKickAir                      ; AAE0  C9 AC
     .word D01_A12E                              ; AAE2  2E A1
     .byte $A1,$01                               ; AAE4
 
@@ -1614,8 +1614,8 @@ D01_AB1E:
     .byte $00,$00,$00,$00,$00,$01,$00,$00,$00,$00,$00; AB21
 
 ; -- STATE (header, 7 bytes)   [cond=$FF always | class=$71 | hits=1]
-D01_AB2C:
-    .byte $FF,$00,$00                           ; AB2C
+RyuWeakKick:
+    .byte $FF,$00,$00                           ; AB2C              weak kick, default (always, class $71)
     .word D01_A12E                              ; AB2F  2E A1
     .byte $71,$01                               ; AB31
 
@@ -1642,9 +1642,9 @@ D01_AB4F:
     .byte $00,$00,$03,$04,$00,$00,$00,$00,$00   ; AB54
 
 ; -- STATE (header, 7 bytes)   [cond=$02 CondOpponentNear | class=$71 | hits=1]
-D01_AB5D:
-    .byte $02                                   ; AB5D
-    .word D01_AB2C                              ; AB5E  2C AB
+RyuWeakKickNear:
+    .byte $02                                   ; AB5D              weak kick, opponent near (CondOpponentNear, class $71)
+    .word RyuWeakKick                           ; AB5E  2C AB
     .word D01_A12E                              ; AB60  2E A1
     .byte $71,$01                               ; AB62
 
@@ -1671,9 +1671,9 @@ D01_AB80:
     .byte $00,$00,$03,$04,$00,$00,$00,$00,$00   ; AB85
 
 ; -- STATE (header, 7 bytes)   [cond=$07 CondInputDown | class=$72 | hits=1]
-D01_AB8E:
-    .byte $07                                   ; AB8E
-    .word D01_AB5D                              ; AB8F  5D AB
+RyuWeakKickCrouch:
+    .byte $07                                   ; AB8E              weak kick, down (CondInputDown, class $72)
+    .word RyuWeakKickNear                       ; AB8F  5D AB
     .word D01_A3C0                              ; AB91  C0 A3
     .byte $72,$01                               ; AB93
 
@@ -1700,9 +1700,9 @@ D01_ABB1:
     .byte $00,$00,$03,$04,$00,$00,$00,$00,$00   ; ABB6
 
 ; -- STATE (header, 7 bytes)   [cond=$05 CondInAir | class=$74 | hits=1]
-D01_ABBF:
-    .byte $05                                   ; ABBF
-    .word D01_AB8E                              ; ABC0  8E AB
+RyuWeakKickAir:
+    .byte $05                                   ; ABBF              weak kick, airborne (InputAttack 2, CondInAir, class $74)
+    .word RyuWeakKickCrouch                     ; ABC0  8E AB
     .word D01_A35E                              ; ABC2  5E A3
     .byte $74,$01                               ; ABC4
 
@@ -1721,8 +1721,8 @@ D01_ABD4:
     .byte $08,$43,$00,$02,$00,$00,$00,$00,$00   ; ABD9
 
 ; -- STATE (header, 7 bytes)   [cond=$FF always | class=$81 | hits=1]
-D01_ABE2:
-    .byte $FF,$00,$00                           ; ABE2
+RyuStrongKick:
+    .byte $FF,$00,$00                           ; ABE2              strong kick, default (always, class $81)
     .word D01_A12E                              ; ABE5  2E A1
     .byte $81,$01                               ; ABE7
 
@@ -1765,9 +1765,9 @@ D01_AC21:
     .byte $00,$00,$00,$04,$00,$00,$00,$00,$00   ; AC26
 
 ; -- STATE (header, 7 bytes)   [cond=$02 CondOpponentNear | class=$81 | hits=1]
-D01_AC2F:
-    .byte $02                                   ; AC2F
-    .word D01_ABE2                              ; AC30  E2 AB
+RyuStrongKickNear:
+    .byte $02                                   ; AC2F              strong kick, opponent near (CondOpponentNear, class $81)
+    .word RyuStrongKick                         ; AC30  E2 AB
     .word D01_A12E                              ; AC32  2E A1
     .byte $81,$01                               ; AC34
 
@@ -1810,9 +1810,9 @@ D01_AC6E:
     .byte $00,$00,$00,$04,$00,$00,$00,$00,$00   ; AC73
 
 ; -- STATE (header, 7 bytes)   [cond=$07 CondInputDown | class=$82 | hits=1]
-D01_AC7C:
-    .byte $07                                   ; AC7C
-    .word D01_AC2F                              ; AC7D  2F AC
+RyuStrongKickCrouch:
+    .byte $07                                   ; AC7C              strong kick, down (CondInputDown, class $82)
+    .word RyuStrongKickNear                     ; AC7D  2F AC
     .word D01_A3C0                              ; AC7F  C0 A3
     .byte $82,$01                               ; AC81
 
@@ -1855,9 +1855,9 @@ D01_ACBB:
     .byte $00,$00,$00,$04,$00,$00,$00,$00,$00   ; ACC0
 
 ; -- STATE (header, 7 bytes)   [cond=$05 CondInAir | class=$84 | hits=1]
-D01_ACC9:
-    .byte $05                                   ; ACC9
-    .word D01_AC7C                              ; ACCA  7C AC
+RyuStrongKickAir:
+    .byte $05                                   ; ACC9              strong kick, airborne (CondInAir, class $84)
+    .word RyuStrongKickCrouch                   ; ACCA  7C AC
     .word D01_A35E                              ; ACCC  5E A3       (inferred)
     .byte $84,$01                               ; ACCE
 
@@ -1892,8 +1892,8 @@ D01_ACFA:
     .byte $00,$00,$00,$02,$00,$00,$00,$00,$00   ; ACFF
 
 ; -- STATE (header, 7 bytes)   [cond=$FF always | class=$89 | hits=1]
-D01_AD08:
-    .byte $FF,$00,$00                           ; AD08
+RyuWeakPunch:
+    .byte $FF,$00,$00                           ; AD08              weak punch, default (always, class $89)
     .word D01_A12E                              ; AD0B  2E A1
     .byte $89,$01                               ; AD0D
 
@@ -1936,9 +1936,9 @@ D01_AD47:
     .byte $00,$00,$00,$04,$00,$00,$00,$00,$00   ; AD4C
 
 ; -- STATE (header, 7 bytes)   [cond=$07 CondInputDown | class=$8A | hits=1]
-D01_AD55:
-    .byte $07                                   ; AD55
-    .word D01_AD08                              ; AD56  08 AD
+RyuWeakPunchCrouch:
+    .byte $07                                   ; AD55              weak punch, down (CondInputDown, class $8A)
+    .word RyuWeakPunch                          ; AD56  08 AD
     .word D01_A3C0                              ; AD58  C0 A3
     .byte $8A,$01                               ; AD5A
 
@@ -1965,9 +1965,9 @@ D01_AD78:
     .byte $00,$00,$03,$04,$00,$00,$00,$00,$00   ; AD7D
 
 ; -- STATE (header, 7 bytes)   [cond=$05 CondInAir | class=$8C | hits=1]
-D01_AD86:
-    .byte $05                                   ; AD86
-    .word D01_AD55                              ; AD87  55 AD
+RyuWeakPunchAir:
+    .byte $05                                   ; AD86              weak punch, airborne (InputAttack 0, CondInAir, class $8C)
+    .word RyuWeakPunchCrouch                    ; AD87  55 AD
     .word D01_A35E                              ; AD89  5E A3
     .byte $8C,$01                               ; AD8B
 
@@ -1986,8 +1986,8 @@ D01_AD9B:
     .byte $08,$43,$00,$02,$00,$00,$00,$00,$00   ; ADA0
 
 ; -- STATE (header, 7 bytes)   [cond=$FF always | class=$99 | hits=1]
-D01_ADA9:
-    .byte $FF,$00,$00                           ; ADA9
+RyuStrongPunch:
+    .byte $FF,$00,$00                           ; ADA9              strong punch, default (always, class $99)
     .word D01_A12E                              ; ADAC  2E A1
     .byte $99,$01                               ; ADAE
 
@@ -2030,9 +2030,9 @@ D01_ADE8:
     .byte $00,$00,$00,$04,$00,$00,$00,$00,$00   ; ADED
 
 ; -- STATE (header, 7 bytes)   [cond=$02 CondOpponentNear | class=$99 | hits=2]
-D01_ADF6:
-    .byte $02                                   ; ADF6
-    .word D01_ADA9                              ; ADF7  A9 AD
+RyuStrongPunchNear:
+    .byte $02                                   ; ADF6              strong punch, opponent near (CondOpponentNear, class $99, 2 hits)
+    .word RyuStrongPunch                        ; ADF7  A9 AD
     .word D01_A12E                              ; ADF9  2E A1
     .byte $99,$02                               ; ADFB
 
@@ -2083,9 +2083,9 @@ D01_AE43:
     .byte $00,$00,$00,$04,$00,$00,$00,$00,$00   ; AE48
 
 ; -- STATE (header, 7 bytes)   [cond=$07 CondInputDown | class=$9A | hits=1]
-D01_AE51:
-    .byte $07                                   ; AE51
-    .word D01_ADF6                              ; AE52  F6 AD
+RyuStrongPunchCrouch:
+    .byte $07                                   ; AE51              strong punch, down (CondInputDown, class $9A)
+    .word RyuStrongPunchNear                    ; AE52  F6 AD
     .word D01_A3C0                              ; AE54  C0 A3
     .byte $9A,$01                               ; AE56
 
@@ -2136,9 +2136,9 @@ D01_AE9E:
     .byte $00,$00,$00,$04,$00,$00,$00,$00,$00   ; AEA3
 
 ; -- STATE (header, 7 bytes)   [cond=$05 CondInAir | class=$9C | hits=1]
-D01_AEAC:
-    .byte $05                                   ; AEAC
-    .word D01_AE51                              ; AEAD  51 AE
+RyuStrongPunchAir:
+    .byte $05                                   ; AEAC              strong punch, airborne (CondInAir, class $9C)
+    .word RyuStrongPunchCrouch                  ; AEAD  51 AE
     .word D01_A35E                              ; AEAF  5E A3
     .byte $9C,$01                               ; AEB1
 
@@ -2190,9 +2190,9 @@ D01_AEF9:
     .word D01_AEF9                              ; AF05  F9 AE       (inferred)
 
 ; -- STATE (header, 7 bytes)   [cond=$06 CondOnGroundOrVelX | class=$9C | hits=1]
-D01_AF07:
-    .byte $06                                   ; AF07
-    .word D01_AEAC                              ; AF08  AC AE
+RyuStrongPunchGround:
+    .byte $06                                   ; AF07              strong punch, ground/sliding (InputAttack 1, CondOnGroundOrVelX, class $9C)
+    .word RyuStrongPunchAir                     ; AF08  AC AE
     .word D01_A35E                              ; AF0A  5E A3
     .byte $9C,$01                               ; AF0C
 
@@ -2235,8 +2235,8 @@ D01_AF46:
     .byte $00,$00,$00,$02,$00,$00,$00,$00,$00   ; AF4B
 
 ; -- STATE (header, 7 bytes)   [cond=$08 CondProjectileFree | class=$B1 | hits=0]
-D01_AF54:
-    .byte $08,$00,$00                           ; AF54
+RyuHadoukenWeak:
+    .byte $08,$00,$00                           ; AF54              hadouken, weak kick (CmdMoveIdx 0, CondProjectileFree, class $B1)
     .word D01_A12E                              ; AF57  2E A1
     .byte $B1,$00                               ; AF59
 
@@ -2279,8 +2279,8 @@ D01_AF93:
     .byte $00,$00,$00,$04,$00,$00,$00,$00,$00   ; AF98
 
 ; -- STATE (header, 7 bytes)   [cond=$08 CondProjectileFree | class=$B9 | hits=0]
-D01_AFA1:
-    .byte $08,$00,$00                           ; AFA1
+RyuHadoukenStrong:
+    .byte $08,$00,$00                           ; AFA1              hadouken, strong kick (CmdMoveIdx 1, CondProjectileFree, class $B9)
     .word D01_A12E                              ; AFA4  2E A1
     .byte $B9,$00                               ; AFA6
 
@@ -2323,8 +2323,8 @@ D01_AFE0:
     .byte $00,$00,$00,$04,$00,$00,$00,$00,$00   ; AFE5
 
 ; -- STATE (header, 7 bytes)   [cond=$FF always | class=$C4 | hits=2]
-D01_AFEE:
-    .byte $FF,$00,$00                           ; AFEE
+RyuShoryukenWeak:
+    .byte $FF,$00,$00                           ; AFEE              shoryuken, weak kick (CmdMoveIdx 2, class $C4, 2 hits)
     .word D01_B0A4                              ; AFF1  A4 B0
     .byte $C4,$02                               ; AFF3
 
@@ -2373,8 +2373,8 @@ D01_B03B:
     .byte $00,$00,$00,$02,$00,$00,$00,$00,$00   ; B040
 
 ; -- STATE (header, 7 bytes)   [cond=$FF always | class=$CC | hits=2]
-D01_B049:
-    .byte $FF,$00,$00                           ; B049
+RyuShoryukenStrong:
+    .byte $FF,$00,$00                           ; B049              shoryuken, strong kick (CmdMoveIdx 3, class $CC, 2 hits)
     .word D01_B0A4                              ; B04C  A4 B0
     .byte $CC,$02                               ; B04E
 
@@ -2436,8 +2436,8 @@ D01_B0A4:
     .byte $00,$20,$00,$04,$00,$00,$00,$00,$00   ; B0B0
 
 ; -- STATE (header, 7 bytes)   [cond=$FF always | class=$D4 | hits=6]
-D01_B0B9:
-    .byte $FF,$00,$00                           ; B0B9
+RyuTatsumakiWeak:
+    .byte $FF,$00,$00                           ; B0B9              tatsumaki, weak punch (CmdMoveIdx 4, class $D4, 6 hits)
     .word D01_A35E                              ; B0BC  5E A3
     .byte $D4,$06                               ; B0BE
 
@@ -2512,8 +2512,8 @@ D01_B132:
     .byte $00,$00,$00,$02,$00,$00,$00,$00,$00   ; B137
 
 ; -- STATE (header, 7 bytes)   [cond=$FF always | class=$DC | hits=6]
-D01_B140:
-    .byte $FF,$00,$00                           ; B140
+RyuTatsumakiStrong:
+    .byte $FF,$00,$00                           ; B140              tatsumaki, strong punch (CmdMoveIdx 5, class $DC, 6 hits)
     .word D01_A35E                              ; B143  5E A3
     .byte $DC,$06                               ; B145
 

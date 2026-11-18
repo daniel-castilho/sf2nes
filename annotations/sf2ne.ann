@@ -2091,8 +2091,95 @@ keepbank 05
 # ============================================================================================================
 # BANK $01 — Ryu data: fighter state bank (statebank at end) + transition tables
 # ============================================================================================================
+# 38 structural names: 8 pointer tables (one already named), 8 direction entries, 17 button-chain
+# states and 6 special-move states. 38 state headers and 228 frames stay automatic (P3).
+# Evidence: tasks/DATA_NAMING_01.md.
+
+# --- pointer tables copied to ram_031E-ram_033A by FighterLoadChar (3B:E000) ---
+label 01:A000 RyuDirTransTbl
+comment 01:A000 states by InputDir (9 entries, indexed InputDir-$04); copied to ram_031E
+label 01:A012 RyuAttackTransTbl
+comment 01:A012 states by InputAttack 0-3 (weak/strong punch, weak/strong kick); copied to ram_0322
 label 01:A01A RyuSpcTrans
 comment 01:A01A 6 transition pointers of Ryu's specials (ram_0326 points here): indexed by CmdMoveIdx*2, consumed by InputDispatch
+label 01:A026 RyuGuardReactTbl
+comment 01:A026 guard reaction by HitReactClass & $3F (12 entries); copied to ram_032A
+label 01:A03E RyuHitReactStandTbl
+comment 01:A03E standing damage reaction (12 entries, fiche slot CharHitReact1); copied to ram_032E
+label 01:A056 RyuHitReactCrouchTbl
+comment 01:A056 crouching damage reaction (12 entries, fiche slot CharHitReact2); copied to ram_0336
+label 01:A06E RyuHitReactNeutralTbl
+comment 01:A06E neutral damage reaction (12 entries, fiche slot CharHitReact0); copied to ram_0332
+label 01:A086 RyuThrowTbl
+comment 01:A086 throw reaction, class $0C (12 entries, fiche slot CharHitReact12); copied to ram_033A
+
+# --- direction entries: first node consulted for each InputDir (9 slots, 8 addresses) ---
+label 01:A0F6 RyuDirNeutralEntry
+comment 01:A0F6 InputDir $04 neutral: first node of the direction chain (tests CondRoundLost, then victory)
+label 01:A16D RyuDirForwardEntry
+comment 01:A16D InputDir $05 forward: walk-forward state (class $61)
+label 01:A3D5 RyuDirBackEntry
+comment 01:A3D5 InputDir $06 back: guard if opponent attacks (class $29), else alternative class $69
+label 01:A223 RyuDirUpEntry
+comment 01:A223 InputDir $07 up: jump-up state (class $5C)
+label 01:A373 RyuDirDownEntry
+comment 01:A373 InputDir $08 down and $0B down-forward: crouch entry (class $5A)
+label 01:A270 RyuDirUpForwardEntry
+comment 01:A270 InputDir $09 up-forward: jump-forward state (class $64)
+label 01:A2E7 RyuDirUpBackEntry
+comment 01:A2E7 InputDir $0A up-back: jump-back state (class $6C)
+label 01:A3EA RyuDirDownBackEntry
+comment 01:A3EA InputDir $0C down-back: crouch guard if opponent attacks (class $2A)
+
+# --- button-chain states: order verified against the +1 alternatives (docs/FORMATS.md §13) ---
+label 01:AD86 RyuWeakPunchAir
+comment 01:AD86 weak punch, airborne (InputAttack 0, CondInAir, class $8C)
+label 01:AD55 RyuWeakPunchCrouch
+comment 01:AD55 weak punch, down (CondInputDown, class $8A)
+label 01:AD08 RyuWeakPunch
+comment 01:AD08 weak punch, default (always, class $89)
+label 01:AF07 RyuStrongPunchGround
+comment 01:AF07 strong punch, ground/sliding (InputAttack 1, CondOnGroundOrVelX, class $9C)
+label 01:AEAC RyuStrongPunchAir
+comment 01:AEAC strong punch, airborne (CondInAir, class $9C)
+label 01:AE51 RyuStrongPunchCrouch
+comment 01:AE51 strong punch, down (CondInputDown, class $9A)
+label 01:ADF6 RyuStrongPunchNear
+comment 01:ADF6 strong punch, opponent near (CondOpponentNear, class $99, 2 hits)
+label 01:ADA9 RyuStrongPunch
+comment 01:ADA9 strong punch, default (always, class $99)
+label 01:ABBF RyuWeakKickAir
+comment 01:ABBF weak kick, airborne (InputAttack 2, CondInAir, class $74)
+label 01:AB8E RyuWeakKickCrouch
+comment 01:AB8E weak kick, down (CondInputDown, class $72)
+label 01:AB5D RyuWeakKickNear
+comment 01:AB5D weak kick, opponent near (CondOpponentNear, class $71)
+label 01:AB2C RyuWeakKick
+comment 01:AB2C weak kick, default (always, class $71)
+label 01:AADF RyuThrowStart
+comment 01:AADF throw start from the strong-kick chain (InputAttack 3, CondCanGrab, class $A1)
+label 01:ACC9 RyuStrongKickAir
+comment 01:ACC9 strong kick, airborne (CondInAir, class $84)
+label 01:AC7C RyuStrongKickCrouch
+comment 01:AC7C strong kick, down (CondInputDown, class $82)
+label 01:AC2F RyuStrongKickNear
+comment 01:AC2F strong kick, opponent near (CondOpponentNear, class $81)
+label 01:ABE2 RyuStrongKick
+comment 01:ABE2 strong kick, default (always, class $81)
+
+# --- special-move states: indexed by CmdMoveIdx through RyuSpcTrans ---
+label 01:AF54 RyuHadoukenWeak
+comment 01:AF54 hadouken, weak kick (CmdMoveIdx 0, CondProjectileFree, class $B1)
+label 01:AFA1 RyuHadoukenStrong
+comment 01:AFA1 hadouken, strong kick (CmdMoveIdx 1, CondProjectileFree, class $B9)
+label 01:AFEE RyuShoryukenWeak
+comment 01:AFEE shoryuken, weak kick (CmdMoveIdx 2, class $C4, 2 hits)
+label 01:B049 RyuShoryukenStrong
+comment 01:B049 shoryuken, strong kick (CmdMoveIdx 3, class $CC, 2 hits)
+label 01:B0B9 RyuTatsumakiWeak
+comment 01:B0B9 tatsumaki, weak punch (CmdMoveIdx 4, class $D4, 6 hits)
+label 01:B140 RyuTatsumakiStrong
+comment 01:B140 tatsumaki, strong punch (CmdMoveIdx 5, class $DC, 6 hits)
 
 # ============================================================================================================
 # BANK $3C — character fiches, names and quotes

@@ -12,16 +12,16 @@
 ; Columns 0 (Ryu) and 1 (Ken) filled in pointer tables. Column 1 points to state bank
 ; states $05 (window $A000) and to frames/collisions of bank $04.
 CharDirTransLoTbl:
-    .byte <(D01_A000)                           ; 8000  00
+    .byte <(RyuDirTransTbl)                     ; 8000  00
     .byte $00,$00,$00,$00,$00,$00,$00,$00,$00   ; 8001
 CharDirTransHiTbl:
-    .byte >(D01_A000)                           ; 800A  A0
+    .byte >(RyuDirTransTbl)                     ; 800A  A0
     .byte $A0,$00,$00,$00,$00,$00,$00,$00,$00   ; 800B              Ken: >D05_A000
 CharAttackTransLoTbl:
-    .byte <(D01_A012)                           ; 8014  12
+    .byte <(RyuAttackTransTbl)                  ; 8014  12
     .byte $12,$00,$00,$00,$00,$00,$00,$00,$00   ; 8015              Ken: <D05_A012
 CharAttackTransHiTbl:
-    .byte >(D01_A012)                           ; 801E  A0
+    .byte >(RyuAttackTransTbl)                  ; 801E  A0
     .byte $A0,$00,$00,$00,$00,$00,$00,$00,$00   ; 801F              Ken: >D05_A012
 CharSpecialTransLoTbl:
     .byte <(RyuSpcTrans)                        ; 8028  1A
@@ -30,34 +30,34 @@ CharSpecialTransHiTbl:
     .byte >(RyuSpcTrans)                        ; 8032  A0
     .byte $A0,$00,$00,$00,$00,$00,$00,$00,$00   ; 8033              Ken: >KenSpcTrans
 CharGuardReactLoTbl:
-    .byte <(D01_A026)                           ; 803C  26
+    .byte <(RyuGuardReactTbl)                   ; 803C  26
     .byte $26,$00,$00,$00,$00,$00,$00,$00,$00   ; 803D              Ken: <D05_A026
 CharGuardReactHiTbl:
-    .byte >(D01_A026)                           ; 8046  A0
+    .byte >(RyuGuardReactTbl)                   ; 8046  A0
     .byte $A0,$00,$00,$00,$00,$00,$00,$00,$00   ; 8047              Ken: >D05_A026
 CharHitReact1LoTbl:
-    .byte <(D01_A03E)                           ; 8050  3E
+    .byte <(RyuHitReactStandTbl)                ; 8050  3E
     .byte $3E,$00,$00,$00,$00,$00,$00,$00,$00   ; 8051              Ken: <D05_A03E
 CharHitReact1HiTbl:
-    .byte >(D01_A03E)                           ; 805A  A0
+    .byte >(RyuHitReactStandTbl)                ; 805A  A0
     .byte $A0,$00,$00,$00,$00,$00,$00,$00,$00   ; 805B              Ken: >D05_A03E
 CharHitReact2LoTbl:
-    .byte <(D01_A056)                           ; 8064  56
+    .byte <(RyuHitReactCrouchTbl)               ; 8064  56
     .byte $56,$00,$00,$00,$00,$00,$00,$00,$00   ; 8065              Ken: <D05_A056
 CharHitReact2HiTbl:
-    .byte >(D01_A056)                           ; 806E  A0
+    .byte >(RyuHitReactCrouchTbl)               ; 806E  A0
     .byte $A0,$00,$00,$00,$00,$00,$00,$00,$00   ; 806F              Ken: >D05_A056
 CharHitReact0LoTbl:
-    .byte <(D01_A06E)                           ; 8078  6E
+    .byte <(RyuHitReactNeutralTbl)              ; 8078  6E
     .byte $6E,$00,$00,$00,$00,$00,$00,$00,$00   ; 8079              Ken: <D05_A06E
 CharHitReact0HiTbl:
-    .byte >(D01_A06E)                           ; 8082  A0
+    .byte >(RyuHitReactNeutralTbl)              ; 8082  A0
     .byte $A0,$00,$00,$00,$00,$00,$00,$00,$00   ; 8083              Ken: >D05_A06E
 CharHitReact12LoTbl:
-    .byte <(D01_A086)                           ; 808C  86
+    .byte <(RyuThrowTbl)                        ; 808C  86
     .byte $86,$00,$00,$00,$00,$00,$00,$00,$00   ; 808D              Ken: <D05_A086
 CharHitReact12HiTbl:
-    .byte >(D01_A086)                           ; 8096  A0
+    .byte >(RyuThrowTbl)                        ; 8096  A0
     .byte $A0,$00,$00,$00,$00,$00,$00,$00,$00   ; 8097              Ken: >D05_A086
 CharCmdListLoTbl:
     .byte <(CmdKeyListRyu)                      ; 80A0  C0
