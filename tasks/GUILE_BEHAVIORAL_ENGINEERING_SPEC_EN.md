@@ -101,14 +101,14 @@ This describes gameplay intent, not AI. Do not add special CPU behavior or strat
 
 ### 4.1 Normals
 
-Implement the six standard inputs in each applicable stance, respecting close/far versions where the game's general rules distinguish them:
+The arcade reference has six attack inputs per stance. For the approved NES scope (Q7/P8), the available classes are LP, HP, LK and HK; MP/MK remain arcade-reference labels only and do not create a NES medium-kick class. Respect close/far versions where the game's general rules distinguish them:
 
-| Stance | Inputs to support | Behavioral role to preserve |
-|---|---|---|
-| Standing | LP, MP, HP, LK, MK, HK | distinct hand/leg attacks; normals with varying range and recovery; close/far versions where required by reference data/art |
-| Crouching | LP, MP, HP, LK, MK, HK | low defense and low/anti-air attacks; each attack must have its own hit and recovery behavior |
-| Neutral jump | LP, MP, HP, LK, MK, HK | aerial attacks appropriate to a vertical jump |
-| Diagonal jump | LP, MP, HP, LK, MK, HK | aerial attacks appropriate to forward/backward movement and jump direction |
+| Stance | Arcade inputs (reference) | NES classes in scope | Behavioral role to preserve |
+|---|---|---|---|
+| Standing | LP, MP, HP, LK, MK, HK | LP, HP, LK, HK | distinct hand/leg attacks; normals with varying range and recovery; close/far versions where required by reference data/art |
+| Crouching | LP, MP, HP, LK, MK, HK | LP, HP, LK, HK | low defense and low/anti-air attacks; each attack must have its own hit and recovery behavior |
+| Neutral jump | LP, MP, HP, LK, MK, HK | LP, HP, LK, HK | aerial attacks appropriate to a vertical jump |
+| Diagonal jump | LP, MP, HP, LK, MK, HK | LP, HP, LK, HK | aerial attacks appropriate to forward/backward movement and jump direction |
 
 The table is an input-coverage contract, **not** a claim that all combinations have unique animations, frames, or hitboxes in the project. The 1999 arcade FAQ describes close/far distinctions and names for crouching/aerial attacks, but its author admits the names are visual impressions from slow motion; treat them as an observation checklist, not an authoritative table. Range, damage, hit count, priority, cancels, and duration must be determined by observing the reference revision or marked as provisional parameters. Do not infer hitboxes from silhouettes or grayscale previews.
 
@@ -118,6 +118,8 @@ The table is an input-coverage contract, **not** a claim that all combinations h
 |---|---|---|
 | Reverse Spin Kick (Upside-down Kick) | close + forward/back + HK | Treat as a distinct move, not a normal HK. The wiki-described Sonic Boom cancel peculiarity is a glitch and remains out of scope. |
 | Knee Pad (ニーパット) | close + forward/back + MK | Include in the World Warrior reference set, with moderate/high secondary-source confidence: two version-specific Japanese lists name it in original SFII; PSKakuge says it does not knock down and Dash replaces it with Knee Bazooka. Do not rename it Knee Bazooka or import that mechanic without confirmation for 910522. |
+
+The approved pose list includes art for both Reverse Spin Kick and Knee Pad, but it does not decide the NES input binding for Knee Pad: the NES control scheme has no medium-kick class. Do not assign Knee Pad to an NES button by inference.
 
 **Version/name distinction:** the 1999 arcade FAQ says “Knee Attack” only works in Champion Edition, while PSKakuge and Retro Game Raiders list Knee Pad in the original. Treat this as a terminology/editorial conflict to resolve by input on the ROM, not as a reason to remove Knee Pad. Knee Bazooka and Rolling Sobat are not World 910522 requirements based on current evidence; Rolling Sobat does not appear in the WW-specific lists reviewed. Do not claim these moves never existed in SFII; limit the claim to the selected target.
 
@@ -187,10 +189,10 @@ Do not invent or assign final values to the aerial moves. SuperCombo reports dam
 Future implementation must provide Guile-specific states and data, with identifiers/pointers consistent with the existing format. The minimum functional set includes:
 
 - neutral/idle, turn, walk forward/back, crouch, vertical/diagonal jump, landing;
-- six normals per applicable stance/variant, with appropriate startup, active frames, recovery, and return;
-- Reverse Spin Kick and Knee Pad as candidate World Warrior command normals; Knee Bazooka/Rolling Sobat enter the minimum set only if World 910522 confirms their presence and nomenclature;
+- the four NES attack classes (LP/HP/LK/HK) per applicable stance/variant, with appropriate startup, active frames, recovery, and return (§5.1);
+- Reverse Spin Kick and Knee Pad as World Warrior command normals included in the approved art coverage; Knee Bazooka/Rolling Sobat enter the minimum set only if World 910522 confirms their presence and nomenclature;
 - Sonic Boom startup/execution/recovery and projectile states; Flash Kick ascent/attack/fall/recovery;
-- two ground throws, two aerial throws, and compatible victim states;
+- two ground throws and compatible victim states; two aerial throws remain a requirement but are excluded from the approved pose list until P9/P11 are resolved (§4.5);
 - high/low guard, standing/crouching/neutral/aerial hit reactions, knockdown, get-up, victory, defeat/KO;
 - natural chains and alternative transitions with no unexpected null pointers, unreachable states, or unintended loops.
 
@@ -198,20 +200,74 @@ For every combat frame, data must specify duration, metasprite, body/attack hitb
 
 Every animation needs documented sprite origin, pivot, orientation/mirroring, palette mapping, and NES parameters. A selection portrait does not replace a fighting sprite sheet; community frame pages do not grant a license to incorporate their assets.
 
+### 5.1 Approved pose/move coverage (Q7/P8, 2026-11-18)
+
+The Maintainer supplied the definitive coverage list. It defines **which animations and states must exist**, not exact frame counts, damage, hitboxes, or numeric properties. Those values must not be invented from the ROM without validation.
+
+**Locomotion and postures**
+
+- standing neutral;
+- walk forward and backward;
+- turn to each side, mirrored when visually correct;
+- crouch transition, crouch neutral, and return to neutral;
+- vertical and diagonal jump: startup, ascent, airborne pose, descent, and landing.
+
+**Normals**
+
+- four attack classes per posture — standing, crouching, neutral jump, and diagonal jump: LP, HP, LK, HK;
+- each attack requires startup, active frame(s), recovery, and return; drawings may be shared only when the pose is genuinely identical;
+- if the engine distinguishes close/far variants, cover the necessary visual variants; do not assume every combination needs unique art.
+
+**Guard and damage**
+
+- standing guard and crouching guard;
+- block reaction while standing and crouching;
+- damage reaction while standing, crouching, and airborne;
+- knockdown and get-up;
+- KO/defeat.
+
+**Special moves**
+
+- **Sonic Boom LP and HP:** charge/preparation, execution, and recovery; include the projectile animation and its disappearance. The charge may reuse the crouch neutral pose if the art does not require a distinct pose.
+- **Flash Kick LK and HK:** startup, ascent/attack, descent, and landing/recovery. Keep the two P10 inputs; do not invent a medium variant.
+
+**Ground throws**
+
+- **Judo Throw:** Guile's capture, execution, and release phases, with the matching victim reaction/fall.
+- **Dragon Suplex:** the same phases with its own sequence and victim reaction.
+
+**Victory and defeat**
+
+- victory pose/loop;
+- defeat pose beyond KO if visually distinct.
+
+**Command normals already in scope**
+
+- Reverse Spin Kick;
+- Knee Pad.
+
+Their art is included in the coverage list. The exact NES input binding for Knee Pad is not decided by this list because the NES control scheme has no medium-kick class.
+
+**Excluded from the approved pose list**
+
+- Flying Mare and Flying Buster Drop remain out until P9/P11 resolve eligibility and commands. This list does not assert arcade parity for them.
+
+D-05 still blocks builds, tests, and emulator runs. P8 still requires legally usable sprites, palettes, audio, per-frame hitboxes, and numeric validation.
+
 ## 6. Fiche, banks, and routing — Guile-specific instructions
 
 ### 6.1 Combat fiche
 
 - Keep `Guile = ID 3`; selection and portrait flows already reference that index.
 - Create a dedicated fiche in column 3 of `3C:8000–80BE`. Populate the pointers needed for the eight state/transition tables and command list; verify by address what the loader copies to RAM. The tenth pair (AI-script pointer) must intentionally remain null while Guile AI is out of scope; no pointer required by the human-controlled flow may be zero. For the direction table, explicitly account for `FighterLoadChar` reading the low byte per character but using fixed high byte `$A0` for all characters. Guile's low byte must therefore point to his table in the selected state bank mapped at `$A000`; leaving the low byte zero points to `$A000`, not `$0000`. Change the loader only if a real requirement exists for a state bank outside this window.
-- Set `CharStateBankTbl[3]` to a reserved and recorded state bank; do not use the current `$01`. Bank `$05` is assigned to Ken's partial states in the current documentation (`docs/ARCHITECTURE.md`); do not allocate it to Guile. Choose a bank after reviewing `sf2ne.cfg`, segments, and the map/linker output; do not infer that a bank is free merely because no source file exists for it.
-- Preserve the portrait pointer: `PortraitWinLayoutTbl+6` (`3C:84AC`) → `D0C_8000`. Bank `$0C` has bytes available after portrait descriptor `$8000–8037`; one option is to place Guile metasprite and hitbox descriptors there, starting at an aligned region (e.g. `$8040`), provided they fit and pointers resolve correctly. Alternatively, reserve another frame bank. This is candidate capacity, not a claim that fighting art exists.
-- Only after creating/validating dedicated collision data, point selector `CharHitBoxBankTbl[3]` (`3C:80DC+3`) to the bank that actually contains those boxes. Current value `$00` does not validate Ryu hitboxes for Guile. Even if metasprites and hitboxes share `$0C`, confirm that every reader uses the correct selector.
-- Do not confuse PRG bank `$0C` (stream/descriptors in CPU `$8000–9FFF`) with CHR page `$0C` (pixels). Each metasprite must select a valid CHR page; extracted pages are tile sheets without proven animation associations. Fighting art, palette, and pivots need explicit provenance/license and NES validation.
+- Set `CharStateBankTbl[3]` to the approved state bank `$09` (Phase 2); do not use the current `$01`. Bank `$05` is assigned to Ken's partial states and remains excluded. Do not infer additional allocations merely because a bank has no source file.
+- Preserve the portrait pointer: `PortraitWinLayoutTbl+6` (`3C:84AC`) → `D0C_8000`. The approved frame/hitbox bank is `$14`; do not place Guile fighting data in PRG bank `$0C`. This keeps the generated portrait record untouched.
+- Only after creating/validating dedicated collision data, point selector `CharHitBoxBankTbl[3]` (`3C:80DF`) to the approved shared bank `$14`. Current value `$00` does not validate Ryu hitboxes for Guile. `CharFrameBankTbl[3]` (`3C:80D5`) also becomes `$14`. Confirm that every reader uses the correct selector.
+- Do not confuse PRG bank `$0C` (stream/descriptors in CPU `$8000–9FFF`) with CHR page `$0C` (pixels). The approved fighting-art reserve is CHR pages `$39`/`$3A`, with `$3B` as the projectile candidate; final page pairing still needs D-05 validation. Each metasprite must select a valid CHR page; extracted pages are tile sheets without proven animation associations. Fighting art, palette, and pivots need explicit provenance/license and NES validation.
 
 ### 6.2 Pointers and behavior
 
-- Populate dedicated direction, button, special-move, guard, standing/crouching/neutral damage-reaction, and throw tables (`docs/FORMATS.md` §1). The command list in §4.3, as defined by the approved mapping, covers two NES strengths per special (Boom LP/HP; Flash Kick LK/HK), with `$0C/$0D` remapped to weak/strong kick or an equivalent per-character mapping. Do not claim that this reproduces all three arcade strengths; medium is outside the NES mapping unless the controls are explicitly changed.
+- Populate dedicated direction, button, special-move, guard, standing/crouching/neutral damage-reaction, and throw tables (`docs/FORMATS.md` §1). The command list in §4.3, as defined by the approved mapping, covers two NES strengths per special (Boom LP/HP; Flash Kick LK/HK). Apply the approved global remap of `CmdKeyAttackTbl[0C]/[0D]` to weak/strong kick; no wider remap is authorized. Do not claim that this reproduces all three arcade strengths; medium is outside the NES mapping unless the controls are explicitly changed.
 - Define Guile's command list for the four approved NES combinations (two strengths per special), explicitly documenting that the two arcade medium-strength variants are not represented. Do not describe six variants as a requirement of the NES parser. Ryu's list `$3F:E0C0` is not reusable by assumption; `$3F:E0C7` has no confirmed association with Guile.
 - Provide dedicated paths for ground and aerial throws. Ground throws follow the existing ground condition once validated; aerial throws require both-airborne eligibility and a dispatcher extension, as well as synchronized states compatible with `GrabCheck`/class `$0C`.
 - Do not build Guile tables/offsets by copying Ryu's order/count. Resolve every state, metasprite, and hitbox pointer through labels and check it against the final map. Bounding-box offsets are signed; dimensions above 256 px require a parser audit.
@@ -272,4 +328,4 @@ Future implementation must not be declared functional until, at minimum:
 
 The original audit checked project sources/annotations, compared all 31 arcade ZIP members with the MAME 0.276 manifest, and confirmed the World 910522 set; `-verifyroms` approved it. A headless benchmark startup was run for about nine seconds, without input or visual inspection. Web research narrowed move-command gaps and recorded candidate metrics, provenance, disagreements, and platform caveats in §§2.4–2.5. The previous technical review reconciled contradictory Knee Pad notes, distinguished it from Knee Bazooka, and made the aerial-throw direction disagreement explicit. It also recorded that the arcade reference accepts three strengths, while the documented NES input only provides weak/strong punch/kick classes; the approved decision is four charge inputs (Boom LP/HP and Flash Kick LK/HK), with no medium variant. The GameFAQs source describes close/far, crouching/aerial normals, and throws, but admits naming moves by appearance in slow motion; use it as an observation guide, not naming authority. The ZIP was read directly without extracting files into the project; no code or third-party resource was incorporated.
 
-The consistency review was performed on 2026-11-10. I fetched public `refs/heads/main` from `https://github.com/daniel-castilho/sf2nes.git` into the isolated local ref `refs/review/public-main` at `e9baf3711e05f40d0b9551be7c945c763cb8f36e` (remote configuration verified first; `origin` points to that URL in the workspace where this pass was performed). Its recorded Git commit timestamp is 2026-11-17 23:15:59 -05:00, later than the review date and the supplied current date; this chronology anomaly is recorded rather than silently changing the review date or choosing an older baseline. I updated documentation paths, corrected the contradiction between required gameplay pointers and the intentionally null AI pointer, separated arcade evidence from NES-ROM acceptance, recorded bank `$05` as assigned to Ken's partial states, made explicit the blockers for aerial throws whose direction/threshold remain undecided, and noted the missing formal reference for approval of that requirement. The 2026-11-18 reconciliation started from public `main` at `50d937680b17aecaac028be4e2aada5b83a991ed`, kept the corrections from that revision, and recorded P10 as an approved decision: four NES combinations (Boom LP/HP and Flash Kick LK/HK), with no medium variant. Claims not supported by workspace evidence were removed. No code, ROM, assets, or tools were modified, and no tests, builds, or emulators were run. This specification remains a proposal for implementation; D-04, P10, and the Phase 2 bank allocation were approved separately, while generation, builds, tests, and emulator runs still require D-05.
+The consistency review was performed on 2026-11-10. I fetched public `refs/heads/main` from `https://github.com/daniel-castilho/sf2nes.git` into the isolated local ref `refs/review/public-main` at `e9baf3711e05f40d0b9551be7c945c763cb8f36e` (remote configuration verified first; `origin` points to that URL in the workspace where this pass was performed). Its recorded Git commit timestamp is 2026-11-17 23:15:59 -05:00, later than the review date and the supplied current date; this chronology anomaly is recorded rather than silently changing the review date or choosing an older baseline. I updated documentation paths, corrected the contradiction between required gameplay pointers and the intentionally null AI pointer, separated arcade evidence from NES-ROM acceptance, recorded bank `$05` as assigned to Ken's partial states, made explicit the blockers for aerial throws whose direction/threshold remain undecided, and noted the missing formal reference for approval of that requirement. The 2026-11-18 reconciliation started from public `main` at `50d937680b17aecaac028be4e2aada5b83a991ed`, kept the corrections from that revision, and recorded P10 as an approved decision: four NES combinations (Boom LP/HP and Flash Kick LK/HK), with no medium variant. Claims not supported by workspace evidence were removed. No code, ROM, assets, or tools were modified, and no tests, builds, or emulators were run. This specification remains a proposal for implementation; D-04, P10, and the Phase 2 bank allocation were approved separately, and the Maintainer supplied the definitive pose/move coverage list recorded in §5.1. Generation, builds, tests, and emulator runs still require D-05.

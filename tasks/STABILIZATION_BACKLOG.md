@@ -75,7 +75,7 @@ The Maintainer answered the Phase 1 audit questions; evidence is `tasks/GUILE_IM
 - **CPU scope — APPROVED.** Guile is human-controlled only (P1/human); the AI fiche pair stays null and CPU stays on Ryu. Selection must not route CPU to Guile.
 - **Projectile path — APPROVED.** Parameterize the shared `ProjHit`/draw path in `$3F`/`$3B` instead of duplicating it.
 - **P10 mechanism — APPROVED.** Use the audited global remap of `CmdKeyAttackTbl[0C]/[0D]` to LK/HK (`$02`/`$03`). The Phase 1 consumer audit found no active Ryu/Ken use of those two keys. No wider remap is authorized.
-- **Pose list — PENDING.** The Maintainer must supply the approved Guile pose list before P8 asset work can be sized.
+- **Pose/move coverage — APPROVED (2026-11-18).** The Maintainer supplied the definitive list: locomotion/postures, four NES attack classes per stance, guard/damage/KO, Sonic Boom and Flash Kick phases, Judo Throw and Dragon Suplex with victim reactions, victory/defeat, Reverse Spin Kick, and Knee Pad. It defines coverage only, not frame counts, damage, or hitboxes. Knee Pad's NES input binding is not decided. Flying Mare and Flying Buster Drop remain excluded pending P9/P11. Full text: `tasks/GUILE_BEHAVIORAL_ENGINEERING_SPEC_EN.md` §5.1. P8 still requires provenance, conversion, and numeric values.
 - These decisions do not authorize builds, generation, scripts, tests, emulator runs, or any source/annotation/linker/ROM edit. D-05, P8, P9, and P11 remain open.
 
 ---

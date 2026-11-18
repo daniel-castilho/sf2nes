@@ -22,8 +22,9 @@
 | CPU scope | Whether Guile must work as CPU | **APPROVED (2026-11-18)**: P1/human only; AI pointer stays null; CPU stays Ryu | Maintainer answer Q4 |
 | Projectile path | How Sonic Boom uses the shared projectile engine | **APPROVED (2026-11-18)**: parameterize the shared hit/draw path | Maintainer answer Q5 |
 | P10 mechanism | How Flash Kick LK/HK is implemented | **APPROVED (2026-11-18)**: audited global remap of `CmdKeyAttackTbl[0C]/[0D]`; no wider remap | Maintainer answer Q6; Phase 1 consumer audit |
+| Pose/move coverage | Definitive Guile animation/state coverage (Q7) | **APPROVED (2026-11-18)**: full list recorded in `tasks/GUILE_BEHAVIORAL_ENGINEERING_SPEC_EN.md` §5.1 | Defines coverage only; no frame counts, damage, hitboxes, or NES binding for Knee Pad |
 
-D-04, P10, the Phase 2 allocation, CPU scope, projectile path, and the P10 mechanism are resolved. P8 (including the Maintainer pose list), P9, P11 and D-05 stay open and are treated as gates below. Resolving them later does not require rewriting this plan; it only opens the corresponding gate.
+D-04, P10, the Phase 2 allocation, CPU scope, projectile path, the P10 mechanism, and the pose/move coverage list are resolved. P8 (legal provenance, conversion, numeric values), P9, P11 and D-05 stay open and are treated as gates below. Resolving them later does not require rewriting this plan; it only opens the corresponding gate.
 
 ### Non-negotiable constraints
 
@@ -138,7 +139,7 @@ Each phase lists its objective, work, deliverable, exit criterion, and gate.
 
 **Objective:** turn every implementation step into a label-and-address fact before writing data.
 
-**Status: COMPLETE.** Delivered as `tasks/GUILE_IMPLEMENTATION_AUDIT.md` (commit `de011b9`). All seven audit questions were answered by the Maintainer on 2026-11-18; Q7 (pose list) is still pending under P8.
+**Status: COMPLETE.** Delivered as `tasks/GUILE_IMPLEMENTATION_AUDIT.md` (commit `de011b9`). All seven audit questions were answered by the Maintainer on 2026-11-18; the Q7 pose/move coverage list is recorded in `tasks/GUILE_BEHAVIORAL_ENGINEERING_SPEC_EN.md` §5.1.
 
 **Work — produce `tasks/GUILE_IMPLEMENTATION_AUDIT.md` (English) covering:**
 1. Fiche column 3, byte by byte, for all 10 pointer pairs (`3C:8000–80BE`), with the effective value and the target label.
@@ -178,7 +179,7 @@ Each phase lists its objective, work, deliverable, exit criterion, and gate.
 **Objective:** obtain legally usable art and audio.
 
 **Work:**
-1. Use the Maintainer-provided pose list (Q7 — still pending). Until it is supplied, derive nothing from Ryu's 94 poses by default.
+1. Use the Maintainer-approved pose/move coverage in `tasks/GUILE_BEHAVIORAL_ENGINEERING_SPEC_EN.md` §5.1. Do not derive the set from Ryu's 94 poses by default, and do not invent frame counts, damage, or hitboxes.
 2. Produce or license-verify sprites, palettes, per-frame hitboxes, and audio.
 3. Document origin, license, conversion steps, tile budget, and CHR page assignment.
 4. Register any gap explicitly; do not invent samples or data.
@@ -329,7 +330,8 @@ Do not touch `src/bank_05.s`.
 | 4 | `ProjHit` parameterization: table or per-fighter branch | **RESOLVED**: parameterize shared path | Maintainer (Q5) |
 | 5 | `CmdKeyAttackTbl`: per-character mapping or audited global remap | **RESOLVED**: audited global remap of `$0C`/`$0D` only | Maintainer (Q6) |
 | 6 | Aerial-throw directions and acceptance rule | Open; blocks Phase 8 | Maintainer (P9, P11) |
-| 7 | Approved Guile pose list and legally usable assets | Open; blocks Phase 3/4 | Maintainer (Q7, P8) |
+| 7 | Approved Guile pose/move coverage | **RESOLVED (2026-11-18)**: spec §5.1 | Maintainer (Q7) |
+| 7a | Legally usable assets, conversion, and numeric values | Open; blocks Phase 3/4 | Maintainer (P8) |
 | 8 | Build/test/emulator authorization | Open; blocks Phases 10–11 | Maintainer (D-05) |
 
 ---
@@ -346,7 +348,7 @@ Do not touch `src/bank_05.s`.
 | Approved `CmdKeyAttackTbl` remap breaks Ryu/Ken | Phase 1 audit found no active Ryu/Ken use of keys `$0C`/`$0D`; change only those two bytes; any wider remap needs a new decision |
 | Aerial throws forced into `$09` | Extend the dispatcher with a new condition code |
 | CPU routed to Guile with a null AI pointer | **Resolved by Q4**: human-controlled only; selection must block CPU routing |
-| Asset provenance unclear or pose list absent | Keep P8 closed until provenance and the Maintainer pose list are recorded |
+| Asset provenance or numeric values unclear | Pose coverage is fixed; keep P8 closed until provenance, conversion, and numeric values are recorded |
 | Portraits/frames share bank `$0C` and collide | **Resolved by Q2**: frames/hitboxes use `$14`; `$0C` unchanged |
 | Validation inferred from a successful build | Report manual status explicitly; never infer |
 
@@ -357,6 +359,7 @@ Do not touch `src/bank_05.s`.
 - [x] Phase 0 committed: spec reconciled with `50d9376`, D-04 recorded as resolved.
 - [x] Phase 1 audit exists and every step maps to a label and an address.
 - [x] Allocation approved (state `$09`, frame/hitbox `$14`, CHR `$39`/`$3A` + `$3B`); bank `$05` untouched.
+- [x] Pose/move coverage approved and recorded in the specification §5.1; aerial throws remain P9/P11-gated.
 - [ ] Guile fiche has no null pointer in the human-controlled flow.
 - [ ] `FighterRoundInit` loads Guile's own state and frame pointers.
 - [ ] Normal moves, Sonic Boom, and Flash Kick work with Guile data.
