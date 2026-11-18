@@ -1941,6 +1941,72 @@ comment 37:F670 pisca o PRESS START alternando a cor 10 da paleta
 # BANK $00 — Ryu data (frames) + Ryu AI
 # ============================================================================================================
 # ------------------------------------------------------------------------------------------------
+# Data batch: AI bytecode scripts ($8E82-$8F3B) and helper tables ($8E72, $9051-$9148).
+# Opcodes: docs/FORMATS.md §14; AiOp00-AiOp11 in $3F. Evidence: tasks/DATA_NAMING_00.md.
+# Only labels change; the 96 metasprites and 79 collision records stay automatic (P3).
+label 00:8E72 RyuAiIdleScriptTbl
+comment 00:8E72 8 scripts drawn by Random&7 when the current script ends (fiche ram_0342/ram_0344)
+label 00:8E82 RyuAiScriptHadoukenWeak
+comment 00:8E82 neutral, wait idle $58, wait projectile free, special 0 (hadouken weak) twice, wait idle
+label 00:8E8B RyuAiScriptHadoukenStrong
+comment 00:8E8B neutral, wait idle, wait projectile free, special 1 (hadouken strong) twice, wait idle
+label 00:8E98 RyuAiScriptWalkBack
+comment 00:8E98 hold back ($06) until moved $20 px from start (or screen edge)
+label 00:8E9F RyuAiScriptWalkForward
+comment 00:8E9F hold forward ($05) until moved $20 px from start (or screen edge)
+label 00:8EA6 RyuAiScriptJumpBack
+comment 00:8EA6 press up-back ($0A), wait airborne, release
+label 00:8EAD RyuAiScriptJumpForward
+comment 00:8EAD press up-forward ($09), wait airborne, release; same 7 bytes as $8F0A
+label 00:8ECA RyuAiScriptVsSpecial
+comment 00:8ECA vs opponent special: back off, weak kick x2, forward + strong kick
+label 00:8EEB RyuAiScriptAirStrongPunchCombo
+comment 00:8EEB airborne: strong punch (neutral), wait, strong punch (down), wait
+label 00:8EFB RyuAiScriptAirStrongPunch
+comment 00:8EFB airborne: strong punch (neutral), wait
+label 00:8F03 RyuAiScriptJumpUp
+comment 00:8F03 press up ($07), wait airborne, release
+label 00:8F0A RyuAiScriptJumpIn
+comment 00:8F0A press up-forward ($09), wait airborne, release; same 7 bytes as $8EAD
+label 00:8F11 RyuAiScriptShoryukenWeak
+comment 00:8F11 special 2 (shoryuken weak) twice, wait idle
+label 00:8F16 RyuAiScriptShoryukenStrong
+comment 00:8F16 special 3 (shoryuken strong) twice, wait idle
+label 00:8F1B RyuAiScriptStrongPunch
+comment 00:8F1B strong punch (neutral), wait attack state $13, wait idle
+label 00:8F24 RyuAiScriptDefend
+comment 00:8F24 defend ($83: back, or down-diagonal if opponent crouches)
+label 00:8F26 RyuAiScriptCrouch
+comment 00:8F26 hold down ($08) for one frame
+label 00:8F29 RyuAiScriptCrouchStrongKick
+comment 00:8F29 down + strong kick (sweep), wait attack state $10, wait idle
+label 00:8F32 RyuAiScriptCrouchStrongPunch
+comment 00:8F32 down + strong punch, wait attack state $13, wait idle
+label 00:8F3B RyuAiScriptThrow
+comment 00:8F3B forward + strong kick (throw), wait attack state $14
+label 00:9051 RyuAiCloseScriptLoTbl
+comment 00:9051 low bytes of $8F1B (strong punch) and $8F16 (shoryuken strong)
+label 00:9053 RyuAiCloseScriptHiTbl
+comment 00:9053 high bytes for RyuAiCloseScriptLoTbl
+label 00:90ED RyuAiState69ScriptLoTbl
+comment 00:90ED 4 low bytes: $8F3B (throw), $8F11 (shoryuken weak), $8F24 (defend) x2
+label 00:90EE RyuAiState69MidLoTbl
+comment 00:90EE entry 1 of RyuAiState69ScriptLoTbl (distance/16 branch)
+label 00:90F1 RyuAiState69ScriptHiTbl
+comment 00:90F1 4 high bytes for RyuAiState69ScriptLoTbl
+label 00:90F2 RyuAiState69MidHiTbl
+comment 00:90F2 entry 1 of RyuAiState69ScriptHiTbl (distance/16 branch)
+label 00:913C RyuAiState69RandomLoTbl
+comment 00:913C 4 low bytes: $8E82 (hadouken weak), $8F32 (crouch strong punch), $8F24 x2; only 0-1 reachable
+label 00:9140 RyuAiState69RandomHiTbl
+comment 00:9140 4 high bytes for RyuAiState69RandomLoTbl
+label 00:9144 RyuAiState69NowLoTbl
+comment 00:9144 low bytes: $8EA6 (jump back), $8EAD (jump forward); only entry 0 reachable
+label 00:9146 RyuAiState69NowHiTbl
+comment 00:9146 high bytes for RyuAiState69NowLoTbl
+label 00:9148 AiHitReactRoutineTbl
+comment 00:9148 per-character routine when opponent is in hit reaction ($B0-$E0); single entry RyuAiAntiAir-1
+# ------------------------------------------------------------------------------------------------
 # Phase 3 P2 naming batch: automatic labels of Ryu AI decision tree.
 # Named by role demonstrated by code; labels only, no byte change.
 label 00:8F5C RyuAiAirDistY
@@ -1952,7 +2018,7 @@ comment 00:8F70 RyuAiAirVelCheck — Ryu AI: in air, only acts if own jump ends 
 label 00:8F7F RyuAiAirScriptPick
 comment 00:8F7F RyuAiAirScriptPick — Ryu AI: in air, chooses script by state class
 label 00:8F8F RyuAiAirScriptDefault
-comment 00:8F8F RyuAiAirScriptDefault — Ryu AI: in air, default script ($00:8EFB)
+comment 00:8F8F RyuAiAirScriptDefault — Ryu AI: in air, default script RyuAiScriptAirStrongPunch
 label 00:8F96 RyuAiProjCheck
 comment 00:8F96 RyuAiProjCheck — Ryu AI: does opponent have projectile in air?
 label 00:8FA5 RyuAiProjAbsDist
@@ -1964,7 +2030,7 @@ comment 00:8FB8 RyuAiProjDistDiv32 — Ryu AI: projectile distance / 32
 label 00:8FC2 RyuAiProjDistDiv64
 comment 00:8FC2 RyuAiProjDistDiv64 — Ryu AI: projectile distance / 64 (too far: does nothing)
 label 00:8FC8 RyuAiProjScriptMid
-comment 00:8FC8 RyuAiProjScriptMid — Ryu AI: projectile at 32-64 px -> script $00:8E82
+comment 00:8FC8 RyuAiProjScriptMid — Ryu AI: projectile at 32-64 px -> RyuAiScriptHadoukenWeak
 label 00:8FCF RyuAiOpponentHitState
 comment 00:8FCF RyuAiOpponentHitState — Ryu AI: no projectile; is opponent in hit reaction?
 label 00:8FE9 RyuAiOpponentWalkCheck
@@ -1974,7 +2040,7 @@ comment 00:8FFC RyuAiOpponentJumpUp — Ryu AI: opponent is jumping up
 label 00:900F RyuAiJumpDistCheck
 comment 00:900F RyuAiJumpDistCheck — Ryu AI: horizontal distance of jumping up opponent
 label 00:9016 RyuAiJumpScriptMid
-comment 00:9016 RyuAiJumpScriptMid — Ryu AI: opponent jumping up at 40-96 px -> script $00:8F0A
+comment 00:9016 RyuAiJumpScriptMid — Ryu AI: opponent jumping up at 40-96 px -> RyuAiScriptJumpIn
 label 00:901D RyuAiOpponentGrounded
 comment 00:901D RyuAiOpponentGrounded — Ryu AI: opponent is on ground
 label 00:9028 RyuAiOpponentDistX
@@ -1984,9 +2050,9 @@ comment 00:903D RyuAiOpponentDistY — Ryu AI: draws between two scripts based o
 label 00:9055 RyuAiOpponentTooFar
 comment 00:9055 RyuAiOpponentTooFar — Ryu AI: opponent too far -> does nothing
 label 00:905C RyuAiOpponentScript
-comment 00:905C RyuAiOpponentScript — Ryu AI: opponent near -> script $00:8F1B
+comment 00:905C RyuAiOpponentScript — Ryu AI: opponent near -> RyuAiScriptStrongPunch
 label 00:9063 RyuAiOpponentSpecial
-comment 00:9063 RyuAiOpponentSpecial — Ryu AI: opponent with special state (zp_62) -> script $00:8ECA
+comment 00:9063 RyuAiOpponentSpecial — Ryu AI: opponent with special state (zp_62) -> RyuAiScriptVsSpecial
 label 00:906F RyuAiOpponentStateHigh
 comment 00:906F RyuAiOpponentStateHigh — Ryu AI: opponent state class >= $58?
 label 00:907B RyuAiState58Check
@@ -1996,13 +2062,13 @@ comment 00:9089 RyuAiState58DistDiv8 — Ryu AI: horizontal distance / 8
 label 00:9095 RyuAiState58DistDiv16
 comment 00:9095 RyuAiState58DistDiv16 — Ryu AI: horizontal distance / 16
 label 00:9098 RyuAiState58Script32
-comment 00:9098 RyuAiState58Script32 — Ryu AI: script $00:8F32
+comment 00:9098 RyuAiState58Script32 — Ryu AI: script RyuAiScriptCrouchStrongPunch
 label 00:909F RyuAiState58DistDiv32
 comment 00:909F RyuAiState58DistDiv32 — Ryu AI: horizontal distance / 32 (far: does nothing)
 label 00:90A5 RyuAiState58Random
 comment 00:90A5 RyuAiState58Random — Ryu AI: draws script based on opponent posture
 label 00:90C3 RyuAiState58Script
-comment 00:90C3 RyuAiState58Script — Ryu AI: script $00:8EAD
+comment 00:90C3 RyuAiState58Script — Ryu AI: script RyuAiScriptJumpForward
 label 00:90CA RyuAiState69Dist
 comment 00:90CA RyuAiState69Dist — Ryu AI: class >= $69, calculates horizontal distance
 label 00:90D4 RyuAiState69DistDiv8
@@ -2012,9 +2078,9 @@ comment 00:90F5 RyuAiState69DistDiv16 — Ryu AI: horizontal distance / 16
 label 00:910C RyuAiState69DistDiv32
 comment 00:910C RyuAiState69DistDiv32 — Ryu AI: horizontal distance / 32 (far: does nothing)
 label 00:9113 RyuAiState69Random
-comment 00:9113 RyuAiState69Random — Ryu AI: draws between 4 scripts
+comment 00:9113 RyuAiState69Random — Ryu AI: draws among 4 table entries (only 0-1 reachable)
 label 00:912B RyuAiState69RandomNow
-comment 00:912B RyuAiState69RandomNow — Ryu AI: draws between 2 scripts (immediate execution)
+comment 00:912B RyuAiState69RandomNow — Ryu AI: draws from 2 entries (only entry 0 reachable; immediate execution)
 label 00:9159 RyuAiAntiAirDist
 comment 00:9159 RyuAiAntiAirDist — anti-air AI: horizontal distance to opponent in air
 label 00:9163 RyuAiAntiAirRange
@@ -2022,13 +2088,13 @@ comment 00:9163 RyuAiAntiAirRange — anti-air AI: distance < $28?
 label 00:916F RyuAiAntiAirVelCheck
 comment 00:916F RyuAiAntiAirVelCheck — anti-air AI: is opponent descending?
 label 00:9174 RyuAiAntiAirScript8E9F
-comment 00:9174 RyuAiAntiAirScript8E9F — anti-air AI: script $00:8E9F
+comment 00:9174 RyuAiAntiAirScript8E9F — anti-air AI: script RyuAiScriptWalkForward
 label 00:917B RyuAiAntiAirVelCheck2
 comment 00:917B RyuAiAntiAirVelCheck2 — anti-air AI (near): is opponent descending?
 label 00:9183 RyuAiAntiAirVelCheck3
 comment 00:9183 RyuAiAntiAirVelCheck3 — anti-air AI (near): is opponent stopped?
 label 00:9188 RyuAiAntiAirScript8F11
-comment 00:9188 RyuAiAntiAirScript8F11 — anti-air AI: script $00:8F11
+comment 00:9188 RyuAiAntiAirScript8F11 — anti-air AI: script RyuAiScriptShoryukenWeak
 label 00:918F RyuAiAntiAirStateCheck
 comment 00:918F RyuAiAntiAirStateCheck — anti-air AI: opponent classes $D0/$D8
 label 00:9197 RyuAiAntiAirDist2
@@ -2036,17 +2102,17 @@ comment 00:9197 RyuAiAntiAirDist2 — anti-air AI ($D0/$D8): horizontal distance
 label 00:91A5 RyuAiAntiAirDist3
 comment 00:91A5 RyuAiAntiAirDist3 — anti-air AI ($D0/$D8): distance < $10?
 label 00:91B0 RyuAiAntiAirScript8F29
-comment 00:91B0 RyuAiAntiAirScript8F29 — anti-air AI ($D0/$D8): script $00:8F29
+comment 00:91B0 RyuAiAntiAirScript8F29 — anti-air AI ($D0/$D8): script RyuAiScriptCrouchStrongKick
 label 00:91B7 RyuAiAntiAirEnd
 comment 00:91B7 RyuAiAntiAirEnd — anti-air AI: no action
-# Ken playable: the anti-air dispatch at $8FDC-$8FE8 uses the RTS trick on D00_9148, indexed by
+# Ken playable: the anti-air dispatch at $8FDC-$8FE8 uses the RTS trick on AiHitReactRoutineTbl, indexed by
 # FighterChar,y. The table has ONE entry (2 bytes) and index advances 1 at a time, so only Ryu (0)
 # works; for Ken (1) the bytes read are $91/$A4 -> target $A491 -> the RTS falls on $A492 ($02 = JAM) and
 # CPU halts (infinite halt). Since this delivery's AI is always Ryu's, we fix index at 0
 # (LDA abs,Y -> LDA abs): any opponent uses RyuAiAntiAir, exactly as in Ryu-vs-Ryu.
 patch 00:8FE0 AD
 patch 00:8FE4 AD
-comment 00:8FE0 all opponents use RyuAiAntiAir (D00_9148 has a single entry)
+comment 00:8FE0 all opponents use RyuAiAntiAir (AiHitReactRoutineTbl has a single entry)
 comment 00:8FE4 same: without indexing by character, RTS-trick doesn't fall on $A492 (JAM)
 label 00:8F46 RyuAiThink
 block 00:8F46 ------------------------------------------------------------------------------------------------
@@ -2056,19 +2122,19 @@ block 00:8F46 oponente e sorteia (Random) qual roteiro de IA disparar.
 
 # --- rotinas e continuacoes nomeadas na revisao de documentacao (ordem de endereco) ---
 label 00:914A RyuAiAntiAir
-comment 00:914A Ryu AI against opponent in air ($C0/$C8): fires anti-air script (table D00_9148)
+comment 00:914A Ryu AI against opponent in air ($C0/$C8): fires anti-air script (table AiHitReactRoutineTbl)
 label 00:91BA RyuAiAirAttack
-comment 00:91BA Ryu AI: starts script D00_8F24 (air attack) always
+comment 00:91BA Ryu AI: starts RyuAiScriptDefend ($8F24) always
 # ============================================================================================================
 # BANK $04 — Ken frames/metasprites/collision (original data) + AI stub
 # ============================================================================================================
 # Ken AI stub (this delivery's CPU remains Ryu). Ken's fiche points to $90E0.
-# There are 8 scripts, like Ryu's table at $00:8E72, and all lead to the $FF terminator, so that
+# There are 8 scripts, like RyuAiIdleScriptTbl at $00:8E72, and all lead to the $FF terminator, so that
 # no pointer falls into collision data.
 patch 04:90E0 F0 90 F0 90 F0 90 F0 90 F0 90 F0 90 F0 90 F0 90
 table 04:90E0 words n=8
 block 04:90E0 Ken AI stub (this delivery's CPU remains Ryu).
-block 04:90E0 Ken's fiche points here ($90E0). There are 8 scripts, like Ryu's table at $00:8E72,
+block 04:90E0 Ken's fiche points here ($90E0). There are 8 scripts, like RyuAiIdleScriptTbl at $00:8E72,
 block 04:90E0 and all lead to the $FF terminator, so that no pointer falls into collision data.
 # Layout of Ken's defeat portrait. On defeat, PortraitBuildP1 uses DE=3, but Ken's normal layout
 # Ken ($8A59) has only 2 groups; reading the next byte ($8A92, metasprite $8A91 attribute) as

@@ -124,28 +124,29 @@ Metrics in sections 4 and 7 are historical (before data batches). The metrics in
 | Data `$29` | 46 | music modules: title/select/versus/win-quote headers, instrument lists, envelopes, channel starts and loop targets; 57 reference/artifact labels deferred | `3540a92` |
 | Data `$2D` | 14 | Fight music module: header, instrument list, envelopes, five channel starts and five loop targets; 55 reference blocks and 1 artifact deferred | `6b75ae3` |
 | Data `$01` | 38 | Ryu state bank anchors: 7 pointer tables, 8 direction entries, 17 button-chain states and 6 special-move states; 38 state headers and 228 frames deferred | `efa5dde` |
-| Data `$05` | 38 | Ken state bank anchors (mirror of `$01`): 7 pointer tables, 8 direction entries, 17 button-chain states and 6 special-move states; 40 state headers and 274 frames deferred | pending |
-| **Total** | **293** | — | — |
+| Data `$05` | 38 | Ken state bank anchors (mirror of `$01`): 7 pointer tables, 8 direction entries, 17 button-chain states and 6 special-move states; 40 state headers and 274 frames deferred | `045cc5c` |
+| Data `$00` | 31 | Ryu AI: idle script table, 19 bytecode scripts and 11 helper tables; 96 metasprites and 79 collision records deferred | pending |
+| **Total** | **324** | — | — |
 
 \* The `$36` batch was applied before `fa7c215` and entered the repository bundled with that English-translation commit; it has no separate commit.
 
-With the 388 code labels, Phase 3 and the follow-up batches renamed **681 labels** (643 committed plus the
-38 of `$05`).
+With the 388 code labels, Phase 3 and the follow-up batches renamed **712 labels** (681 through `$05`, plus
+the 31 of `$00`).
 
 ### 10.2 Final metrics
 
 Canonical method: `grep -rhE '^[A-Za-z_][A-Za-z0-9_]*:$' src/bank_*.s`, with the caveat of the three labels with same-line comment (`EdgeARel`, `EdgeBRel`, `EdgeBBtn`).
 
-| Metric | Phase 1 | Closing | After `$36` | After `$3B` | After `$37` | After `$29` | After `$2D` | After `$01` | After `$05` |
-|--------|---------|---------|-------------|-------------|-------------|-------------|-------------|-------------|-------------|
-| Label definitions | 2,145 | **2,145** | **2,145** | **2,145** | **2,145** | **2,145** | **2,145** | **2,145** | **2,145** |
-| Unique names | 2,141 | **2,141** | **2,141** | **2,141** | **2,140** | **2,140** | **2,140** | **2,140** | **2,140** |
-| Automatic code (`L`) | 379 | **0** | **0** | **0** | **0** | **0** | **0** | **0** | **0** |
-| Automatic data (`D`) | 1,213 | **1,135** | **1,108** | **1,073** | **1,056** | **1,010** | **996** | **958** | **920** |
-| Unique semantic | 549 | **1,006** | **1,033** | **1,068** | **1,084** | **1,130** | **1,144** | **1,182** | **1,220** |
-| Semantic sum by bank | — | **1,010** | **1,037** | **1,072** | **1,089** | **1,135** | **1,149** | **1,187** | **1,225** |
+| Metric | Phase 1 | Closing | After `$36` | After `$3B` | After `$37` | After `$29` | After `$2D` | After `$01` | After `$05` | After `$00` |
+|--------|---------|---------|-------------|-------------|-------------|-------------|-------------|-------------|-------------|-------------|
+| Label definitions | 2,145 | **2,145** | **2,145** | **2,145** | **2,145** | **2,145** | **2,145** | **2,145** | **2,145** | **2,145** |
+| Unique names | 2,141 | **2,141** | **2,141** | **2,141** | **2,140** | **2,140** | **2,140** | **2,140** | **2,140** | **2,140** |
+| Automatic code (`L`) | 379 | **0** | **0** | **0** | **0** | **0** | **0** | **0** | **0** | **0** |
+| Automatic data (`D`) | 1,213 | **1,135** | **1,108** | **1,073** | **1,056** | **1,010** | **996** | **958** | **920** | **889** |
+| Unique semantic | 549 | **1,006** | **1,033** | **1,068** | **1,084** | **1,130** | **1,144** | **1,182** | **1,220** | **1,251** |
+| Semantic sum by bank | — | **1,010** | **1,037** | **1,072** | **1,089** | **1,135** | **1,149** | **1,187** | **1,225** | **1,256** |
 
-The 1,225 vs 1,220 difference comes from `ResetStub` (3×), `ResetVectorFill` (2×), `RoundStart` (2×), and `InputButtons` (2× in `$3F`). The canonical regex does not count the three same-line-comment labels; including them would give 1,223 unique semantic and 1,228 bank sum.
+The 1,256 vs 1,251 difference comes from `ResetStub` (3×), `ResetVectorFill` (2×), `RoundStart` (2×), and `InputButtons` (2× in `$3F`). The canonical regex does not count the three same-line-comment labels; including them would give 1,254 unique semantic and 1,259 bank sum.
 
 ### 10.3 Verification
 
@@ -164,6 +165,10 @@ The 1,225 vs 1,220 difference comes from `ResetStub` (3×), `ResetVectorFill` (2
 | `src/bank_2D.s` after `$2D` | 14 `D2D_*` replaced; 56 reference/artifact labels kept automatic; 632 `.byte`/`.word`/`.res` directives before and after, 15 differ only by symbol rename |
 | `src/globals.inc` after `$2D` | one `.global` name renamed (`D2D_A000` → `MusicFightHeader`); count unchanged |
 | `src/bank_05.s` (Ken, manual source) | 0 references to `D20_*`, `D29_*`, `D2D_*` or `D36_*` |
+| `src/bank_00.s` after `$00` | 31 labels replaced; 175 metasprites/collision labels kept automatic; 688 `.byte`/`.word`/`.res` directives before and after, only symbol operands differ |
+| `src/bank_3C.s` after `$00` | fiche `CharAiScript*` comments cite `RyuAiIdleScriptTbl`; operands remain numeric |
+| `src/globals.inc` after `$00` | one `.global` name renamed (`D00_8E72` → `RyuAiIdleScriptTbl`); count unchanged |
+| `src/bank_01.s` after `$00` | untouched (Ryu column 0 byte-for-byte unchanged) |
 | `make fixed` | OK — expected divergence (`-D FIX_SOFT_RESET`) |
 
 ### 10.4 Decisions and acceptance
@@ -192,7 +197,7 @@ Phase 3 spec §12 acceptance criteria:
 
 ### 10.5 Pendencies and next step
 
-- **920 automatic data labels remain**; spec allows keeping them when semantics is undetermined (P3/opaque). Distribution: `$00` 206, `$01` 266, `$04` 3, `$05` 314, `$08/$0C/$10/$1C/$24` 5, `$29` 57, `$2D` 56, `$36` 3, `$37` 10.
-- Next candidate by evidence/effort: `$00` (Ryu metasprites/AI, 206); the remaining state/frame labels may stay P3.
+- **889 automatic data labels remain**; spec allows keeping them when semantics is undetermined (P3/opaque). Distribution: `$00` 175, `$01` 266, `$04` 3, `$05` 314, `$08/$0C/$10/$1C/$24` 5, `$29` 57, `$2D` 56, `$36` 3, `$37` 10.
+- The `$00` batch named Ryu's AI scripts and helper tables; the 175 remaining `$00` labels are metasprites and collision records. The remaining state/frame and shared-reference labels may stay P3.
 - The three `$36` write-only labels (`C005`, `C00A`, `C00F`) stay automatic until a consumer appears; `MMC5_CHR_BG2` is never used in the ROM.
 - No character, feature, or playable content was started.

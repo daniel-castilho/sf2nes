@@ -376,56 +376,56 @@ D00_8E49:
     .byte $2D,$00,$03,$F8,$B3,$70,$72,$74,$80,$00,$01,$08,$A3,$52,$04,$F0; 8E49
     .byte $C3,$54,$56,$58,$5A,$04,$F0,$D3,$5C,$5E,$60,$62,$03,$F8,$E3,$64; 8E59
     .byte $66,$68,$03,$F8,$F3,$6A,$6C,$6E,$80   ; 8E69
-D00_8E72:
-    .word D00_8E98                              ; 8E72  98 8E
-    .word D00_8E9F                              ; 8E74  9F 8E
-    .word D00_8EA6                              ; 8E76  A6 8E
-    .word D00_8EAD                              ; 8E78  AD 8E
-    .word D00_8E82                              ; 8E7A  82 8E
-    .word D00_8E8B                              ; 8E7C  8B 8E
-    .word D00_8E8B                              ; 8E7E  8B 8E
-    .word D00_8E8B                              ; 8E80  8B 8E
-D00_8E82:
-    .byte $80,$04,$89,$8B,$82,$00,$82,$89,$FF   ; 8E82
-D00_8E8B:
-    .byte $80,$04,$89,$8B,$82,$01,$82,$8B,$82,$01,$82,$89,$FF; 8E8B
-D00_8E98:
-    .byte $80,$06,$85,$08,$8C,$20,$FF           ; 8E98
-D00_8E9F:
-    .byte $80,$05,$85,$08,$8C,$20,$FF           ; 8E9F
-D00_8EA6:
-    .byte $80,$0A,$88,$04,$80,$04,$FF           ; 8EA6
-D00_8EAD:
-    .byte $80,$09,$88,$04,$80,$04,$FF,$80,$04,$89,$84,$78,$8D,$82,$03,$82; 8EAD
+RyuAiIdleScriptTbl:
+    .word RyuAiScriptWalkBack                   ; 8E72  98 8E       8 scripts drawn by Random&7 when the current script ends (fiche ram_0342/ram_0344)
+    .word RyuAiScriptWalkForward                ; 8E74  9F 8E
+    .word RyuAiScriptJumpBack                   ; 8E76  A6 8E
+    .word RyuAiScriptJumpForward                ; 8E78  AD 8E
+    .word RyuAiScriptHadoukenWeak               ; 8E7A  82 8E
+    .word RyuAiScriptHadoukenStrong             ; 8E7C  8B 8E
+    .word RyuAiScriptHadoukenStrong             ; 8E7E  8B 8E
+    .word RyuAiScriptHadoukenStrong             ; 8E80  8B 8E
+RyuAiScriptHadoukenWeak:
+    .byte $80,$04,$89,$8B,$82,$00,$82,$89,$FF   ; 8E82              neutral, wait idle $58, wait projectile free, special 0 (hadouken weak) twice, wait idle
+RyuAiScriptHadoukenStrong:
+    .byte $80,$04,$89,$8B,$82,$01,$82,$8B,$82,$01,$82,$89,$FF; 8E8B              neutral, wait idle, wait projectile free, special 1 (hadouken strong) twice, wait idle
+RyuAiScriptWalkBack:
+    .byte $80,$06,$85,$08,$8C,$20,$FF           ; 8E98              hold back ($06) until moved $20 px from start (or screen edge)
+RyuAiScriptWalkForward:
+    .byte $80,$05,$85,$08,$8C,$20,$FF           ; 8E9F              hold forward ($05) until moved $20 px from start (or screen edge)
+RyuAiScriptJumpBack:
+    .byte $80,$0A,$88,$04,$80,$04,$FF           ; 8EA6              press up-back ($0A), wait airborne, release
+RyuAiScriptJumpForward:
+    .byte $80,$09,$88,$04,$80,$04,$FF,$80,$04,$89,$84,$78,$8D,$82,$03,$82; 8EAD              press up-forward ($09), wait airborne, release; same 7 bytes as $8F0A
     .byte $89,$FF,$80,$04,$89,$84,$78,$8D,$82,$05,$82,$89,$FF; 8EBD
-D00_8ECA:
-    .byte $80,$06,$8F,$29,$81,$04,$02,$87,$0E,$80,$04,$89,$81,$04,$02,$87; 8ECA
+RyuAiScriptVsSpecial:
+    .byte $80,$06,$8F,$29,$81,$04,$02,$87,$0E,$80,$04,$89,$81,$04,$02,$87; 8ECA              vs opponent special: back off, weak kick x2, forward + strong kick
     .byte $0E,$80,$05,$8E,$18,$80,$04,$90,$0A,$81,$05,$03,$87,$14,$80,$04; 8EDA
     .byte $FF                                   ; 8EEA
-D00_8EEB:
-    .byte $81,$04,$01,$87,$13,$80,$04,$89,$81,$08,$01,$87,$13,$80,$04,$FF; 8EEB
-D00_8EFB:
-    .byte $81,$04,$01,$87,$13,$80,$04,$FF       ; 8EFB
-D00_8F03:
-    .byte $80,$07,$88,$04,$80,$04,$FF           ; 8F03
-D00_8F0A:
-    .byte $80,$09,$88,$04,$80,$04,$FF           ; 8F0A
-D00_8F11:
-    .byte $82,$02,$82,$89,$FF                   ; 8F11
-D00_8F16:
-    .byte $82,$03,$82,$89,$FF                   ; 8F16
-D00_8F1B:
-    .byte $81,$04,$01,$87,$13,$80,$04,$89,$FF   ; 8F1B
-D00_8F24:
-    .byte $83,$FF                               ; 8F24
-D00_8F26:
-    .byte $80,$08,$FF                           ; 8F26
-D00_8F29:
-    .byte $81,$08,$03,$87,$10,$80,$04,$89,$FF   ; 8F29
-D00_8F32:
-    .byte $81,$08,$01,$87,$13,$80,$04,$89,$FF   ; 8F32
-D00_8F3B:
-    .byte $81,$05,$03,$87,$14,$80,$04,$FF,$80,$04,$FF; 8F3B
+RyuAiScriptAirStrongPunchCombo:
+    .byte $81,$04,$01,$87,$13,$80,$04,$89,$81,$08,$01,$87,$13,$80,$04,$FF; 8EEB              airborne: strong punch (neutral), wait, strong punch (down), wait
+RyuAiScriptAirStrongPunch:
+    .byte $81,$04,$01,$87,$13,$80,$04,$FF       ; 8EFB              airborne: strong punch (neutral), wait
+RyuAiScriptJumpUp:
+    .byte $80,$07,$88,$04,$80,$04,$FF           ; 8F03              press up ($07), wait airborne, release
+RyuAiScriptJumpIn:
+    .byte $80,$09,$88,$04,$80,$04,$FF           ; 8F0A              press up-forward ($09), wait airborne, release; same 7 bytes as $8EAD
+RyuAiScriptShoryukenWeak:
+    .byte $82,$02,$82,$89,$FF                   ; 8F11              special 2 (shoryuken weak) twice, wait idle
+RyuAiScriptShoryukenStrong:
+    .byte $82,$03,$82,$89,$FF                   ; 8F16              special 3 (shoryuken strong) twice, wait idle
+RyuAiScriptStrongPunch:
+    .byte $81,$04,$01,$87,$13,$80,$04,$89,$FF   ; 8F1B              strong punch (neutral), wait attack state $13, wait idle
+RyuAiScriptDefend:
+    .byte $83,$FF                               ; 8F24              defend ($83: back, or down-diagonal if opponent crouches)
+RyuAiScriptCrouch:
+    .byte $80,$08,$FF                           ; 8F26              hold down ($08) for one frame
+RyuAiScriptCrouchStrongKick:
+    .byte $81,$08,$03,$87,$10,$80,$04,$89,$FF   ; 8F29              down + strong kick (sweep), wait attack state $10, wait idle
+RyuAiScriptCrouchStrongPunch:
+    .byte $81,$08,$01,$87,$13,$80,$04,$89,$FF   ; 8F32              down + strong punch, wait attack state $13, wait idle
+RyuAiScriptThrow:
+    .byte $81,$05,$03,$87,$14,$80,$04,$FF,$80,$04,$FF; 8F3B              forward + strong kick (throw), wait attack state $14
 
 ; ------------------------------------------------------------------------------------------------
 ; IA do Ryu (codigo nativo dentro do banco de dados do personagem). Decide pelo estado e distancia do
@@ -477,15 +477,15 @@ RyuAiAirScriptPick:
     and #$F8                                    ; 8F82  29 F8
     cmp #$60                                    ; 8F84  C9 60
     bne RyuAiAirScriptDefault                   ; 8F86  D0 07
-    lda #<D00_8EEB                              ; 8F88  A9 EB
-    ldy #>D00_8EEB                              ; 8F8A  A0 8E
+    lda #<RyuAiScriptAirStrongPunchCombo        ; 8F88  A9 EB
+    ldy #>RyuAiScriptAirStrongPunchCombo        ; 8F8A  A0 8E
     jmp AiStartScript                           ; 8F8C  4C F3 E6
 
 
 ; modes: fight
 RyuAiAirScriptDefault:
-    lda #<D00_8EFB                              ; 8F8F  A9 FB       RyuAiAirScriptDefault — Ryu AI: in air, default script ($00:8EFB)
-    ldy #>D00_8EFB                              ; 8F91  A0 8E
+    lda #<RyuAiScriptAirStrongPunch             ; 8F8F  A9 FB       RyuAiAirScriptDefault — Ryu AI: in air, default script RyuAiScriptAirStrongPunch
+    ldy #>RyuAiScriptAirStrongPunch             ; 8F91  A0 8E
     jmp AiStartScript                           ; 8F93  4C F3 E6
 
 
@@ -509,8 +509,8 @@ RyuAiProjDistDiv16:
     lsr a                                       ; 8FAD  4A
     lsr a                                       ; 8FAE  4A
     bne RyuAiProjDistDiv32                      ; 8FAF  D0 07
-    lda #<D00_8F24                              ; 8FB1  A9 24
-    ldy #>D00_8F24                              ; 8FB3  A0 8F
+    lda #<RyuAiScriptDefend                     ; 8FB1  A9 24
+    ldy #>RyuAiScriptDefend                     ; 8FB3  A0 8F
     jmp AiStartScript                           ; 8FB5  4C F3 E6
 
 
@@ -518,8 +518,8 @@ RyuAiProjDistDiv16:
 RyuAiProjDistDiv32:
     lsr a                                       ; 8FB8  4A          RyuAiProjDistDiv32 — Ryu AI: projectile distance / 32
     bne RyuAiProjDistDiv64                      ; 8FB9  D0 07
-    lda #<D00_8F03                              ; 8FBB  A9 03
-    ldy #>D00_8F03                              ; 8FBD  A0 8F
+    lda #<RyuAiScriptJumpUp                     ; 8FBB  A9 03
+    ldy #>RyuAiScriptJumpUp                     ; 8FBD  A0 8F
     jmp AiStartScriptNow                        ; 8FBF  4C E8 E6
 
 
@@ -532,8 +532,8 @@ RyuAiProjDistDiv64:
 
 ; modes: fight
 RyuAiProjScriptMid:
-    lda #<D00_8E82                              ; 8FC8  A9 82       RyuAiProjScriptMid — Ryu AI: projectile at 32-64 px -> script $00:8E82
-    ldy #>D00_8E82                              ; 8FCA  A0 8E
+    lda #<RyuAiScriptHadoukenWeak               ; 8FC8  A9 82       RyuAiProjScriptMid — Ryu AI: projectile at 32-64 px -> RyuAiScriptHadoukenWeak
+    ldy #>RyuAiScriptHadoukenWeak               ; 8FCA  A0 8E
     jmp AiStartScript                           ; 8FCC  4C F3 E6
 
 
@@ -547,9 +547,9 @@ RyuAiOpponentHitState:
     bcs RyuAiOpponentWalkCheck                  ; 8FDA  B0 0D
     lda a:FighterChar,y                         ; 8FDC  B9 00 00
     tay                                         ; 8FDF  A8
-    lda D00_9148+1                              ; 8FE0  AD 49 91    all opponents use RyuAiAntiAir (D00_9148 has a single entry)
+    lda AiHitReactRoutineTbl+1                  ; 8FE0  AD 49 91    all opponents use RyuAiAntiAir (AiHitReactRoutineTbl has a single entry)
     pha                                         ; 8FE3  48
-    lda D00_9148                                ; 8FE4  AD 48 91    same: without indexing by character, RTS-trick doesn't fall on $A492 (JAM)
+    lda AiHitReactRoutineTbl                    ; 8FE4  AD 48 91    same: without indexing by character, RTS-trick doesn't fall on $A492 (JAM)
     pha                                         ; 8FE7  48
     rts                                         ; 8FE8  60
 
@@ -573,8 +573,8 @@ RyuAiOpponentJumpUp:
     jsr DistanceX                               ; 9001  20 3D E0
     cmp #$28                                    ; 9004  C9 28
     bcs RyuAiJumpDistCheck                      ; 9006  B0 07
-    lda #<D00_8F03                              ; 9008  A9 03
-    ldy #>D00_8F03                              ; 900A  A0 8F
+    lda #<RyuAiScriptJumpUp                     ; 9008  A9 03
+    ldy #>RyuAiScriptJumpUp                     ; 900A  A0 8F
     jmp AiStartScriptNow                        ; 900C  4C E8 E6
 
 
@@ -587,8 +587,8 @@ RyuAiJumpDistCheck:
 
 ; modes: fight
 RyuAiJumpScriptMid:
-    lda #<D00_8F0A                              ; 9016  A9 0A       RyuAiJumpScriptMid — Ryu AI: opponent jumping up at 40-96 px -> script $00:8F0A
-    ldy #>D00_8F0A                              ; 9018  A0 8F
+    lda #<RyuAiScriptJumpIn                     ; 9016  A9 0A       RyuAiJumpScriptMid — Ryu AI: opponent jumping up at 40-96 px -> RyuAiScriptJumpIn
+    ldy #>RyuAiScriptJumpIn                     ; 9018  A0 8F
     jmp AiStartScriptNow                        ; 901A  4C E8 E6
 
 
@@ -608,8 +608,8 @@ RyuAiOpponentDistX:
     jsr DistanceY                               ; 902F  20 49 E0
     cmp #$38                                    ; 9032  C9 38
     bcs RyuAiOpponentDistY                      ; 9034  B0 07
-    lda #<D00_8F16                              ; 9036  A9 16
-    ldy #>D00_8F16                              ; 9038  A0 8F
+    lda #<RyuAiScriptShoryukenStrong            ; 9036  A9 16
+    ldy #>RyuAiScriptShoryukenStrong            ; 9038  A0 8F
     jmp AiStartScript                           ; 903A  4C F3 E6
 
 
@@ -617,18 +617,18 @@ RyuAiOpponentDistY:
     jsr Random                                  ; 903D  20 B9 E5    RyuAiOpponentDistY — Ryu AI: draws between two scripts based on vertical distance
     and #$01                                    ; 9040  29 01
     tay                                         ; 9042  A8
-    lda D00_9051,y                              ; 9043  B9 51 90    [idx $00..$00]
+    lda RyuAiCloseScriptLoTbl,y                 ; 9043  B9 51 90    [idx $00..$00]
     sta zp_DC                                   ; 9046  85 DC
-    lda D00_9053,y                              ; 9048  B9 53 90    [idx $00..$00]
+    lda RyuAiCloseScriptHiTbl,y                 ; 9048  B9 53 90    [idx $00..$00]
     tay                                         ; 904B  A8
     lda zp_DC                                   ; 904C  A5 DC
     jmp AiStartScript                           ; 904E  4C F3 E6
 
-D00_9051:
-    .byte <(D00_8F1B)                           ; 9051  1B
+RyuAiCloseScriptLoTbl:
+    .byte <(RyuAiScriptStrongPunch)             ; 9051  1B          low bytes of $8F1B (strong punch) and $8F16 (shoryuken strong)
     .byte $16                                   ; 9052
-D00_9053:
-    .byte >(D00_8F1B)                           ; 9053  8F
+RyuAiCloseScriptHiTbl:
+    .byte >(RyuAiScriptStrongPunch)             ; 9053  8F          high bytes for RyuAiCloseScriptLoTbl
     .byte $8F                                   ; 9054
 
 ; modes: fight
@@ -640,17 +640,17 @@ RyuAiOpponentTooFar:
 
 ; modes: fight
 RyuAiOpponentScript:
-    lda #<D00_8F1B                              ; 905C  A9 1B       RyuAiOpponentScript — Ryu AI: opponent near -> script $00:8F1B
-    ldy #>D00_8F1B                              ; 905E  A0 8F
+    lda #<RyuAiScriptStrongPunch                ; 905C  A9 1B       RyuAiOpponentScript — Ryu AI: opponent near -> RyuAiScriptStrongPunch
+    ldy #>RyuAiScriptStrongPunch                ; 905E  A0 8F
     jmp AiStartScript                           ; 9060  4C F3 E6
 
 
 ; modes: fight
 RyuAiOpponentSpecial:
-    lda a:zp_62,y                               ; 9063  B9 62 00    RyuAiOpponentSpecial — Ryu AI: opponent with special state (zp_62) -> script $00:8ECA
+    lda a:zp_62,y                               ; 9063  B9 62 00    RyuAiOpponentSpecial — Ryu AI: opponent with special state (zp_62) -> RyuAiScriptVsSpecial
     beq RyuAiOpponentStateHigh                  ; 9066  F0 07
-    lda #<D00_8ECA                              ; 9068  A9 CA
-    ldy #>D00_8ECA                              ; 906A  A0 8E
+    lda #<RyuAiScriptVsSpecial                  ; 9068  A9 CA
+    ldy #>RyuAiScriptVsSpecial                  ; 906A  A0 8E
     jmp AiStartScript                           ; 906C  4C F3 E6
 
 
@@ -677,8 +677,8 @@ RyuAiState58DistDiv8:
     lsr a                                       ; 908A  4A
     lsr a                                       ; 908B  4A
     bne RyuAiState58DistDiv16                   ; 908C  D0 07
-    lda #<D00_8F3B                              ; 908E  A9 3B
-    ldy #>D00_8F3B                              ; 9090  A0 8F
+    lda #<RyuAiScriptThrow                      ; 908E  A9 3B
+    ldy #>RyuAiScriptThrow                      ; 9090  A0 8F
     jmp AiStartScript                           ; 9092  4C F3 E6
 
 
@@ -687,8 +687,8 @@ RyuAiState58DistDiv16:
     lsr a                                       ; 9095  4A          RyuAiState58DistDiv16 — Ryu AI: horizontal distance / 16
     bne RyuAiState58DistDiv32                   ; 9096  D0 07
 RyuAiState58Script32:
-    lda #<D00_8F32                              ; 9098  A9 32       RyuAiState58Script32 — Ryu AI: script $00:8F32
-    ldy #>D00_8F32                              ; 909A  A0 8F
+    lda #<RyuAiScriptCrouchStrongPunch          ; 9098  A9 32       RyuAiState58Script32 — Ryu AI: script RyuAiScriptCrouchStrongPunch
+    ldy #>RyuAiScriptCrouchStrongPunch          ; 909A  A0 8F
     jmp AiStartScript                           ; 909C  4C F3 E6
 
 
@@ -711,15 +711,15 @@ RyuAiState58Random:
     jsr Random                                  ; 90B5  20 B9 E5
     and #$01                                    ; 90B8  29 01
     beq RyuAiState58Script                      ; 90BA  F0 07
-    lda #<D00_8EA6                              ; 90BC  A9 A6
-    ldy #>D00_8EA6                              ; 90BE  A0 8E
+    lda #<RyuAiScriptJumpBack                   ; 90BC  A9 A6
+    ldy #>RyuAiScriptJumpBack                   ; 90BE  A0 8E
     jmp AiStartScriptNow                        ; 90C0  4C E8 E6
 
 
 ; modes: fight
 RyuAiState58Script:
-    lda #<D00_8EAD                              ; 90C3  A9 AD       RyuAiState58Script — Ryu AI: script $00:8EAD
-    ldy #>D00_8EAD                              ; 90C5  A0 8E
+    lda #<RyuAiScriptJumpForward                ; 90C3  A9 AD       RyuAiState58Script — Ryu AI: script RyuAiScriptJumpForward
+    ldy #>RyuAiScriptJumpForward                ; 90C5  A0 8E
     jmp AiStartScriptNow                        ; 90C7  4C E8 E6
 
 
@@ -738,21 +738,21 @@ RyuAiState69DistDiv8:
     jsr Random                                  ; 90D9  20 B9 E5    (nt)
     and #$03                                    ; 90DC  29 03       (nt)
     tay                                         ; 90DE  A8          (nt)
-    lda D00_90ED,y                              ; 90DF  B9 ED 90    (nt)
+    lda RyuAiState69ScriptLoTbl,y               ; 90DF  B9 ED 90    (nt)
     sta zp_DC                                   ; 90E2  85 DC       (nt)
-    lda D00_90F1,y                              ; 90E4  B9 F1 90    (nt)
+    lda RyuAiState69ScriptHiTbl,y               ; 90E4  B9 F1 90    (nt)
     tay                                         ; 90E7  A8          (nt)
     lda zp_DC                                   ; 90E8  A5 DC       (nt)
     jmp AiStartScript                           ; 90EA  4C F3 E6    (nt)
 
-D00_90ED:
-    .byte $3B                                   ; 90ED
-D00_90EE:
-    .byte $11,$24,$24                           ; 90EE
-D00_90F1:
-    .byte $8F                                   ; 90F1
-D00_90F2:
-    .byte $8F,$8F,$8F                           ; 90F2
+RyuAiState69ScriptLoTbl:
+    .byte $3B                                   ; 90ED              4 low bytes: $8F3B (throw), $8F11 (shoryuken weak), $8F24 (defend) x2
+RyuAiState69MidLoTbl:
+    .byte $11,$24,$24                           ; 90EE              entry 1 of RyuAiState69ScriptLoTbl (distance/16 branch)
+RyuAiState69ScriptHiTbl:
+    .byte $8F                                   ; 90F1              4 high bytes for RyuAiState69ScriptLoTbl
+RyuAiState69MidHiTbl:
+    .byte $8F,$8F,$8F                           ; 90F2              entry 1 of RyuAiState69ScriptHiTbl (distance/16 branch)
 
 ; modes: fight
 RyuAiState69DistDiv16:
@@ -761,9 +761,9 @@ RyuAiState69DistDiv16:
     jsr Random                                  ; 90F8  20 B9 E5
     and #$01                                    ; 90FB  29 01
     tay                                         ; 90FD  A8
-    lda D00_90EE,y                              ; 90FE  B9 EE 90    [idx $01..$01]
+    lda RyuAiState69MidLoTbl,y                  ; 90FE  B9 EE 90    [idx $01..$01]
     sta zp_DC                                   ; 9101  85 DC
-    lda D00_90F2,y                              ; 9103  B9 F2 90    [idx $01..$01]
+    lda RyuAiState69MidHiTbl,y                  ; 9103  B9 F2 90    [idx $01..$01]
     tay                                         ; 9106  A8
     lda zp_DC                                   ; 9107  A5 DC
     jmp AiStartScript                           ; 9109  4C F3 E6
@@ -779,15 +779,15 @@ RyuAiState69DistDiv32:
 
 ; modes: fight
 RyuAiState69Random:
-    jsr Random                                  ; 9113  20 B9 E5    RyuAiState69Random — Ryu AI: draws between 4 scripts
+    jsr Random                                  ; 9113  20 B9 E5    RyuAiState69Random — Ryu AI: draws among 4 table entries (only 0-1 reachable)
     and #$07                                    ; 9116  29 07
     lsr a                                       ; 9118  4A
     bcs RyuAiState69RandomNow                   ; 9119  B0 10
     lsr a                                       ; 911B  4A
     tay                                         ; 911C  A8
-    lda D00_913C,y                              ; 911D  B9 3C 91    [idx $00..$01]
+    lda RyuAiState69RandomLoTbl,y               ; 911D  B9 3C 91    [idx $00..$01]
     sta zp_DC                                   ; 9120  85 DC
-    lda D00_9140,y                              ; 9122  B9 40 91    [idx $00..$01]
+    lda RyuAiState69RandomHiTbl,y               ; 9122  B9 40 91    [idx $00..$01]
     tay                                         ; 9125  A8
     lda zp_DC                                   ; 9126  A5 DC
     jmp AiStartScript                           ; 9128  4C F3 E6
@@ -795,37 +795,37 @@ RyuAiState69Random:
 
 ; modes: fight
 RyuAiState69RandomNow:
-    lsr a                                       ; 912B  4A          RyuAiState69RandomNow — Ryu AI: draws between 2 scripts (immediate execution)
+    lsr a                                       ; 912B  4A          RyuAiState69RandomNow — Ryu AI: draws from 2 entries (only entry 0 reachable; immediate execution)
     lsr a                                       ; 912C  4A
     tay                                         ; 912D  A8
-    lda D00_9144,y                              ; 912E  B9 44 91    [idx $00..$00]
+    lda RyuAiState69NowLoTbl,y                  ; 912E  B9 44 91    [idx $00..$00]
     sta zp_DC                                   ; 9131  85 DC
-    lda D00_9146,y                              ; 9133  B9 46 91    [idx $00..$00]
+    lda RyuAiState69NowHiTbl,y                  ; 9133  B9 46 91    [idx $00..$00]
     tay                                         ; 9136  A8
     lda zp_DC                                   ; 9137  A5 DC
     jmp AiStartScriptNow                        ; 9139  4C E8 E6
 
-D00_913C:
-    .byte <(D00_8E82)                           ; 913C  82
-    .byte <(D00_8F32)                           ; 913D  32
+RyuAiState69RandomLoTbl:
+    .byte <(RyuAiScriptHadoukenWeak)            ; 913C  82          4 low bytes: $8E82 (hadouken weak), $8F32 (crouch strong punch), $8F24 x2; only 0-1 reachable
+    .byte <(RyuAiScriptCrouchStrongPunch)       ; 913D  32
     .byte $24,$24                               ; 913E
-D00_9140:
-    .byte >(D00_8E82)                           ; 9140  8E
-    .byte >(D00_8F32)                           ; 9141  8F
+RyuAiState69RandomHiTbl:
+    .byte >(RyuAiScriptHadoukenWeak)            ; 9140  8E          4 high bytes for RyuAiState69RandomLoTbl
+    .byte >(RyuAiScriptCrouchStrongPunch)       ; 9141  8F
     .byte $8F,$8F                               ; 9142
-D00_9144:
-    .byte <(D00_8EA6)                           ; 9144  A6
+RyuAiState69NowLoTbl:
+    .byte <(RyuAiScriptJumpBack)                ; 9144  A6          low bytes: $8EA6 (jump back), $8EAD (jump forward); only entry 0 reachable
     .byte $AD                                   ; 9145
-D00_9146:
-    .byte >(D00_8EA6)                           ; 9146  8E
+RyuAiState69NowHiTbl:
+    .byte >(RyuAiScriptJumpBack)                ; 9146  8E          high bytes for RyuAiState69NowLoTbl
     .byte $8E                                   ; 9147
-D00_9148:
-    .word RyuAiAntiAir-1                        ; 9148  49 91
+AiHitReactRoutineTbl:
+    .word RyuAiAntiAir-1                        ; 9148  49 91       per-character routine when opponent is in hit reaction ($B0-$E0); single entry RyuAiAntiAir-1
 
-; <- table D00_9148
+; <- table AiHitReactRoutineTbl
 ; modes: fight
 RyuAiAntiAir:
-    ldy OtherFighter                            ; 914A  A4 65       Ryu AI against opponent in air ($C0/$C8): fires anti-air script (table D00_9148)
+    ldy OtherFighter                            ; 914A  A4 65       Ryu AI against opponent in air ($C0/$C8): fires anti-air script (table AiHitReactRoutineTbl)
     lda a:FighterState,y                        ; 914C  B9 26 00
     and #$F8                                    ; 914F  29 F8
     cmp #$C0                                    ; 9151  C9 C0
@@ -856,8 +856,8 @@ RyuAiAntiAirVelCheck:
 
 ; modes: fight
 RyuAiAntiAirScript8E9F:
-    lda #<D00_8E9F                              ; 9174  A9 9F       RyuAiAntiAirScript8E9F — anti-air AI: script $00:8E9F
-    ldy #>D00_8E9F                              ; 9176  A0 8E
+    lda #<RyuAiScriptWalkForward                ; 9174  A9 9F       RyuAiAntiAirScript8E9F — anti-air AI: script RyuAiScriptWalkForward
+    ldy #>RyuAiScriptWalkForward                ; 9176  A0 8E
     jmp AiStartScriptNow                        ; 9178  4C E8 E6
 
 
@@ -876,8 +876,8 @@ RyuAiAntiAirVelCheck3:
 
 ; modes: fight
 RyuAiAntiAirScript8F11:
-    lda #<D00_8F11                              ; 9188  A9 11       RyuAiAntiAirScript8F11 — anti-air AI: script $00:8F11
-    ldy #>D00_8F11                              ; 918A  A0 8F
+    lda #<RyuAiScriptShoryukenWeak              ; 9188  A9 11       RyuAiAntiAirScript8F11 — anti-air AI: script RyuAiScriptShoryukenWeak
+    ldy #>RyuAiScriptShoryukenWeak              ; 918A  A0 8F
     jmp AiStartScript                           ; 918C  4C F3 E6
 
 
@@ -891,8 +891,8 @@ RyuAiAntiAirDist2:
     jsr DistanceX                               ; 9197  20 3D E0    RyuAiAntiAirDist2 — anti-air AI ($D0/$D8): horizontal distance
     cmp #$38                                    ; 919A  C9 38
     bcc RyuAiAntiAirDist3                       ; 919C  90 07
-    lda #<D00_8E82                              ; 919E  A9 82
-    ldy #>D00_8E82                              ; 91A0  A0 8E
+    lda #<RyuAiScriptHadoukenWeak               ; 919E  A9 82
+    ldy #>RyuAiScriptHadoukenWeak               ; 91A0  A0 8E
     jmp AiStartScript                           ; 91A2  4C F3 E6
 
 
@@ -900,15 +900,15 @@ RyuAiAntiAirDist2:
 RyuAiAntiAirDist3:
     cmp #$10                                    ; 91A5  C9 10       RyuAiAntiAirDist3 — anti-air AI ($D0/$D8): distance < $10?
     bcc RyuAiAntiAirScript8F29                  ; 91A7  90 07
-    lda #<D00_8F26                              ; 91A9  A9 26
-    ldy #>D00_8F26                              ; 91AB  A0 8F
+    lda #<RyuAiScriptCrouch                     ; 91A9  A9 26
+    ldy #>RyuAiScriptCrouch                     ; 91AB  A0 8F
     jmp AiStartScriptNow                        ; 91AD  4C E8 E6
 
 
 ; modes: fight
 RyuAiAntiAirScript8F29:
-    lda #<D00_8F29                              ; 91B0  A9 29       RyuAiAntiAirScript8F29 — anti-air AI ($D0/$D8): script $00:8F29
-    ldy #>D00_8F29                              ; 91B2  A0 8F
+    lda #<RyuAiScriptCrouchStrongKick           ; 91B0  A9 29       RyuAiAntiAirScript8F29 — anti-air AI ($D0/$D8): script RyuAiScriptCrouchStrongKick
+    ldy #>RyuAiScriptCrouchStrongKick           ; 91B2  A0 8F
     jmp AiStartScript                           ; 91B4  4C F3 E6
 
 
@@ -920,8 +920,8 @@ RyuAiAntiAirEnd:
 ; <- jmp RyuAiAntiAirRange, jmp RyuAiAntiAirVelCheck, jmp RyuAiAntiAirVelCheck2, jmp RyuAiAntiAirVelCheck3
 ; modes: fight
 RyuAiAirAttack:
-    lda #<D00_8F24                              ; 91BA  A9 24       Ryu AI: starts script D00_8F24 (air attack) always
-    ldy #>D00_8F24                              ; 91BC  A0 8F
+    lda #<RyuAiScriptDefend                     ; 91BA  A9 24       Ryu AI: starts RyuAiScriptDefend ($8F24) always
+    ldy #>RyuAiScriptDefend                     ; 91BC  A0 8F
     jmp AiStartScriptNow                        ; 91BE  4C E8 E6
 
 D00_91C1:

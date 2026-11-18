@@ -66,10 +66,10 @@ CharCmdListHiTbl:
     .byte >(CmdKeyListRyu)                      ; 80AA  E0
     .byte $E0,$00,$00,$00,$00,$00,$00,$00,$00   ; 80AB              Ken: >CmdKeyListRyu
 CharAiScriptLoTbl:
-    .byte <(D00_8E72)                           ; 80B4  72
+    .byte <(RyuAiIdleScriptTbl)                 ; 80B4  72
     .byte $E0,$00,$00,$00,$00,$00,$00,$00,$00   ; 80B5              Ken: <D04_90E0 (AI stub)
 CharAiScriptHiTbl:
-    .byte >(D00_8E72)                           ; 80BE  8E
+    .byte >(RyuAiIdleScriptTbl)                 ; 80BE  8E
     .byte $90,$00,$00,$00,$00,$00,$00,$00,$00   ; 80BF              Ken: >D04_90E0 (AI stub)
 CharStateBankTbl:
     .byte $01,$05,$01,$01,$01,$01,$01,$01,$00,$01; 80C8              column 1 (Ken) = state bank $05

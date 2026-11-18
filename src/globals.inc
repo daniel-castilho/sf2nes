@@ -133,7 +133,6 @@
 .global D00_8DF7
 .global D00_8E1F
 .global D00_8E49
-.global D00_8E72
 .global D00_91C1
 .global D00_91CA
 .global D00_91D3
@@ -275,6 +274,7 @@
 .global RoundText3
 .global RoundText4
 .global RoundTextFlash
+.global RyuAiIdleScriptTbl
 .global RyuAiThink
 .global RyuAttackTransTbl
 .global RyuDirTransTbl

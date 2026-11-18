@@ -277,14 +277,15 @@ Bank `$00` is the only Ryu code bank modified, and only in those two bytes.
 
 ---
 
-## 10. Appendix — what the `$3C`/`$3F`/`$20`/`$36`/`$3B`/`$37`/`$29`/`$2D`/`$01`/`$05` data naming batches taught
+## 10. Appendix — what the `$3C`/`$3F`/`$20`/`$36`/`$3B`/`$37`/`$29`/`$2D`/`$01`/`$05`/`$00` data naming batches taught
 
 The data batches (33 labels from `$3C`, 15 from `$3F`, 30 from `$20`, 27 from `$36`, 35 from `$3B`,
-17 from `$37`, 46 from `$29`, 14 from `$2D`, 38 from `$01` and 38 from `$05`, see
+17 from `$37`, 46 from `$29`, 14 from `$2D`, 38 from `$01`, 38 from `$05` and 31 from `$00`, see
 `tasks/DATA_NAMING_3C.md`, `tasks/DATA_NAMING_3F.md`, `tasks/DATA_NAMING_20.md`,
 `tasks/DATA_NAMING_36.md`, `tasks/DATA_NAMING_3B.md`, `tasks/DATA_NAMING_37.md`,
-`tasks/DATA_NAMING_29.md`, `tasks/DATA_NAMING_2D.md`, `tasks/DATA_NAMING_01.md` and
-`tasks/DATA_NAMING_05.md`) did not change bytes, but exposed these reading pitfalls:
+`tasks/DATA_NAMING_29.md`, `tasks/DATA_NAMING_2D.md`, `tasks/DATA_NAMING_01.md`,
+`tasks/DATA_NAMING_05.md` and `tasks/DATA_NAMING_00.md`) did not change bytes, but exposed these
+reading pitfalls:
 
 * **Do not classify a bank by its address.** Initial triage treated `$29`/`$2D` as "AI" because they are
   near the engine; generated headers show they are **FamiTone2 music** (173 labels). Reading the header
@@ -392,6 +393,23 @@ The data batches (33 labels from `$3C`, 15 from `$3F`, 30 from `$20`, 27 from `$
 * **Weak/strong special names depend on the command list.** `RyuSpcTrans` is indexed by `CmdMoveIdx`, and
   `CmdKeyListRyu` uses kick strength for hadouken/shoryuken and punch strength for tatsumaki. Naming the
   six states without reading `CmdKeyAttackTbl` would invert weak and strong.
+* **A label inside a table can be a view, not a second table.** In `$00`, `$90EE`/`$90F2` are entry 1 of
+  the 4-entry arrays at `$90ED`/`$90F1`, used by the distance/16 branch with `y = 0–1`. Naming them
+  `...MidLoTbl`/`...MidHiTbl` is useful only because the comment says they are the same bytes; otherwise
+  the next reader may try to resize or duplicate the array.
+* **Decode the index arithmetic before claiming an entry is reachable.** `$913C` has 4 entries but
+  `(Random & 7) >> 2` yields only 0–1; `$9144` has 2 entries but the `Now` branch shifts twice after
+  testing bit 0, so `y` is always 0. Trace coverage (`[idx $00..$00]`) alone is weak evidence; the shift
+  sequence is the proof.
+* **Dead bytes after `$FF` are not scripts.** `$8EB4`–`$8EC9` and `$8F43`–`$8F45` look like valid
+  bytecode but nothing points at them. They stayed automatic and unlabelled; the `$FF` terminator is not
+  a guarantee that the next byte starts a new entry.
+* **Byte-identical scripts need the consumer as tie-breaker.** `$8EAD` and `$8F0A` are the same seven
+  bytes (`80 09 88 04 80 04 FF`); one is the jump-forward idle script, the other the jump-in branch.
+  Naming by bytes alone would merge them.
+* **A pre-existing code label can be wrong.** `RyuAiAirAttack` (`$91BA`) starts `$8F24`, which is
+  `$83 FF` = defend. Code naming was out of scope, so the label stayed, but the comment now says it starts
+  `RyuAiScriptDefend`; do not inherit an old name as evidence.
 * **Translation can desynchronize the generator.** After `fa7c215`, `annotations/sf2ne.ann` was in English
   while the committed `src/*.s` still carried the pre-translation Portuguese comments and `tools/disasm.py`
   still emitted Portuguese headers/auto-comments. Running `make gen` mixed translation with naming. This

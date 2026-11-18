@@ -279,7 +279,7 @@ D04_8A59:
     .byte $0C,$33,$CC,$F5,$15,$00,$FF           ; 90D9
 
 ; Ken AI stub (this delivery's CPU remains Ryu).
-; Ken's fiche points here ($90E0). There are 8 scripts, like Ryu's table at $00:8E72,
+; Ken's fiche points here ($90E0). There are 8 scripts, like RyuAiIdleScriptTbl at $00:8E72,
 ; and all lead to the $FF terminator, so that no pointer falls into collision data.
 D04_90E0:
     .word D04_90F0                              ; 90E0  F0 90
